@@ -1,39 +1,4 @@
 <style>
-    .disabled {
-        color:gray  !important;
-
-    }
-    .disabled .node {
-        border-left: solid gray 25px;
-    }
-    .relation-edit {
-        display:none;
-    }
-    .relation-title {
-        padding:4px;
-        padding-bottom: 6px;
-        border-top: solid gray 1px;
-    }
-    .relation-title:hover {
-
-        background-color: #BBE3EC;
-    }
-    .relation-title:hover > .relation-edit {
-        display:block
-    }
-    .form-select {
-        margin-bottom:12px
-    }
-    .selected {
-        border: solid gray 1px;
-        padding: 12px;
-        padding-left: 12px !important;
-        background-color: #F7F7F7;
-    }
-    h4.relation-group {
-        margin-top: 12px;
-    }
-
     .person-photo {
         width: 80px;
         margin-left: 0px;
@@ -59,7 +24,7 @@
                 {{schema.result._attributes.id}}
             </template>
             <template v-else>
-                {{store.current().data.type_label}}
+                {{store.current().data.type_label}} {{ store.current().data.id }}
             </template>
 
             <div class="d-flex bd-highlight">
@@ -87,14 +52,6 @@
                         <input v-if="state.editing && edit_name" v-model="edit_name" @keyup.enter="saveLabel()"/>
                     </h4>
                 </template>
-
-                <!-- <template v-else>
-                    <h4 :class="['card-title', 'p-2', 'flex-grow-1', store.current().data.type]">     {{schema.result._attributes.label}}
-                        <i v-if="state.editing && schema.result._attributes._active" @click="toggleEdit()" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
-                        </i>
-                        <input v-if="state.editing && edit_name" v-model="edit_name" @keyup.enter="saveLabel()"/>
-                    </h4>
-                </template> -->
 
             </div>
 
@@ -140,143 +97,39 @@
 
 
         </div>
-    
 
+        <!-- SERVICES -->
+        <div class="card-body overflow-auto">
+            <h4>Services for {{ schema.result._attributes.type }}</h4>
+
+            <div v-if="services.result && services.result.for_format && services.result.for_format.length == 0" class="alert alert-warning">No services found</div>
+
+            <ol class="list-group border-0" v-for="d in services.result.for_format">
+                <template v-if="d.services">
+                    <li class="list-group-item border-0" v-for="(value, key) of d.services" :key="key">
+                        <div @click="initProcessCreator(value)" class="node Service pointer"> {{ value.name }} </div>
+                        <div class="rel-info">{{ value.description }}</div>
+                    </li>
+                </template>
+            </ol>
+
+            <div>
+        </div>
+
+         <!-- SERVICES ENDS -->
+
+  </div>
+       
+    
+<!--
         <NodeAttributes v-if="schema.result._attributes" :editing="state.editing" :attributes="schema.result._attributes"  @reLoadData="loadData"/>
+-->
+
+
 
         <div :class="['card-body overflow-auto', schema.result._attributes._active ? '' : 'disabled']">
 
-            <div v-for="(group, groupname) in schema.result.tags" :key="groupname">
-                <template v-if="groupname != 'default_display'">
-                    <h4 class="relation-group" v-if="state.editing">{{group.label}}</h4>
-                    <h4 v-else-if="group.count !== 0">{{group.label}}</h4>
-                </template>
 
-                <div v-for="relation of group.relations" :key="relation.type" :id="group.label">
-                    <!-- RELATION INFO -->
-                    <!--  Show relationship only if there is data -->
-                    <ol :class="['list-group', connect_editor.relation == relation ? 'selected' : '']" v-if="relation.data.length > 0">
-
-                        <!-- editing on -->
-                        <div class="relation-title" v-if="state.editing && schema.result._attributes._active">
-
-
-                            <div @click="initConnectEditor(relation)" class="pointer" style="position:initial">{{relation.label}} (<b>{{relation.target_label}}</b>)<i  class="float-end bi bi-pen" ></i></div>
-                            <div v-if="connect_editor.relation == relation">
-                                <div>
-
-                                    <select class="form-select" v-model="state.selected" @change="createConnection(relation)">
-                                        <option></option>
-                                        <option v-for="row of connect_editor.data" :value="row.value">
-                                            {{row.text}}
-                                        </option>
-                                    </select>
-
-                                    <div v-if="store.user.access != 'user' || relation.target_publicity" @click="initNodeCreator(relation)" title="lisää node" type="button" class="btn btn-primary float-end">
-                                        <i :title="'create ' + relation.target_label" class="float-end bi bi-plus-circle pointer" style="font-size: 1rem; color: white;"></i>
-                                    </div>
-
-                                </div>
-
-                            </div>
-                        </div>
-
-                        <div v-else>
-                            <div style="position:initial">{{relation.label}} (<b>{{relation.target_label}}</b>)</div>
-                        </div>
-
-                        <!-- editing on ends -->
-
-                        <!-- LIST RELATION DATA -->
-                        <li class="list-group-item d-flex justify-content-between align-items-start border-0" v-for="node in relation.data" :key="node.label">
-                            <div :class="['me-auto', node.rel_active ? 'active' : 'disabled']">
-
-                                <div @click="select(node.type, node.id)" :class="['node',node.type, 'pointer']">
-                                    {{node.label}}
-                                </div>
-
-                                <!-- INFO -->
-                                <div class="rel-info" v-if="!state.editing && node.rel_attr">
-                                    <i>{{node.rel_attr}}</i>
-                                </div>
-
-                                <!-- RELATIONSHIP ATTRIBUTE editor (info) -->
-                                <template v-if="state.editing && state.active">
-                                    <div v-if="node.rel_attr">{{node.rel_attr}}
-                                        <i @click="connect_editor.current_rel_id = node.rel_id; connect_editor.current_rel_attr = node.rel_attr" class=" bi bi-pen pointer" style="font-size: 0.7rem; color: blue;margin-left:10px">
-                                        </i>
-                                    </div>
-
-                                    <div v-else>
-                                        <i>info</i>
-                                        <i @click="connect_editor.current_rel_id = node.rel_id" class=" bi bi-pen pointer" style="font-size: 0.7rem; color: blue;margin-left:10px">
-                                        </i>
-                                    </div>
-                                </template>
-
-                                <div v-if="state.editing && connect_editor.current_rel_id == node.rel_id">
-                                    <textarea  v-model="node.rel_attr" rows="3" cols="30"></textarea><br>
-
-                                    <button @click="connect_editor.current_rel_id = ''; node.rel_attr = connect_editor.current_rel_attr" class="btn btn-secondary">peru</button>
-
-                                    <button @click="saveRelationAttribute(node.rel_attr)" class="btn btn-primary">tallenna</button>
-                                </div>
-                                <!-- RELATIONSHIP ATTRIBUTE editor ENDS  -->
-
-                            </div>
-                            <!-- ACTIVE/INACTIVE LINK TOGGLE-->
-                            <div v-if="state.editing && schema.result._attributes._active && connect_editor.relation == relation" class="form-check form-switch">
-
-                              <input @click="setActiveLink(node)" v-model="node.rel_active" class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
-                              <label class="form-check-label" for="flexSwitchCheckChecked"></label>
-                              <i @click="removeConnection(node.rel_id)" class="float-end bi-x-circle pointer"></i>
-                            </div>
-
-                            <!-- FIT map to item on QueryMap -->
-                            <div v-if="schema.result._attributes._active && store.current_node.data.type == 'QueryMap'" class="form-check form-switch ">
-                                    <i @click="fitGraph(store.current_node.data.id, node.id)" class="bi bi-geo-alt-fill float-end text-primary pointer fs-5"></i>
-                            </div>
-
-                            <div v-if="state.editing && schema.result._attributes._active && node.type == 'QueryMap' && connect_editor.relation == relation" class="form-check form-switch ">
-                                    <i title="muuta sijaintia" @click="openMapPositionEditor(node.id, node.rel_id)" class="bi bi-geo-alt-fill float-end text-primary pointer fs-5"></i>
-                            </div>
-
-                            <!-- Map location without coordinates -->
-                            <div v-if="state.editing && schema.result._attributes._active && node.type == 'QueryMap' && !node.rel_x" class="form-check form-switch ">
-                                    <button @click="openMapPositionEditor(node.id, node.rel_id)" class="bi bi-geo-alt-fill float-end btn btn-danger pointer fs-5">aseta sijainti</button>
-                            </div>
-
-
-                            <!-- <i v-if="state.editing" @click="removeConnection(node.rel_id)" class="float-end bi-x-circle pointer"></i> -->
-
-                        </li>
-                    </ol>
-
-
-                    <!-- editing on -->
-                    <div class="relation-title" v-else-if="state.editing && schema.result._attributes._active">
-
-                        <div @click="initConnectEditor(relation)"  class="pointer" style="position:initial">{{relation.label}} (<b>{{relation.target_label}}</b>)
-                            <i  class="float-end bi bi-pen" ></i>
-                        </div>
-                        <div style="margin-bottom:60px" v-if="connect_editor.relation == relation">
-                            <div>
-
-                                <select class="form-select" v-model="state.selected" @change="createConnection(relation)">
-                                    <option></option>
-                                    <option v-for="row of connect_editor.data" :value="row.value">
-                                        {{row.text}}
-                                    </option>
-                                </select>
-
-                                <div v-if="store.user.access != 'user' || relation.target_publicity" @click="initNodeCreator(relation)" title="lisää node" type="button" class="btn btn-primary float-end" >
-                                    <i :title="'create ' + relation.target_label" class="float-end bi bi-plus-circle pointer" style="font-size: 1rem; color: white;"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- DELETE BUTTON -->
             <div class="float-end" style="margin-top:50px" v-if="state.editing  && store.user.access !== 'user' && store.current().data.id !== store.user.rid">
@@ -285,49 +138,6 @@
 
         </div>
         <div class="card-footer">
-            <div v-if="!route.query.map" class="btn-group" role="group" >
-                <!--<button class="btn" @click="setGraphOptions('cose')">cose</button>-->
-                <button class="btn" title="layout cose" @click="$emit('setGraphOptions', 'cose')">A1</button>
-                <button class="btn" title="layout cola" @click="$emit('setGraphOptions', 'cola')">A2</button>
-                <button class="btn" title="layout fcose" @click="$emit('setGraphOptions', 'fcose')">A3</button>
-                <button class="btn" title="layout grid" @click="$emit('setGraphOptions', 'grid')">grid</button>
-                <button class="btn" title="oma asettelu" @click="$emit('setGraphOptions', 'preset')">my</button><br>
-                <button @click="$emit('saveLayout')" class="btn btn-secondary" title="save layout"><i class="bi bi-snow"></i></button>
-            </div>
-
-            <!-- USER GROUPS & ADMIN STUFF -->
-			<!-- one cannot set ones own permissions -->
-			<template v-if="state.admin_edit">
-
-				<div class="card border-danger" v-if="store.current().data.type == 'Person' && store.user.access == 'admin'">
-
-					<div class="card-header">
-						User settings
-					</div>
-					<div class="card-body">
-						<h5>User group (visibility group)</h5>
-						<select @change="saveUserSetting('_group')" class="form-select" aria-label="Default select example" v-model="state._group">
-
-							<option v-for="group in store.groups" :key="group.id" :value="group.id">
-								{{group.label}}
-							</option>
-						</select>
-
-                        <h5>User Permissions</h5>
-                        <div v-if="store.current().data.id !== store.user.rid">
-    						<select @change="saveUserSetting('_access')" class="form-select" aria-label="Default select example" v-model="state._access">
-    							<option v-for="permission of permissions" :key="permission" :value="permission">
-    								{{permission}}
-    							</option>
-    						</select>
-                        </div>
-                        <div v-else>
-                            Can't set your own access level.
-                        </div>
-					</div>
-				</div>
-			</template>
-			<!-- USER GROUPS & ADMIN STUFF ENDS -->
 
 
             <div v-if="store.user">
@@ -371,6 +181,7 @@
     })
     var graph = reactive({result:[]})
     var schema = reactive({result:[]})
+    var services = reactive({result:[]})
     var me = reactive({data:{}})
     var edit_name = ref('')
     const image_file = ref(null);
@@ -471,6 +282,7 @@
     async function loadData(rid) {
         console.log('loading node data...')
         schema.result = await web.getSchemaAndData(rid)
+        services.result = await web.getServicesForFile(rid)
         prepareUserSettings()
     }
 
@@ -500,37 +312,16 @@
         }
     }
 
-    function initNodeCreator(relation) {
-        store.new_node_type = relation.target
-        store.new_node_label = relation.target_label
-        store.new_node_relation = relation
-        store.node_creator_open = true
+    function initProcessCreator(data) {
+        store.process = data
+        store.new_node_type = 'Process'
+        store.new_node_label = 'Process'
+        store.new_node_relation = 'WAS_PROCESSED_BY'
+        store.process_creator_open = true
     }
 
-    async function initConnectEditor(relation) {
-        if(connect_editor.relation == relation) {
-            connect_editor.relation = null
-            connect_editor.data = []
-            return
-        }
-        connect_editor.relation = relation
-        var result = await web.getListOfNonConnected(relation.target, relation.type, route.query.node)
-        connect_editor.data = result.data
-    }
 
-    async function select(type, id) {
-        id = id.replace('#', '')
-        // if we click map, then open map in map view
-        if(type == 'QueryMap') {
-            router.push({ name: 'graph', query: { map: id } })
-            // if we are in map view, then zoom to clicked item
-        } else if (route.query.map) {
-            emit('fitGraph', id)
-            router.push({ name: 'graph', query: { map: route.query.map, focus: id } })
-        } else {
-            router.push({ name: 'graph', query: { node: id } })
-        }
-    }
+
 
     async function saveLabel() {
         var result = await web.setNodeAttribute(store.current().data.id, {key:'label', value: edit_name.value})
@@ -552,11 +343,6 @@
         }
     }
 
-    async function setActiveLink(relation) {
-        relation.rel_active = !relation.rel_active
-        var result = await web.setRelationAttribute(relation.rel_id, {name:'_active', value: relation.rel_active})
-        store.reload()
-    }
 
     async function setActiveNode() {
         state.active = !state.active
@@ -564,30 +350,6 @@
         store.reload()
     }
 
-    async function saveRelationAttribute(attr_value) {
-        var result = await web.setRelationAttribute(connect_editor.current_rel_id, {name:'attr', value: attr_value})
-        connect_editor.current_rel_id = 0
-        connect_editor.current_rel_attr = ''
-    }
-
-    async function createConnection(relation) {
-        var to = state.selected
-        if(relation.reverse)
-            await web.connect(to, relation.type, route.query.node)
-        else
-            await web.connect(route.query.node, relation.type, to)
-
-        store.reload()
-    }
-
-    async function removeConnection(rid) {
-        await web.removeEdgeByRID(rid)
-        store.reload()
-    }
-
-    function openMapPositionEditor(map_rid, rel_rid) {
-        router.push({ name: 'maps', query: { map: map_rid.replace('#', ''), focus: route.query.node, relation: rel_rid.replace('#', '') } })
-    }
 
 
 </script>

@@ -23,9 +23,7 @@
 			</div>
             <div class="col-3 sidebar p-0 h-100">
                 <NodeCard v-if="props.mode == 'graph'" @setGraphOptions="setGraphOptions" @saveLayout="saveLayout" @fitGraph="fitGraph" class="h-100 w-100 position-absolute"/>
-                <SchemaCard v-if="props.mode == 'schema'" @setGraphOptions="setGraphOptions" @saveLayout="saveLayout" class="h-100 w-100 position-absolute" />
                 <NavigationCard v-if="props.mode == 'queries'" @setGraphOptions="setGraphOptions" @saveLayout="saveLayout" class="h-100 w-100 position-absolute"/>
-				<MapCard v-if="props.mode == 'maps'" class="h-100 w-100 position-absolute"/>
                 <AboutCard v-if="props.mode == 'about'" class="h-100 w-100 position-absolute"/>
                 <StatsCard v-if="props.mode == 'stats'" class="h-100 w-100 position-absolute"/>
                 <ListCard v-if="props.mode == 'list'" class="h-100 w-100 position-absolute"/>
@@ -43,9 +41,8 @@
     import { onMounted, watch, reactive, ref, computed } from "vue";
     import web from "../web.js";
     import NodeCard from "./NodeCard.vue";
-    import SchemaCard from './SchemaCard.vue'
+
     import NavigationCard from './NavigationCard.vue'
-    import MapCard from './MapCard.vue'
     import StatsCard from './StatsCard.vue'
     import ListCard from './ListCard.vue'
     import AboutCard from './AboutCard.vue'
@@ -198,7 +195,7 @@ console.log(props.mode)
            layout = getLayoutSettings('preset')
            setUserPositions(positions)
 
-        } else if(positions && store.current_node.data && store.current_node.data.type !== 'QueryMap') {
+        } else if(positions && store.current_node.data) {
             // if all nodes has user position, then use layout "preset"
             // otherwise use "fcose" with "fixedNodeConstraint"
             // TODO figure out why fixedNodeConstraint does not work
@@ -307,6 +304,7 @@ console.log(props.mode)
                 store.y = pos.position().y
                 // simple align
                 pos.position({x:Math.round(pos.position().x/10)*10, y:Math.round(pos.position().y/10)*10})
+                saveLayout()
             });
 		}
 

@@ -3,7 +3,7 @@
     import { useRoute } from 'vue-router'
     import JYUHeader from './JYUHeader.vue'
     import GraphDisplay from './GraphDisplay.vue'
-    import NodeCreator from './NodeCreator.vue'
+    import ProcessCreator from './ProcessCreator.vue'
     import NodeDeleter from './NodeDeleter.vue'
     import web from "../web.js"
     import {store} from "./Store.js"
@@ -36,7 +36,7 @@
                     </div>
                     <div class="row m-0 p-0  flex-grow-1">
                         <GraphDisplay mode="graph"/>
-                        <NodeCreator mode="graph" @createConnection="createConnectionFromNew"/>
+                        <ProcessCreator mode="graph" @createConnection="createConnectionFromNew"/>
                         <NodeDeleter mode="graph" />
                     </div>
                 </div>

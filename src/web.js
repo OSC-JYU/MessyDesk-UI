@@ -41,13 +41,9 @@ web.getSchemaLinks = async function(rid) {
 	 return response
 }
 
-web.getMapData = async function(rid) {
-	var query = `MATCH (map:QueryMap) WHERE id(map) = "#${rid}" RETURN map.image as image, map.scale as scale`
-	var response = await axios.post('/api/query', {query:query})
-	if(response.data && response.data.result.length)
-		return response.data.result[0]
-	else
-		return {}
+web.getServicesForFile = async function(file_rid) {
+	var result = await axios.get(`/api/services/files/${file_rid.replace('#','')}`)
+	return result.data
 }
 
 web.getList = async function(schema) {

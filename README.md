@@ -1,5 +1,7 @@
 # MessyDesk-UI
 
+https://github.com/OSC-JYU/MessyDesk
+
 .env file defines the public url.
 
 This template should help get you started developing with Vue 3 in Vite.
