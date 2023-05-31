@@ -124,15 +124,19 @@
 		var layout = ''
         graph.result = []
 
-        console.log('ROUTE MUUTTUI lista')
-        graph.result = await web.getGraph(`MATCH (p:Project) WHERE id(p) = "#${route.params.id}" OPTIONAL MATCH (p)-[r]-(t) RETURN p,r,t`)
-        console.log(graph.result)
+        //console.log('ROUTE MUUTTUI lista')
+        //graph.result = await web.getGraph(`MATCH (p:Project) WHERE id(p) = "#${route.params.id}" OPTIONAL MATCH (p)-[r]-(t) RETURN p,r,t`)
+        //console.log(graph.result)
 
 
          if(route.query.node) {
 
             console.log('loading graph...')
-            graph.result = await web.getGraph(`MATCH (p) WHERE id(p) = "#${route.query.node}" OPTIONAL MATCH (p)-[r]-(t) RETURN p,r,t`, route.query.node, CLUSTER)
+            //const query = `MATCH (project:Project) WHERE id(project) = "#${route.query.node}" OPTIONAL MATCH (project)<-[r]-(t) RETURN project,r,t`
+            const query = `MATCH (person:Person)-[rp:IS_OWNER]->(project:Project) WHERE id(project) = "#${route.query.node}" WITH project, person, rp
+            OPTIONAL MATCH (project)-[r*0..4]-(t) WHERE t:File OR t:Process RETURN project,r,t, rp, person`
+
+            graph.result = await web.getGraph(query, route.query.node, CLUSTER)
             //graph.result = await web.getGraph(`MATCH (p:Project)-[r*]-(t) WHERE id(p) = "#${route.query.node}"  RETURN p,r,t`, route.query.node, CLUSTER)
             console.log(graph.result)
             //store.current_node = getNodeFromGraph(route.query.node)
@@ -297,6 +301,15 @@ console.log(props.mode)
 
             cy.on('dragfreeon', 'node', async function(evt) {
                 //console.log(evt.target.data().id )
+                if(evt.target.data().id) {
+                        var nodeID = evt.target.data().id.replace('#','')
+                        console.log(nodeID)
+                        var node = getNodeFromGraph(evt.target.data().id)
+                        if(node) store.current_node = node
+                        else store.current_node = {data: {id: '#' + nodeID}}
+                  } else {
+                      store.current_node = null
+                  }
                 var pos = cy.nodes("[id = '" + evt.target.data().id + "']");
                 current_graph_node.position.x = pos.position().x
                 current_graph_node.position.y = pos.position().y
@@ -308,31 +321,6 @@ console.log(props.mode)
             });
 		}
 
-        // if QueryMap, then draw background image and lock nodes
-        if(route.query.map) {
-			// get image name and scale from QueryMap
-			const mapData = await web.getMapData(route.query.map)
-            console.log(mapData)
-            setBackground(mapData)
-            cy.nodes().forEach(function(node) {
-                node.lock();
-            });
-            if(props.mode == 'maps') {
-                cy.nodes().forEach(function(node) {
-                    if(node.id() != '#' + route.query.focus)
-                        node.data('active', false)
-                    else {
-                        node.unlock()
-                    }
-                });
-            }
-            if(oldValue && oldValue.node) {
-                cy.fit(cy.$('node[idc="#' + oldValue.node.replace(':','_')+'"]'), 250)
-            } else if(route.query.focus) {
-                cy.fit(cy.$('node[idc="#' + route.query.focus.replace(':','_')+'"]'), 250)
-            }
-
-        }
     }
 
     function fitGraph(id) {
@@ -344,117 +332,6 @@ console.log(props.mode)
 //   cy.center();
 // }
     }
-
-    async function setMapPositions() {
-        var coords = await web.rawQuery('MATCH (n)-[r]-(map:QueryMap) RETURN r.x as x, r.y as y, id(n) as id')
-        console.log(coords)
-        // loop through the nodes and check if position on the map is found
-        var count = 0
-        for(var node of graph.result.data.nodes) {
-            var id = node.data.id
-            node.position = {x: count, y: 0}
-            count = count + 100
-            //node.data.parent = 'outlaws'
-            // console.log(id)
-            var found = false
-            for(var position of coords.result) {
-                if(position.id == id && position.x != '  cypher.null') {
-                    node.position = {x: position.x, y: position.y}
-                    found = true
-                }
-            }
-            if(!found) {
-                node.style = {'background-color': 'red'}
-            }
-        }
-        //graph.result.data.nodes.push({data:{id:'outlaws', name:'outlaws'}})
-
-        // cy.nodes().forEach(function(node) {
-        //     node.lock();
-        // });
-    }
-
-    function setBackground(mapData) {
-
-        var myElement = cy.container()
-        for (const child of myElement.children) {
-          console.log(child.tagName);
-        }
-
-
-        const image = new Image(60, 45); // Using optional size for image
-        image.onload = setDrawNative(image, mapData.scale) // Draw when image has loaded
-
-        //image.src = "/maps/finland.svg";
-        console.log(mapData.image)
-        image.src ='maps/' + mapData.image
-    }
-
-    function setDrawNative(image, scale) {
-        const container = cy.container();
-
-        const canvas = document.createElement("canvas");
-        canvas.setAttribute("id", "backgroundCanvas");
-
-        container.firstChild.appendChild(canvas);
-
-        const defaults = {
-            zIndex: 0,
-            pixelRatio: "auto",
-        };
-
-        const options = Object.assign({}, defaults);
-
-        if (options.pixelRatio === "auto") {
-            options.pixelRatio = window.devicePixelRatio || 1;
-        }
-
-        function resize() {
-             const width = container.offsetWidth;
-             const height = container.offsetHeight;
-             console.log(width)
-             console.log(height)
-             console.log(window.devicePixelRatio)
-            // console.log(container.firstChild.offsetHeight)
-            //const width = 997
-            //const height = 770
-
-            const canvasWidth = width * options.pixelRatio;
-            const canvasHeight = height * options.pixelRatio;
-
-            canvas.width = canvasWidth;
-            canvas.height = canvasHeight;
-
-            canvas.style.width = `${width}px`;
-            canvas.style.height = `${height}px`;
-
-            cy.trigger("cyCanvas.resize");
-        }
-
-        cy.on("resize", () => {
-            resize();
-        });
-
-        canvas.setAttribute(
-            "style",
-            `position:absolute; top:0; left:0; z-index:${options.zIndex};`,
-        );
-        resize();
-        var ctx = canvas.getContext('2d');
-
-        cy.on("render cyCanvas.resize", function(evt) {
-            resetTransform(ctx, options);
-            clear(ctx, options);
-
-
-            setTransform(ctx, options);
-
-             ctx.save();
-            ctx.drawImage(image, image.width*scale*-1, image.height*scale*-1, image.width*scale, image.height*scale);
-        })
-
-    }
-
 
 
 

@@ -7,6 +7,7 @@ export const store = reactive({
   x: 0,
   y: 0,
   process: {},
+  process_id: '',
   new_node_type: '',
   new_node_id: null,
   new_node_relation: null,

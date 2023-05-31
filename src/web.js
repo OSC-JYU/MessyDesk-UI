@@ -147,6 +147,15 @@ web.getMyGraph = async function(rel_types=[], node_types=[],q_return='') {
 // 	return result.data.result
 // }
 
+
+web.createFileProcess = async function(process, file_rid) {
+
+	const url = `/api/queue/${process.id}/files/${file_rid.replace('#', '')}`
+	console.log(url)
+	var result = await axios.post(url, process)
+	return result
+}
+
 web.createNode = async function(data) {
 
 	var result = await axios.post(`/api/graph/vertices`, data)

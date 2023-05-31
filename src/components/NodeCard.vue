@@ -55,35 +55,9 @@
 
             </div>
 
-            <div v-if="state.editing">
-                <button v-if="store.current().data.id == store.user.rid" @click="state.image_edit = !state.image_edit">change image</button>
 
-                <button v-else-if="store.user.access != 'user'" @click="state.image_edit = !state.image_edit">change image</button>
-                <!-- IMAGE UPLOAD -->
-                <div v-if="state.image_edit" >
-                    <div class="mb-3">
-                      <label for="formFile" class="form-label">Square images works best (.jpeg or .png)</label>
-                      <input class="form-control" type="file" id="image" ref="image_file">
-                    </div>
-
-                    <button @click="sendImage()" class="btn btn-primary">send image</button>
-                </div>
-
-                <!-- ACTIVE/INACTIVE SWITCH -->
-                <div class="clearfix">
-                    <div  v-if="store.current().data.id !== store.user.rid" class="form-check form-switch float-end">
-                      <input v-model="schema.result._attributes._active" @click="setActiveNode()" class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked">
-                      <label class="form-check-label" for="flexSwitchCheckChecked">Active</label>
-                    </div>
-                </div>
-
-                    <div class="clearfix">
-                        <div style="width:120px" role="button" @click="setEdit()" class="btn btn-primary float-end" >Ready</div>
-                    </div>
-
-            </div>
             <!-- EDIT BUTTON -->
-            <div v-else-if="editable()">
+            <div v-if="editable()">
                 <div role="button" @click="state.editing = true" class="btn btn-primary float-end" title="Edit item">
                     <i class="bi bi-pen" style="font-size: 1rem; color: white;"></i>
                 </div>
@@ -98,16 +72,16 @@
 
         </div>
 
-        <!-- SERVICES -->
-        <div class="card-body overflow-auto">
-            <h4>Services for {{ schema.result._attributes.type }}</h4>
+        <!-- CRUNCHERS -->
+        <div v-if="!['Process', 'Project','Person'].includes(store.current().data.type)" class="card-body overflow-auto">
+            <h4>Crunchers for {{ schema.result._attributes.type }}</h4>
 
             <div v-if="services.result && services.result.for_format && services.result.for_format.length == 0" class="alert alert-warning">No services found</div>
 
-            <ol class="list-group border-0" v-for="d in services.result.for_format">
-                <template v-if="d.services">
-                    <li class="list-group-item border-0" v-for="(value, key) of d.services" :key="key">
-                        <div @click="initProcessCreator(value)" class="node Service pointer"> {{ value.name }} </div>
+            <ol class="list-group border-0" v-for="service in services.result.for_format">
+                <template v-if="service.crunchers">
+                    <li class="list-group-item border-0" v-for="(value, key) of service.crunchers" :key="key">
+                        <div @click="initProcessCreator(service, key)" class="node Service pointer"> {{ value.name }} </div>
                         <div class="rel-info">{{ value.description }}</div>
                     </li>
                 </template>
@@ -116,7 +90,7 @@
             <div>
         </div>
 
-         <!-- SERVICES ENDS -->
+         <!-- CRUNCHERS ENDS -->
 
   </div>
        
@@ -312,9 +286,9 @@
         }
     }
 
-    function initProcessCreator(data) {
+    function initProcessCreator(data, service_id) {
         store.process = data
-        store.new_node_type = 'Process'
+        store.process_id = service_id
         store.new_node_label = 'Process'
         store.new_node_relation = 'WAS_PROCESSED_BY'
         store.process_creator_open = true
