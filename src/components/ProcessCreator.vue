@@ -9,9 +9,9 @@
 				</div>
 
 				<div class="modal-body">
-					<h4 v-if="store.process"> {{ store.process.crunchers[store.process_id].name}}</h4>
+					<h4 v-if="store.process"> {{ store.process.tasks[store.process_id].name}}</h4>
 					
-					<div>{{ store.process.crunchers[store.process_id].description }} </div>
+					<div>{{ store.process.tasks[store.process_id].description }} </div>
 
 					<div class="card">
 						<div class="card-header">Settings</div>
@@ -77,7 +77,6 @@
         mode: ''
     })
 
-	const emit = defineEmits(['createConnection'])
 
 	async function createProcess(process) {
 		// we must send ELG "params" 

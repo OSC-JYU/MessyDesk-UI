@@ -231,16 +231,12 @@ web.getDockerContainerInspect = async function(id) {
 	return result.data
 }
 
-web.uploadImage = async function(fileObject, rid) {
-	var formData = new FormData()
-	formData.append("image", fileObject)
-	await axios.post(`/api/upload/${rid.replace('#','')}`, formData)
-}
-
-web.uploadFile = async function(fileObject, type) {
+web.uploadFile = async function(fileObject, rid) {
 	var formData = new FormData()
 	formData.append("file", fileObject)
-	await axios.post(`/api/${type}/upload/`, formData)
+	await axios.post(`/api/projects/${rid.replace('#','')}/upload`, formData)
 }
+
+
 
 export default web

@@ -41,22 +41,50 @@
                     </h4>
                 </template>
 
-                <template v-else>
-                    <img v-if="store.current().data.image" class="person-photo" :src="store.current().data.image" />
 
-
-
-                    <h4 :class="['card-title', 'p-2', 'flex-grow-1']">     {{schema.result._attributes.label}}
+                <template v-else-if="store.current().data.type == 'File'">
+                    <a target="_blank" :href="'/api/files/' + store.current().data.id.replace('#','')">
+                        <h4 :class="['card-title', 'p-2', 'flex-grow-1']">     {{schema.result._attributes.label}}
                         <i v-if="state.editing && schema.result._attributes._active" @click="toggleEdit()" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
                         </i>
                         <input v-if="state.editing && edit_name" v-model="edit_name" @keyup.enter="saveLabel()"/>
                     </h4>
+                    </a>
+
+                </template>
+
+                <template v-else>
+                        <h4 :class="['card-title', 'p-2', 'flex-grow-1']">     {{schema.result._attributes.label}}
+                        <i v-if="state.editing && schema.result._attributes._active" @click="toggleEdit()" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
+                        </i>
+                        <input v-if="state.editing && edit_name" v-model="edit_name" @keyup.enter="saveLabel()"/>
+                    </h4>
+
                 </template>
 
             </div>
 
+            
 
-            <!-- EDIT BUTTON -->
+            <!-- ADD FILE BUTTON -->
+
+            <div >
+                <div  @click="state.show_loader = !state.show_loader" title="lisää node" type="button" class="btn btn-primary float-end">
+                    <i title="Add Project" class="float-end bi bi-plus-circle pointer" style="font-size: 1rem; color: white;"></i>Add File
+                </div>
+                <div v-if="state.show_loader" class="input-group mb-3">
+                    
+                    <div class="mb-3">
+                      <label for="formFile" class="form-label">Add file to project</label>
+                      <input class="form-control" type="file" id="image" ref="upload">
+                    </div>
+
+                    <button @click="sendFile()" class="btn btn-primary">send file</button>
+                </div>
+
+            </div>
+ 
+
             <div v-if="editable()">
                 <div role="button" @click="state.editing = true" class="btn btn-primary float-end" title="Edit item">
                     <i class="bi bi-pen" style="font-size: 1rem; color: white;"></i>
@@ -76,11 +104,11 @@
         <div v-if="!['Process', 'Project','Person'].includes(store.current().data.type)" class="card-body overflow-auto">
             <h4>Crunchers for {{ schema.result._attributes.type }}</h4>
 
-            <div v-if="services.result && services.result.for_format && services.result.for_format.length == 0" class="alert alert-warning">No services found</div>
+            <div v-if="services.result && services.result.for_format && services.result.for_format.length == 0" class="alert alert-warning">No crunchers found</div>
 
             <ol class="list-group border-0" v-for="service in services.result.for_format">
-                <template v-if="service.crunchers">
-                    <li class="list-group-item border-0" v-for="(value, key) of service.crunchers" :key="key">
+                <template v-if="service.tasks">
+                    <li class="list-group-item border-0" v-for="(value, key) of service.tasks" :key="key">
                         <div @click="initProcessCreator(service, key)" class="node Service pointer"> {{ value.name }} </div>
                         <div class="rel-info">{{ value.description }}</div>
                     </li>
@@ -105,28 +133,16 @@
 
 
 
-            <!-- DELETE BUTTON -->
-            <div class="float-end" style="margin-top:50px" v-if="state.editing  && store.user.access !== 'user' && store.current().data.id !== store.user.rid">
-                <button @click="store.node_deleter_open = true" class="btn btn-danger" title="delete item"><i class="bi bi-trash"></i></button>
-            </div>
+
 
         </div>
         <div class="card-footer">
-
-
-            <div v-if="store.user">
-                <hr>
-                <div v-if="state.editing && store.current().data.type == 'Person' && store.user.access == 'admin'">
-                    <a href="#" @click.prevent="state.admin_edit = !state.admin_edit">{{store.user.id}} [{{store.user.group}} : {{store.user.access}}]</a>
-                </div>
-                <div v-else>
-                    {{store.user.id}}  [{{store.user.group}} : {{store.user.access}}]
-                </div>
+   
+             <!-- DELETE BUTTON -->
+            <div class="float-end"  v-if="store.current().data.type != 'Person'">
+                <button @click="store.node_deleter_open = true" class="btn btn-danger" title="delete item"><i class="bi bi-trash"></i></button>
             </div>
         </div>
-
-
-
     </div>
 
 </template>
@@ -150,6 +166,7 @@
         selected: null,
         admin_edit: false,
         image_edit: false,
+        show_loader: false,
         _group: null,
         _access: null
     })
@@ -158,7 +175,7 @@
     var services = reactive({result:[]})
     var me = reactive({data:{}})
     var edit_name = ref('')
-    const image_file = ref(null);
+    const upload = ref(null);
     var add_new = reactive({type:'', label:''})
     var created = reactive([])
     var connect_editor = reactive({
@@ -262,11 +279,10 @@
 
 
 
-    async function sendImage() {
-        if(image_file.value.files.length) {
+    async function sendFile() {
+        if(upload.value.files.length) {
             try {
-                await web.uploadImage(image_file.value.files[0], store.current().data.id)
-                await web.setNodeAttribute(store.current().data.id, {key:'_image', value: 'images/' + store.current().data.id.replace('#','') + '.png'})
+                await web.uploadFile(upload.value.files[0], route.query.node)
                 window.location.reload()
             } catch(e) {
                 if(e.response && e.response.data.error)

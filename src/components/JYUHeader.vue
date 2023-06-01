@@ -22,7 +22,7 @@ import { onMounted} from "vue";
 <nav class="navbar navbar-expand-lg ">
   <div class="container-fluid">
       <img class="mr-3" src="@/assets/images/logo.svg" height="40px">
-      <a class="navbar-brand" href="/">MessyDesk</a><div class="badge bg-danger" v-if="store.user && store.user.mode == 'development'" title="KuKaKo is running on developer mode!">LOCAL</div>
+      <a class="navbar-brand" href="/">MessyDesk</a><span v-if="store.current()">{{ store.current().data.name }}</span><div class="badge bg-danger" v-if="store.user && store.user.mode == 'development'" title="KuKaKo is running on developer mode!">LOCAL</div>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -45,7 +45,7 @@ import { onMounted} from "vue";
             </ul>
           </li> -->
 
-          <li v-if="store.menus.length == 0">
+          <!-- <li v-if="store.menus.length == 0">
               No menus defined
           </li>
           <li v-for="menu in store.menus" :key:="menu.label" class="nav-item dropdown">
@@ -63,7 +63,7 @@ import { onMounted} from "vue";
                     </template>
                 </li>
               </ul>
-          </li>
+          </li> -->
 
           <!-- TAGS -->
           <li v-if="store.tags.length > 0" class="nav-item dropdown">
@@ -94,10 +94,12 @@ import { onMounted} from "vue";
 
       </ul>
 
+      <div @click="initNodeCreator(relation)" title="lisää node" type="button" class="btn btn-primary float-end">
+              Add File
+        </div>
 
 
-
-        <Search />
+        <!-- <Search /> -->
 
 
         <div class="btn-group">

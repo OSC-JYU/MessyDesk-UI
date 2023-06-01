@@ -8,7 +8,7 @@
 	        <h5 class="modal-title">Delete Node</h5>
 	      </div>
 	      <div class="modal-body">
-	        <p class="alert alert-info">Deleting node deletes also all relationships.</p>
+	        <p class="alert alert-info">Deleting a node deletes also all children nodes!</p>
 	      </div>
 	      <div class="modal-footer">
 	        <button type="button" @click="store.node_deleter_open = false" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

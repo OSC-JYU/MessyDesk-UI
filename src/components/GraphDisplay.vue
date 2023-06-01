@@ -132,9 +132,12 @@
          if(route.query.node) {
 
             console.log('loading graph...')
-            //const query = `MATCH (project:Project) WHERE id(project) = "#${route.query.node}" OPTIONAL MATCH (project)<-[r]-(t) RETURN project,r,t`
-            const query = `MATCH (person:Person)-[rp:IS_OWNER]->(project:Project) WHERE id(project) = "#${route.query.node}" WITH project, person, rp
-            OPTIONAL MATCH (project)-[r*0..4]-(t) WHERE t:File OR t:Process RETURN project,r,t, rp, person`
+  
+
+            const query = `MATCH (project:Project)-[r]->(child)
+            WHERE id(project) = "#${route.query.node}" 
+            OPTIONAL MATCH (child)-[r2*]->(child2)
+			RETURN  child, r2, child2`
 
             graph.result = await web.getGraph(query, route.query.node, CLUSTER)
             //graph.result = await web.getGraph(`MATCH (p:Project)-[r*]-(t) WHERE id(p) = "#${route.query.node}"  RETURN p,r,t`, route.query.node, CLUSTER)
@@ -287,8 +290,12 @@ console.log(props.mode)
 
 
 			cy.on('oneclick', async function(evt) {
+                cy.nodes().forEach(function(node){
+                    node.removeClass("selected")
+                })
 
                 if(evt.target.data().id) {
+                        evt.target.addClass("selected")
                         var nodeID = evt.target.data().id.replace('#','')
                         console.log(nodeID)
                         var node = getNodeFromGraph(evt.target.data().id)
@@ -302,22 +309,25 @@ console.log(props.mode)
             cy.on('dragfreeon', 'node', async function(evt) {
                 //console.log(evt.target.data().id )
                 if(evt.target.data().id) {
+                        evt.target.data().me = 'k'
                         var nodeID = evt.target.data().id.replace('#','')
                         console.log(nodeID)
                         var node = getNodeFromGraph(evt.target.data().id)
                         if(node) store.current_node = node
                         else store.current_node = {data: {id: '#' + nodeID}}
+
+                        var pos = evt.target
+                        current_graph_node.position.x = pos.position().x
+                        current_graph_node.position.y = pos.position().y
+                        store.x = pos.position().x
+                        store.y = pos.position().y
+                        // simple align
+                        pos.position({x:Math.round(pos.position().x/10)*10, y:Math.round(pos.position().y/10)*10})
+                        saveLayout()
                   } else {
                       store.current_node = null
                   }
-                var pos = cy.nodes("[id = '" + evt.target.data().id + "']");
-                current_graph_node.position.x = pos.position().x
-                current_graph_node.position.y = pos.position().y
-                store.x = pos.position().x
-                store.y = pos.position().y
-                // simple align
-                pos.position({x:Math.round(pos.position().x/10)*10, y:Math.round(pos.position().y/10)*10})
-                saveLayout()
+       
             });
 		}
 
@@ -547,22 +557,22 @@ console.log(props.mode)
 		graph.result.data = {
 			nodes: [
 				{ data: { id: 'project1', name:"Digital humanities in school", type:"Project", type_label:"Project", active: true } },
-				{ data: { id: 'messy', name:"Messy", type:"Person", type_label:"Person", active: true } },
-				{ data: { id: 'sad_tale', name:"sad_tale.pdf", type: "File", type_label:"File", active: true} },
+	
+				{ data: { id: 'sad_tale', name:"sad_tale.pdf", _type: "pdf", type_label:"File", active: true} },
 				{ data: { id: 'extract_text', name: "Extract text", type:"Process", type_label:"Process", active: true } },
-				{ data: { id: 'sad_tale_txt', name: "sad_tale.txt", type:"File", type_label:"File", active: true  } },
-                { data: { id: 'sad_tale_image', name: "saddist.jpg", type:"Image", type_label:"File", active: true  } },
-                { data: { id: 'sad_tale_illustration', name: "sad.jpg", type:"Image", type_label:"File", active: true  } },
+				{ data: { id: 'sad_tale_txt', name: "sad_tale.txt", _type:"text", type_label:"File", active: true  } },
+                { data: { id: 'sad_tale_image', name: "saddist.jpg", _type:"image", type_label:"File", active: true  } },
+                { data: { id: 'sad_tale_illustration', name: "sad.jpg", _type:"image", type_label:"File", active: true  } },
                 { data: { id: 'extract_images', name: "Extract images", type:"Process", type_label:"Process", active: true } },
 
 			],
 			edges: [
-				{ data: { source: 'messy', target: 'project1', label:"IS OWNER OF", active: true } },
 				{ data: { source: 'sad_tale', target: 'project1', label:"IS PART OF", active: true } },
 				{ data: { source: 'sad_tale', target: 'extract_text', label:"WAS PROCESSED BY", active: true } },
 				{ data: { source: 'sad_tale_txt', target: 'extract_text', label:"WAS PRODUCED BY", active: true } },
                 { data: { source: 'sad_tale', target: 'extract_images', label:"WAS PROCESSED BY", active: true } },
-                { data: { source: 'sad_tale_image', target: 'extract_images', label:"WAS_PODUCED_BY", active: true } },
+                { data: { source: 'sad_tale_image', target: 'extract_images', label:"WAS_PRODUCED_BY", active: true } },
+                { data: { source: 'sad_tale_illustration', target: 'extract_images', label:"WAS_PRODUCED_BY", active: true } },
 
 			]
 		}
