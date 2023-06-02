@@ -3,11 +3,12 @@ import web from "../web.js";
 
 export const store = reactive({
   update: 0,
+  update_data: null,
   user: null,
   x: 0,
   y: 0,
   process: {},
-  process_id: '',
+  task_id: '',
   new_node_type: '',
   new_node_id: null,
   new_node_relation: null,
@@ -20,6 +21,7 @@ export const store = reactive({
   maps: [],
   graph_node_update: '',
   process_creator_open: false,
+  uploader_open: false,
   node_deleter_open: false,
   importer_open: false,
   exporter_open: false,
@@ -28,7 +30,8 @@ export const store = reactive({
   gtags() {
       return this.tags
   },
-  reload() {
+  reload(update) {
+      this.update_data = update
       this.update++
   },
   current() {

@@ -5,23 +5,13 @@
     import GraphDisplay from './GraphDisplay.vue'
     import ProcessCreator from './ProcessCreator.vue'
     import NodeDeleter from './NodeDeleter.vue'
-    import web from "../web.js"
-    import {store} from "./Store.js"
+    import Uploader from './Uploader.vue'
 
     document.title = "MessyDesk"
 
     const route  = useRoute();
 
 
-    async function createConnectionFromNew(new_node, relation) {
-
-        if(relation.reverse)
-            await web.connect(new_node, relation.type, route.query.node)
-        else
-            await web.connect(route.query.node, relation.type, new_node)
-
-        store.reload()
-    }
 </script>
 
 
@@ -35,8 +25,9 @@
                         <JYUHeader/>
                     </div>
                     <div class="row m-0 p-0  flex-grow-1">
-                        <GraphDisplay mode="graph"/>
-                        <ProcessCreator mode="graph" @createConnection="createConnectionFromNew"/>
+                        <GraphDisplay mode="graph" />
+                        <ProcessCreator mode="graph" />
+                        <Uploader mode="graph" />
                         <NodeDeleter mode="graph" />
                     </div>
                 </div>

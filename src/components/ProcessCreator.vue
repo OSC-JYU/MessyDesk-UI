@@ -9,25 +9,33 @@
 				</div>
 
 				<div class="modal-body">
-					<h4 v-if="store.process"> {{ store.process.tasks[store.process_id].name}}</h4>
+					<h4 v-if="store.process"> {{ store.process.tasks[store.task_id].name}}</h4>
 					
-					<div>{{ store.process.tasks[store.process_id].description }} </div>
+					<div style="margin-bottom:40px">{{ store.process.tasks[store.task_id].description }} </div>
 
-					<div class="card">
-						<div class="card-header">Settings</div>
-						<div class="card-body">
-							<div v-if="store.process.params_help" >
-								<div v-for="(help, key) in store.process.params_help" :key="key" class="input-group mb-3">
-									<div class="input-group-prepend">
-										<span class="input-group-text" id="basic-addon1">{{ help.name }}</span>
-									</div>
-									<input v-model="state.out_params[key]" type="text" class="form-control" placeholder=""  aria-label="Username" aria-describedby="basic-addon1">
-									<div>{{ help.help }}</div>
+
+					<div>
+						<div v-if="store.process.tasks[store.task_id].params_help">
+							<div v-for="(help, key) in store.process.tasks[store.task_id].params_help" :key="key" class="input-group mb-3">
+								<div class="input-group-prepend">
+									<span class="input-group-text" id="basic-addon1">{{ help.name }}</span>
 								</div>
+								<input v-model="state.out_params[key]" type="text" class="form-control" placeholder=""  aria-label="Username" aria-describedby="basic-addon1">
+								<div>{{ help.help }}</div>
+							</div>
 						</div>
-							<div v-else>This cruncher has no settings, just click "Crunch!".</div>
-						</div>
+						<div v-else-if="store.process.params_help" >
+							<div v-for="(help, key) in store.process.params_help" :key="key" class="input-group mb-3">
+								<div class="input-group-prepend">
+									<span class="input-group-text" id="basic-addon1">{{ help.name }}</span>
+								</div>
+								<input v-model="state.out_params[key]" type="text" class="form-control" placeholder=""  aria-label="Username" aria-describedby="basic-addon1">
+								<div>{{ help.help }}</div>
+							</div>
 					</div>
+						<div v-else>This cruncher has no settings, just click "Crunch!".</div>
+					</div>
+				
 					
 
 				
@@ -37,7 +45,7 @@
 				<div class="modal-footer">
 					{{ store.current().data.name }}
 					<button @click="close()" type="button" class="btn btn-secondary" >Cancel</button>
-					<button v-if="store.process_id " @click=createProcess() type="button" class="btn btn-primary">Crunch!</button>
+					<button v-if="store.task_id " @click=createProcess() type="button" class="btn btn-primary">Crunch!</button>
 					<img src="icons/cookie-bite-solid.svg"/>
 					<div v-if="state.error" class="alert alert-danger">{{state.error}}</div>
 				</div>
@@ -77,20 +85,30 @@
         mode: ''
     })
 
+    watch(
+        () => store.process,
+        async (newValue, oldValue) => {
+            initForm()
+
+    })
 
 	async function createProcess(process) {
 		// we must send ELG "params" 
 		// target
 		state.error = ''
 console.log(store.current().data.id)
-console.log(store.process_id)
+console.log(store.task_id)
 console.log(store.process)
 console.log(state.out_params)
 
-		var process = {id: store.process.id}
+		var process = {id: store.process.id, task: store.task_id}
 		process.params = state.out_params
+		console.log(process)
 		var res = await web.createFileProcess(process, store.current().data.id)
 		//var node = res.data.result[0]
+		//console.log(res)
+		store.reload()
+		close()
 
 	}
 
@@ -100,11 +118,19 @@ console.log(state.out_params)
 		store.process_creator_open = false
 	}
 
-	onActivated(async()=> {
-		console.log('onmounted')
-		for(var param in store.process.params_help) {
-			state.out_params[param] = store.process.params_help[param].default
+	function initForm() {
+		state.out_params = {}
+		// set default values
+		if(store.process.tasks[store.task_id].params_help) {
+			for(var param in store.process.tasks[store.task_id].params_help) {
+				state.out_params[param] = store.process.tasks[store.task_id].params_help[param].default
+			}	
+		} else if(store.process.params_help) {
+			for(var param in store.process.params_help) {
+				state.out_params[param] = store.process.params_help[param].default
+			}	
 		}
-	})
+	}
+
 
 </script>

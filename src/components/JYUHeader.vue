@@ -1,11 +1,13 @@
 <script setup>
-import { onMounted} from "vue";
+    import { onMounted } from "vue";
+    import { useRoute } from 'vue-router'
     import Search from './Search.vue'
     import Importer from './Importer.vue'
     import Exporter from './Exporter.vue'
     import {store} from "./Store.js";
     import web from "../web.js";
 
+    const route  = useRoute();
     const props = defineProps({
         mode: ''
     })
@@ -94,15 +96,37 @@ import { onMounted} from "vue";
 
       </ul>
 
-      <div @click="initNodeCreator(relation)" title="lisää node" type="button" class="btn btn-primary float-end">
-              Add File
+        <!-- <Search /> -->
+
+        <div class="btn-group">
+          <button type="button" class="btn navbar dropdown-toggle" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" style="margin-left:50px; padding:15px">
+            <i class="fs-5 bi-plus-circle"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-start dropdown-menu-lg-start">
+              <li v-if="route.query.node">
+                  <div @click="store.uploader_open = true" class="dropdown-item">
+                      <i class="fs-5 bi-plus-circle"></i><span class="ms-1 d-none d-sm-inline">Add File</span> </div>
+              </li>
+
+              <li class="nav-item">
+                  <router-link :to="'/stats'" class="dropdown-item">
+                      <i class="fs-5 bi-card-list"></i><span class="ms-1 d-none d-sm-inline">Stats</span>
+                  </router-link>
+              </li>
+
+
+              <li v-if="store.user && store.user.access == 'admin'" class="nav-item">
+                  <router-link :to="'queries'" class="dropdown-item">
+                      <i class="fs-5 bi-question"></i><span class="ms-1 d-none d-sm-inline">Navigation</span>
+                  </router-link>
+              </li>
+
+
+          </ul>
         </div>
 
 
-        <!-- <Search /> -->
-
-
-        <div class="btn-group">
+        <!-- <div class="btn-group">
           <button type="button" class="btn navbar dropdown-toggle" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" style="margin-left:50px; padding:15px">
             <i class="fs-5 bi-gear"></i>
           </button>
@@ -143,7 +167,7 @@ import { onMounted} from "vue";
 
 
           </ul>
-        </div>
+        </div> -->
 
     </div>
   </div>

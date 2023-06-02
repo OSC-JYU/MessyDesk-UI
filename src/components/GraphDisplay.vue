@@ -115,10 +115,24 @@
     watch(
     	() => store.update,
       	async (newValue, oldValue) => {
-        	loadGraph(route, oldValue)
+            if(store.update_data) updateGraphNode(store.update_data)
+        	else loadGraph(route, oldValue)
     })
 
-
+    function updateGraphNode(update) {
+        console.log(update)
+        cy.nodes().forEach(function( ele ){
+            if(ele.id() == update.id) {
+                ele.data('name', update.name)
+            }
+});
+        // var node = cy.nodes("[id = '" + update.id + "']");
+        // console.log(node)
+        // console.log(typeof node)
+        // //var node = getNodeFromGraph(update.id)
+        // node.data('name', 'jota')
+        // node.removeClass("selected")
+    }
 
 	async function loadGraph(route, oldValue) {
 		var layout = ''
@@ -131,19 +145,21 @@
 
          if(route.query.node) {
 
-            console.log('loading graph...')
-  
-
             const query = `MATCH (project:Project)-[r]->(child)
             WHERE id(project) = "#${route.query.node}" 
             OPTIONAL MATCH (child)-[r2*]->(child2)
 			RETURN  child, r2, child2`
 
             graph.result = await web.getGraph(query, route.query.node, CLUSTER)
-            //graph.result = await web.getGraph(`MATCH (p:Project)-[r*]-(t) WHERE id(p) = "#${route.query.node}"  RETURN p,r,t`, route.query.node, CLUSTER)
-            console.log(graph.result)
-            //store.current_node = getNodeFromGraph(route.query.node)
+
         
+        } else if(route.params.type == 'Project') {
+            const query = `MATCH (project:Project)-[r]->(child)
+            WHERE id(project) = "#${route.params.id}" 
+            OPTIONAL MATCH (child)-[r2*]->(child2)
+			RETURN  child, r2, child2`
+
+            graph.result = await web.getGraph(query, route.params.id, CLUSTER)
         }
 		// } else if(route.query.tag) {
 
@@ -222,21 +238,6 @@ console.log(props.mode)
 
 		}
 
-        if(store.current_node && store.current_node.data && route.query.map) {
-            // remove edges from map view since they make map messy
-            graph.result.data.edges = []
-            // get node positions from relationship attributes
-            await setMapPositions()
-            layout = getLayoutSettings('preset')
-        }
-
-
-        // make sure that map canvas is removeEdgeByRID
-        // var backgroundCanvas = document.querySelector('#backgroundCanvas')
-        // console.log(backgroundCanvas)
-        // if(backgroundCanvas && backgroundCanvas.parentNode) {
-        //     backgroundCanvas.parentNode.removeChild(backgroundCanvas)
-        // }
 
         const elem = document.getElementById("cy");
         elem.replaceChildren();
@@ -244,7 +245,7 @@ console.log(props.mode)
         //cytoscape.warnings(false)
     	cy = cytoscape({
     	  container: document.getElementById("cy"),
-    	  boxSelectionEnabled: false,
+    	  boxSelectionEnabled: true,
     	  autounselectify: true,
     	  wheelSensitivity: 0.2,
     	  style: store.graph_style,
@@ -289,12 +290,22 @@ console.log(props.mode)
             })
 
 
+            cy.on('box', 'node', async function(evt) {
+
+console.log('box')
+                if(evt.target.data('type') == 'File') {
+                    evt.target.addClass("selected")
+                }
+            })
+
 			cy.on('oneclick', async function(evt) {
                 cy.nodes().forEach(function(node){
                     node.removeClass("selected")
                 })
 
                 if(evt.target.data().id) {
+                    console.log('click')
+                    console.log(evt.target.data().id)
                         evt.target.addClass("selected")
                         var nodeID = evt.target.data().id.replace('#','')
                         console.log(nodeID)
@@ -309,7 +320,7 @@ console.log(props.mode)
             cy.on('dragfreeon', 'node', async function(evt) {
                 //console.log(evt.target.data().id )
                 if(evt.target.data().id) {
-                        evt.target.data().me = 'k'
+                        
                         var nodeID = evt.target.data().id.replace('#','')
                         console.log(nodeID)
                         var node = getNodeFromGraph(evt.target.data().id)
@@ -322,7 +333,7 @@ console.log(props.mode)
                         store.x = pos.position().x
                         store.y = pos.position().y
                         // simple align
-                        pos.position({x:Math.round(pos.position().x/10)*10, y:Math.round(pos.position().y/10)*10})
+                        pos.position({x:Math.round(pos.position().x/100)*100, y:Math.round(pos.position().y/100)*100})
                         saveLayout()
                   } else {
                       store.current_node = null

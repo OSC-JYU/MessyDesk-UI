@@ -23,8 +23,9 @@
             <template v-if="store.current().data.type == 'Person'">
                 {{schema.result._attributes.id}}
             </template>
-            <template v-else>
-                {{store.current().data.type_label}} {{ store.current().data.id }}
+            <template v-else-if="store.current().data.type == 'File'">
+                <a target="_blank" :href="'/api/files/' + store.current().data.id.replace('#','')">{{store.current().data.type_label}} {{ store.current().data.id }}</a>
+                
             </template>
 
             <div class="d-flex bd-highlight">
@@ -43,21 +44,26 @@
 
 
                 <template v-else-if="store.current().data.type == 'File'">
-                    <a target="_blank" :href="'/api/files/' + store.current().data.id.replace('#','')">
-                        <h4 :class="['card-title', 'p-2', 'flex-grow-1']">     {{schema.result._attributes.label}}
-                        <i v-if="state.editing && schema.result._attributes._active" @click="toggleEdit()" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
+
+                    <h4 :class="['card-title', 'p-2', 'flex-grow-1']"> {{schema.result._attributes.label}}
+                 
+                        <i @click="toggleEdit()" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
                         </i>
-                        <input v-if="state.editing && edit_name" v-model="edit_name" @keyup.enter="saveLabel()"/>
+                        <input v-if="edit_name" v-model="edit_name" @keyup.enter="saveLabel()"/>
+
                     </h4>
-                    </a>
+                   
+
+
+
 
                 </template>
 
                 <template v-else>
                         <h4 :class="['card-title', 'p-2', 'flex-grow-1']">     {{schema.result._attributes.label}}
-                        <i v-if="state.editing && schema.result._attributes._active" @click="toggleEdit()" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
+                        <i  @click="toggleEdit()" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
                         </i>
-                        <input v-if="state.editing && edit_name" v-model="edit_name" @keyup.enter="saveLabel()"/>
+                        <input v-if="edit_name" v-model="edit_name" @keyup.enter="saveLabel()"/>
                     </h4>
 
                 </template>
@@ -65,24 +71,6 @@
             </div>
 
             
-
-            <!-- ADD FILE BUTTON -->
-
-            <div >
-                <div  @click="state.show_loader = !state.show_loader" title="lisää node" type="button" class="btn btn-primary float-end">
-                    <i title="Add Project" class="float-end bi bi-plus-circle pointer" style="font-size: 1rem; color: white;"></i>Add File
-                </div>
-                <div v-if="state.show_loader" class="input-group mb-3">
-                    
-                    <div class="mb-3">
-                      <label for="formFile" class="form-label">Add file to project</label>
-                      <input class="form-control" type="file" id="image" ref="upload">
-                    </div>
-
-                    <button @click="sendFile()" class="btn btn-primary">send file</button>
-                </div>
-
-            </div>
  
 
             <div v-if="editable()">
@@ -235,17 +223,8 @@
     watch(
       () => store.update,
       async (newValue, oldValue) => {
-            await loadData(route.query.node)
-            // update connection editor if open
-            if(connect_editor.relation.type) {
-                var result = await web.getListOfNonConnected(connect_editor.relation.target, connect_editor.relation.type, route.query.node)
-                connect_editor.data = result.data
-                for(var s of schema.result) {
-                    if(s.type == connect_editor.relation.type) {
-                        connect_editor.relation = s
-                    }
-                }
-            }
+            await loadData(route.query.node) 
+
     })
 
     // users can edit only their own links + data. Admin can edit all
@@ -279,20 +258,6 @@
 
 
 
-    async function sendFile() {
-        if(upload.value.files.length) {
-            try {
-                await web.uploadFile(upload.value.files[0], route.query.node)
-                window.location.reload()
-            } catch(e) {
-                if(e.response && e.response.data.error)
-                    alert(e.response.data.error)
-                else
-                    alert(e)
-            }
-        }
-    }
-
     function prepareUserSettings() {
         state._group = null
         state._access = null
@@ -302,28 +267,21 @@
         }
     }
 
-    function initProcessCreator(data, service_id) {
+    function initProcessCreator(data, task_id) {
         store.process = data
-        store.process_id = service_id
+        store.task_id = task_id
         store.new_node_label = 'Process'
         store.new_node_relation = 'WAS_PROCESSED_BY'
         store.process_creator_open = true
     }
 
 
-
-
     async function saveLabel() {
         var result = await web.setNodeAttribute(store.current().data.id, {key:'label', value: edit_name.value})
+        store.reload({id: store.current().data.id, name: edit_name.value})
         edit_name.value = ''
-        store.reload()
     }
 
-	async function saveUserSetting(key) {
-		await web.setNodeAttribute(store.current().data.id, {key: key, value: state[key]})
-		state.node = await web.getNodeAttributes(route.query.node)
-		store.reload()
-	}
 
     function toggleEdit() {
         if(edit_name.value == '')
@@ -332,14 +290,6 @@
             edit_name.value = ''
         }
     }
-
-
-    async function setActiveNode() {
-        state.active = !state.active
-        var result = await web.setNodeAttribute(store.current().data.id, {key:'_active', value: state.active})
-        store.reload()
-    }
-
 
 
 </script>
