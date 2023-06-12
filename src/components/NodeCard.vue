@@ -90,20 +90,22 @@
 
         <!-- CRUNCHERS -->
         <div v-if="!['Process', 'Project','Person'].includes(store.current().data.type)" class="card-body overflow-auto">
-            <h4>Crunchers for {{ schema.result._attributes.type }}</h4>
-
-            <div v-if="services.result && services.result.for_format && services.result.for_format.length == 0" class="alert alert-warning">No crunchers found</div>
-
-            <ol class="list-group border-0" v-for="service in services.result.for_format">
-                <template v-if="service.tasks">
-                    <li class="list-group-item border-0" v-for="(value, key) of service.tasks" :key="key">
-                        <div @click="initProcessCreator(service, key)" class="node Service pointer"> {{ value.name }} </div>
-                        <div class="rel-info">{{ value.description }}</div>
-                    </li>
-                </template>
-            </ol>
+            <h5>Things that you can do with your {{ schema.result._attributes.type }}</h5>
 
             <div>
+                <div v-if="services.result && services.result.for_format && services.result.for_format.length == 0" class="alert alert-warning">No crunchers found</div>
+
+                <ol class="list-group border-0" v-for="service in services.result.for_format">
+                    <template v-if="service.tasks">
+                        <li class="list-group-item border-0" v-for="(value, key) of service.tasks" :key="key">
+                            <div @click="initProcessCreator(service, key)" class="node Service pointer"> {{ value.name }} </div>
+                            <div class="rel-info">{{ value.description }}</div><div class="badge rel-info bg-secondary">{{service.name}}</div>
+                        </li>
+                    </template>
+                </ol>
+
+                <div>
+            </div>
         </div>
 
          <!-- CRUNCHERS ENDS -->
