@@ -88,6 +88,12 @@
 
         </div>
 
+        <!-- THUMBNAIL -->
+        <div>
+            <img :src="state.thumbnail" />
+        </div>
+        {{ schema.result }}
+
         <!-- CRUNCHERS -->
         <div v-if="!['Process', 'Project','Person'].includes(store.current().data.type)" class="card-body overflow-auto">
             <h4>Crunchers for {{ schema.result._attributes.type }}</h4>
@@ -103,10 +109,11 @@
                 </template>
             </ol>
 
-            <div>
-        </div>
+        <div>
 
-         <!-- CRUNCHERS ENDS -->
+            <!-- CRUNCHERS ENDS -->
+    </div>
+
 
   </div>
        
@@ -149,6 +156,7 @@
     const router = useRouter();
 
     var state = reactive({
+        thumbnail: 'api/thumbnails/data/projects/228_5/files/108_18',
         editing: false,
         active: true,
         selected: null,

@@ -7,13 +7,15 @@
 
 				
 
-                <div @click="initNodeCreator(relation)" title="lisää node" type="button" class="btn btn-primary float-end">
-                    <i title="Add Project" class="float-end bi bi-plus-circle pointer" style="font-size: 1rem; color: white;"></i>
-                </div>
                 <h4>Projects</h4>
 
 			</div>
+            
 			<div class="card-body overflow-auto">
+
+                <div @click="initNodeCreator(relation)" title="lisää node" type="button" class="btn btn-primary float-end">
+                    <i title="Add Project" class="float-end bi bi-plus-circle pointer" style="font-size: 1rem; color: white;"></i>
+                </div>
                 <ol class="">
                     <li v-for="item in state.items">
                         <router-link   :to="`/list/Project/${item['@rid'].replace('#','')}`" >{{item.label}}</router-link> 
