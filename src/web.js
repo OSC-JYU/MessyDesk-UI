@@ -16,16 +16,30 @@ web.rawQuery = async function(query) {
 	return result.data
 }
 
+web.getGraph = async function(query, current_node, cluster) {
+
+	var result = await axios.post('/api/graph/query', {query:query, current: current_node, cluster: cluster})
+	return result
+}
+
+web.createProject = async function(name, description) {
+	var data = {
+		"label": name,
+		"description": description
+	}
+	var response = await axios.post('/api/projects', data)
+}
+
+
+
+
+
+
+
 web.getListOfNonConnected = async function(type, relation, target) {
 	var path = `/api/documents?type=${type}`
 	if(relation && target) path = `/api/documents?type=${type}&relation=${relation}&target=${target.replace('#','')}`
 	var result = await axios.get(path)
-	return result
-}
-
-web.getGraph = async function(query, current_node, cluster) {
-
-	var result = await axios.post('/api/graph/query', {query:query, current: current_node, cluster: cluster})
 	return result
 }
 

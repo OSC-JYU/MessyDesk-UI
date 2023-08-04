@@ -51,7 +51,7 @@
 				</div>
 
 				<div class="card">
-						<div class="card-header">About Service</div>
+						<div class="card-header">About {{ store.process.name }}</div>
 						<div class="card-body">
 							{{ store.process.description }}
 						</div>
