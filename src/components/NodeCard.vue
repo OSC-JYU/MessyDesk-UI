@@ -92,7 +92,7 @@
         <div>
             <img :src="state.thumbnail" />
         </div>
-        {{ schema.result }}
+        {{ schema.result._attributes.path }}
 
         <!-- CRUNCHERS -->
         <div v-if="!['Process', 'Project','Person'].includes(store.current().data.type)" class="card-body overflow-auto">
@@ -156,7 +156,7 @@
     const router = useRouter();
 
     var state = reactive({
-        thumbnail: 'api/thumbnails/data/projects/228_5/files/108_18',
+        thumbnail: '',
         editing: false,
         active: true,
         selected: null,
@@ -166,6 +166,7 @@
         _group: null,
         _access: null
     })
+    
     var graph = reactive({result:[]})
     var schema = reactive({result:[]})
     var services = reactive({result:[]})
@@ -260,11 +261,14 @@
     async function loadData(rid) {
         console.log('loading node data...')
         schema.result = await web.getSchemaAndData(rid)
+        state.thumbnail = thumbnail()
         services.result = await web.getServicesForFile(rid)
         prepareUserSettings()
     }
 
-
+    function thumbnail() {
+        return 'api/thumbnails/' + removeLastPathPart(schema.result._attributes.path.replace('data/', ''))
+    }
 
     function prepareUserSettings() {
         state._group = null
@@ -299,5 +303,13 @@
         }
     }
 
+
+    function removeLastPathPart(str) {
+        const lastIndex = str.lastIndexOf('/');
+        if (lastIndex !== -1) {
+            return str.substring(0, lastIndex);
+        }
+        return str;
+        }
 
 </script>

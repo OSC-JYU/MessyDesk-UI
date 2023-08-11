@@ -161,47 +161,7 @@
 
             graph.result = await web.getGraph(query, route.params.id, CLUSTER)
         }
-		// } else if(route.query.tag) {
 
-        //     var tags = JSON.parse(JSON.stringify(store.tags))
-		// 	var t = tags.find(x => x['@rid'] == '#'+route.query.tag)
-
-        //     if(t) {
-    	// 		var tagged_relations = await web.rawQuery(`match (s)-[r]->(t) where "${t.id}" in r.tags return type(r) as rel`)
-    	// 		var rels = []
-    	// 		for(var rel of tagged_relations.result) {
-    	// 			rels.push(rel.rel)
-    	// 		}if(rels.length) {
-        //             graph.result = await web.getGraph(`MATCH  (s)-[r:${rels.join('|:')}]->(t) WHERE not s:Schema return s,r,t, t.label as l`)
-        //             if(t.layout) layout = t.layout
-        //         } else {
-        //             graph.result.data = {nodes:[], edges:[]}
-        //         }
-
-        //     }
-
-		// } else if (route.query.type) {
-		// 	var t = store.schemas.find(x => x.rid == '#' + route.query.type)
-		// 	graph.result = await web.getGraph(`MATCH (p:${t.label}) OPTIONAL MATCH (p)-[r]-(t) RETURN p,r,t`)
-
-		// } else if (route.query.query) {
-        //     var Q = await web.getNodeAttributes(route.query.query)
-		// 	console.log(Q[0].layout)
-        //     if(Q[0].layout) layout = Q[0].layout
-		// 	graph.result = await web.getGraph(Q[0].query)
-        //     //store.current_node = {data: {name:"ss", id:"#429:0"}}
-
-		// } else if (route.query.cluster) {
-		// 	var splitted = route.query.cluster.split('__')
-		// 	var source = '#' + splitted[0]
-		// 	var rel = splitted[1]
-		// 	graph.result = await web.getGraph(`MATCH (p) WHERE id(p) = "${source}" OPTIONAL MATCH (p)-[r:${rel}]-(t) RETURN p,r,t`)
-
-		// } else if (route.query.map) {
-        //     console.log('map')
-        //     graph.result = await web.getGraph(`MATCH (node)-[r]-(map:QueryMap) WHERE id(map) = "#${route.query.map}" RETURN node`)
-        //     store.current_node = {data:{id:route.query.map, type: 'QueryMap', type_label: 'Kartta'}}
-        // }
 
 		drawGraph(layout, route, oldValue)
 	}
@@ -211,7 +171,7 @@
 
         var layout = getLayoutSettings(layout_name)
         var positions = await getNodePositions()
-console.log(props.mode)
+
         // schema has common layout for all users
         if(positions && (['schema', 'queries'].includes(props.mode))) {
             console.log(props.mode)
