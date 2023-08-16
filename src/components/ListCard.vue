@@ -26,7 +26,7 @@
 
                 <ol class="">
                     <li v-for="item in state.items">
-                        <router-link   :to="`/list/graph?node=${item['@rid'].replace('#','')}`" >{{item.label}}</router-link> 
+                        <router-link   :to="`/graph?node=${item['@rid'].replace('#','')}`" >{{item.label}}</router-link> 
                     </li>
                 </ol>
 			</div>
