@@ -103,6 +103,7 @@ console.log(state.out_params)
 
 		var process = {id: store.process.id, task: store.task_id}
 		process.params = state.out_params
+		process.params.task = store.task_id
 		console.log(process)
 		var res = await web.createFileProcess(process, store.current().data.id)
 		//var node = res.data.result[0]

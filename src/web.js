@@ -60,6 +60,12 @@ web.getServicesForFile = async function(file_rid) {
 	return result.data
 }
 
+
+web.getProcessParams = async function(process_path) {
+	var result = await axios.get(process_path)
+	return result
+}
+
 web.getList = async function(schema) {
 	var query = `MATCH (s:${schema}) RETURN s.label AS label, s.description AS description, id(s) AS rid ORDER BY label`
 	var response = await axios.post('/api/query', {query:query})

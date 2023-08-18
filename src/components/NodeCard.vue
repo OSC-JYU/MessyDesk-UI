@@ -83,16 +83,20 @@
 
 
             <i v-if="!schema.result._attributes._active" class="alert alert-warning">Inactive</i>
+            {{ schema.result._attributes.path }}
 
 
 
         </div>
 
         <!-- THUMBNAIL -->
-        <div>
+        <div v-if="store.current().data.type != 'Process'">
             <img :src="state.thumbnail" />
         </div>
-        {{ schema.result._attributes.path }}
+        <div v-else>
+            {{ state.params }}
+        </div>
+       
 
         <!-- CRUNCHERS -->
         <div v-if="!['Process', 'Project','Person'].includes(store.current().data.type)" class="card-body overflow-auto">
@@ -148,7 +152,6 @@
 <script setup>
     import { onMounted, watch, reactive, ref, computed } from "vue";
     import { useRouter, useRoute } from 'vue-router'
-    import NodeAttributes from './NodeAttributes.vue'
     import {store} from "./Store.js";
     import web from "../web.js";
 
@@ -157,6 +160,7 @@
 
     var state = reactive({
         thumbnail: '',
+        params: '',
         editing: false,
         active: true,
         selected: null,
@@ -261,13 +265,22 @@
     async function loadData(rid) {
         console.log('loading node data...')
         schema.result = await web.getSchemaAndData(rid)
-        state.thumbnail = thumbnail()
+        state.thumbnail = getThumbnail()
+        if (schema.result._attributes['@type'] == 'Process')
+            state.params = await getProcessParams()
         services.result = await web.getServicesForFile(rid)
         prepareUserSettings()
     }
 
-    function thumbnail() {
+    function getThumbnail() {
         return 'api/thumbnails/' + removeLastPathPart(schema.result._attributes.path.replace('data/', ''))
+    }
+
+    async function getProcessParams() {
+        var url = 'api/process/' + removeLastPathPart(schema.result._attributes.path.replace('data/', ''))
+        var params = await web.getProcessParams(url)
+        console.log(params)
+        return params.data
     }
 
     function prepareUserSettings() {
