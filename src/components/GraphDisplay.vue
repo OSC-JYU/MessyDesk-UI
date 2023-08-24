@@ -30,6 +30,30 @@
             </div>
 		</div>
 
+        <div class="offcanvas offcanvas-bottom" tabindex="-1" id="offcanvasBottom" ref="offCanvasSet" aria-labelledby="offcanvasBottomLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="offcanvasBottomLabel">Offcanvas bottom</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body small">
+        <table class="table" ref="settable">
+        <thead>
+            <tr>
+            <th scope="col">name</th>
+            <th scope="col">First</th>
+            <th scope="col">Last</th>
+            <th scope="col">Handle</th>
+            </tr>
+        </thead>
+        <tbody>
+         <tr v-for="item in state.setdata.nodes">
+            <td>{{item.data.name}}</td>
+         </tr>
+
+        </tbody>
+        </table>
+        </div>
+</div>
   </div>
 </template>
 
@@ -51,6 +75,10 @@
     import { useRouter, useRoute } from 'vue-router'
     import cyCanvas from 'cytoscape-canvas';
 
+    // import * as bootstrap from "bootstrap/dist/js/bootstrap"
+    import * as bootstrap from 'bootstrap';
+    window.bootstrap = bootstrap;
+
     cyCanvas(cytoscape); // Register extension
 
 
@@ -63,7 +91,9 @@
     const route  = useRoute();
     const router = useRouter();
 
-	//const offCanvas = ref(null)
+	const offCanvasSet = ref(null)
+    var settable = ref(null)
+    var state = reactive({setdata:[]})
 
     var current_node = reactive({})
     var current_graph_node = reactive({position: {}})
@@ -78,7 +108,9 @@
         mode: ''
     })
 
-
+onMounted(() => {
+  console.log(settable.value)
+});
     //
 	watch(
     	() => route.query,
@@ -161,47 +193,7 @@
 
             graph.result = await web.getGraph(query, route.params.id, CLUSTER)
         }
-		// } else if(route.query.tag) {
 
-        //     var tags = JSON.parse(JSON.stringify(store.tags))
-		// 	var t = tags.find(x => x['@rid'] == '#'+route.query.tag)
-
-        //     if(t) {
-    	// 		var tagged_relations = await web.rawQuery(`match (s)-[r]->(t) where "${t.id}" in r.tags return type(r) as rel`)
-    	// 		var rels = []
-    	// 		for(var rel of tagged_relations.result) {
-    	// 			rels.push(rel.rel)
-    	// 		}if(rels.length) {
-        //             graph.result = await web.getGraph(`MATCH  (s)-[r:${rels.join('|:')}]->(t) WHERE not s:Schema return s,r,t, t.label as l`)
-        //             if(t.layout) layout = t.layout
-        //         } else {
-        //             graph.result.data = {nodes:[], edges:[]}
-        //         }
-
-        //     }
-
-		// } else if (route.query.type) {
-		// 	var t = store.schemas.find(x => x.rid == '#' + route.query.type)
-		// 	graph.result = await web.getGraph(`MATCH (p:${t.label}) OPTIONAL MATCH (p)-[r]-(t) RETURN p,r,t`)
-
-		// } else if (route.query.query) {
-        //     var Q = await web.getNodeAttributes(route.query.query)
-		// 	console.log(Q[0].layout)
-        //     if(Q[0].layout) layout = Q[0].layout
-		// 	graph.result = await web.getGraph(Q[0].query)
-        //     //store.current_node = {data: {name:"ss", id:"#429:0"}}
-
-		// } else if (route.query.cluster) {
-		// 	var splitted = route.query.cluster.split('__')
-		// 	var source = '#' + splitted[0]
-		// 	var rel = splitted[1]
-		// 	graph.result = await web.getGraph(`MATCH (p) WHERE id(p) = "${source}" OPTIONAL MATCH (p)-[r:${rel}]-(t) RETURN p,r,t`)
-
-		// } else if (route.query.map) {
-        //     console.log('map')
-        //     graph.result = await web.getGraph(`MATCH (node)-[r]-(map:QueryMap) WHERE id(map) = "#${route.query.map}" RETURN node`)
-        //     store.current_node = {data:{id:route.query.map, type: 'QueryMap', type_label: 'Kartta'}}
-        // }
 
 		drawGraph(layout, route, oldValue)
 	}
@@ -211,7 +203,7 @@
 
         var layout = getLayoutSettings(layout_name)
         var positions = await getNodePositions()
-console.log(props.mode)
+
         // schema has common layout for all users
         if(positions && (['schema', 'queries'].includes(props.mode))) {
             console.log(props.mode)
@@ -281,18 +273,26 @@ console.log(props.mode)
 
 
             cy.on('dblclick', 'node', async function(evt) {
+                console.log('öööö')
                console.log(evt.target)
                console.log(evt.target.data('id'))
+               console.log(evt.target.data('type'))
 
                 if(evt.target.data('type') == 'Project') {
                     router.push({ name: 'graph', query: { node: evt.target.data('id').replace('#', '')} })
+                } else if(evt.target.data('type') == 'Set') {
+                        console.log("settiii")
+                        state.setdata = ['testi','toka']
+                        showCanvas()
+                        loadSet(evt.target.data('id'))
+                     
+                   // var offcanvas = "offcanvasBottom"
                 }
             })
 
 
             cy.on('box', 'node', async function(evt) {
 
-console.log('box')
                 if(evt.target.data('type') == 'File') {
                     evt.target.addClass("selected")
                 }
@@ -333,7 +333,7 @@ console.log('box')
                         store.x = pos.position().x
                         store.y = pos.position().y
                         // simple align
-                        pos.position({x:Math.round(pos.position().x/100)*100, y:Math.round(pos.position().y/100)*100})
+                        pos.position({x:Math.round(pos.position().x/50)*50, y:Math.round(pos.position().y/50)*50})
                         saveLayout()
                   } else {
                       store.current_node = null
@@ -343,6 +343,7 @@ console.log('box')
 		}
 
     }
+
 
     function fitGraph(id) {
         id = id.replace('#', '')
@@ -355,7 +356,13 @@ console.log('box')
     }
 
 
-
+      function showCanvas(){
+        //let myOffcanvas = $refs.setCanvas;
+       // console.log(offCanvasSet.value)
+       console.log(settable.value)
+        let bsOffcanvas = new bootstrap.Offcanvas(document.getElementById('offcanvasBottom'));
+        bsOffcanvas.show();
+      }
 
     function clear(ctx, options) {
         const width = cy.width();
@@ -640,6 +647,13 @@ console.log('box')
 		store.queries = await web.getQueries()
 
 	}
+
+    async function loadSet(rid) {
+        var result = await web.getGraph(`MATCH (s:Set)<-[:IS_PART_OF]-(f:File) WHERE id(s) = "${rid}" RETURN f`)
+        state.setdata = result.data
+
+
+    }
 
 	onMounted(async()=> {
 		initView()

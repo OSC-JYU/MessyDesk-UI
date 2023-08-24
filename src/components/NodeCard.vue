@@ -83,10 +83,20 @@
 
 
             <i v-if="!schema.result._attributes._active" class="alert alert-warning">Inactive</i>
+            {{ schema.result._attributes.path }}
 
 
 
         </div>
+
+        <!-- THUMBNAIL -->
+        <div v-if="store.current().data.type != 'Process'">
+            <img :src="state.thumbnail" />
+        </div>
+        <div v-else>
+            {{ state.params }}
+        </div>
+       
 
         <!-- CRUNCHERS -->
         <div v-if="!['Process', 'Project','Person'].includes(store.current().data.type)" class="card-body overflow-auto">
@@ -108,7 +118,6 @@
             </div>
         </div>
 
-         <!-- CRUNCHERS ENDS -->
 
   </div>
        
@@ -143,7 +152,6 @@
 <script setup>
     import { onMounted, watch, reactive, ref, computed } from "vue";
     import { useRouter, useRoute } from 'vue-router'
-    import NodeAttributes from './NodeAttributes.vue'
     import {store} from "./Store.js";
     import web from "../web.js";
 
@@ -151,6 +159,8 @@
     const router = useRouter();
 
     var state = reactive({
+        thumbnail: '',
+        params: '',
         editing: false,
         active: true,
         selected: null,
@@ -160,6 +170,7 @@
         _group: null,
         _access: null
     })
+    
     var graph = reactive({result:[]})
     var schema = reactive({result:[]})
     var services = reactive({result:[]})
@@ -254,11 +265,23 @@
     async function loadData(rid) {
         console.log('loading node data...')
         schema.result = await web.getSchemaAndData(rid)
+        state.thumbnail = getThumbnail()
+        if (schema.result._attributes['@type'] == 'Process')
+            state.params = await getProcessParams()
         services.result = await web.getServicesForFile(rid)
         prepareUserSettings()
     }
 
+    function getThumbnail() {
+        return 'api/thumbnails/' + removeLastPathPart(schema.result._attributes.path.replace('data/', ''))
+    }
 
+    async function getProcessParams() {
+        var url = 'api/process/' + removeLastPathPart(schema.result._attributes.path.replace('data/', ''))
+        var params = await web.getProcessParams(url)
+        console.log(params)
+        return params.data
+    }
 
     function prepareUserSettings() {
         state._group = null
@@ -293,5 +316,13 @@
         }
     }
 
+
+    function removeLastPathPart(str) {
+        const lastIndex = str.lastIndexOf('/');
+        if (lastIndex !== -1) {
+            return str.substring(0, lastIndex);
+        }
+        return str;
+        }
 
 </script>

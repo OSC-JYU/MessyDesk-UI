@@ -10,7 +10,7 @@
 	  "edit": {
 		"create": "Create",
 		"cancel": "Cancel",
-		"project_title": "Project title"
+		"project_label": "Project title"
 	  }
 
 	},
@@ -27,7 +27,8 @@
 	  "edit": {
 		"create": "lisää",
 		"cancel": "peru",
-		"project_title": "Project title"
+		"project_label": "Projektin nimi",
+		"project_create": "Luo uusi projekti"
 	  }
 
   }

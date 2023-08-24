@@ -9,7 +9,7 @@
   "dependencies": {
     "@popperjs/core": "^2.11.5",
     "axios": "^0.26.1",
-    "bootstrap": "^5.2.0",
+    "bootstrap": "^5.3.1",
     "bootstrap-icons": "^1.9.1",
     "cytoscape": "^3.21.1",
     "cytoscape-canvas": "^3.0.1",

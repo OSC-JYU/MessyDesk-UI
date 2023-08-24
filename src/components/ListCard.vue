@@ -16,14 +16,18 @@
                 </div>
                 <h4 class="header-title">{{$t('nav.projects')}}</h4>
 
+
+
+
 			</div>
-			<div class="card-body overflow-auto">
+
+            <div class="card-body">
                 <ol class="">
                     <li v-for="item in state.items">
-                        <router-link   :to="`/list/Project/${item['@rid'].replace('#','')}`" >{{item.label}}</router-link> 
+                        <router-link   :to="`/graph?node=${item['@rid'].replace('#','')}`" >{{item.label}}</router-link> 
                     </li>
                 </ol>
-			</div>
+            </div>
 		</div>
 
         <div v-if="state.project_creator_open" class="modal modal-lg fade show" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" style="display:block">
@@ -36,16 +40,16 @@
                     <div class="modal-body">
                         <form>
                             <div class="form-group">
-                                <label for="exampleInputEmail1">{{$t('edit.project_title')}}</label>
-                                <input type="email" class="form-control" id="projectTitle" aria-describedby="emailHelp" :placeholder="$t('edit.project_title')">
-                                <small id="emailHelp" class="form-text text-muted">Descriptive project title helps you to find your stuff.</small>
+                                <label for="projectTitle">{{$t('edit.project_label')}}</label>
+                                <input v-model="state.project_label" class="form-control" id="projectTitle" aria-describedby="projectHelp">
+                                <small id="projectHelp" class="form-text text-muted">Descriptive project title helps you to find your stuff.</small>
                             </div>
                         </form>
                     </div>
 
 
                     <div class="modal-footer">
-                        <button @click="close()" type="button" class="btn btn-secondary" >{{$t('edit.cancel')}}</button>
+                        <button @click="state.project_creator_open = false" type="button" class="btn btn-secondary" >{{$t('edit.cancel')}}</button>
                         <button  @click=createProject() type="button" class="btn btn-primary">{{$t('edit.create')}}</button>
                         <div v-if="state.error" class="alert alert-danger">{{state.error}}</div>
                     </div>
@@ -65,10 +69,10 @@
     const route  = useRoute();
 
     var state = reactive({
-        error: '',
         items: [],
         project_creator_open: false,
-        project_title: ''
+        project_label: '',
+        project_description: ''
     })
 
     watch(
@@ -83,17 +87,13 @@
         state.items = response
     }
 
-    function close() {
-        state.project_creator_open = false
-    }
-
     async function createProject() {
-
+        await web.createProject(state.project_label, state.project_description)
+         state.project_creator_open = false
     }
 
     onMounted(async()=> {
         loadData()
-
     })
 
 

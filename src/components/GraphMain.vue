@@ -1,4 +1,11 @@
 
+<style>
+//This changes the width for all the offcanvas in the app
+.offcanvas{
+     height:50% !important;
+} 
+</style>
+
 <script setup>
     import { useRoute } from 'vue-router'
     import JYUHeader from './JYUHeader.vue'
@@ -23,6 +30,8 @@
                 <div class="h-100 d-flex flex-column w-100 m-0 p-0">
                     <div class="row justify-content-center m-0 p-0">
                         <JYUHeader/>
+                        <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasBottom" aria-controls="offcanvasBottom">Toggle bottom offcanvas</button>
+
                     </div>
                     <div class="row m-0 p-0  flex-grow-1">
                         <GraphDisplay mode="graph" />
@@ -33,6 +42,7 @@
                 </div>
             </div>
         </div>
+
 
 
 
