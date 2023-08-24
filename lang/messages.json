@@ -1,0 +1,34 @@
+{
+	"en": {
+	  "nav": {
+		"home": "Your homepage",
+		"about": "About",
+		"search": "search",
+		"tags": "Relations by tags",
+		"projects": "Projects"
+	  },
+	  "edit": {
+		"create": "Create",
+		"cancel": "Cancel",
+		"project_title": "Project title"
+	  }
+
+	},
+
+
+	"fi": {
+	  "nav": {
+		"home": "Kotisivusi",
+		"about": "tietoja",
+		"search": "haku",
+		"tags": "suhteet",
+		"projects": "projektit"
+	  },
+	  "edit": {
+		"create": "lisää",
+		"cancel": "peru",
+		"project_title": "Project title"
+	  }
+
+  }
+}
