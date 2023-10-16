@@ -273,7 +273,8 @@
     }
 
     function getThumbnail() {
-        return 'api/thumbnails/' + removeLastPathPart(schema.result._attributes.path.replace('data/', ''))
+        if(schema.result._attributes && schema.result._attributes.path)
+            return 'api/thumbnails/' + removeLastPathPart(schema.result._attributes.path.replace('data/', ''))
     }
 
     async function getProcessParams() {
