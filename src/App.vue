@@ -20,6 +20,7 @@
 #app {
   margin: 0 ;
   font-weight: normal;
+  text-transform: none;
 }
 
 #cy {

@@ -32,7 +32,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'Home',
-      component: ListMain
+      component: ProjectMain
     },
 
     {

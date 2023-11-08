@@ -90,8 +90,8 @@
         </div>
 
         <!-- THUMBNAIL -->
-        <div v-if="store.current().data.type != 'Process'">
-            <img :src="state.thumbnail" />
+        <div v-if="store.current().type != 'process'">
+            <img class="nodecard-image" :src="state.thumbnail" />
         </div>
         <div v-else>
             {{ state.params }}
@@ -228,7 +228,7 @@
             console.log('ROUTER: on current_node')
             reset()
             if(newValue)
-                loadData(store.current().data.id)
+                loadData(store.current().id)
             else
                 schema.result = []
     })
