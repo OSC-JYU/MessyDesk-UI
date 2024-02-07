@@ -16,17 +16,19 @@
     </div> -->
 
     <!-- node card --> 
-    <div class="card" v-if="store.current_node && schema.result._attributes">
+    <div class="card" v-if="store.current_node && store.current().id && schema.result._attributes">
 
         <div class="card-header">
 
             <template v-if="store.current().data.type == 'Person'">
                 {{schema.result._attributes.id}}
             </template>
-            <template v-else-if="store.current().data.type == 'File'">
-                <a target="_blank" :href="'/api/files/' + store.current().data.id.replace('#','')">{{store.current().data.type_label}} {{ store.current().data.id }}</a>
+            <template v-else-if="store.current().type != 'process'">
+                <a target="_blank" :href="'/api/files/' + store.current().id.replace('#','')">{{store.current().data.type_label}} {{ store.current().id }}</a>
                 
             </template>
+
+
 
             <div class="d-flex bd-highlight">
 
@@ -42,9 +44,19 @@
                     </h4>
                 </template>
 
+                <template v-else-if="store.current().type == 'text'">
+                  
+                  <h4 :class="['card-title', 'p-2', 'flex-grow-1']"> {{schema.result._attributes.label}}
+               
+                      <i @click="toggleEdit()" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
+                      </i>
+                      <input v-if="edit_name" v-model="edit_name" @keyup.enter="saveLabel()"/>
 
-                <template v-else-if="store.current().data.type == 'File'">
+                  </h4>
+              </template>
 
+                <template v-else-if="store.current().type == 'image'">
+                  
                     <h4 :class="['card-title', 'p-2', 'flex-grow-1']"> {{schema.result._attributes.label}}
                  
                         <i @click="toggleEdit()" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
@@ -52,14 +64,10 @@
                         <input v-if="edit_name" v-model="edit_name" @keyup.enter="saveLabel()"/>
 
                     </h4>
-                   
-
-
-
-
                 </template>
 
                 <template v-else>
+                   
                         <h4 :class="['card-title', 'p-2', 'flex-grow-1']">     {{schema.result._attributes.label}}
                         <i  @click="toggleEdit()" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
                         </i>
@@ -82,15 +90,14 @@
 
 
 
-            <i v-if="!schema.result._attributes._active" class="alert alert-warning">Inactive</i>
-            {{ schema.result._attributes.path }}
+            <!-- {{ schema.result._attributes.path }} -->
 
 
 
         </div>
 
         <!-- THUMBNAIL -->
-        <div v-if="store.current().type != 'process'">
+        <div v-if="store.current().type == 'image' || store.current().type == 'pdf'">
             <img class="nodecard-image" :src="state.thumbnail" />
         </div>
         <div v-else>
@@ -99,7 +106,7 @@
        
 
         <!-- CRUNCHERS -->
-        <div v-if="!['Process', 'Project','Person'].includes(store.current().data.type)" class="card-body overflow-auto">
+        <div v-if="!['Process', 'Project','Person'].includes(store.current().type)" class="card-body overflow-auto">
             <h5>Things that you can do with your {{ schema.result._attributes.type }}</h5>
 
             <div>
@@ -138,7 +145,7 @@
         <div class="card-footer">
    
              <!-- DELETE BUTTON -->
-            <div class="float-end"  v-if="store.current().data.type != 'Person'">
+            <div class="float-end"  v-if="store.current().type != 'Person'">
                 <button @click="store.node_deleter_open = true" class="btn btn-danger" title="delete item"><i class="bi bi-trash"></i></button>
             </div>
         </div>

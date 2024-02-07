@@ -32,40 +32,6 @@
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
 
-      <!-- ME -->
-          <!-- <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              Minä
-            </a>
-            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                <router-link  to="/graph?node=me" class="dropdown-item">omat linkit</router-link>
-                <li><hr class="dropdown-divider"></li>
-              <li v-for="item in store.queries" :key="item['@rid']" >
-
-                <router-link v-if="item.menu == 'me'" :to="`/graph?query=${item['@rid'].replace('#','')}`" class="dropdown-item">{{item.label}}</router-link>
-              </li>
-            </ul>
-          </li> -->
-
-          <!-- <li v-if="store.menus.length == 0">
-              No menus defined
-          </li>
-          <li v-for="menu in store.menus" :key:="menu.label" class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                {{menu.label}}
-              </a>
-              <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                  <template v-if="menu.id == 'me'">
-                      <router-link   to="/graph?node=me" class="dropdown-item">My connections</router-link>
-                      <li><hr class="dropdown-divider"></li>
-                  </template>
-                <li v-for="item in menu.items" :key="item['@rid']" >
-                    <template v-if="item['@type'] == 'Query'">
-                        <router-link :to="`/graph?query=${item['@rid'].replace('#','')}`" class="dropdown-item">{{item.label}}</router-link>
-                    </template>
-                </li>
-              </ul>
-          </li> -->
 
           <!-- TAGS -->
           <li v-if="store.tags.length > 0" class="nav-item dropdown">
@@ -100,17 +66,14 @@
 
         <div class="btn-group">
           <button type="button" class="btn navbar dropdown-toggle" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" style="margin-left:50px; padding:15px">
-            <i class="fs-5 bi-plus-circle"></i>
+            Menu
           </button>
           <ul class="dropdown-menu dropdown-menu-start dropdown-menu-lg-start">
-              <li v-if="route.query.node">
-                  <div @click="store.uploader_open = true" class="dropdown-item">
-                      <i class="fs-5 bi-plus-circle"></i><span class="ms-1 d-none d-sm-inline">Add File</span> </div>
-              </li>
+
 
               <li class="nav-item">
-                  <router-link :to="'/stats'" class="dropdown-item">
-                      <i class="fs-5 bi-card-list"></i><span class="ms-1 d-none d-sm-inline">Stats</span>
+                  <router-link :to="'/services'" class="dropdown-item">
+                      <i class="fs-5 bi-card-list"></i><span class="ms-1 d-none d-sm-inline">Services</span>
                   </router-link>
               </li>
 
@@ -125,49 +88,15 @@
           </ul>
         </div>
 
-
-        <!-- <div class="btn-group">
-          <button type="button" class="btn navbar dropdown-toggle" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" style="margin-left:50px; padding:15px">
-            <i class="fs-5 bi-gear"></i>
+        <div class="btn-group">
+          <button v-if="route.query.node" type="button" class="btn navbar " data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" style="margin-left:50px; padding:15px">
+                        
+            <div @click="store.uploader_open = true" class="dropdown-item">
+                      <i class="fs-5 bi-plus-circle"></i><span class="ms-1 d-none d-sm-inline">Add File</span> </div>
+             
           </button>
-          <ul class="dropdown-menu dropdown-menu-start dropdown-menu-lg-start">
-              <li v-if="store.user && store.user.access != 'user'">
-                  <div @click="store.node_creator_open = true" class="dropdown-item">
-                      <i class="fs-5 bi-plus-circle"></i><span class="ms-1 d-none d-sm-inline">Add Node</span> </div>
-              </li>
 
-              <li class="nav-item">
-                  <router-link :to="'/stats'" class="dropdown-item">
-                      <i class="fs-5 bi-card-list"></i><span class="ms-1 d-none d-sm-inline">Stats</span>
-                  </router-link>
-              </li>
-
-
-              <li v-if="store.user && store.user.access == 'admin'" class="nav-item">
-                  <router-link :to="'queries'" class="dropdown-item">
-                      <i class="fs-5 bi-question"></i><span class="ms-1 d-none d-sm-inline">Navigation</span>
-                  </router-link>
-              </li>
-
-
-              <li class="nav-item">
-                  <router-link :to="'/about'" class="dropdown-item">
-                      <i class="fs-5 bi-info-circle"></i><span  class="ms-1 d-none d-sm-inline">About</span>
-                  </router-link>
-              </li>
-
-              <template v-if="store.user && store.user.mode == 'development'">
-                  <li><hr class="dropdown-divider"></li>
-                  <li class="dropdown-item" @click="store.importer_open = 'graph'">Import Graph</li>
-                  <li class="dropdown-item" @click="store.exporter_open = 'graph'">Export Graph</li>
-                  <li><hr class="dropdown-divider"></li>
-                  <li class="dropdown-item" @click="store.importer_open = 'styles'">Import Style</li>
-                  <li class="dropdown-item" @click="store.exporter_open = 'styles'">Export Style</li>
-              </template>
-
-
-          </ul>
-        </div> -->
+        </div>
 
     </div>
   </div>

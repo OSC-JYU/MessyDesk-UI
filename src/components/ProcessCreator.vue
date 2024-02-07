@@ -96,7 +96,7 @@
 		// we must send ELG "params" 
 		// target
 		state.error = ''
-console.log(store.current().data.id)
+console.log(store.current().id)
 console.log(store.task_id)
 console.log(store.process)
 console.log(state.out_params)
@@ -105,7 +105,7 @@ console.log(state.out_params)
 		process.params = state.out_params
 		process.params.task = store.task_id
 		console.log(process)
-		var res = await web.createFileProcess(process, store.current().data.id)
+		var res = await web.createFileProcess(process, store.current().id)
 		//var node = res.data.result[0]
 		//console.log(res)
 		store.reload()

@@ -59,13 +59,18 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                         <template #node-pdf="{ data }">
                             <PDFNode :data="data" />
                         </template>
+
+                        <template #node-text="{ data }">
+                            <TextNode :data="data" />
+                        </template>
                     </VueFlow>  
                 </div>
 			</div>
 
             <div class="col-3 sidebar p-0 h-100">
+            
                 <NodeCard v-if="props.mode == 'graph'" @setGraphOptions="setGraphOptions" @saveLayout="saveLayout" @fitGraph="fitGraph" class="h-100 w-100 position-absolute"/>
-
+                
             </div>
 		</div>
 
@@ -125,6 +130,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     import ProjectNode from './nodes/ProjectNode.vue'
     import ProcessingNode from './nodes/ProcessingNode.vue'
     import PDFNode from './nodes/PDFNode.vue'
+    import TextNode from './nodes/TextNode.vue'
 
     // import * as bootstrap from "bootstrap/dist/js/bootstrap"
     import * as bootstrap from 'bootstrap';
@@ -152,6 +158,24 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     var me = reactive({data:{}})
     var editing = ref(false)
 
+    let connection = new WebSocket('ws://localhost:8200/ws');
+    connection.onmessage = (event) => {
+        try {
+            var wsdata = JSON.parse(event.data)
+            if(wsdata.target) {
+                var target_node = elements.value.find(x => x.id == wsdata.target)
+                if(target_node) {
+                    if(wsdata.image) target_node.data.image = wsdata.image
+                }
+            }
+        } catch(e) {
+            console.log(event.data)
+        }
+    }
+
+    connection.onerror = (error) => {
+        console.error('WebSocket Error:', error);
+    };
 
     const props = defineProps({
         mode: ''
@@ -159,18 +183,21 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
 
     vueFlow.onNodeDragStop((event) => {
+        store.current_node = event.node
         saveLayout()
+        connection.send('dadaa')
     })
 
 
     vueFlow.onNodeClick((event) => {
         store.current_node = event.node
+        //vueFlow.fitView()
     })
 
 
     vueFlow.onNodeDoubleClick((event) => {
         if(event.node.type == "project" )
-        router.push({ name: 'graph', query: { node: event.node.id.replace('#', '')} })
+            router.push({ name: 'graph', query: { node: event.node.id.replace('#', '')} })
     })
 
     //
@@ -259,8 +286,9 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
         for(var node of graph.result.data.nodes) {
             var flownode = {
                 id: node.data.id, 
-                type: node.data.type.toLowerCase(), 
+                type: node.data.type.toLowerCase(),
                 data: {
+                    type: node.data.type.toLowerCase(),
                     label: node.data.name,
                     description: node.data.description
                 }
@@ -268,8 +296,11 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
             if(node.data._type)
                 flownode.type = node.data._type.toLowerCase()
 
-            if(positions.positions[node.data.id])
+            if(positions.positions && positions.positions[node.data.id]) {
                 flownode.position = positions.positions[node.data.id]
+            } else {
+                flownode.position = getDefaultPosition()
+            }
 
             if(node.data.image) 
                 flownode.data.image = node.data.image
@@ -285,118 +316,21 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
             elements.value.push(flowedge)
         }
         
-        //vueFlow.fitView()
+        vueFlow.fitView()
         //var layout = getLayoutSettings(layout_name)
         
 
 
 
-		if(props.mode != 'about') {
-
-            // right click expands
-            // cy.on('cxttap', "node", async function(event) {
-
-            //     var nodeID = event.target.data().id.replace('#','')
-
-            //     var expandData = await expand(nodeID)
-            //     cy.nodes().forEach(function(node){
-            //         node.lock()
-            //     })
-
-            //     cy.add(expandData)
-            //     setGraphOptions('fcose')
-            //     cy.nodes().forEach(function(node){
-            //         node.unlock()
-            //     })
-
-            // });
-
-
-            // cy.on('dblclick', 'node', async function(evt) {
-            //     console.log('öööö')
-            //    console.log(evt.target)
-            //    console.log(evt.target.data('id'))
-            //    console.log(evt.target.data('type'))
-
-            //     if(evt.target.data('type') == 'Project') {
-            //         router.push({ name: 'graph', query: { node: evt.target.data('id').replace('#', '')} })
-            //     } else if(evt.target.data('type') == 'Set') {
-            //             console.log("settiii")
-            //             state.setdata = ['testi','toka']
-            //             showCanvas()
-            //             loadSet(evt.target.data('id'))
-                     
-            //        // var offcanvas = "offcanvasBottom"
-            //     }
-            // })
-
-
-            // cy.on('box', 'node', async function(evt) {
-
-            //     if(evt.target.data('type') == 'File') {
-            //         evt.target.addClass("selected")
-            //     }
-            // })
-
-			// cy.on('oneclick', async function(evt) {
-            //     cy.nodes().forEach(function(node){
-            //         node.removeClass("selected")
-            //     })
-
-            //     if(evt.target.data().id) {
-            //         console.log('click')
-            //         console.log(evt.target.data().id)
-            //             evt.target.addClass("selected")
-            //             var nodeID = evt.target.data().id.replace('#','')
-            //             console.log(nodeID)
-            //             var node = getNodeFromGraph(evt.target.data().id)
-            //             if(node) store.current_node = node
-            //             else store.current_node = {data: {id: '#' + nodeID}}
-            //       } else {
-            //           store.current_node = null
-            //       }
-    		// });
-
-            // cy.on('dragfreeon', 'node', async function(evt) {
-            //     //console.log(evt.target.data().id )
-            //     if(evt.target.data().id) {
-                        
-            //             var nodeID = evt.target.data().id.replace('#','')
-            //             console.log(nodeID)
-            //             var node = getNodeFromGraph(evt.target.data().id)
-            //             if(node) store.current_node = node
-            //             else store.current_node = {data: {id: '#' + nodeID}}
-
-            //             var pos = evt.target
-            //             current_graph_node.position.x = pos.position().x
-            //             current_graph_node.position.y = pos.position().y
-            //             store.x = pos.position().x
-            //             store.y = pos.position().y
-            //             // simple align
-            //             pos.position({x:Math.round(pos.position().x/50)*50, y:Math.round(pos.position().y/50)*50})
-            //             saveLayout()
-            //       } else {
-            //           store.current_node = null
-            //       }
-       
-            // });
-		}
-
     }
 
-
-    function fitGraph(id) {
-        id = id.replace('#', '')
-       // cy.fit(cy.$('node[idc="#' + id.replace(':','_')+'"]'), 250)
-
-// if( cy.zoom() > fitMaxZoom ){
-//   cy.zoom( fitMaxZoom );
-//   cy.center();
-// }
+    function getDefaultPosition() {
+        return {x: 0, y: 0}
     }
 
+    function fitGraph() {
 
-
+    }
 
 
     function setNodePositions(node_layout, layout) {
@@ -408,20 +342,12 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                         x: node_layout.positions[node.id()].x,
                         y: node_layout.positions[node.id()].y
                     };
+                } else {
+
                 }
             });
         }
 
-
-        // if(layout_name === 'preset' ) {
-        //     cy.nodes().positions(function( node, i ){
-		// 		console.log(node.data('type'))
-		// 			return {
-		// 				x: (i % 3) * 130 -500,
-		// 				y: (i - (i % 3))/3 * 50 -500
-		// 			};
-        //     });
-        // }
 		layout.run()
     }
 
@@ -433,9 +359,12 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
             node = props.mode
 
         if(node) {
+            console.log(node)
             var node_layout = await web.getLayoutByTarget(node)
-            if(node_layout.positions)
-            return node_layout
+            if(node_layout.positions) {
+                console.log('positions found')
+                return node_layout
+            }
         }
         return 0
     }
@@ -498,6 +427,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
 	onMounted(async()=> {
 		initView()
+
         console.log(import.meta.env.VITE_PUBLIC_PATH)
 	})
 

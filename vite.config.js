@@ -27,6 +27,11 @@ export default ({ mode }) => {
     server: {
     
         proxy: {
+            '/ws': {
+                target: 'http://localhost:8200',
+                changeOrigin: true,
+                ws: true,
+            },
               '/api': {
                    target: 'http://localhost:8200',
                    changeOrigin: true,

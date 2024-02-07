@@ -2,6 +2,7 @@
 
 .node-body {
   min-height: 200px;
+  min-width: 200px;
 }
 
 img {
@@ -33,7 +34,7 @@ const props = defineProps({
 <template>
   <div class="node-body">
     <div class="header"> {{ data.label }}</div>
-    <img :src="data.image" />
+   
   {{ data.description }}
   </div>
 

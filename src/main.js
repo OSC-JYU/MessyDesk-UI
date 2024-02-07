@@ -2,10 +2,10 @@ import { createI18n } from 'vue-i18n'
 import messages from '../lang/messages.json'
 
 import GraphMain from './components/GraphMain.vue'
-import SchemaMain from './components/SchemaMain.vue'
-import MapMain from './components/MapMain.vue'
+
 import StatsMain from './components/StatsMain.vue'
 import ProjectMain from './components/ProjectMain.vue'
+import ServicesMain from './components/ServicesMain.vue'
 import ListMain from './components/ListMain.vue'
 import Repositories from './components/Repositories.vue'
 import NavigationSettings from './components/NavigationSettings.vue'
@@ -42,10 +42,10 @@ const router = createRouter({
     },
 
     {
-        path: '/maps',
-        name: 'maps',
-        component: MapMain
-    },
+      path: '/services',
+      name: 'services',
+      component: ServicesMain
+  },
 
     {
         path: '/stats',
@@ -65,11 +65,6 @@ const router = createRouter({
       component: ListMain
     },
 
-    {
-        path: '/schema',
-        name: 'schema',
-        component: SchemaMain
-    },
 
     {
           path: '/queries',
