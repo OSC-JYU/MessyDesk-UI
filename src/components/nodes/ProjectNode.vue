@@ -1,7 +1,8 @@
 <style scoped>
 
 .node-body {
-  min-height: 200px;
+  min-height: 100px;
+  min-width: 200px;
 }
 
 img {

@@ -21,6 +21,10 @@
 
     document.title = "MessyDesk - services"
 
+    async function enable(adapter_ID) {
+        console.log(adapter_ID)
+    }
+
     onMounted(async()=> {
         var response = await web.getServices()
         var data = {'text':[], 'pdf':[], 'image':[]}
@@ -56,6 +60,14 @@
                                 <span v-else class="badge disabled">offline</span>
                                 <span v-if="service.enabled" class="badge enabled">enabled</span>
                                 <span v-else class="badge disabled">disabled</span>
+                                <span>
+                                    <div v-if="service.online" class="form-check form-switch">
+                                        <input v-model="service.enabled" @change="enable(service.id)" class="form-check-input" type="checkbox" id="flexSwitchCheckChecked">
+                                        <label class="form-check-label" for="flexSwitchCheckChecked">enabled</label>
+                                    </div>
+                                </span>
+
+
                             </div>
 
                             <div>
@@ -76,6 +88,12 @@
                                 <span v-else class="badge disabled">offline</span>
                                 <span v-if="service.enabled" class="badge enabled">enabled</span>
                                 <span v-else class="badge disabled">disabled</span>
+                                <span>
+                                    <div v-if="service.online" class="form-check form-switch">
+                                        <input v-model="service.enabled" class="form-check-input" type="checkbox" id="flexSwitchCheckChecked">
+                                        <label class="form-check-label" for="flexSwitchCheckChecked">enabled</label>
+                                    </div>
+                                </span>
                             </div>
 
                             <div>
@@ -97,6 +115,12 @@
                                 <span v-else class="badge disabled">offline</span>
                                 <span v-if="service.enabled" class="badge enabled">enabled</span>
                                 <span v-else class="badge disabled">disabled</span>
+                                <span>
+                                    <div v-if="service.online" class="form-check form-switch">
+                                        <input v-model="service.enabled" class="form-check-input" type="checkbox" id="flexSwitchCheckChecked">
+                                        <label class="form-check-label" for="flexSwitchCheckChecked">enabled</label>
+                                    </div>
+                                </span>
                             </div>
 
                             <div>

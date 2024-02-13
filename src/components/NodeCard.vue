@@ -108,10 +108,20 @@
         <!-- CRUNCHERS -->
         <div v-if="!['Process', 'Project','Person'].includes(store.current().type)" class="card-body overflow-auto">
             <h5>Things that you can do with your {{ schema.result._attributes.type }}</h5>
+            {{ store.current().data }}
 
             <div>
                 <div v-if="services.result && services.result.for_format && services.result.for_format.length == 0" class="alert alert-warning">No crunchers found</div>
-
+                <div v-if="store.current().data.type == 'set'">
+                    <ol class="card" v-for="service in services.result.for_type">
+                        <template v-if="service.tasks">
+                            <li class="list-group-item border-0" v-for="(value, key) of service.tasks" :key="key">
+                                <div @click="initProcessCreator(service, key)" class="node Service pointer"> {{ value.name }} </div>
+                                <div class="rel-info">{{ value.description }}</div><div class="badge rel-info bg-secondary">{{service.name}}</div>
+                            </li>
+                        </template>
+                    </ol>
+                </div>
                 <ol class="list-group border-0" v-for="service in services.result.for_format">
                     <template v-if="service.tasks">
                         <li class="list-group-item border-0" v-for="(value, key) of service.tasks" :key="key">

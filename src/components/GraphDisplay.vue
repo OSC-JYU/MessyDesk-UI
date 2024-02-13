@@ -21,6 +21,21 @@
   max-width: 202px;
 }
 
+.vue-flow__node-process {
+    border-radius: 10px 100px / 120px;
+    border:none;
+}
+
+.vue-flow__node-process .header{
+    border-radius: 10px 20px / 20px;
+    border:none;
+}
+
+.vue-flow__node-project {
+  background-color:white;
+  border:1px solid black;
+  max-width: 302px;
+}
 
 .graph-display { 
   background: url(images/bg.jpg) no-repeat center center fixed; 
@@ -63,6 +78,9 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                         <template #node-text="{ data }">
                             <TextNode :data="data" />
                         </template>
+                        <template #node-set="{ data }">
+                            <SetNode :data="data" />
+                        </template>
                     </VueFlow>  
                 </div>
 			</div>
@@ -70,6 +88,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
             <div class="col-3 sidebar p-0 h-100">
             
                 <NodeCard v-if="props.mode == 'graph'" @setGraphOptions="setGraphOptions" @saveLayout="saveLayout" @fitGraph="fitGraph" class="h-100 w-100 position-absolute"/>
+                <ProjectCard v-if="props.mode == 'projects'"></ProjectCard>
                 
             </div>
 		</div>
@@ -112,12 +131,13 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     import { onMounted, watch, reactive, ref, computed } from "vue";
     import web from "../web.js";
     import NodeCard from "./NodeCard.vue";
+    import ProjectCard from "./ProjectCard.vue";
 
     import {store} from "./Store.js";
-    import {getLayoutSettings} from "./GraphOptions.js";
+    //import {getLayoutSettings} from "./GraphOptions.js";
     import { useRouter, useRoute } from 'vue-router'
 
-    import { Position, VueFlow, defaultNodeTypes, useVueFlow } from '@vue-flow/core'
+    import { GlobalVueFlowStorage, Position, VueFlow, defaultNodeTypes, useVueFlow } from '@vue-flow/core'
 
     //const { getNode, onNodeClick, onNodeDoubleClick, onNodeDragStop} = useVueFlow()
     const vueFlow = useVueFlow({
@@ -131,6 +151,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     import ProcessingNode from './nodes/ProcessingNode.vue'
     import PDFNode from './nodes/PDFNode.vue'
     import TextNode from './nodes/TextNode.vue'
+    import SetNode from './nodes/SetNode.vue'
 
     // import * as bootstrap from "bootstrap/dist/js/bootstrap"
     import * as bootstrap from 'bootstrap';
@@ -158,6 +179,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     var me = reactive({data:{}})
     var editing = ref(false)
 
+    // Websocket for UI updates
     let connection = new WebSocket('ws://localhost:8200/ws');
     connection.onmessage = (event) => {
         try {
@@ -166,12 +188,15 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                 var target_node = elements.value.find(x => x.id == wsdata.target)
                 if(target_node) {
                     if(wsdata.image) target_node.data.image = wsdata.image
+                    if(wsdata.node) addNode(wsdata.node, wsdata.target)
                 }
             }
         } catch(e) {
             console.log(event.data)
         }
     }
+    // Websocket for UI updates ends
+
 
     connection.onerror = (error) => {
         console.error('WebSocket Error:', error);
@@ -247,6 +272,23 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                 ele.data('name', update.name)
             }
         });
+    }
+
+    function addNode(node, target) {
+        console.log(node)
+        const newNode = {
+            id: node.rid,
+            data: {
+                label: 'node.label',
+                type: 'file',
+                image: ''
+            },
+            type: 'image',
+            position: { x: Math.random() * vueFlow.dimensions.value.width, y: Math.random() * vueFlow.dimensions.value.height },
+        }
+        elements.value.push(newNode)
+        //vueFlow.addNodes([newNode])
+        elements.value.push({id:6, source: target, target: node.rid})
     }
 
 	async function loadGraph(route, oldValue) {

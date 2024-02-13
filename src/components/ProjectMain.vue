@@ -19,7 +19,6 @@
                     </div>
                     <div class="row m-0 p-0  flex-grow-1">
                         <GraphDisplay mode="projects"/>
-                        <NodeCreator mode="list"/>
                     </div>
                 </div>
             </div>
