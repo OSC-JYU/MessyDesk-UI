@@ -25,8 +25,8 @@
             </template>
             <template v-else-if="store.current().type != 'process'">
                 <a target="_blank" :href="'/api/files/' + store.current().id.replace('#','')">{{store.current().data.type_label}} {{ store.current().id }}</a>
-                
             </template>
+            <template v-else>{{ store.current().id }}</template>
 
 
 

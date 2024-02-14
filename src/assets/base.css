@@ -122,6 +122,41 @@ body,
   box-shadow: 10px 10px 5px rgb(88, 128, 147);
 }
 
+.Service:hover {
+  background-color:rgb(233, 232, 182);
+  box-shadow: 3px 3px 2px rgb(88, 128, 147);
+}
+.pointer {
+  cursor: pointer;
+}
+
+.vue-flow__node.selected{
+  box-shadow: 20px 20px 5px rgb(88, 128, 147);
+}
+
+
+.vue-flow__node {
+  background-color:white;
+  border:1px solid black;
+  max-width: 202px;
+}
+
+.vue-flow__node-process {
+    border-radius: 10px 10px / 20px;
+    border:none;
+}
+
+.vue-flow__node-process .header{
+    border-radius: 10px;
+    border:none;
+}
+
+.vue-flow__node-project {
+  background-color:white;
+  border:1px solid black;
+  max-width: 302px;
+}
+/*
 .selected .header{
   border-top: 5px solid red;
   border-bottom: 5px solid red;
@@ -129,3 +164,5 @@ body,
   transform: scale(1.5);
   
 }
+*/
+

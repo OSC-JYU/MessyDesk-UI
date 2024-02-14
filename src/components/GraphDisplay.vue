@@ -15,27 +15,6 @@
         min-width: 220px;
     }
 
-.vue-flow__node {
-  background-color:white;
-  border:1px solid black;
-  max-width: 202px;
-}
-
-.vue-flow__node-process {
-    border-radius: 10px 100px / 120px;
-    border:none;
-}
-
-.vue-flow__node-process .header{
-    border-radius: 10px 20px / 20px;
-    border:none;
-}
-
-.vue-flow__node-project {
-  background-color:white;
-  border:1px solid black;
-  max-width: 302px;
-}
 
 .graph-display { 
   background: url(images/bg.jpg) no-repeat center center fixed; 
@@ -457,19 +436,21 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 			} 
 
 		} else if(props.mode == 'projects') {
-           graph.result = await web.getGraph(`MATCH (p:Project) RETURN p`)
-
+            graph.result.data = {nodes: [], edges:[]}
+            graph.result.data.nodes = await web.getProjects()
+            // convert projects to graph format
+            for(var node of graph.result.data.nodes) {
+                node.data = {id:node['@rid']}
+                node.data.name = node.label
+                node.data.type = node['@type']
+            }
             drawGraph('fcose', route)
         }
-
-		//store.queries = await web.getQueries()
-
 	}
 
 
 	onMounted(async()=> {
 		initView()
-
         console.log(import.meta.env.VITE_PUBLIC_PATH)
 	})
 
