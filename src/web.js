@@ -74,6 +74,11 @@ web.getProjects = async function() {
 	return result.data
 }
 
+web.getProject = async function(rid) {
+	var result = await axios.get(`/api/projects/${rid.replace('#', '')}`)
+	return result.data
+}
+
 web.getMenus = async function() {
 	var result = await axios.get(`/api/menus`)
 	return result.data

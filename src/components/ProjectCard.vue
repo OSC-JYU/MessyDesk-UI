@@ -5,25 +5,45 @@
 		<div class="card">
 			<div class="card-header">
 				<div>MessyDesk</div>
-
-				<h4>Projects</h4>
+                <div class="d-flex justify-content-between ">
+                    <h4 class="">Desks</h4>
+                    <div class="float-end pointer">
+                        <i  title="Create new Desk" @click="state.creator_open = !state.creator_open" class=" bi bi-plus-circle-fill" style="font-size: 1.2rem; color: #002957;"></i>
+                    </div>
+                </div>
 			</div>
 
-            <button @click="state.creator_open = !state.creator_open">Add project</button>
-            <div v-if="state.creator_open">
-                <div class="input-group-text" id="inputGroup-sizing-default">Project title</div>
+            <!-- Desk Creator open-->
+            <div class="card m-2" v-if="state.creator_open">
+ 
+                <div class="card-header">Create new desk</div>
                 <div class="input-group mb-3">
-                    <input v-model="state.project_name" type="text" class="form-control" aria-label="Project name" aria-describedby="inputGroup-sizing-default">
+                    <input v-model="state.project_name" type="text" class="form-control" aria-label="Desk name" aria-describedby="inputGroup-sizing-default" placeholder="Project title">
                 </div>
                 <button @click="create()" class="btn btn-primary">Create</button>
-                {{ state.error }}
+
+                <div v-if="state.error" class="alert alert-warning"> {{ state.error }}</div>
 
             </div>
-			<div class="card-body">
-                <div v-for="item of state.items">
-                    <router-link   :to="`/graph?node=${item['@rid'].replace('#','')}`" >{{item.label}}</router-link> 
+
+            <!-- Desk Creator closed-->
+            <div v-else>            
+                <!-- Desk node selected-->
+                <div v-if="store.current_node && state.project">
+                    <h3>{{ state.project[0].label }}</h3>
+                    <div>{{ state.project[0].description }}</div>
+                    <button class="btn">
+                        <router-link   :to="`/graph?node=${store.current_node.id.replace('#','')}`" >open</router-link>
+                    </button>
                 </div>
-			</div>
+
+                <!-- Desk node not selected-->
+                <div v-if="!store.current_node" class="card-body">
+                    <div v-for="item of state.items">
+                        <router-link   :to="`/graph?node=${item['@rid'].replace('#','')}`" >{{item.label}}</router-link> 
+                    </div>
+                </div>
+            </div>
             
 		</div>
 
@@ -40,7 +60,15 @@
         items: [],
         creator_open: false,
         project_name: '',
-        error: ''
+        error: '',
+        project: null
+
+    })
+
+    watch(
+        () => store.current_node,
+        async (newValue, oldValue) => {
+            await getProjectData()
     })
 
     async function create() {
@@ -52,13 +80,19 @@
             state.creator_open = false
             store.reload()
         }
-        
+    }
+
+
+    async function getProjectData() {
+        if(store.current_node)
+            state.project = await web.getProject(store.current_node.id)
+
     }
 
     onMounted(async()=> {
         var response = await web.getProjects()
+        store.current_node = null
         state.items = response
-
     })
 
 

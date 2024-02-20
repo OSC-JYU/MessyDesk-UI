@@ -198,11 +198,16 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
         //vueFlow.fitView()
     })
 
+    vueFlow.onPaneClick((event) => {
+        store.current_node = null
+    })
 
     vueFlow.onNodeDoubleClick((event) => {
         if(event.node.type == "project" )
             router.push({ name: 'graph', query: { node: event.node.id.replace('#', '')} })
     })
+
+
 
     //
 	watch(
