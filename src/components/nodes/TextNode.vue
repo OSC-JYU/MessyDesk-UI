@@ -33,7 +33,7 @@ const props = defineProps({
   <div class="node-body">
     <div class="header"> {{ data.label }}</div>
    
-    {{ data.description }}
+    <div class="m-2">{{ data.description }} </div>
     <Handle id="a" type="target" :position="Position.Left" />
     <Handle id="b" type="source" :position="Position.Right" /> 
   </div>

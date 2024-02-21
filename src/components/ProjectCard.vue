@@ -78,6 +78,8 @@
             state.error = ''
             await web.createProject(state.project_name)
             state.creator_open = false
+            var response = await web.getProjects()
+            state.items = response
             store.reload()
         }
     }

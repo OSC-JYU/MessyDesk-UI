@@ -167,6 +167,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                 var target_node = elements.value.find(x => x.id == wsdata.target)
                 if(target_node) {
                     if(wsdata.image) target_node.data.image = wsdata.image
+                    if(wsdata.description) target_node.data.description = wsdata.description
                     if(wsdata.node) addNode(wsdata.node, wsdata.target)
                 }
             }
@@ -262,12 +263,8 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
         console.log(node)
         const newNode = {
             id: node.rid,
-            data: {
-                label: 'node.label',
-                type: 'file',
-                image: ''
-            },
-            type: 'image',
+            data: node,
+            type: node.type,
             position: { x: Math.random() * vueFlow.dimensions.value.width, y: Math.random() * vueFlow.dimensions.value.height },
         }
         elements.value.push(newNode)
@@ -287,18 +284,13 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 			RETURN  child, r2, child2`
 
             graph.result = await web.getGraph(query, route.query.node, CLUSTER)
-
-        
-        } else if(route.params.type == 'Project') {
-            const query = `MATCH (project:Project)-[r]->(child)
-            WHERE id(project) = "#${route.params.id}" 
-            OPTIONAL MATCH (child)-[r2*]->(child2)
-			RETURN  child, r2, child2`
-
-            graph.result = await web.getGraph(query, route.params.id, CLUSTER)
+      
+        } else {
+            await loadProjects()
         }
 
-		drawGraph(layout, route, oldValue)
+        drawGraph(layout, route, oldValue)
+
 	}
 
 
@@ -423,7 +415,17 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 	}
 
 
-
+    async function loadProjects() {
+        graph.result.data = {nodes: [], edges:[]}
+        graph.result.data.nodes = await web.getProjects()
+        // convert projects to graph format
+        for(var node of graph.result.data.nodes) {
+            node.data = {id:node['@rid']}
+            node.data.name = node.label
+            node.data.type = node['@type']
+        }
+        
+    }
 
 
 	async function initView() {
@@ -441,14 +443,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 			} 
 
 		} else if(props.mode == 'projects') {
-            graph.result.data = {nodes: [], edges:[]}
-            graph.result.data.nodes = await web.getProjects()
-            // convert projects to graph format
-            for(var node of graph.result.data.nodes) {
-                node.data = {id:node['@rid']}
-                node.data.name = node.label
-                node.data.type = node['@type']
-            }
+            await loadProjects()
             drawGraph('fcose', route)
         }
 	}
