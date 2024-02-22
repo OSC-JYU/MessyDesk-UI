@@ -57,6 +57,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                         <template #node-text="{ data }">
                             <TextNode :data="data" />
                         </template>
+                        
                         <template #node-set="{ data }">
                             <SetNode :data="data" />
                         </template>
@@ -423,6 +424,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
             node.data = {id:node['@rid']}
             node.data.name = node.label
             node.data.type = node['@type']
+            node.data.description = node.file_count + ' files'
         }
         
     }

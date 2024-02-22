@@ -40,7 +40,7 @@
                 <!-- Desk node not selected-->
                 <div v-if="!store.current_node" class="card-body">
                     <div v-for="item of state.items">
-                        <router-link   :to="`/graph?node=${item['@rid'].replace('#','')}`" >{{item.label}}</router-link> 
+                        <router-link   :to="`/graph?node=${item['@rid'].replace('#','')}`" >{{item.label}} ({{ item.file_count }} files)</router-link> 
                     </div>
                 </div>
             </div>
