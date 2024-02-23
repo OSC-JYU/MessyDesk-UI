@@ -1,12 +1,12 @@
 <style scoped>
 
 .node-body {
-  min-height: 100px;
+  min-height: 200px;
   min-width: 200px;
 }
 
 img {
-  width:200px;
+  width:160px;
 
 }
 .header {
@@ -19,8 +19,7 @@ img {
 
 <script setup>
 import { Handle, Position } from '@vue-flow/core'
-//import { computed } from 'vue'
-//import { colors } from '../presets.js'
+
 
 const props = defineProps({
   data: {
@@ -36,6 +35,12 @@ const props = defineProps({
     <div class="header"> {{ data.label }}</div>
     <img :src="data.image" />
   {{ data.description }}
+  <div class="row m-4">
+    <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">
+      <img v-for="f in data.paths" :src="f" class="w-200 shadow-1-strong rounded mb-4"/>
+    </div>
+  </div>
+   
   </div>
 
 

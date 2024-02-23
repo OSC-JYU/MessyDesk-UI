@@ -275,16 +275,11 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
 	async function loadGraph(route, oldValue) {
 		var layout = ''
-        graph.result = []
+        graph.result.data = {}
 
          if(route.query.node) {
 
-            const query = `MATCH (project:Project)-[r]->(child)
-            WHERE id(project) = "#${route.query.node}" 
-            OPTIONAL MATCH (child)-[r2*]->(child2)
-			RETURN  child, r2, child2`
-
-            graph.result = await web.getGraph(query, route.query.node, CLUSTER)
+            graph.result.data = await web.getProject(route.query.node)
       
         } else {
             await loadProjects()
@@ -309,7 +304,8 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                 data: {
                     type: node.data.type.toLowerCase(),
                     label: node.data.name,
-                    description: node.data.description
+                    description: node.data.description,
+                    paths: node.data.paths
                 }
             }
             if(node.data._type)
@@ -323,6 +319,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
             if(node.data.image) 
                 flownode.data.image = node.data.image
+
             elements.value.push(flownode)
         }
 
@@ -332,6 +329,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                 source: node.data.source,
                 target: node.data.target
             }
+
             elements.value.push(flowedge)
         }
         
@@ -425,6 +423,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
             node.data.name = node.label
             node.data.type = node['@type']
             node.data.description = node.file_count + ' files'
+            node.data.paths = node.paths
         }
         
     }
