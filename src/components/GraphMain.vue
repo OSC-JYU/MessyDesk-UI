@@ -30,9 +30,8 @@
                 <div class="h-100 d-flex flex-column w-100 m-0 p-0">
                     <div class="row justify-content-center m-0 p-0">
                         <JYUHeader/>
-                        <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasBottom" aria-controls="offcanvasBottom">Toggle bottom offcanvas</button>
-
                     </div>
+                    
                     <div class="row m-0 p-0  flex-grow-1">
                         <GraphDisplay mode="graph" />
                         <ProcessCreator mode="graph" />

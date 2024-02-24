@@ -79,6 +79,11 @@ web.getProject = async function(rid) {
 	return result.data
 }
 
+web.getSetFiles = async function(rid) {
+	var result = await axios.get(`/api/sets/${rid.replace('#', '')}/files`)
+	return result.data
+}
+
 web.getMenus = async function() {
 	var result = await axios.get(`/api/menus`)
 	return result.data
@@ -102,7 +107,7 @@ web.getStats = async function() {
 web.importFile = async function(dir, filename, mode) {
 	if(mode) filename = filename + '&mode=' + mode
 	var result = await axios.post(`/api/` + dir + '/import?filename=' + filename)
-	return result.data
+	return result
 }
 
 web.getStyle = async function() {

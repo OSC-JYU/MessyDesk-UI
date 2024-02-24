@@ -14,8 +14,61 @@
     .sidecard {
         min-width: 220px;
     }
+    .offcanvas-bottom {
+        height:50% !important;
+    }
+
+    .process-panel,
+.layout-panel {
+  display: flex;
+  gap: 10px;
+  z-index: 10000;
+}
 
 
+    .process-panel {
+  background-color: #2d3748;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+.process-panel button {
+  border: none;
+  cursor: pointer;
+  background-color: #4a5568;
+  border-radius: 8px;
+  color: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.process-panel button {
+  font-size: 16px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkbox-panel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.process-panel button:hover,
+.layout-panel button:hover {
+  background-color: #2563eb;
+  transition: background-color 0.2s;
+}
+
+.process-panel label {
+  color: white;
+  font-size: 12px;
+}
 .graph-display { 
   background: url(images/bg.jpg) no-repeat center center fixed; 
   background: rgb(94,94,110);
@@ -37,7 +90,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 		<div class="row h-100" >
 			<div class="col-9 px-0">
                 <div class="graph-display">
-                    <VueFlow v-model="elements" :fit-view-on-init = "true" >
+                    <VueFlow :nodes="elements.nodes" :edges="elements.edges"  >
                         <template #node-project="{ data }">
                             <ProjectNode :data="data" />
                         </template>
@@ -61,6 +114,26 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                         <template #node-set="{ data }">
                             <SetNode :data="data" />
                         </template>
+
+                        <Background />
+
+                        <Panel class="process-panel" position="top-right">
+                            <div class="layout-panel">
+
+
+                            <button title="set horizontal layout" @click="layoutGraph('LR')">
+                                <Icon name="horizontal" />
+                            </button>
+
+                            <button title="set vertical layout" @click="layoutGraph('TB')">
+                                <Icon name="vertical" />
+                            </button>
+
+                            <button title="shuffle graph" @click="shuffleGraph">
+                                <Icon name="shuffle" />
+                            </button>
+                            </div>
+                        </Panel>
                     </VueFlow>  
                 </div>
 			</div>
@@ -73,34 +146,35 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
             </div>
 		</div>
 
-        <div class="offcanvas offcanvas-bottom" tabindex="-1" id="offcanvasBottom" ref="offCanvasSet" aria-labelledby="offcanvasBottomLabel">
+        <div class="offcanvas offcanvas-bottom" tabindex="-1" id="ImageSetPanel" ref="offCanvasSet" aria-labelledby="offcanvasBottomLabel">
             <div class="offcanvas-header">
-                <h5 class="offcanvas-title" id="offcanvasBottomLabel">Offcanvas bottom</h5>
+                <h5 v-if="store.current_node" class="offcanvas-title" id="offcanvasBottomLabel"> {{ store.current_node.data.label }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body small">
-            <table class="table" ref="settable">
-            <thead>
-                <tr>
-                <th scope="col">name</th>
-                <th scope="col">First</th>
-                <th scope="col">Last</th>
-                <th scope="col">Handle</th>
-                </tr>
-            </thead>
-            <tbody>
-            <tr v-for="item in state.setdata.nodes">
-                <td>{{item.data.name}}</td>
-            </tr>
 
-            </tbody>
-            </table>
+                <div v-if="state.setdata.length" class="container">
+                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+                        <!-- Images -->
+                        <div v-for="file in state.setdata" class="col w-200 shadow-1-strong rounded mb-4">
+                            <div class="card">
+                                <img :src="file.thumb" :alt="file.label" class="image" />
+                                <div class="m-2">
+                                    {{ file.label }}
+                                    <div class="form-check form-switch">
+                                        <input @change="expandSetNode(file, store.current_node.id)" class="form-check-input" type="checkbox" role="switch" :id="file['@rid']">
+                                        <label class="form-check-label" :for="file['@rid']">Show in Desk</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
             </div>
         </div>
     </div>
 
 
-
+</div>
 
   
 </template>
@@ -108,7 +182,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
 <script setup>
 
-    import { onMounted, watch, reactive, ref, computed } from "vue";
+    import { onMounted, watch, reactive, ref, nextTick } from "vue";
     import web from "../web.js";
     import NodeCard from "./NodeCard.vue";
     import ProjectCard from "./ProjectCard.vue";
@@ -133,11 +207,17 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     import TextNode from './nodes/TextNode.vue'
     import SetNode from './nodes/SetNode.vue'
 
+    import { useShuffle } from './useShuffle'
+    import { useLayout } from './useLayout'
+    import Icon from './Icon.vue'
+
     // import * as bootstrap from "bootstrap/dist/js/bootstrap"
     import * as bootstrap from 'bootstrap';
     window.bootstrap = bootstrap;
 
-    const elements = ref([])
+    const { graph_dagre, layout, previousDirection } = useLayout()
+
+    const elements = reactive({nodes: [], edges:[]})
 
 
 
@@ -197,6 +277,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
     vueFlow.onNodeClick((event) => {
         store.current_node = event.node
+        
         //vueFlow.fitView()
     })
 
@@ -205,8 +286,12 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     })
 
     vueFlow.onNodeDoubleClick((event) => {
-        if(event.node.type == "project" )
+        if(event.node.type == "project" ) {
             router.push({ name: 'graph', query: { node: event.node.id.replace('#', '')} })
+        } else if(event.node.type == "set") {
+            toggleOffcanvas(event.node)
+        }
+           
     })
 
 
@@ -251,6 +336,23 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
         	else loadGraph(route, oldValue)
     })
 
+    async function layoutGraph(direction) {
+
+        //nodes.value = layout(nodes.value, edges.value, direction)
+        elements.nodes = layout(elements.nodes, elements.edges, direction)
+
+        nextTick(() => {
+            vueFlow.fitView()
+        })
+    }
+
+    async function toggleOffcanvas(node) {
+      const offcanvasElement = new bootstrap.Offcanvas(document.getElementById('ImageSetPanel'));
+      offcanvasElement.toggle(); // Toggle the offcanvas
+      console.log(node)
+      state.setdata = await web.getSetFiles(node.id)
+    }
+
     function updateGraphNode(update) {
         console.log(update)
         cy.nodes().forEach(function( ele ){
@@ -261,6 +363,20 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     }
 
     function addNode(node, target) {
+        console.log(node)
+        const newNode = {
+            id: node.rid,
+            data: node,
+            type: node.type,
+            position: { x: Math.random() * vueFlow.dimensions.value.width, y: Math.random() * vueFlow.dimensions.value.height },
+        }
+        elements.value.push(newNode)
+        //vueFlow.addNodes([newNode])
+        elements.value.push({id:6, source: target, target: node.rid})
+    }
+
+    function expandSetNode(node, target) {
+        if(node['@rid']) node.rid = node['@rid']
         console.log(node)
         const newNode = {
             id: node.rid,
@@ -292,8 +408,6 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
     async function drawGraph(layout_name, route, oldValue) {
 
-        elements.value = []
-
 
         var positions = await getNodePositions()
 
@@ -320,7 +434,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
             if(node.data.image) 
                 flownode.data.image = node.data.image
 
-            elements.value.push(flownode)
+            elements.nodes.push(flownode)
         }
 
         for(var node of graph.result.data.edges) {
@@ -330,7 +444,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                 target: node.data.target
             }
 
-            elements.value.push(flowedge)
+            elements.edges.push(flowedge)
         }
         
         vueFlow.fitView()
@@ -404,7 +518,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 	async function saveLayout() {
         //console.log(elements.value)
 		var positions = {}
-		elements.value.forEach(function(ele){
+		elements.nodes.forEach(function(ele){
 			positions[ele.id] = ele.position
 		})
 		if(route.query.node)

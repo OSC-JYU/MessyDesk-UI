@@ -31,9 +31,18 @@ const props = defineProps({
 
 <template>
   <div class="node-body">
-    <div class="header"> {{ data.label }}</div>
-   
-    {{ data.description }}
+    <div class="header">IMAGE SET:  {{ data.label }}</div>
+    <div class="m-2">
+
+      {{ data.description }} jotain kuvia
+    </div>
+
+    <div class="row m-4">
+      <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">
+        <img v-for="f in data.paths" :src="f" class="w-200 shadow-1-strong rounded mb-4"/>
+      </div>
+    </div>
+
     <Handle id="a" type="target" :position="Position.Left" />
     <Handle id="b" type="source" :position="Position.Right" /> 
   </div>
