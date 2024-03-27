@@ -2,10 +2,12 @@
     .enabled {
         background-color: greenyellow;
         color: black;
+        margin:2px;
     }
     .disabled {
         background-color: pink;
         color: black;
+        margin:2px;
     }
 </style>
 
@@ -49,90 +51,92 @@
                     <div class="row justify-content-center m-0 p-0">
                         <JYUHeader/>
                     </div>
-                    <div class="row m-0 p-0 mt-5 flex-grow-1">
-                   
-                        <h3>Services For Images</h3>
-                        <div v-for="service in state.services.image">
-                      
-                            <div>
-                                <b>{{ service.id }}</b> {{ service.url }} 
-                                <span v-if="service.online" class="badge enabled">online</span>
-                                <span v-else class="badge disabled">offline</span>
-                                <span v-if="service.enabled" class="badge enabled">enabled</span>
-                                <span v-else class="badge disabled">disabled</span>
-                                <span>
-                                    <div v-if="service.online" class="form-check form-switch">
-                                        <input v-model="service.enabled" @change="enable(service.id)" class="form-check-input" type="checkbox" id="flexSwitchCheckChecked">
-                                        <label class="form-check-label" for="flexSwitchCheckChecked">enabled</label>
-                                    </div>
-                                </span>
-
-
-                            </div>
-
-                            <div>
-                                <ul class="list-group">
-                                    <li class="list-group-item list-group-item-primary" v-for="s in service.tasks">
-                                        {{ s.name }} 
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <h3>Services For PDF</h3>
-                        <div v-for="service in state.services.pdf">
-                      
-                            <div>
-                                <b>{{ service.id }}</b> {{ service.url }}
-                                <span v-if="service.online" class="badge enabled">online</span>
-                                <span v-else class="badge disabled">offline</span>
-                                <span v-if="service.enabled" class="badge enabled">enabled</span>
-                                <span v-else class="badge disabled">disabled</span>
-                                <span>
-                                    <div v-if="service.online" class="form-check form-switch">
-                                        <input v-model="service.enabled" class="form-check-input" type="checkbox" id="flexSwitchCheckChecked">
-                                        <label class="form-check-label" for="flexSwitchCheckChecked">enabled</label>
-                                    </div>
-                                </span>
-                            </div>
-
-                            <div>
-                                <ul class="list-group">
-                                    <div  class="list-group-item list-group-item-primary" v-for="s in service.tasks">
-                                        {{ s.name }}
-                                    </div>
-                                </ul>
-
-                            </div>
-                        </div>
-
-                        <h3>Services For text</h3>
-                        <div  v-for="service in state.services.text">
-                      
-                            <div>
-                                <b>{{ service.id }}</b> {{ service.url }}
-                                <span v-if="service.online" class="badge enabled">online</span>
-                                <span v-else class="badge disabled">offline</span>
-                                <span v-if="service.enabled" class="badge enabled">enabled</span>
-                                <span v-else class="badge disabled">disabled</span>
-                                <span>
-                                    <div v-if="service.online" class="form-check form-switch">
-                                        <input v-model="service.enabled" class="form-check-input" type="checkbox" id="flexSwitchCheckChecked">
-                                        <label class="form-check-label" for="flexSwitchCheckChecked">enabled</label>
-                                    </div>
-                                </span>
-                            </div>
-
-                            <div>
-                                <ul class="list-group">
-                                    <div  class="list-group-item list-group-item-primary" v-for="s in service.tasks">
-                                        {{ s.name }}
-                                    </div>
-                                </ul>
-                            </div>
-                        </div>
-
+                    <div class="m-2">
+                        <h4 class="mt-5">Services For Images</h4>
+                        <div class="row m-0 p-0 mt-0 flex-grow-1 ">
                     
+                            <div class="card bg-light p-2 m-2" style="width: 18rem;" v-for="service in state.services.image">
+                        
+                            
+                                    <div class="card-header">
+
+                                        <b>{{ service.id }}</b> {{ service.url }}
+                                        <span v-if="service.online" class="badge enabled">online</span>
+                                        <span v-else class="badge disabled">offline</span>
+                                        <span v-if="service.disabled" class="badge disabled">disabled</span>
+                                        
+                                        <span v-if="service.nomad" class="badge enabled">nomad</span>
+                                        <span v-else class="badge disabled">static</span>
+                                    </div>
+
+                                    
+                                    <div class="card-body">
+                                        queue: {{ service.queue.items.length }}
+                                        <ul class="list-group">
+                                            <div  class="list-group-item " v-for="s in service.tasks">
+                                                {{ s.name }}
+                                            </div>
+                                        </ul>
+                                    </div>
+                                
+                            </div>
+                        </div>
+
+                        <h4 class="mt-5">Services For PDF</h4>
+                        <div class="row m-0 p-0 mt-0 flex-grow-1 ">
+                            <div class="card bg-light p-2 m-2" style="width: 18rem;" v-for="service in state.services.pdf">
+                        
+                                <div class="card">
+                                    <div class="card-header">
+
+                                        <b>{{ service.id }}</b> {{ service.url }}
+                                        <span v-if="service.online" class="badge enabled">online</span>
+                                        <span v-else class="badge disabled">offline</span>
+                                        <span v-if="service.disabled" class="badge disabled">disabled</span>
+                                        
+                                        <span v-if="service.nomad" class="badge enabled">nomad</span>
+                                        <span v-else class="badge disabled">static</span>
+                                    </div>
+
+                                    
+                                    <div class="card-body">
+                                        <ul class="list-group">
+                                            <div  class="list-group-item " v-for="s in service.tasks">
+                                                {{ s.name }}
+                                            </div>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4 class="mt-5">Services For text</h4>
+                        <div class="row m-0 p-0 mt-0 flex-grow-1 ">
+                            <div class="card bg-light p-2 m-2" style="width: 18rem;" v-for="service in state.services.text">
+                        
+                                <div class="card">
+                                    <div class="card-header">
+
+                                        <b>{{ service.id }}</b> {{ service.url }}
+                                        <span v-if="service.online" class="badge enabled">online</span>
+                                        <span v-else class="badge disabled">offline</span>
+                                        <span v-if="service.disabled" class="badge disabled">disabled</span>
+                                        
+                                        <span v-if="service.nomad" class="badge enabled">nomad</span>
+                                        <span v-else class="badge disabled">static</span>
+                                    </div>
+
+                                    
+                                    <div class="card-body">
+                                        <ul class="list-group">
+                                            <div  class="list-group-item " v-for="s in service.tasks">
+                                                {{ s.name }}
+                                            </div>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

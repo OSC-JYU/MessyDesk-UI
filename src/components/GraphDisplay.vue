@@ -128,10 +128,6 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                             <button title="set vertical layout" @click="layoutGraph('TB')">
                                 <Icon name="vertical" />
                             </button>
-
-                            <button title="shuffle graph" @click="shuffleGraph">
-                                <Icon name="shuffle" />
-                            </button>
                             </div>
                         </Panel>
                     </VueFlow>  
@@ -447,7 +443,8 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
             elements.edges.push(flowedge)
         }
         
-        vueFlow.fitView()
+        layoutGraph('LR')
+        //vueFlow.fitView()
         //var layout = getLayoutSettings(layout_name)
         
 
