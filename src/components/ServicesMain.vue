@@ -71,7 +71,7 @@
 
                                     
                                     <div class="card-body">
-                                        queue: {{ service.queue.items.length }}
+                                       
                                         <ul class="list-group">
                                             <div  class="list-group-item " v-for="s in service.tasks">
                                                 {{ s.name }}
@@ -100,6 +100,7 @@
 
                                     
                                     <div class="card-body">
+                                        
                                         <ul class="list-group">
                                             <div  class="list-group-item " v-for="s in service.tasks">
                                                 {{ s.name }}
