@@ -9,6 +9,11 @@
         color: black;
         margin:2px;
     }
+    .has {
+        background-color: rgb(163, 166, 237);
+        color: black;
+        margin:2px;
+    }
 </style>
 
 <script setup>
@@ -60,23 +65,39 @@
                             
                                     <div class="card-header">
 
-                                        <b>{{ service.id }}</b> {{ service.url }}
-                                        <span v-if="service.online" class="badge enabled">online</span>
-                                        <span v-else class="badge disabled">offline</span>
-                                        <span v-if="service.disabled" class="badge disabled">disabled</span>
-                                        
-                                        <span v-if="service.nomad" class="badge enabled">nomad</span>
+                                        <b>{{ service.id }}</b> 
+                                        <span v-if="service.nomad_hcl" title="service has .hcl file" class="badge has">hcl</span>
                                         <span v-else class="badge disabled">static</span>
+                                        {{ service.url }}
+                                        <div>
+                                            <span v-if="service.consumers.length" class="badge          enabled">online {{ service.consumers.length }}</span>
+                                            <span v-else class="badge disabled">offline</span>
+
+                                            <span v-if="service.disabled" class="badge disabled">disabled</span>
+
+                                            <span v-if="service.nomad" class="badge enabled">nomad</span>
+   
+                                        </div>
+  
                                     </div>
 
                                     
                                     <div class="card-body">
                                        
-                                        <ul class="list-group">
-                                            <div  class="list-group-item " v-for="s in service.tasks">
-                                                {{ s.name }}
-                                            </div>
-                                        </ul>
+                                        <p class="d-inline-flex gap-1">
+
+                                            <button class="btn btn-primary" type="button" data-bs-toggle="collapse" :data-bs-target="'#'+service.id" aria-expanded="false" aria-controls="collapseExample">
+                                                Tasks
+                                            </button>
+                                        </p>
+                                        <div class="collapse" :id="service.id">
+                                            <ul class="list-group">
+                                                <div  class="list-group-item " v-for="s in service.tasks">
+                                                <b>{{ s.name }}</b>
+                                                <p>{{ s.description }}</p>
+                                                </div>
+                                            </ul>
+                                        </div>
                                     </div>
                                 
                             </div>
@@ -89,23 +110,40 @@
                                 <div class="card">
                                     <div class="card-header">
 
-                                        <b>{{ service.id }}</b> {{ service.url }}
-                                        <span v-if="service.online" class="badge enabled">online</span>
-                                        <span v-else class="badge disabled">offline</span>
-                                        <span v-if="service.disabled" class="badge disabled">disabled</span>
-                                        
-                                        <span v-if="service.nomad" class="badge enabled">nomad</span>
+                                        <b>{{ service.id }}</b> 
+                                        <span v-if="service.nomad_hcl" title="service has .hcl file" class="badge has">hcl</span>
                                         <span v-else class="badge disabled">static</span>
+                                        {{ service.url }}
+
+                                        <div>
+                                            <span v-if="service.consumers.length" class="badge          enabled">online {{ service.consumers.length }}</span>
+                                            <span v-else class="badge disabled">offline</span>
+
+                                            <span v-if="service.disabled" class="badge disabled">disabled</span>
+                                            <span v-if="service.nomad" class="badge enabled">nomad</span>
+                                        </div>                                                        
+
+                                        
+   
                                     </div>
 
                                     
                                     <div class="card-body">
-                                        
-                                        <ul class="list-group">
-                                            <div  class="list-group-item " v-for="s in service.tasks">
-                                                {{ s.name }}
-                                            </div>
-                                        </ul>
+    
+                                        <p class="d-inline-flex gap-1">
+
+                                            <button class="btn btn-primary" type="button" data-bs-toggle="collapse" :data-bs-target="'#'+service.id" aria-expanded="false" aria-controls="collapseExample">
+                                                Tasks
+                                            </button>
+                                        </p>
+                                        <div class="collapse" :id="service.id">
+                                            <ul class="list-group">
+                                                 <div  class="list-group-item " v-for="s in service.tasks">
+                                                    <b>{{ s.name }}</b>
+                                                <p>{{ s.description }}</p>
+                                                </div>
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -118,22 +156,37 @@
                                 <div class="card">
                                     <div class="card-header">
 
-                                        <b>{{ service.id }}</b> {{ service.url }}
-                                        <span v-if="service.online" class="badge enabled">online</span>
-                                        <span v-else class="badge disabled">offline</span>
-                                        <span v-if="service.disabled" class="badge disabled">disabled</span>
-                                        
-                                        <span v-if="service.nomad" class="badge enabled">nomad</span>
+                                        <b>{{ service.id }}</b> 
+                                        <span v-if="service.nomad_hcl" title="service has .hcl file" class="badge has">hcl</span>
                                         <span v-else class="badge disabled">static</span>
+                                        {{ service.url }}
+                                        
+                                        <div>
+                                            <span v-if="service.consumers.length" class="badge enabled">online {{ service.consumers.length }}</span>
+                                            <span v-else class="badge disabled">offline</span>
+
+                                            <span v-if="service.disabled" class="badge disabled">disabled</span>
+                                            <span v-if="service.nomad" class="badge enabled">nomad</span>
+                                        </div>
                                     </div>
 
                                     
                                     <div class="card-body">
-                                        <ul class="list-group">
-                                            <div  class="list-group-item " v-for="s in service.tasks">
-                                                {{ s.name }}
-                                            </div>
-                                        </ul>
+
+                                        <p class="d-inline-flex gap-1">
+
+                                            <button class="btn btn-primary" type="button" data-bs-toggle="collapse" :data-bs-target="'#'+service.id" aria-expanded="false" aria-controls="collapseExample">
+                                                Tasks
+                                            </button>
+                                        </p>
+                                        <div class="collapse" :id="service.id">
+                                            <ul class="list-group">
+                                                <div  class="list-group-item " v-for="s in service.tasks">
+                                                    <b>{{ s.name }}</b>
+                                                <p>{{ s.description }}</p>
+                                                </div>
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
