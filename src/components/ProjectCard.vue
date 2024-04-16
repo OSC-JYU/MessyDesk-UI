@@ -27,11 +27,12 @@
             </div>
 
             <!-- Desk Creator closed-->
-            <div v-else>            
+            <div v-else>       
+                 
                 <!-- Desk node selected-->
                 <div v-if="store.current_node && state.project">
-                    <h3>{{ state.project[0].label }}</h3>
-                    <div>{{ state.project[0].description }}</div>
+                    <!-- <h3>{{ state.project[0].label }}</h3>
+                    <div>{{ state.project[0].description }}</div> -->
                     <button class="btn">
                         <router-link   :to="`/graph?node=${store.current_node.id.replace('#','')}`" >open</router-link>
                     </button>
@@ -68,7 +69,10 @@
     watch(
         () => store.current_node,
         async (newValue, oldValue) => {
-            await getProjectData()
+            if(newValue)
+                await getProjectData()
+            else    
+                state.project = null
     })
 
     async function create() {

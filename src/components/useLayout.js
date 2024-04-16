@@ -28,7 +28,7 @@ export function useLayout() {
     previousDirection.value = direction
 
     for (const node of nodes) {
-      console.log('node.id:', node.id)
+      //console.log('node.id:', node.id)
       // if you need width+height of nodes for your layout, you can use the dimensions property of the internal node (`GraphNode` type)
       //const graphNode = findNode(node.id)
 
@@ -46,7 +46,7 @@ export function useLayout() {
 
     // set nodes with updated positions
     return nodes.map((node) => {
-      console.log(node.id)
+      //console.log(node.id)
       const nodeWithPosition = dagreGraph.node(node.id)
 
       return {

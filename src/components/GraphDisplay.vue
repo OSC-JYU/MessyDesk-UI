@@ -190,7 +190,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     import { GlobalVueFlowStorage, Position, VueFlow, defaultNodeTypes, useVueFlow } from '@vue-flow/core'
 
     //const { getNode, onNodeClick, onNodeDoubleClick, onNodeDragStop} = useVueFlow()
-    const vueFlow = useVueFlow({
+    const flow = useVueFlow({
         defaultZoom: 0.5,
         maxZoom: 3,
         minZoom: 0.1,
@@ -238,10 +238,13 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     // Websocket for UI updates
     let connection = new WebSocket('ws://localhost:8200/ws');
     connection.onmessage = (event) => {
+        console.log('tuli message')
+        console.log(event)
         try {
             var wsdata = JSON.parse(event.data)
             if(wsdata.target) {
-                var target_node = elements.value.find(x => x.id == wsdata.target)
+                console.log('got message')
+                var target_node = elements.nodes.find(x => x.id == wsdata.target)
                 if(target_node) {
                     if(wsdata.image) target_node.data.image = wsdata.image
                     if(wsdata.description) target_node.data.description = wsdata.description
@@ -249,6 +252,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                 }
             }
         } catch(e) {
+            console.log('WS virhe', e)
             console.log(event.data)
         }
     }
@@ -264,24 +268,25 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     })
 
 
-    vueFlow.onNodeDragStop((event) => {
+    flow.onNodeDragStop((event) => {
         store.current_node = event.node
-        saveLayout()
-        connection.send('dadaa')
+        console.log(event.node.position)
+        //saveLayout()
+        connection.send(JSON.stringify({id:event.node.id, position:event.node.position}))
     })
 
 
-    vueFlow.onNodeClick((event) => {
+    flow.onNodeClick((event) => {
         store.current_node = event.node
         
-        //vueFlow.fitView()
+        //flow.fitView()
     })
 
-    vueFlow.onPaneClick((event) => {
+    flow.onPaneClick((event) => {
         store.current_node = null
     })
 
-    vueFlow.onNodeDoubleClick((event) => {
+    flow.onNodeDoubleClick((event) => {
         if(event.node.type == "project" ) {
             router.push({ name: 'graph', query: { node: event.node.id.replace('#', '')} })
         } else if(event.node.type == "set") {
@@ -338,7 +343,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
         elements.nodes = layout(elements.nodes, elements.edges, direction)
 
         nextTick(() => {
-            vueFlow.fitView()
+            flow.fitView()
         })
     }
 
@@ -364,10 +369,9 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
             id: node.rid,
             data: node,
             type: node.type,
-            position: { x: Math.random() * vueFlow.dimensions.value.width, y: Math.random() * vueFlow.dimensions.value.height },
+            position: { x: Math.random() * flow.dimensions.value.width, y: Math.random() * flow.dimensions.value.height },
         }
         elements.value.push(newNode)
-        //vueFlow.addNodes([newNode])
         elements.value.push({id:6, source: target, target: node.rid})
     }
 
@@ -378,10 +382,10 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
             id: node.rid,
             data: node,
             type: node.type,
-            position: { x: Math.random() * vueFlow.dimensions.value.width, y: Math.random() * vueFlow.dimensions.value.height },
+            position: { x: Math.random() * flow.dimensions.value.width, y: Math.random() * flow.dimensions.value.height },
         }
         elements.value.push(newNode)
-        //vueFlow.addNodes([newNode])
+        //flow.addNodes([newNode])
         elements.value.push({id:6, source: target, target: node.rid})
     }
 
@@ -443,8 +447,13 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
             elements.edges.push(flowedge)
         }
         
-        layoutGraph('LR')
-        //vueFlow.fitView()
+        if(props.mode !== 'projects')
+            layoutGraph('LR')
+
+        nextTick(() => {
+            flow.fitView()
+        })
+        //flow.fitView()
         //var layout = getLayoutSettings(layout_name)
         
 
@@ -513,10 +522,11 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 	}
 
 	async function saveLayout() {
-        //console.log(elements.value)
+        console.log(elements.value)
 		var positions = {}
 		elements.nodes.forEach(function(ele){
 			positions[ele.id] = ele.position
+            console.log(ele)
 		})
 		if(route.query.node)
 			web.saveLayout(positions, route.query.node)

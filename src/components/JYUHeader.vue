@@ -11,10 +11,7 @@
     const props = defineProps({
         mode: ''
     })
-    onMounted(async()=>{
-        store.menus = await web.getMenus()
-        //store.groups = await web.getGroups()
-    })
+
 </script>
 
 <template>
@@ -33,31 +30,7 @@
 
 
 
-          <!-- TAGS -->
-          <li v-if="store.tags.length > 0" class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                Roolit
-              </a>
-              <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                  <li v-for="tag in store.tags" :key="tag['@rid']" >
-                    <router-link :to="`/graph?tag=${tag['@rid'].replace('#','')}`" class="dropdown-item">{{tag.label}}</router-link>
-                  </li>
-              </ul>
-          </li>
 
-
-          <!-- LISTS -->
-          <li v-if="store.tags.length > 0" class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                Listat
-              </a>
-              <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-
-                  <li v-for="schema in store.schemas" :key="schema.type" >
-                    <router-link :to="`/list/${schema.type}`" class="dropdown-item">{{schema.label}}</router-link>
-                  </li>
-              </ul>
-          </li>
 
 
       </ul>
