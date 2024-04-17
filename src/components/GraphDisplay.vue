@@ -120,7 +120,6 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                         <Panel class="process-panel" position="top-right">
                             <div class="layout-panel">
 
-
                             <button title="set horizontal layout" @click="layoutGraph('LR')">
                                 <Icon name="horizontal" />
                             </button>
@@ -128,6 +127,10 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                             <button title="set vertical layout" @click="layoutGraph('TB')">
                                 <Icon name="vertical" />
                             </button>
+                            <button v-if="store.current_node" title="DEBUG: add node" @click="addNode({rid: Math.random() + 'p', type: 'process', position: { x: 100, y: 100 }}, store.current_node.id)">
+                                <Icon name="plus" />   <i class="fs-5 bi-plus-circle"></i>
+                            </button>
+                            <span v-if="store.current_node" style="color:white" >{{ store.current_node.data.label }}</span>
                             </div>
                         </Panel>
                     </VueFlow>  
@@ -243,13 +246,18 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
         try {
             var wsdata = JSON.parse(event.data)
             if(wsdata.target) {
-                console.log('got message')
-                var target_node = elements.nodes.find(x => x.id == wsdata.target)
-                if(target_node) {
-                    if(wsdata.image) target_node.data.image = wsdata.image
-                    if(wsdata.description) target_node.data.description = wsdata.description
-                    if(wsdata.node) addNode(wsdata.node, wsdata.target)
+                console.log('got message:', wsdata.command)
+                if(wsdata.command == 'add') {
+                    addNode(wsdata.target, wsdata.type, wsdata.node)
+                } else if (wsdata.command == 'update') {
+                    console.log('updating ', wsdata.target)
+                    var target_node = elements.nodes.find(x => x.id == wsdata.target)
+                    if(target_node) {
+                        if(wsdata.image) target_node.data.image = wsdata.image
+                        if(wsdata.description) target_node.data.description = wsdata.description
+                    }
                 }
+
             }
         } catch(e) {
             console.log('WS virhe', e)
@@ -363,16 +371,26 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
         });
     }
 
-    function addNode(node, target) {
+    function addNode(target, type, node) {
+        console.log(target)
         console.log(node)
+        const id = node['@rid'] || node.rid || node.id
+        const nodetype = node['@type'] || node.type
         const newNode = {
-            id: node.rid,
+            id: id,
             data: node,
-            type: node.type,
+            image: 'api/thumbnails/projects/73_2/files/31_13',
+            type: type,
             position: { x: Math.random() * flow.dimensions.value.width, y: Math.random() * flow.dimensions.value.height },
         }
-        elements.value.push(newNode)
-        elements.value.push({id:6, source: target, target: node.rid})
+        
+        console.log('adding node', newNode)
+        console.log('to node ', target)
+        elements.nodes.push(newNode)
+        console.log(`source: ${target}, target: ${id}`)
+
+        elements.edges.push({id:Math.random() + 'edge', source: target, target: id})
+        layoutGraph('LR')
     }
 
     function expandSetNode(node, target) {

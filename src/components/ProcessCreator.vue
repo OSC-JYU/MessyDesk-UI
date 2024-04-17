@@ -108,7 +108,7 @@ console.log(state.out_params)
 		var res = await web.createFileProcess(process, store.current().id)
 		//var node = res.data.result[0]
 		//console.log(res)
-		store.reload()
+		//store.reload()
 		close()
 
 	}

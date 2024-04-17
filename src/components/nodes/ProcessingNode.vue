@@ -28,6 +28,7 @@ const props = defineProps({
 <template>
   <div class="header"> {{ data.label }}</div>
   <img src="icons/cookie-bite-solid.svg" />
+  {{ data }}
 
 
 

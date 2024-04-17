@@ -107,8 +107,8 @@
 
         <!-- CRUNCHERS -->
         <div v-if="!['Process', 'Project','Person'].includes(store.current().type)" class="card-body overflow-auto">
-            <h5>Things that you can do with your {{ schema.result._attributes.type }}</h5>
-            {{ store.current().data }}
+            <h5 v-if="store.current().type != 'process'">Things that you can do with your {{ schema.result._attributes.type }}</h5>
+           <!-- {{ store.current().data }}-->
 
             <div>
                 <div v-if="services.result && services.result.for_format && services.result.for_format.length == 0" class="alert alert-warning">No crunchers found</div>
@@ -231,7 +231,6 @@
     watch(
         () => route.query.node,
         async (newValue, oldValue) => {
-            console.log('ROUTER: on query.node')
             if(newValue)
                 loadData(newValue)
             else
@@ -242,7 +241,6 @@
     watch(
         () => store.current_node,
         async (newValue, oldValue) => {
-            console.log('ROUTER: on current_node')
             reset()
             if(newValue)
                 loadData(store.current().id)
@@ -280,7 +278,6 @@
     }
 
     async function loadData(rid) {
-        console.log('loading node data...')
         schema.result = await web.getSchemaAndData(rid)
         state.thumbnail = getThumbnail()
         if (schema.result._attributes['@type'] == 'Process')
