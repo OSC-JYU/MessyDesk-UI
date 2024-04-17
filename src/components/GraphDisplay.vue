@@ -410,6 +410,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
 
         var positions = await getNodePositions()
+        console.log(positions)
 
         for(var node of graph.result.data.nodes) {
             var flownode = {
@@ -425,8 +426,8 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
             if(node.data._type)
                 flownode.type = node.data._type.toLowerCase()
 
-            if(positions.positions && positions.positions[node.data.id]) {
-                flownode.position = positions.positions[node.data.id]
+            if(positions && positions[node.data.id]) {
+                flownode.position = positions[node.data.id]
             } else {
                 flownode.position = getDefaultPosition()
             }
@@ -498,10 +499,8 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
         if(node) {
             console.log(node)
             var node_layout = await web.getLayoutByTarget(node)
-            if(node_layout.positions) {
-                console.log('positions found')
-                return node_layout
-            }
+            return node_layout
+
         }
         return 0
     }
