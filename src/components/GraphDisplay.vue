@@ -91,6 +91,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 			<div class="col-9 px-0">
                 <div class="graph-display">
                     <VueFlow :nodes="elements.nodes" :edges="elements.edges"  >
+                        <Background />
                         <template #node-project="{ data }">
                             <ProjectNode :data="data" />
                         </template>
@@ -191,6 +192,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     import { useRouter, useRoute } from 'vue-router'
 
     import { GlobalVueFlowStorage, Position, VueFlow, defaultNodeTypes, useVueFlow } from '@vue-flow/core'
+    import { Background } from '@vue-flow/background'
 
     //const { getNode, onNodeClick, onNodeDoubleClick, onNodeDragStop} = useVueFlow()
     const flow = useVueFlow({
@@ -438,7 +440,8 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                     type: node.data.type.toLowerCase(),
                     label: node.data.name,
                     description: node.data.description,
-                    paths: node.data.paths
+                    paths: node.data.paths,
+                    info: node.data.info
                 }
             }
             if(node.data._type)

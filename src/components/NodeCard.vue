@@ -308,6 +308,7 @@
     }
 
     function initProcessCreator(data, task_id) {
+        console.log(data)
         store.process = data
         store.task_id = task_id
         store.new_node_label = 'Process'

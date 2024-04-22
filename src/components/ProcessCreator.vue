@@ -23,7 +23,9 @@
 								<input v-model="state.out_params[key]" type="text" class="form-control" placeholder=""  aria-label="Username" aria-describedby="basic-addon1">
 								<div>{{ help.help }}</div>
 							</div>
+							
 						</div>
+						
 						<div v-else-if="store.process.params_help" >
 							<div v-for="(help, key) in store.process.params_help" :key="key" class="input-group mb-3">
 								<div class="input-group-prepend">
@@ -76,6 +78,7 @@
 		current_type: '',
 		current_schema: null,
 		out_params: {},
+		user_info: '',
 		error: ''
 	})
 	var new_node = reactive({})
@@ -92,7 +95,7 @@
 
     })
 
-	async function createProcess(process) {
+	async function createProcess() {
 		// we must send ELG "params" 
 		// target
 		state.error = ''
@@ -104,6 +107,12 @@ console.log(state.out_params)
 		var process = {id: store.process.id, task: store.task_id}
 		process.params = state.out_params
 		process.params.task = store.task_id
+		if(store.process.tasks[store.task_id].info) process.info = store.process.tasks[store.task_id].info
+
+		if(store.process.tasks[store.task_id].info) {
+			console.log('INFO LÖYTYI')
+			process.info = createUserInfo(store.process.tasks[store.task_id].info, state.out_params)
+		}
 		console.log(process)
 		var res = await web.createFileProcess(process, store.current().id)
 		//var node = res.data.result[0]
@@ -117,6 +126,20 @@ console.log(state.out_params)
 		store.new_node_type = ''
 		store.new_node_relation = null
 		store.process_creator_open = false
+	}
+
+	function createUserInfo(info, params) {
+		if(info) {
+			console.log('params:')
+			for(var key of Object.keys(params)) {
+				console.log(key)
+				info = info.replace('{{' + key + '}}', params[key])
+			}
+			return info
+		} else {
+			return JSON.stringify(params)
+		}
+
 	}
 
 	function initForm() {
