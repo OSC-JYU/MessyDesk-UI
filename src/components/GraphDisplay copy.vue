@@ -1,4 +1,7 @@
 <style>
+
+    @import '@vue-flow/core/dist/style.css';
+
     .graph {
         background-color: white;
     }
@@ -11,84 +14,214 @@
     .sidecard {
         min-width: 220px;
     }
+    .offcanvas-bottom {
+        height:50% !important;
+    }
+
+    .process-panel,
+.layout-panel {
+  display: flex;
+  gap: 10px;
+  z-index: 10000;
+}
+
+
+    .process-panel {
+  background-color: #2d3748;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+.process-panel button {
+  border: none;
+  cursor: pointer;
+  background-color: #4a5568;
+  border-radius: 8px;
+  color: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.process-panel button {
+  font-size: 16px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkbox-panel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.process-panel button:hover,
+.layout-panel button:hover {
+  background-color: #2563eb;
+  transition: background-color 0.2s;
+}
+
+.process-panel label {
+  color: white;
+  font-size: 12px;
+}
+.graph-display { 
+  background: url(images/bg.jpg) no-repeat center center fixed; 
+  background: rgb(94,94,110);
+background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(129,159,176,0.5508404045211834) 7%, rgba(69,130,159,0) 100%);
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+  width: 100%;
+  height: 100%;
+}
 
 </style>
 
 <template>
+ 
 
-    <div id="container" >
+ <div id="container" >
 		<div class="row h-100" >
-			<div class="col-9">
-				<div id="cy" class="cy"></div>
+			<div class="col-9 px-0">
+                <div class="graph-display">
+                    <VueFlow  fit-view-on-init>
+                        <Background />
+                        <template #node-project="{ data }">
+                            <ProjectNode :data="data" />
+                        </template>
+
+                        <template #node-image="{ data }">
+                            <ImageNode :data="data" />
+                        </template>
+
+                        <template #node-process="{ data }">
+                            <ProcessingNode :data="data" />
+                        </template>
+
+                        <template #node-pdf="{ data }">
+                            <PDFNode :data="data" />
+                        </template>
+
+                        <template #node-text="{ data }">
+                            <TextNode :data="data" />
+                        </template>
+                        
+                        <template #node-set="{ data }">
+                            <SetNode :data="data" />
+                        </template>
+
+                        <Background />
+
+                        <Panel class="process-panel" position="top-right">
+                            <div class="layout-panel">
+
+                            <button title="set horizontal layout" @click="layoutGraph('LR')">
+                                <Icon name="horizontal" />
+                            </button>
+
+                            <button title="set vertical layout" @click="layoutGraph('TB')">
+                                <Icon name="vertical" />
+                            </button>
+                            <button @click="flow.fitView()">fit</button>
+                            <button v-if="store.current_node" title="DEBUG: add node" @click="addNode({rid: Math.random() + 'p', type: 'process', position: { x: 100, y: 100 }}, store.current_node.id)">
+                                <Icon name="plus" />   <i class="fs-5 bi-plus-circle"></i>
+                            </button>
+                            <span v-if="store.current_node" style="color:white" >{{ store.current_node.data.label }}</span>
+                            </div>
+                        </Panel>
+                    </VueFlow>  
+                </div>
 			</div>
+
             <div class="col-3 sidebar p-0 h-100">
+            
                 <NodeCard v-if="props.mode == 'graph'" @setGraphOptions="setGraphOptions" @saveLayout="saveLayout" @fitGraph="fitGraph" class="h-100 w-100 position-absolute"/>
-                <NavigationCard v-if="props.mode == 'queries'" @setGraphOptions="setGraphOptions" @saveLayout="saveLayout" class="h-100 w-100 position-absolute"/>
-                <AboutCard v-if="props.mode == 'about'" class="h-100 w-100 position-absolute"/>
-                <StatsCard v-if="props.mode == 'stats'" class="h-100 w-100 position-absolute"/>
-                <ListCard v-if="props.mode == 'list'" class="h-100 w-100 position-absolute"/>
+                <ProjectCard v-if="props.mode == 'projects'"></ProjectCard>
+                
             </div>
 		</div>
 
-        <div class="offcanvas offcanvas-bottom" tabindex="-1" id="offcanvasBottom" ref="offCanvasSet" aria-labelledby="offcanvasBottomLabel">
+        <div class="offcanvas offcanvas-bottom" tabindex="-1" id="ImageSetPanel" ref="offCanvasSet" aria-labelledby="offcanvasBottomLabel">
             <div class="offcanvas-header">
-                <h5 class="offcanvas-title" id="offcanvasBottomLabel">Offcanvas bottom</h5>
+                <h5 v-if="store.current_node" class="offcanvas-title" id="offcanvasBottomLabel"> {{ store.current_node.data.label }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body small">
-            <table class="table" ref="settable">
-            <thead>
-                <tr>
-                <th scope="col">name</th>
-                <th scope="col">First</th>
-                <th scope="col">Last</th>
-                <th scope="col">Handle</th>
-                </tr>
-            </thead>
-            <tbody>
-            <tr v-for="item in state.setdata.nodes">
-                <td>{{item.data.name}}</td>
-            </tr>
 
-            </tbody>
-            </table>
+                <div v-if="state.setdata.length" class="container">
+                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+                        <!-- Images -->
+                        <div v-for="file in state.setdata" class="col w-200 shadow-1-strong rounded mb-4">
+                            <div class="card">
+                                <img :src="file.thumb" :alt="file.label" class="image" />
+                                <div class="m-2">
+                                    {{ file.label }}
+                                    <div class="form-check form-switch">
+                                        <input @change="expandSetNode(file, store.current_node.id)" class="form-check-input" type="checkbox" role="switch" :id="file['@rid']">
+                                        <label class="form-check-label" :for="file['@rid']">Show in Desk</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
             </div>
         </div>
     </div>
+
+
+</div>
+
+  
 </template>
 
 
 <script setup>
-    import cytoscape from "cytoscape";
-    import cola from 'cytoscape-cola'
-    import fcose from 'cytoscape-fcose';
-    import { onMounted, watch, reactive, ref, computed } from "vue";
+
+    import { onMounted, watch, reactive, ref, nextTick } from "vue";
     import web from "../web.js";
     import NodeCard from "./NodeCard.vue";
+    import ProjectCard from "./ProjectCard.vue";
 
-    import NavigationCard from './NavigationCard.vue'
-    import StatsCard from './StatsCard.vue'
-    import ListCard from './ListCard.vue'
-    import AboutCard from './AboutCard.vue'
     import {store} from "./Store.js";
-    import {getLayoutSettings} from "./GraphOptions.js";
+    //import {getLayoutSettings} from "./GraphOptions.js";
     import { useRouter, useRoute } from 'vue-router'
-    import cyCanvas from 'cytoscape-canvas';
 
-    import ImageNode from './ImageNode.vue'
+    import {Position, VueFlow, useVueFlow } from '@vue-flow/core'
+    import { Background } from '@vue-flow/background'
+
+    //const { getNode, onNodeClick, onNodeDoubleClick, onNodeDragStop} = useVueFlow()
+    const flow = useVueFlow({
+        defaultZoom: 0.5,
+        maxZoom: 3,
+        minZoom: 0.1,
+    })
+
+    import ImageNode from './nodes/ImageNode.vue'
+    import ProjectNode from './nodes/ProjectNode.vue'
+    import ProcessingNode from './nodes/ProcessingNode.vue'
+    import PDFNode from './nodes/PDFNode.vue'
+    import TextNode from './nodes/TextNode.vue'
+    import SetNode from './nodes/SetNode.vue'
+
+    import { useShuffle } from './useShuffle'
+    import { useLayout } from './useLayout'
+    import Icon from './Icon.vue'
 
     // import * as bootstrap from "bootstrap/dist/js/bootstrap"
     import * as bootstrap from 'bootstrap';
     window.bootstrap = bootstrap;
 
-    cyCanvas(cytoscape); // Register extension
+    const { graph_dagre, layout, previousDirection } = useLayout()
+
+    const elements = reactive({nodes: [], edges:[]})
 
 
-
-    cytoscape.use( cola );
-    cytoscape.use( fcose );
-
-	const CLUSTER = 1
 
     const route  = useRoute();
     const router = useRouter();
@@ -104,15 +237,81 @@
 	var tags = reactive({result:[]})
     var me = reactive({data:{}})
     var editing = ref(false)
-    let cy
+
+    // Websocket for UI updates
+    let connection = new WebSocket('ws://localhost:8200/ws');
+    connection.onmessage = (event) => {
+        console.log('tuli message')
+        console.log(event)
+        try {
+            var wsdata = JSON.parse(event.data)
+            if(wsdata.target) {
+                console.log('got message:', wsdata.command)
+                if(wsdata.command == 'add') {
+                    addNode(wsdata.target, wsdata.type, wsdata.node)
+                } else if (wsdata.command == 'update') {
+                    console.log('updating ', wsdata.target)
+                    var target_node = elements.nodes.find(x => x.id == wsdata.target)
+                    if(target_node) {
+                        if(wsdata.image) target_node.data.image = wsdata.image
+                        if(wsdata.description) target_node.data.description = wsdata.description
+                    }
+                }
+
+            }
+        } catch(e) {
+            console.log('WS virhe', e)
+            console.log(event.data)
+        }
+    }
+    // Websocket for UI updates ends
+
+
+    connection.onerror = (error) => {
+        console.error('WebSocket Error:', error);
+    };
 
     const props = defineProps({
         mode: ''
     })
 
-onMounted(() => {
-  console.log(settable.value)
-});
+
+    flow.onNodeDragStop((event) => {
+        store.current_node = event.node
+        console.log(event.node.position)
+        //saveLayout()
+        connection.send(JSON.stringify({id:event.node.id, position:event.node.position}))
+    })
+
+
+    flow.onNodeClick((event) => {
+        store.current_node = event.node
+    })
+
+    flow.onPaneClick((event) => {
+        store.current_node = null
+    })
+
+    flow.onNodeDoubleClick((event) => {
+        if(event.node.type == "project" ) {
+            router.push({ name: 'graph', query: { node: event.node.id.replace('#', '')} })
+        } else if(event.node.type == "set") {
+            toggleOffcanvas(event.node)
+        }
+           
+    })
+
+    // flow.onPaneReady((event) => {
+    //     // timeout is needed to wait for pane to be ready?
+    //     setTimeout(()=>{
+    //         flow.fitView()
+    //     },1000);
+    // })
+
+function test() {
+    console.log('pane clicked')
+}
+
     //
 	watch(
     	() => route.query,
@@ -153,371 +352,164 @@ onMounted(() => {
         	else loadGraph(route, oldValue)
     })
 
+    async function layoutGraph(direction) {
+
+        //nodes.value = layout(nodes.value, edges.value, direction)
+        elements.nodes = layout(elements.nodes, elements.edges, direction)
+
+        nextTick(() => {
+            flow.fitView()
+        })
+    }
+
+    async function toggleOffcanvas(node) {
+      const offcanvasElement = new bootstrap.Offcanvas(document.getElementById('ImageSetPanel'));
+      offcanvasElement.toggle(); // Toggle the offcanvas
+      console.log(node)
+      state.setdata = await web.getSetFiles(node.id)
+    }
+
     function updateGraphNode(update) {
         console.log(update)
         cy.nodes().forEach(function( ele ){
             if(ele.id() == update.id) {
                 ele.data('name', update.name)
             }
-});
-        // var node = cy.nodes("[id = '" + update.id + "']");
-        // console.log(node)
-        // console.log(typeof node)
-        // //var node = getNodeFromGraph(update.id)
-        // node.data('name', 'jota')
-        // node.removeClass("selected")
+        });
+    }
+
+    function addNode(target, type, node) {
+        console.log(target)
+        console.log(node)
+        const id = node['@rid'] || node.rid || node.id
+        const nodetype = node['@type'] || node.type
+        const newNode = {
+            id: id,
+            data: node,
+            image: 'api/thumbnails/projects/73_2/files/31_13',
+            type: type,
+            position: { x: Math.random() * flow.dimensions.value.width, y: Math.random() * flow.dimensions.value.height },
+        }
+        
+        console.log('adding node', newNode)
+        console.log('to node ', target)
+        elements.nodes.push(newNode)
+        console.log(`source: ${target}, target: ${id}`)
+
+        elements.edges.push({id:Math.random() + 'edge', source: target, target: id})
+        layoutGraph('LR')
+    }
+
+    function expandSetNode(node, target) {
+        if(node['@rid']) node.rid = node['@rid']
+        console.log(node)
+        const newNode = {
+            id: node.rid,
+            data: node,
+            type: node.type,
+            position: { x: Math.random() * flow.dimensions.value.width, y: Math.random() * flow.dimensions.value.height },
+        }
+        elements.value.push(newNode)
+        //flow.addNodes([newNode])
+        elements.value.push({id:6, source: target, target: node.rid})
     }
 
 	async function loadGraph(route, oldValue) {
 		var layout = ''
-        graph.result = []
-
-        //console.log('ROUTE MUUTTUI lista')
-        //graph.result = await web.getGraph(`MATCH (p:Project) WHERE id(p) = "#${route.params.id}" OPTIONAL MATCH (p)-[r]-(t) RETURN p,r,t`)
-        //console.log(graph.result)
-
+        graph.result.data = {}
 
          if(route.query.node) {
 
-            const query = `MATCH (project:Project)-[r]->(child)
-            WHERE id(project) = "#${route.query.node}" 
-            OPTIONAL MATCH (child)-[r2*]->(child2)
-			RETURN  child, r2, child2`
-
-            graph.result = await web.getGraph(query, route.query.node, CLUSTER)
-
-        
-        } else if(route.params.type == 'Project') {
-            const query = `MATCH (project:Project)-[r]->(child)
-            WHERE id(project) = "#${route.params.id}" 
-            OPTIONAL MATCH (child)-[r2*]->(child2)
-			RETURN  child, r2, child2`
-
-            graph.result = await web.getGraph(query, route.params.id, CLUSTER)
+            graph.result.data = await web.getProject(route.query.node)
+      
+        } else {
+            await loadProjects()
         }
 
+        drawGraph(layout, route, oldValue)
 
-		drawGraph(layout, route, oldValue)
 	}
 
 
     async function drawGraph(layout_name, route, oldValue) {
 
-        var layout = getLayoutSettings(layout_name)
+
         var positions = await getNodePositions()
+        console.log(positions)
 
-        // schema has common layout for all users
-        if(positions && (['schema', 'queries'].includes(props.mode))) {
-            console.log(props.mode)
-           layout = getLayoutSettings('preset')
-           setUserPositions(positions)
-
-        } else if(positions && store.current_node.data) {
-            // if all nodes has user position, then use layout "preset"
-            // otherwise use "fcose" with "fixedNodeConstraint"
-            // TODO figure out why fixedNodeConstraint does not work
-           layout = getLayoutSettings('preset')
-           var nonPositionedNodes = setUserPositions(positions)
-           // console.log(nonPositionedNodes)
-           // if(nonPositionedNodes > 0) {
-           //     console.log('using fcose')
-           //     layout = getLayoutSettings('fcose')
-           //     layout.layout.fixedNodeConstraint = setFixedNodeConstraint(positions)
-           // }
-
-        }
-		if(!graph.result.data || (graph.result.data.nodes && !graph.result.data.nodes.length)) {
-            graph.result.data = {}
-			graph.result.data.nodes = [{ data: {id:"not found", name:"not found", type_label:"empty", type:"empty", active: true}}]
-
-		}
-
-
-        const elem = document.getElementById("cy");
-        elem.replaceChildren();
-
-        //cytoscape.warnings(false)
-    	cy = cytoscape({
-    	  container: document.getElementById("cy"),
-    	  boxSelectionEnabled: true,
-    	  autounselectify: true,
-    	  wheelSensitivity: 0.2,
-    	  style: store.graph_style,
-
-    	  elements: {
-    		nodes: graph.result.data.nodes,
-    		edges: graph.result.data.edges,
-    	  },
-		  layout: layout.layout
-    	});
-
-
-
-		if(props.mode != 'about') {
-
-            // right click expands
-            cy.on('cxttap', "node", async function(event) {
-
-                var nodeID = event.target.data().id.replace('#','')
-
-                var expandData = await expand(nodeID)
-                cy.nodes().forEach(function(node){
-                    node.lock()
-                })
-
-                cy.add(expandData)
-                setGraphOptions('fcose')
-                cy.nodes().forEach(function(node){
-                    node.unlock()
-                })
-
-            });
-
-
-            cy.on('dblclick', 'node', async function(evt) {
-                console.log('öööö')
-               console.log(evt.target)
-               console.log(evt.target.data('id'))
-               console.log(evt.target.data('type'))
-
-                if(evt.target.data('type') == 'Project') {
-                    router.push({ name: 'graph', query: { node: evt.target.data('id').replace('#', '')} })
-                } else if(evt.target.data('type') == 'Set') {
-                        console.log("settiii")
-                        state.setdata = ['testi','toka']
-                        showCanvas()
-                        loadSet(evt.target.data('id'))
-                     
-                   // var offcanvas = "offcanvasBottom"
+        for(var node of graph.result.data.nodes) {
+            var flownode = {
+                id: node.data.id, 
+                type: node.data.type.toLowerCase(),
+                data: {
+                    type: node.data.type.toLowerCase(),
+                    label: node.data.name,
+                    description: node.data.description,
+                    paths: node.data.paths,
+                    info: node.data.info
                 }
-            })
+            }
+            if(node.data._type)
+                flownode.type = node.data._type.toLowerCase()
 
-
-            cy.on('box', 'node', async function(evt) {
-
-                if(evt.target.data('type') == 'File') {
-                    evt.target.addClass("selected")
-                }
-            })
-
-			cy.on('oneclick', async function(evt) {
-                cy.nodes().forEach(function(node){
-                    node.removeClass("selected")
-                })
-
-                if(evt.target.data().id) {
-                    console.log('click')
-                    console.log(evt.target.data().id)
-                        evt.target.addClass("selected")
-                        var nodeID = evt.target.data().id.replace('#','')
-                        console.log(nodeID)
-                        var node = getNodeFromGraph(evt.target.data().id)
-                        if(node) store.current_node = node
-                        else store.current_node = {data: {id: '#' + nodeID}}
-                  } else {
-                      store.current_node = null
-                  }
-    		});
-
-            cy.on('dragfreeon', 'node', async function(evt) {
-                //console.log(evt.target.data().id )
-                if(evt.target.data().id) {
-                        
-                        var nodeID = evt.target.data().id.replace('#','')
-                        console.log(nodeID)
-                        var node = getNodeFromGraph(evt.target.data().id)
-                        if(node) store.current_node = node
-                        else store.current_node = {data: {id: '#' + nodeID}}
-
-                        var pos = evt.target
-                        current_graph_node.position.x = pos.position().x
-                        current_graph_node.position.y = pos.position().y
-                        store.x = pos.position().x
-                        store.y = pos.position().y
-                        // simple align
-                        pos.position({x:Math.round(pos.position().x/50)*50, y:Math.round(pos.position().y/50)*50})
-                        saveLayout()
-                  } else {
-                      store.current_node = null
-                  }
-       
-            });
-		}
-
-    }
-
-
-    function fitGraph(id) {
-        id = id.replace('#', '')
-        cy.fit(cy.$('node[idc="#' + id.replace(':','_')+'"]'), 250)
-
-// if( cy.zoom() > fitMaxZoom ){
-//   cy.zoom( fitMaxZoom );
-//   cy.center();
-// }
-    }
-
-
-      function showCanvas(){
-        //let myOffcanvas = $refs.setCanvas;
-       // console.log(offCanvasSet.value)
-       console.log(settable.value)
-        let bsOffcanvas = new bootstrap.Offcanvas(document.getElementById('offcanvasBottom'));
-        bsOffcanvas.show();
-      }
-
-    function clear(ctx, options) {
-        const width = cy.width();
-        const height = cy.height();
-        ctx.save();
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0, 0, width * options.pixelRatio, height * options.pixelRatio);
-        ctx.restore();
-    }
-
-    function resetTransform(ctx, options) {
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-    }
-
-    function setTransform(ctx, options) {
-        const pan = cy.pan();
-        const zoom = cy.zoom();
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.translate(pan.x * options.pixelRatio, pan.y * options.pixelRatio);
-        ctx.scale(zoom * options.pixelRatio, zoom * options.pixelRatio);
-    }
-
-
-    function setDraw(image) {
-
-        //var layer = cy.cyCanvas();
-        const layer = cy.cyCanvas({
-          zIndex: 1
-        });
-        var canvas = layer.getCanvas();
-        var ctx = canvas.getContext('2d');
-
-        cy.on("render cyCanvas.resize", function(evt) {
-            layer.resetTransform(ctx);
-            layer.clear(ctx);
-
-
-            layer.setTransform(ctx);
-
-             ctx.save();
-             // Draw a background
-             ctx.drawImage(image, 0, 0);
-
-            // Draw fixed elements
-            //ctx.fillRect(0, 0, 100, 100); // Top left corner
-
-            //layer.setTransform(ctx);
-            let circle = new Path2D();  // <<< Declaration
-            circle.arc(100, 100, 45, 0, 2 * Math.PI, false);
-            ctx.fillStyle = 'blue';
-            ctx.fill(circle);
-            // Draw model elements
-            //var n = getRandomIntInclusive(0,10)
-            cy.nodes().forEach(function(node) {
-                var pos = node.position();
-                ctx.fillRect(pos.x, pos.y, 100, 100); // At node position
-            });
-            // ctx.restore();
-        });
-
-    }
-
-
-    function getRandomIntInclusive(min, max) {
-      min = Math.ceil(min);
-      max = Math.floor(max);
-      return Math.floor(Math.random() * (max - min + 1) + min); // The maximum is inclusive and the minimum is inclusive
-    }
-
-    //
-    async function expand(nodeID) {
-        var response = await web.getGraph(`match (s)-[r]-(t) WHERE id(s) = "#${nodeID}" RETURN s,r,t`)
-        //graph.result.data.nodes = graph.result.data.nodes.concat(response.data)
-        return response.data
-    }
-
-	async function showSchemas() {
-		graph.result = await web.getGraph(`match (s:Schema)-[r]-(s2:Schema) WHERE NOT s._type IN ["Menu", "Query", "UserGroup", "Tag", "NodeGroup"] return s,r,s2`)
-		drawGraph('fcose', route)
-	}
-
-    async function showNavigation() {
-		graph.result = await web.getGraph(`match (s) WHERE s:Query OR s:Menu OR s:UserGroup  OPTIONAL MATCH (s)-[r]-(p) OPTIONAL MATCH (p)-[r2]-(group) return s,p, r, group, r2`)
-		drawGraph('fcose', route)
-	}
-
-    async function showQueries() {
-		graph.result = await web.getGraph(`match (s:Query) return s`)
-		drawGraph('fcose', route)
-	}
-
-	function getNodeFromGraph(nodeID) {
-		var current = null
-        if(nodeID.startsWith('#')) nodeID = nodeID.replace('#','')
-		for(var node of graph.result.data.nodes) {
-			if(node.data.id == '#' + nodeID) current = node
-		}
-		return current
-	}
-
-	function setUserPositions(node_layout) {
-        var nonPositionedNodes = 0
-		for( var node of graph.result.data.nodes) {
-            if(node_layout.positions[node.data.id]) {
-                node.position = {
-                    x: node_layout.positions[node.data.id].x,
-                    y: node_layout.positions[node.data.id].y
-                }
+            if(positions && positions[node.data.id]) {
+                flownode.position = positions[node.data.id]
             } else {
-                nonPositionedNodes++
+                flownode.position = getDefaultPosition()
             }
-		}
-        return nonPositionedNodes
-	}
 
-    function setFixedNodeConstraint(node_layout, layout) {
+            if(node.data.image) 
+                flownode.data.image = node.data.image
 
-        //{nodeId:"#528:7", position: {x:-500, y:0}}
-        var out = []
-        if(node_layout.positions) {
-            for(var node in node_layout.positions) {
-                var id = node.replace('node','#').replace('_',':')
-                out.push({nodeId: id, position: {x: node_layout.positions[node].x, y: node_layout.positions[node].y}})
-            }
+            elements.nodes.push(flownode)
         }
-        console.log(out)
-        return out
+
+        for(var node of graph.result.data.edges) {
+            var flowedge = {
+                id: node.data.id, 
+                source: node.data.source,
+                target: node.data.target
+            }
+
+            elements.edges.push(flowedge)
+        }
+        
+       flow.addNodes(elements.nodes)
+       flow.addEdges(elements.edges)
+
+        if(props.mode !== 'projects')
+            layoutGraph('LR')
+
+        // nextTick(() => {
+        //     flow.fitView()
+        // })
+       // flow.fitView()
+        //var layout = getLayoutSettings(layout_name)
+        
+
+
+
+    }
+
+    function getDefaultPosition() {
+        return {x: 0, y: 0}
     }
 
     function setNodePositions(node_layout, layout) {
 
         if(node_layout.positions) {
             cy.nodes().positions(function( node, i ){
-                console.log(node.id())
                 if(node_layout.positions[node.id()]) {
                     return {
                         x: node_layout.positions[node.id()].x,
                         y: node_layout.positions[node.id()].y
                     };
+                } else {
+
                 }
             });
         }
 
-
-        // if(layout_name === 'preset' ) {
-        //     cy.nodes().positions(function( node, i ){
-		// 		console.log(node.data('type'))
-		// 			return {
-		// 				x: (i % 3) * 130 -500,
-		// 				y: (i - (i % 3))/3 * 50 -500
-		// 			};
-        //     });
-        // }
 		layout.run()
     }
 
@@ -525,17 +517,14 @@ onMounted(() => {
         var node = route.query.node
         if(route.query.query)
             node = route.query.query
-        else if(route.query.tag)
-            node = route.query.tag
-        else if(route.query.cluster)
-            node = route.query.cluster
-        else if(props.mode == 'schema' || props.mode == 'queries')
+        else if(props.mode == 'projects')
             node = props.mode
 
         if(node) {
+            console.log(node)
             var node_layout = await web.getLayoutByTarget(node)
-            if(node_layout.positions)
             return node_layout
+
         }
         return 0
     }
@@ -556,25 +545,32 @@ onMounted(() => {
 	}
 
 	async function saveLayout() {
+        console.log(elements.value)
 		var positions = {}
-		cy.nodes().forEach(function(ele){
-			if(!ele.isParent())
-				positions[ele.id()] = ele.position()
+		elements.nodes.forEach(function(ele){
+			positions[ele.id] = ele.position
+            console.log(ele)
 		})
 		if(route.query.node)
 			web.saveLayout(positions, route.query.node)
-		else if(route.query.query)
-			web.saveLayout(positions, route.query.query)
-        else if(route.query.tag)
-			web.saveLayout(positions, route.query.tag)
-		else if(route.query.cluster)
-			web.saveLayout(positions, route.query.cluster)
-        else if(props.mode == 'schema' || props.mode == 'queries')
+        else if(props.mode == 'projects')
             web.saveLayout(positions, props.mode)
 	}
 
 
-
+    async function loadProjects() {
+        graph.result.data = {nodes: [], edges:[]}
+        graph.result.data.nodes = await web.getProjects()
+        // convert projects to graph format
+        for(var node of graph.result.data.nodes) {
+            node.data = {id:node['@rid']}
+            node.data.name = node.label
+            node.data.type = node['@type']
+            node.data.description = node.file_count + ' files'
+            node.data.paths = node.paths
+        }
+        
+    }
 
 
 	async function initView() {
@@ -591,20 +587,12 @@ onMounted(() => {
 				loadGraph(route)
 			} 
 
-		} else if(props.mode == 'list') {
-           graph.result = await web.getGraph(`MATCH (p:Project) RETURN p`)
-
+		} else if(props.mode == 'projects') {
+            await loadProjects()
             drawGraph('fcose', route)
         }
-
-		//store.queries = await web.getQueries()
-
 	}
 
-    async function loadSet(rid) {
-        var result = await web.getGraph(`MATCH (s:Set)<-[:IS_PART_OF]-(f:File) WHERE id(s) = "${rid}" RETURN f`)
-        state.setdata = result.data
-    }
 
 	onMounted(async()=> {
 		initView()

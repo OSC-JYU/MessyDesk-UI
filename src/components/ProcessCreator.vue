@@ -8,6 +8,8 @@
 						Add Cruncher <img src="icons/cookie-bite-solid.svg"/>
 				</div>
 
+
+				
 				<div class="modal-body">
 					<h4 v-if="store.process"> {{ store.process.tasks[store.task_id].name}}</h4>
 					
@@ -20,8 +22,21 @@
 								<div class="input-group-prepend">
 									<span class="input-group-text" id="basic-addon1">{{ help.name }}</span>
 								</div>
-								<input v-model="state.out_params[key]" type="text" class="form-control" placeholder=""  aria-label="Username" aria-describedby="basic-addon1">
-								<div>{{ help.help }}</div>
+							
+
+							
+
+							
+								
+								
+								<div >
+									<input v-model="state.out_params[key]" type="text" class="form-control" placeholder=""  aria-label="Username" aria-describedby="basic-addon1">
+									<div>{{ help.help }}</div>
+									<div v-if="help.values"	>{{ help.values }}</div>	
+								</div>
+	
+
+								
 							</div>
 							
 						</div>
