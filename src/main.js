@@ -3,12 +3,10 @@ import messages from '../lang/messages.json'
 
 import GraphMain from './components/GraphMain.vue'
 
-import StatsMain from './components/StatsMain.vue'
+import FilesMain from './components/FilesMain.vue'
 import ProjectMain from './components/ProjectMain.vue'
 import ServicesMain from './components/ServicesMain.vue'
-import ListMain from './components/ListMain.vue'
-import Repositories from './components/Repositories.vue'
-import NavigationSettings from './components/NavigationSettings.vue'
+
 import About from './components/About.vue'
 
 import { createApp } from 'vue'
@@ -45,37 +43,12 @@ const router = createRouter({
       path: '/services',
       name: 'services',
       component: ServicesMain
-  },
-
-    {
-        path: '/stats',
-        name: 'stats',
-        component: StatsMain
     },
 
     {
-      path: '/list/:type',
-      name: 'list',
-      component: ListMain
-    },
-
-    {
-      path: '/list/:type/:id',
-      name: 'list2',
-      component: ListMain
-    },
-
-
-    {
-          path: '/queries',
-          name: 'queries',
-          component: NavigationSettings
-    },
-
-    {
-        path: '/repositories',
-        name: 'repositories',
-        component: Repositories
+      path: '/files/:rid',
+      name: 'files',
+      component: FilesMain
     },
 
     {

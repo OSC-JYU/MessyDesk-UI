@@ -297,10 +297,13 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     })
 
     flow.onNodeDoubleClick((event) => {
+        console.log(event.node)
         if(event.node.type == "project" ) {
             router.push({ name: 'graph', query: { node: event.node.id.replace('#', '')} })
         } else if(event.node.type == "set") {
             toggleOffcanvas(event.node)
+        } else if(event.node.data.type == "file") {
+            router.push({ name: 'files', params: { rid: event.node.id.replace('#', '')} })
         }
            
     })

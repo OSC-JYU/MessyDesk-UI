@@ -125,9 +125,9 @@ web.getStyle = async function() {
 	return result.data
 }
 
-web.getNodeAttributes = async function(rid) {
+web.getDocInfo = async function(rid) {
 	var result = await axios.get(`/api/documents/${rid.replace('#','')}`)
-	return result.data.result
+	return result.data
 }
 
 web.getSchemaAndData = async function(rid) {
