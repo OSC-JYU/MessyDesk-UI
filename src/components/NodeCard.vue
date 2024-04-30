@@ -222,12 +222,6 @@
     const emit = defineEmits(['fitGraph', 'saveLayout', 'setGraphOptions'])
 
 
-    onMounted(async()=> {
-        if(route.query.node) {
-            loadData(route.query.node)
-        }
-    })
-
     watch(
         () => route.query.node,
         async (newValue, oldValue) => {
@@ -282,7 +276,8 @@
         state.thumbnail = getThumbnail()
         if (schema.result._attributes['@type'] == 'Process')
             state.params = await getProcessParams()
-        services.result = await web.getServicesForFile(rid)
+        if (schema.result._attributes['@type'] !== 'Process')
+            services.result = await web.getServicesForFile(rid)
         prepareUserSettings()
     }
 
@@ -340,5 +335,11 @@
         }
         return str;
         }
+
+    onMounted(async()=> {
+        if(route.query.node) {
+          //  loadData(route.query.node)
+        }
+    })
 
 </script>
