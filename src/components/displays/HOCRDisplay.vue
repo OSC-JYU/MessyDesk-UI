@@ -2,6 +2,8 @@
 
   <div class="row h-100">
     
+    <v-card text="...">sdfgsdfg</v-card>
+
         <div class="col-6 p-0 overflow-hidden" style="height: 100vh;">
           <div class="content">
             <img ref="page_image" class="page_image" @load="onImgLoad" v-if="state.file" :src="state.file.original" alt="Image" />

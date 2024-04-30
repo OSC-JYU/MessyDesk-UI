@@ -17,13 +17,42 @@
 </style>
 
 <script setup>
-    import { onMounted, reactive } from "vue";
+    import { Position, VueFlow, defaultNodeTypes, useVueFlow } from '@vue-flow/core'
+    import { Background } from '@vue-flow/background'
+
+    import { onMounted, reactive, nextTick, markRaw } from "vue";
+    import ProcessingNode from './nodes/ProcessingNode.vue'
     import JYUHeader from './JYUHeader.vue'
     import web from "../web.js";
 
+        //const { getNode, onNodeClick, onNodeDoubleClick, onNodeDragStop} = useVueFlow()
+    const flow = useVueFlow({
+        defaultZoom: 0.2,
+        maxZoom: 3,
+        minZoom: 0.1,
+    })
+
+    const nodeTypes = {
+  custom: markRaw(ProcessingNode),
+}
 
     var state = reactive({
-        services: []
+        services: [],
+        nodes: [  
+            { id: 'md_api', label: 'MessyDesk API', position: { x: 200, y: 50 }, class: 'light' },
+            { id: 'md_ui',  label: 'MessyDesk UI', position: { x: 50, y: 0 }, class: 'light' },
+            { id: 'db', type: 'output', label: 'ArcadeDB', position: { x: 100, y: 100 }, class: 'light' },
+            { id: 'nats', label: 'NATS Jetstream', position: { x: 400, y: 100 }, class: 'light' },
+            { id: 'nomad', label: 'Nomad', position: { x: 150, y: 200 }, class: 'light' },
+
+            { id: 'image', label: 'Image services', position: { x: 0, y: 200 }, type:'processing', data: {label:'Image services'} },
+            { id: 'text', label: 'Text services', position: { x: 150, y: 200 } },
+            { id: 'pdf', label: 'PDF services', position: { x: 300, y: 200 } }
+        ],
+
+        edges: [
+        { id: 'md', source: 'md_api', target: 'md_ui', animated: true, label: 'test' }
+        ],
     })
 
     document.title = "MessyDesk - services"
@@ -39,9 +68,24 @@
             console.log(response[s]['supported_types'])
             for(var mediatype of response[s]['supported_types']) {
                 data[mediatype].push(response[s])
+               // state.nodes.push({id: response[s].id, label: response[s].id, position: { x: 0, y: count * 50 }, parentNode: mediatype, class: 'light', expandParent: true})
+                count++
             }
         }
+
+        for(var mediatype in data) {
+            var count = 1
+            for(var item in data[mediatype]) {
+                state.nodes.push({id: data[mediatype][item].id, label: data[mediatype][item].id, position: { x: 0, y: count * 50 }, class: 'light', parentNode: mediatype, expandParent: true})
+                count++
+            }
+            //
+            count++
+        }
         state.services = data
+        nextTick(() => {
+            flow.fitView()
+        })
     })
 
 </script>
@@ -56,142 +100,16 @@
                     <div class="row justify-content-center m-0 p-0">
                         <JYUHeader/>
                     </div>
-                    <div class="m-2">
-                        <h4 class="mt-5">Services For Images</h4>
-                        <div class="row m-0 p-0 mt-0 flex-grow-1 ">
-                    
-                            <div class="card bg-light p-2 m-2" style="width: 18rem;" v-for="service in state.services.image">
-                        
-                            
-                                    <div class="card-header">
 
-                                        <b>{{ service.id }}</b> 
-                                        <span v-if="service.nomad_hcl" title="service has .hcl file" class="badge has">hcl</span>
-                                        <span v-else class="badge disabled">static</span>
-                                        {{ service.url }}
-                                        <div>
-                                            <span v-if="service.consumers.length" class="badge          enabled">online {{ service.consumers.length }}</span>
-                                            <span v-else class="badge disabled">offline</span>
+                    <VueFlow :nodes="state.nodes" :edges="state.edges" fit-view-on-init>
+                        <Background />
+                        <template #node-processing="{ data }">
+                            <ProcessingNode :data="data" />
+                        </template>
+                        </VueFlow>
 
-                                            <span v-if="service.disabled" class="badge disabled">disabled</span>
 
-                                            <span v-if="service.nomad" class="badge enabled">nomad</span>
-   
-                                        </div>
-  
-                                    </div>
-
-                                    
-                                    <div class="card-body">
-                                       
-                                        <p class="d-inline-flex gap-1">
-
-                                            <button class="btn btn-primary" type="button" data-bs-toggle="collapse" :data-bs-target="'#'+service.id" aria-expanded="false" aria-controls="collapseExample">
-                                                Tasks
-                                            </button>
-                                        </p>
-                                        <div class="collapse" :id="service.id">
-                                            <ul class="list-group">
-                                                <div  class="list-group-item " v-for="s in service.tasks">
-                                                <b>{{ s.name }}</b>
-                                                <p>{{ s.description }}</p>
-                                                </div>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                
-                            </div>
-                        </div>
-
-                        <h4 class="mt-5">Services For PDF</h4>
-                        <div class="row m-0 p-0 mt-0 flex-grow-1 ">
-                            <div class="card bg-light p-2 m-2" style="width: 18rem;" v-for="service in state.services.pdf">
-                        
-                                <div class="card">
-                                    <div class="card-header">
-
-                                        <b>{{ service.id }}</b> 
-                                        <span v-if="service.nomad_hcl" title="service has .hcl file" class="badge has">hcl</span>
-                                        <span v-else class="badge disabled">static</span>
-                                        {{ service.url }}
-
-                                        <div>
-                                            <span v-if="service.consumers.length" class="badge          enabled">online {{ service.consumers.length }}</span>
-                                            <span v-else class="badge disabled">offline</span>
-
-                                            <span v-if="service.disabled" class="badge disabled">disabled</span>
-                                            <span v-if="service.nomad" class="badge enabled">nomad</span>
-                                        </div>                                                        
-
-                                        
-   
-                                    </div>
-
-                                    
-                                    <div class="card-body">
-    
-                                        <p class="d-inline-flex gap-1">
-
-                                            <button class="btn btn-primary" type="button" data-bs-toggle="collapse" :data-bs-target="'#'+service.id" aria-expanded="false" aria-controls="collapseExample">
-                                                Tasks
-                                            </button>
-                                        </p>
-                                        <div class="collapse" :id="service.id">
-                                            <ul class="list-group">
-                                                 <div  class="list-group-item " v-for="s in service.tasks">
-                                                    <b>{{ s.name }}</b>
-                                                <p>{{ s.description }}</p>
-                                                </div>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <h4 class="mt-5">Services For text</h4>
-                        <div class="row m-0 p-0 mt-0 flex-grow-1 ">
-                            <div class="card bg-light p-2 m-2" style="width: 18rem;" v-for="service in state.services.text">
-                        
-                                <div class="card">
-                                    <div class="card-header">
-
-                                        <b>{{ service.id }}</b> 
-                                        <span v-if="service.nomad_hcl" title="service has .hcl file" class="badge has">hcl</span>
-                                        <span v-else class="badge disabled">static</span>
-                                        {{ service.url }}
-                                        
-                                        <div>
-                                            <span v-if="service.consumers.length" class="badge enabled">online {{ service.consumers.length }}</span>
-                                            <span v-else class="badge disabled">offline</span>
-
-                                            <span v-if="service.disabled" class="badge disabled">disabled</span>
-                                            <span v-if="service.nomad" class="badge enabled">nomad</span>
-                                        </div>
-                                    </div>
-
-                                    
-                                    <div class="card-body">
-
-                                        <p class="d-inline-flex gap-1">
-
-                                            <button class="btn btn-primary" type="button" data-bs-toggle="collapse" :data-bs-target="'#'+service.id" aria-expanded="false" aria-controls="collapseExample">
-                                                Tasks
-                                            </button>
-                                        </p>
-                                        <div class="collapse" :id="service.id">
-                                            <ul class="list-group">
-                                                <div  class="list-group-item " v-for="s in service.tasks">
-                                                    <b>{{ s.name }}</b>
-                                                <p>{{ s.description }}</p>
-                                                </div>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+ 
                 </div>
             </div>
         </div>
