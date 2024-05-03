@@ -9,24 +9,8 @@ import ServicesMain from './components/ServicesMain.vue'
 
 import About from './components/About.vue'
 
-
 import { createApp } from 'vue'
 import App from './App.vue'
-
-// Vuetify
-import 'vuetify/styles'
-import { createVuetify } from 'vuetify'
-import * as components from 'vuetify/components'
-import * as directives from 'vuetify/directives'
-
-const vuetify = createVuetify({
-  components,
-  directives,
-})
-
-
-
-
 
 let history = import.meta.env.VITE_PUBLIC_PATH
 //let history = ''
@@ -75,9 +59,7 @@ const router = createRouter({
   ]
 })
 
-//const app = createApp(App)
-
-createApp(App).use(vuetify).use(router).mount('#app')
+const app = createApp(App)
 
 const i18n = createI18n({
   locale: "fi",
@@ -88,6 +70,6 @@ const i18n = createI18n({
 })
 
 // tell Vue to use router
-//app.use(router)
-//app.use(i18n)
-//app.mount('#app')
+app.use(router)
+app.use(i18n)
+app.mount('#app')

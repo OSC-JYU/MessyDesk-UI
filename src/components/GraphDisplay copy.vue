@@ -27,8 +27,6 @@
 
 
     .process-panel {
-
-        width:400px;
   background-color: #2d3748;
   padding: 10px;
   border-radius: 8px;
@@ -72,7 +70,7 @@
   font-size: 12px;
 }
 .graph-display { 
-
+  background: url(images/bg.jpg) no-repeat center center fixed; 
   background: rgb(94,94,110);
 background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(129,159,176,0.5508404045211834) 7%, rgba(69,130,159,0) 100%);
   -webkit-background-size: cover;
@@ -91,10 +89,8 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
  <div id="container" >
 		<div class="row h-100" >
 			<div class="col-9 px-0">
-
-
                 <div class="graph-display">
-                    <VueFlow :nodes="elements.nodes" :edges="elements.edges" fit-view-on-init >
+                    <VueFlow  fit-view-on-init>
                         <Background />
                         <template #node-project="{ data }">
                             <ProjectNode :data="data" />
@@ -122,6 +118,23 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
                         <Background />
 
+                        <Panel class="process-panel" position="top-right">
+                            <div class="layout-panel">
+
+                            <button title="set horizontal layout" @click="layoutGraph('LR')">
+                                <Icon name="horizontal" />
+                            </button>
+
+                            <button title="set vertical layout" @click="layoutGraph('TB')">
+                                <Icon name="vertical" />
+                            </button>
+                            <button @click="flow.fitView()">fit</button>
+                            <button v-if="store.current_node" title="DEBUG: add node" @click="addNode({rid: Math.random() + 'p', type: 'process', position: { x: 100, y: 100 }}, store.current_node.id)">
+                                <Icon name="plus" />   <i class="fs-5 bi-plus-circle"></i>
+                            </button>
+                            <span v-if="store.current_node" style="color:white" >{{ store.current_node.data.label }}</span>
+                            </div>
+                        </Panel>
                     </VueFlow>  
                 </div>
 			</div>
@@ -179,7 +192,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     //import {getLayoutSettings} from "./GraphOptions.js";
     import { useRouter, useRoute } from 'vue-router'
 
-    import { Position, VueFlow, defaultNodeTypes, useVueFlow } from '@vue-flow/core'
+    import {Position, VueFlow, useVueFlow } from '@vue-flow/core'
     import { Background } from '@vue-flow/background'
 
     //const { getNode, onNodeClick, onNodeDoubleClick, onNodeDragStop} = useVueFlow()
@@ -209,9 +222,6 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     const elements = reactive({nodes: [], edges:[]})
 
 
-
-
-	const CLUSTER = 1
 
     const route  = useRoute();
     const router = useRouter();
@@ -276,8 +286,6 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
     flow.onNodeClick((event) => {
         store.current_node = event.node
-        
-        //flow.fitView()
     })
 
     flow.onPaneClick((event) => {
@@ -285,18 +293,24 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     })
 
     flow.onNodeDoubleClick((event) => {
-        console.log(event.node)
         if(event.node.type == "project" ) {
             router.push({ name: 'graph', query: { node: event.node.id.replace('#', '')} })
         } else if(event.node.type == "set") {
             toggleOffcanvas(event.node)
-        } else if(event.node.data.type == "file") {
-            router.push({ name: 'files', params: { rid: event.node.id.replace('#', '')} })
         }
            
     })
 
+    // flow.onPaneReady((event) => {
+    //     // timeout is needed to wait for pane to be ready?
+    //     setTimeout(()=>{
+    //         flow.fitView()
+    //     },1000);
+    // })
 
+function test() {
+    console.log('pane clicked')
+}
 
     //
 	watch(
@@ -460,13 +474,16 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
             elements.edges.push(flowedge)
         }
         
+       flow.addNodes(elements.nodes)
+       flow.addEdges(elements.edges)
+
         if(props.mode !== 'projects')
             layoutGraph('LR')
 
-        nextTick(() => {
-            flow.fitView()
-        })
-        //flow.fitView()
+        // nextTick(() => {
+        //     flow.fitView()
+        // })
+       // flow.fitView()
         //var layout = getLayoutSettings(layout_name)
         
 
@@ -477,11 +494,6 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     function getDefaultPosition() {
         return {x: 0, y: 0}
     }
-
-    function fitGraph() {
-
-    }
-
 
     function setNodePositions(node_layout, layout) {
 

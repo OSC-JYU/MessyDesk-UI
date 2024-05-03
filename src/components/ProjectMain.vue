@@ -4,7 +4,7 @@
     import NodeCreator from './NodeCreator.vue'
 
 
-    document.title = "KuKaKo-OSC"
+    document.title = "MessyDesk - projects"
 </script>
 
 
@@ -18,8 +18,7 @@
                         <JYUHeader/>
                     </div>
                     <div class="row m-0 p-0  flex-grow-1">
-                        <GraphDisplay mode="list"/>
-                        <NodeCreator mode="list"/>
+                        <GraphDisplay mode="projects"/>
                     </div>
                 </div>
             </div>

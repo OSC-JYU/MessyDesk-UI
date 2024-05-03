@@ -1,5 +1,4 @@
 
-import cytoscape from "cytoscape";
 
 export const getLayoutSettings = function(layout_name) {
     if(!layout_name)

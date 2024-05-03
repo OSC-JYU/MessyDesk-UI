@@ -16,35 +16,33 @@
     </div> -->
 
     <!-- node card --> 
-    <div class="card" v-if="store.current_node && schema.result._attributes">
+    <div class="card" v-if="store.current_node && store.current().id && schema.result._attributes">
 
         <div class="card-header">
 
-            <template v-if="store.current().data.type == 'Person'">
-                {{schema.result._attributes.id}}
+            <template v-if="store.current().type != 'process'">
+                <a target="_blank" :href="'/api/files/' + store.current().id.replace('#','')">{{store.current().data.type_label}} {{ store.current().id }}</a>
             </template>
-            <template v-else-if="store.current().data.type == 'File'">
-                <a target="_blank" :href="'/api/files/' + store.current().data.id.replace('#','')">{{store.current().data.type_label}} {{ store.current().data.id }}</a>
-                
-            </template>
+            <template v-else>{{ store.current().id }}</template>
+
+
 
             <div class="d-flex bd-highlight">
 
-                <template v-if="store.current().data.type == 'Person'">
-                    <img v-if="store.current().data.image" class="person-photo" :src="store.current().data.image" />
-                    <img v-else class="person-photo" :src="'icons/person_icon.svg'" />
 
+                <template v-if="store.current().type == 'text'">
+                  
+                  <h4 :class="['card-title', 'p-2', 'flex-grow-1']"> {{schema.result._attributes.label}}
+               
+                      <i @click="toggleEdit()" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
+                      </i>
+                      <input v-if="edit_name" v-model="edit_name" @keyup.enter="saveLabel()"/>
 
-                    <h4 :class="['card-title', 'p-2', 'flex-grow-1']">     {{schema.result._attributes.label}}
-                        <i v-if="state.editing && schema.result._attributes._active" @click="toggleEdit()" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
-                        </i>
-                        <input v-if="state.editing && edit_name" v-model="edit_name" @keyup.enter="saveLabel()"/>
-                    </h4>
-                </template>
+                  </h4>
+              </template>
 
-
-                <template v-else-if="store.current().data.type == 'File'">
-
+                <template v-else-if="store.current().type == 'image'">
+                  
                     <h4 :class="['card-title', 'p-2', 'flex-grow-1']"> {{schema.result._attributes.label}}
                  
                         <i @click="toggleEdit()" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
@@ -52,14 +50,10 @@
                         <input v-if="edit_name" v-model="edit_name" @keyup.enter="saveLabel()"/>
 
                     </h4>
-                   
-
-
-
-
                 </template>
 
                 <template v-else>
+                   
                         <h4 :class="['card-title', 'p-2', 'flex-grow-1']">     {{schema.result._attributes.label}}
                         <i  @click="toggleEdit()" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
                         </i>
@@ -82,29 +76,38 @@
 
 
 
-            <i v-if="!schema.result._attributes._active" class="alert alert-warning">Inactive</i>
-            {{ schema.result._attributes.path }}
+            <!-- {{ schema.result._attributes.path }} -->
 
 
 
         </div>
 
         <!-- THUMBNAIL -->
-        <div v-if="store.current().data.type != 'Process'">
-            <img :src="state.thumbnail" />
+        <div v-if="store.current().type == 'image' || store.current().type == 'pdf'">
+            <img style="max-height: 160px;" class="nodecard-image" :src="state.thumbnail" />
         </div>
-        <div v-else>
-            {{ state.params }}
-        </div>
+        <v-container v-else>
+            <div v-if="state.params.info">{{ state.params.info }}</div>
+        </v-container>
        
 
         <!-- CRUNCHERS -->
-        <div v-if="!['Process', 'Project','Person'].includes(store.current().data.type)" class="card-body overflow-auto">
-            <h5>Things that you can do with your {{ schema.result._attributes.type }}</h5>
+        <div v-if="!['Process', 'Project','Person'].includes(store.current().type)" class="card-body overflow-auto">
+            <h5 v-if="store.current().type != 'process'">Things that you can do with your {{ schema.result._attributes.type }}</h5>
+           <!-- {{ store.current().data }}-->
 
             <div>
                 <div v-if="services.result && services.result.for_format && services.result.for_format.length == 0" class="alert alert-warning">No crunchers found</div>
-
+                <div v-if="store.current().data.type == 'set'">
+                    <ol class="card" v-for="service in services.result.for_type">
+                        <template v-if="service.tasks">
+                            <li class="list-group-item border-0" v-for="(value, key) of service.tasks" :key="key">
+                                <div @click="initProcessCreator(service, key)" class="node Service pointer"> {{ value.name }} </div>
+                                <div class="rel-info">{{ value.description }}</div><div class="badge rel-info bg-secondary">{{service.name}}</div>
+                            </li>
+                        </template>
+                    </ol>
+                </div>
                 <ol class="list-group border-0" v-for="service in services.result.for_format">
                     <template v-if="service.tasks">
                         <li class="list-group-item border-0" v-for="(value, key) of service.tasks" :key="key">
@@ -138,7 +141,7 @@
         <div class="card-footer">
    
              <!-- DELETE BUTTON -->
-            <div class="float-end"  v-if="store.current().data.type != 'Person'">
+            <div class="float-end"  v-if="store.current().type != 'Person'">
                 <button @click="store.node_deleter_open = true" class="btn btn-danger" title="delete item"><i class="bi bi-trash"></i></button>
             </div>
         </div>
@@ -205,16 +208,9 @@
     const emit = defineEmits(['fitGraph', 'saveLayout', 'setGraphOptions'])
 
 
-    onMounted(async()=> {
-        if(route.query.node) {
-            loadData(route.query.node)
-        }
-    })
-
     watch(
         () => route.query.node,
         async (newValue, oldValue) => {
-            console.log('ROUTER: on query.node')
             if(newValue)
                 loadData(newValue)
             else
@@ -225,10 +221,9 @@
     watch(
         () => store.current_node,
         async (newValue, oldValue) => {
-            console.log('ROUTER: on current_node')
             reset()
             if(newValue)
-                loadData(store.current().data.id)
+                loadData(store.current().id)
             else
                 schema.result = []
     })
@@ -263,12 +258,12 @@
     }
 
     async function loadData(rid) {
-        console.log('loading node data...')
         schema.result = await web.getSchemaAndData(rid)
         state.thumbnail = getThumbnail()
         if (schema.result._attributes['@type'] == 'Process')
             state.params = await getProcessParams()
-        services.result = await web.getServicesForFile(rid)
+        if (schema.result._attributes['@type'] !== 'Process')
+            services.result = await web.getServicesForFile(rid)
         prepareUserSettings()
     }
 
@@ -294,6 +289,7 @@
     }
 
     function initProcessCreator(data, task_id) {
+        console.log(data)
         store.process = data
         store.task_id = task_id
         store.new_node_label = 'Process'
@@ -325,5 +321,11 @@
         }
         return str;
         }
+
+    onMounted(async()=> {
+        if(route.query.node) {
+          //  loadData(route.query.node)
+        }
+    })
 
 </script>

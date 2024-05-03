@@ -12,7 +12,7 @@
 	      </div>
 	      <div class="modal-footer">
 	        <button type="button" @click="store.node_deleter_open = false" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-	        <button type="button" @click="deleteNode()" class="btn btn-danger"><b>Delete {{store.current().data.name}}</b> ({{store.current().data.type}})</button>
+	        <button type="button" @click="deleteNode()" class="btn btn-danger"><b>Delete {{store.current().data.name}}</b> ({{store.current().type}})</button>
 	      </div>
 	    </div>
 	  </div>
@@ -42,7 +42,7 @@
 
 	async function deleteNode() {
 		state.error = ''
-		var response = await web.deleteNode(store.current().data.id)
+		var response = await web.deleteNode(store.current().id)
 		store.reload()
 		store.node_deleter_open = false
 	}

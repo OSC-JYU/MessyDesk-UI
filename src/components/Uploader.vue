@@ -57,6 +57,7 @@
         if(upload.value.files.length && route.query.node) {
             try {
                 await web.uploadFile(upload.value.files[0], route.query.node)
+                store.uploader_open = false
                 store.reload()
             } catch(e) {
                 if(e.response && e.response.data.error)

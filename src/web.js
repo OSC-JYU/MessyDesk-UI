@@ -17,7 +17,6 @@ web.rawQuery = async function(query) {
 }
 
 web.getGraph = async function(query, current_node, cluster) {
-
 	var result = await axios.post('/api/graph/query', {query:query, current: current_node, cluster: cluster})
 	return result
 }
@@ -30,29 +29,9 @@ web.createProject = async function(name, description) {
 	var response = await axios.post('/api/projects', data)
 }
 
-
-
-
-
-
-
-web.getListOfNonConnected = async function(type, relation, target) {
-	var path = `/api/documents?type=${type}`
-	if(relation && target) path = `/api/documents?type=${type}&relation=${relation}&target=${target.replace('#','')}`
-	var result = await axios.get(path)
-	return result
-}
-
-web.getSchemaLinks = async function(rid) {
-	var query = `MATCH (s:Schema)-[r]-(t:Schema) WHERE id(s) = "#${rid}"
-	RETURN COALESCE(s.label, s._type) as source,  TYPE(r) as type, r.label as label, r.label_rev as label_rev, COALESCE(t.label, t._type) as target, id(t) as target_id, id(r) as rid, r.compound as compound, r.tags as tags, r as relation,
-	       CASE WHEN STARTNODE(r) = s THEN 'outgoing' ELSE 'incoming' END AS direction`
-	 var response = await axios.post('/api/query', {query:query})
-	 // clean up cypher.nulls from tags
-	 for(var s of response.data.result) {
-		 if(!Array.isArray(s.tags) && s.tags.trim() == 'cypher.null') s.tags = []
-	 }
-	 return response
+web.getServices = async function(rid) {
+	var result = await axios.get(`/api/services`)
+	return result.data
 }
 
 web.getServicesForFile = async function(file_rid) {
@@ -60,18 +39,10 @@ web.getServicesForFile = async function(file_rid) {
 	return result.data
 }
 
-
 web.getProcessParams = async function(process_path) {
 	var result = await axios.get(process_path)
 	return result
 }
-
-web.getList = async function(schema) {
-	var query = `MATCH (s:${schema}) RETURN s.label AS label, s.description AS description, id(s) AS rid ORDER BY label`
-	var response = await axios.post('/api/query', {query:query})
-	return response.data
-}
-
 
 web.getMe = async function() {
 	var result = await axios.get(`/api/me`)
@@ -103,6 +74,16 @@ web.getProjects = async function() {
 	return result.data
 }
 
+web.getProject = async function(rid) {
+	var result = await axios.get(`/api/projects/${rid.replace('#', '')}`)
+	return result.data
+}
+
+web.getSetFiles = async function(rid) {
+	var result = await axios.get(`/api/sets/${rid.replace('#', '')}/files`)
+	return result.data
+}
+
 web.getMenus = async function() {
 	var result = await axios.get(`/api/menus`)
 	return result.data
@@ -126,7 +107,7 @@ web.getStats = async function() {
 web.importFile = async function(dir, filename, mode) {
 	if(mode) filename = filename + '&mode=' + mode
 	var result = await axios.post(`/api/` + dir + '/import?filename=' + filename)
-	return result.data
+	return result
 }
 
 web.getStyle = async function() {
@@ -144,9 +125,9 @@ web.getStyle = async function() {
 	return result.data
 }
 
-web.getNodeAttributes = async function(rid) {
+web.getDocInfo = async function(rid) {
 	var result = await axios.get(`/api/documents/${rid.replace('#','')}`)
-	return result.data.result
+	return result.data
 }
 
 web.getSchemaAndData = async function(rid) {
@@ -160,13 +141,6 @@ web.getMyGraph = async function(rel_types=[], node_types=[],q_return='') {
 	var result = await axios.post('/api/graph/query/me', {rel_types:rel_types, node_types:node_types, return:q_return})
 	return result
 }
-
-// web.getNodeList = async function(type) {
-//
-// 	var result = await axios.get(`/api/graph/vertices/${type}`)
-// 	return result.data.result
-// }
-
 
 web.createFileProcess = async function(process, file_rid) {
 
@@ -236,20 +210,6 @@ web.getLayoutByTarget = async function(rid) {
 	return result.data
 }
 
-web.getGitlabCommits = async function(id) {
-	var result = await axios.get(`/api/gitlab/repositories/${id}/commits`)
-	return result.data
-}
-
-web.getDockerContainerLogs = async function(id) {
-	var result = await axios.get(`/api/docker/containers/${id}/logs`)
-	return result.data
-}
-
-web.getDockerContainerInspect = async function(id) {
-	var result = await axios.get(`/api/docker/containers/${id}/inspect`)
-	return result.data
-}
 
 web.uploadFile = async function(fileObject, rid) {
 	var formData = new FormData()
