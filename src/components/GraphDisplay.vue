@@ -27,7 +27,7 @@
 
 
     .process-panel {
-        top: 60px;
+
         width:400px;
   background-color: #2d3748;
   padding: 10px;
@@ -91,23 +91,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
  <div id="container" >
 		<div class="row h-100" >
 			<div class="col-9 px-0">
-                
-                <div class="process-panel" >
-                            <div class="layout-panel">
 
-                                <button title="set horizontal layout" @click="layoutGraph('LR')">
-                                    <Icon name="horizontal" />
-                                </button>
-
-                                <button title="set vertical layout" @click="layoutGraph('TB')">
-                                    <Icon name="vertical" />
-                                </button>
-                                <button v-if="store.current_node" title="DEBUG: add node" @click="addNode({rid: Math.random() + 'p', type: 'process', position: { x: 100, y: 100 }}, store.current_node.id)">
-                                    <Icon name="plus" />   <i class="fs-5 bi-plus-circle"></i>
-                                </button>
-                                <span v-if="store.current_node" style="color:white" >{{ store.current_node.data.label }}</span>
-                            </div>
-                        </div>
 
                 <div class="graph-display">
                     <VueFlow :nodes="elements.nodes" :edges="elements.edges" fit-view-on-init >

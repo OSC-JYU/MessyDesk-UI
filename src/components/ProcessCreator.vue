@@ -68,7 +68,9 @@
 				</div>
 
 				<div class="card">
-						<div class="card-header">About {{ store.process.name }}</div>
+						<div class="card-header">This cruncher is provided by 
+							<a v-if="store.process.source_url" :href="store.process.source_url" target="_blank"><b>{{ store.process.name }}</b></a>
+							<b v-else>{{ store.process.name }}</b></div>
 						<div class="card-body">
 							{{ store.process.description }}
 						</div>

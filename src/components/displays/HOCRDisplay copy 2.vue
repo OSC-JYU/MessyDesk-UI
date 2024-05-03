@@ -1,40 +1,23 @@
 <template>
-  <v-row>
-    <v-card class="overflow-auto p-3" width="100dvh">
 
-      <v-btn
-          class="text-none text-subtitle-1"
-          color="#5865f2"
-          size="small"
-          variant="flat"
-        >
-          Save corrected text
-        </v-btn>
-    </v-card>
-  </v-row>
-  <v-row>
+  <div class="row h-100">
+    
+    <v-card text="...">sdfgsdfg</v-card>
 
-    <v-col cols="col-6">
-      <v-card class="overflow-auto" height="100dvh">
-        <v-card-text>
-          
+        <div class="col-6 p-0 overflow-hidden" style="height: 100vh;">
+          <div class="content">
             <img ref="page_image" class="page_image" @load="onImgLoad" v-if="state.file" :src="state.file.original" alt="Image" />
             {{ state.page_images }}
 
-          
-        </v-card-text>
-      </v-card>
-    </v-col>
-    <v-col cols="col-6">
-      <v-card class="overflow-auto" height="100dvh">
-        <v-card-text>
-          <div ref="editor"@click="onclick" v-html="state.hocr"></div>
-        </v-card-text>
-      </v-card>
-    </v-col>
+          </div>
+        </div>
+        <div class="col-6 p-0 overflow-auto">
+          <div ref="editor" class="container h-100 overflow-auto" @click="onclick" v-html="state.hocr"></div>
+        </div>
+      
+    </div>
 
-  </v-row>
-</template>
+  </template>
   
   <script setup>
 

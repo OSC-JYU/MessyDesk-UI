@@ -20,10 +20,7 @@
 
         <div class="card-header">
 
-            <template v-if="store.current().data.type == 'Person'">
-                {{schema.result._attributes.id}}
-            </template>
-            <template v-else-if="store.current().type != 'process'">
+            <template v-if="store.current().type != 'process'">
                 <a target="_blank" :href="'/api/files/' + store.current().id.replace('#','')">{{store.current().data.type_label}} {{ store.current().id }}</a>
             </template>
             <template v-else>{{ store.current().id }}</template>
@@ -32,19 +29,8 @@
 
             <div class="d-flex bd-highlight">
 
-                <template v-if="store.current().data.type == 'Person'">
-                    <img v-if="store.current().data.image" class="person-photo" :src="store.current().data.image" />
-                    <img v-else class="person-photo" :src="'icons/person_icon.svg'" />
 
-
-                    <h4 :class="['card-title', 'p-2', 'flex-grow-1']">     {{schema.result._attributes.label}}
-                        <i v-if="state.editing && schema.result._attributes._active" @click="toggleEdit()" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
-                        </i>
-                        <input v-if="state.editing && edit_name" v-model="edit_name" @keyup.enter="saveLabel()"/>
-                    </h4>
-                </template>
-
-                <template v-else-if="store.current().type == 'text'">
+                <template v-if="store.current().type == 'text'">
                   
                   <h4 :class="['card-title', 'p-2', 'flex-grow-1']"> {{schema.result._attributes.label}}
                
@@ -98,11 +84,11 @@
 
         <!-- THUMBNAIL -->
         <div v-if="store.current().type == 'image' || store.current().type == 'pdf'">
-            <img class="nodecard-image" :src="state.thumbnail" />
+            <img style="max-height: 160px;" class="nodecard-image" :src="state.thumbnail" />
         </div>
-        <div v-else>
-            {{ state.params }}
-        </div>
+        <v-container v-else>
+            <div v-if="state.params.info">{{ state.params.info }}</div>
+        </v-container>
        
 
         <!-- CRUNCHERS -->
