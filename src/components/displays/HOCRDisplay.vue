@@ -28,7 +28,7 @@
     <v-col cols="col-6">
       <v-card class="overflow-auto" height="100dvh">
         <v-card-text>
-          <div ref="editor"@click="onclick" v-html="state.hocr"></div>
+          <div ref="editor" @click="onclick" v-html="state.hocr"></div>
         </v-card-text>
       </v-card>
     </v-col>
@@ -223,7 +223,7 @@
 
     onMounted(async()=> {
   
-      var hocr =  await fetch('/api/files/40:7')
+      var hocr =  await fetch('/api/files/255:21')
       hocr = await hocr.text();
       var start = hocr.indexOf("<body>") + "<body>".length
       var end = hocr.indexOf("</body>")
@@ -238,7 +238,7 @@
         
         state.file = response
         //state.file.thumbnail = removeLastPathPart(response.path.replace('data/', '/api/thumbnails/'))
-        state.file.original = 'http://localhost:3000/api/files/37:7'
+        state.file.original = 'http://localhost:3000/api/files/270:15'
 
       
     })

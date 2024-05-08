@@ -128,7 +128,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
             <div class="col-3 sidebar p-0 h-100">
             
-                <NodeCard v-if="props.mode == 'graph'" @setGraphOptions="setGraphOptions" @saveLayout="saveLayout" @fitGraph="fitGraph" class="h-100 w-100 position-absolute"/>
+                <NodeCard v-if="props.mode == 'graph'"  @updateGraph="updateGraphNode" class="h-100 w-100 position-absolute"/>
                 <ProjectCard v-if="props.mode == 'projects'"></ProjectCard>
                 
             </div>
@@ -330,7 +330,6 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
         	loadGraph(route, oldValue)
     })
 
-
     watch(
     	() => store.update,
       	async (newValue, oldValue) => {
@@ -356,12 +355,13 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     }
 
     function updateGraphNode(update) {
-        console.log(update)
-        cy.nodes().forEach(function( ele ){
-            if(ele.id() == update.id) {
-                ele.data('name', update.name)
+
+        var target_node = elements.nodes.find(x => x.id == update.id)
+        if(target_node) {
+            if(update.name) {
+                target_node.data.label = update.name
             }
-        });
+        }
     }
 
     function addNode(target, type, node) {

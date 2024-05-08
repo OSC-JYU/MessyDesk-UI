@@ -34,6 +34,7 @@ export const store = reactive({
       this.update_data = update
       this.update++
   },
+
   current() {
 		if(this.current_node && !this.current_node.data) {
 			return {data: {name:'', type: ''}}

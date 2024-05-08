@@ -34,30 +34,32 @@
                   
                   <h4 :class="['card-title', 'p-2', 'flex-grow-1']"> {{schema.result._attributes.label}}
                
-                      <i @click="toggleEdit()" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
-                      </i>
-                      <input v-if="edit_name" v-model="edit_name" @keyup.enter="saveLabel()"/>
+                    <i @click="toggleEdit(schema.result._attributes.label)" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
+                        </i>
+                    <v-text-field v-if="state.edit_label" v-model="state.new_label" @keyup.enter="saveLabel()"></v-text-field>
 
-                  </h4>
-              </template>
+
+                    </h4>
+                </template>
 
                 <template v-else-if="store.current().type == 'image'">
-                  
+                    
                     <h4 :class="['card-title', 'p-2', 'flex-grow-1']"> {{schema.result._attributes.label}}
-                 
-                        <i @click="toggleEdit()" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
+                    
+                        <i @click="toggleEdit(schema.result._attributes.label)" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
                         </i>
-                        <input v-if="edit_name" v-model="edit_name" @keyup.enter="saveLabel()"/>
+                        <v-text-field v-if="state.edit_label" v-model="state.new_label" @keyup.enter="saveLabel()"></v-text-field>
 
                     </h4>
                 </template>
 
                 <template v-else>
-                   
-                        <h4 :class="['card-title', 'p-2', 'flex-grow-1']">     {{schema.result._attributes.label}}
-                        <i  @click="toggleEdit()" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
+                    
+                    <h4 :class="['card-title', 'p-2', 'flex-grow-1']">     {{schema.result._attributes.label}}
+                        <i @click="toggleEdit(schema.result._attributes.label)" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
                         </i>
-                        <input v-if="edit_name" v-model="edit_name" @keyup.enter="saveLabel()"/>
+                        <v-text-field v-if="state.edit_label" v-model="state.new_label" @keyup.enter="saveLabel()"></v-text-field>
+
                     </h4>
 
                 </template>
@@ -162,6 +164,8 @@
     const router = useRouter();
 
     var state = reactive({
+        edit_label: false,
+        new_label: '',
         thumbnail: '',
         params: '',
         editing: false,
@@ -205,7 +209,7 @@
     })
 
     const permissions = ['user', 'creator', 'admin']
-    const emit = defineEmits(['fitGraph', 'saveLayout', 'setGraphOptions'])
+    const emit = defineEmits(['updateGraph'])
 
 
     watch(
@@ -299,18 +303,18 @@
 
 
     async function saveLabel() {
-        var result = await web.setNodeAttribute(store.current().data.id, {key:'label', value: edit_name.value})
-        store.reload({id: store.current().data.id, name: edit_name.value})
-        edit_name.value = ''
+        var result = await web.setNodeAttribute(store.current().id, {key:'label', value: state.new_label})
+        emit('updateGraph', {id: store.current().id, name: state.new_label})
+        state.edit_label = false
+        
     }
 
 
-    function toggleEdit() {
-        if(edit_name.value == '')
-            edit_name.value = store.current().data.name
-        else {
-            edit_name.value = ''
-        }
+    function toggleEdit(label) {
+        state.edit_label = !state.edit_label
+        if(state.edit_label)
+            state.new_label = label
+        
     }
 
 
