@@ -1,21 +1,8 @@
-<style>
-    .person-photo {
-        width: 80px;
-        margin-left: 0px;
-    }
 
 
-</style>
 
 <template>
 
-    <!-- information about query-->
-    <!-- <div v-if="route.query.query">
-        <div class="card-header"><h4>{{ current_query.menu }} - {{ current_query.label}}</h4> </div>
-        
-    </div> -->
-
-    <!-- node card --> 
     <div class="card" v-if="store.current_node && store.current().id && schema.result._attributes">
 
         <div class="card-header">
@@ -54,33 +41,21 @@
                 </template>
 
                 <template v-else>
-                    
                     <h4 :class="['card-title', 'p-2', 'flex-grow-1']">     {{schema.result._attributes.label}}
                         <i @click="toggleEdit(schema.result._attributes.label)" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
                         </i>
                         <v-text-field v-if="state.edit_label" v-model="state.new_label" @keyup.enter="saveLabel()"></v-text-field>
 
                     </h4>
-
                 </template>
 
             </div>
-
-            
- 
 
             <div v-if="editable()">
                 <div role="button" @click="state.editing = true" class="btn btn-primary float-end" title="Edit item">
                     <i class="bi bi-pen" style="font-size: 1rem; color: white;"></i>
                 </div>
             </div>
-
-
-
-
-            <!-- {{ schema.result._attributes.path }} -->
-
-
 
         </div>
 
@@ -91,55 +66,8 @@
         <v-container v-else>
             <div v-if="state.params.info">{{ state.params.info }}</div>
         </v-container>
-       
-
-        <!-- CRUNCHERS -->
-        <div v-if="!['Process', 'Project','Person'].includes(store.current().type)" class="card-body overflow-auto">
-            <h5 v-if="store.current().type != 'process'">Things that you can do with your {{ schema.result._attributes.type }}</h5>
-           <!-- {{ store.current().data }}-->
-
-            <div>
-                <div v-if="services.result && services.result.for_format && services.result.for_format.length == 0" class="alert alert-warning">No crunchers found</div>
-                <div v-if="store.current().data.type == 'set'">
-                    <ol class="card" v-for="service in services.result.for_type">
-                        <template v-if="service.tasks">
-                            <li class="list-group-item border-0" v-for="(value, key) of service.tasks" :key="key">
-                                <div @click="initProcessCreator(service, key)" class="node Service pointer"> {{ value.name }} </div>
-                                <div class="rel-info">{{ value.description }}</div><div class="badge rel-info bg-secondary">{{service.name}}</div>
-                            </li>
-                        </template>
-                    </ol>
-                </div>
-                <ol class="list-group border-0" v-for="service in services.result.for_format">
-                    <template v-if="service.tasks">
-                        <li class="list-group-item border-0" v-for="(value, key) of service.tasks" :key="key">
-                            <div @click="initProcessCreator(service, key)" class="node Service pointer"> {{ value.name }} </div>
-                            <div class="rel-info">{{ value.description }}</div><div class="badge rel-info bg-secondary">{{service.name}}</div>
-                        </li>
-                    </template>
-                </ol>
-
-                <div>
-            </div>
-        </div>
-
-
-  </div>
-       
     
-<!--
-        <NodeAttributes v-if="schema.result._attributes" :editing="state.editing" :attributes="schema.result._attributes"  @reLoadData="loadData"/>
--->
 
-
-
-        <div :class="['card-body overflow-auto', schema.result._attributes._active ? '' : 'disabled']">
-
-
-
-
-
-        </div>
         <div class="card-footer">
    
              <!-- DELETE BUTTON -->
@@ -268,7 +196,7 @@
             state.params = await getProcessParams()
         if (schema.result._attributes['@type'] !== 'Process')
             services.result = await web.getServicesForFile(rid)
-        prepareUserSettings()
+        
     }
 
     function getThumbnail() {
@@ -276,29 +204,13 @@
             return 'api/thumbnails/' + removeLastPathPart(schema.result._attributes.path.replace('data/', ''))
     }
 
+
+
     async function getProcessParams() {
         var url = 'api/process/' + removeLastPathPart(schema.result._attributes.path.replace('data/', ''))
         var params = await web.getProcessParams(url)
         console.log(params)
         return params.data
-    }
-
-    function prepareUserSettings() {
-        state._group = null
-        state._access = null
-        if(schema.result._attributes && schema.result._attributes['@type'] == 'Person') {
-            state._group = schema.result._attributes._group
-            state._access = schema.result._attributes._access
-        }
-    }
-
-    function initProcessCreator(data, task_id) {
-        console.log(data)
-        store.process = data
-        store.task_id = task_id
-        store.new_node_label = 'Process'
-        store.new_node_relation = 'WAS_PROCESSED_BY'
-        store.process_creator_open = true
     }
 
 

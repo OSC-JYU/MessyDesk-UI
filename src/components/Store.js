@@ -9,6 +9,7 @@ export const store = reactive({
   y: 0,
   process: {},
   task_id: '',
+  view: null,
   new_node_type: '',
   new_node_id: null,
   new_node_relation: null,
@@ -25,6 +26,7 @@ export const store = reactive({
   node_deleter_open: false,
   importer_open: false,
   exporter_open: false,
+  crunchers_open: false,
   graph_style: [],
 
   gtags() {

@@ -6,6 +6,7 @@ import GraphMain from './components/GraphMain.vue'
 import FilesMain from './components/FilesMain.vue'
 import ProjectMain from './components/ProjectMain.vue'
 import ServicesMain from './components/ServicesMain.vue'
+import CrunchersMain from './components/CrunchersMain.vue'
 
 import About from './components/About.vue'
 
@@ -65,6 +66,12 @@ const router = createRouter({
       path: '/files/:rid',
       name: 'files',
       component: FilesMain
+    },
+
+    {
+      path: '/crunchers',
+      name: 'crunchers',
+      component: CrunchersMain
     },
 
     {

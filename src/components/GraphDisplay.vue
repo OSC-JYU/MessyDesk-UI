@@ -94,7 +94,8 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
 
                 <div class="graph-display">
-                    <VueFlow :nodes="elements.nodes" :edges="elements.edges" fit-view-on-init >
+                    <!-- <VueFlow :nodes="elements.nodes" :edges="elements.edges" fit-view-on-init > -->
+                    <VueFlow :nodes="elements.nodes" :edges="elements.edges" >
                         <Background />
                         <template #node-project="{ data }">
                             <ProjectNode :data="data" />
@@ -275,13 +276,26 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
 
     flow.onNodeClick((event) => {
+        console.log(event.node)
         store.current_node = event.node
+
+        store.view = flow.getViewport()
+        console.log(view)
         
         //flow.fitView()
     })
 
     flow.onPaneClick((event) => {
         store.current_node = null
+    })
+
+    flow.onNodesInitialized ((event) => {
+        if(store.view) flow.setViewport(store.view)
+        else flow.fitView()
+    })
+
+    flow.onMoveEnd ((event) => {
+        store.view = flow.getViewport()
     })
 
     flow.onNodeDoubleClick((event) => {
@@ -342,9 +356,9 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
         //nodes.value = layout(nodes.value, edges.value, direction)
         elements.nodes = layout(elements.nodes, elements.edges, direction)
 
-        nextTick(() => {
-            flow.fitView()
-        })
+        // nextTick(() => {
+        //     flow.fitView()
+        // })
     }
 
     async function toggleOffcanvas(node) {
@@ -463,23 +477,10 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
         if(props.mode !== 'projects')
             layoutGraph('LR')
 
-        nextTick(() => {
-            flow.fitView()
-        })
-        //flow.fitView()
-        //var layout = getLayoutSettings(layout_name)
-        
-
-
-
     }
 
     function getDefaultPosition() {
         return {x: 0, y: 0}
-    }
-
-    function fitGraph() {
-
     }
 
 

@@ -10,7 +10,6 @@
     import { useRoute } from 'vue-router'
     import JYUHeader from './JYUHeader.vue'
     import GraphDisplay from './GraphDisplay.vue'
-    import ProcessCreator from './ProcessCreator.vue'
     import NodeDeleter from './NodeDeleter.vue'
     import Uploader from './Uploader.vue'
 
@@ -34,16 +33,12 @@
                     
                     <div class="row m-0 p-0  flex-grow-1">
                         <GraphDisplay mode="graph" />
-                        <ProcessCreator mode="graph" />
+                        
                         <Uploader mode="graph" />
                         <NodeDeleter mode="graph" />
                     </div>
                 </div>
             </div>
         </div>
-
-
-
-
     </div>
 </template>
