@@ -32,6 +32,7 @@ import { useRouter, useRoute } from 'vue-router'
 import {store} from "../Store.js";
 
 const router = useRouter();
+const route = useRoute();
 
 const props = defineProps({
   data: {
@@ -45,7 +46,7 @@ const props = defineProps({
 
 function openCrunchers(id) {
   store.current_node = node
-  router.push({ name: 'crunchers', query: { node: node.id.replace('#', '')} })
+  router.push({ name: 'crunchers', query: { node: node.id.replace('#', ''), desk:route.query.node} })
 }
 
 </script>

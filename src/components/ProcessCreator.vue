@@ -89,6 +89,7 @@
     import web from "../web.js";
 
 	const router = useRouter();
+	const route = useRoute();
 
 
 	var state = reactive({
@@ -143,6 +144,7 @@ console.log(state.out_params)
 		store.new_node_type = ''
 		store.new_node_relation = null
 		store.process_creator_open = false
+		router.push({ name: 'graph', query: { node: route.query.desk} })
 	}
 
 	function createUserInfo(info, params) {

@@ -38,8 +38,8 @@ height: 100%;
                             <v-card class="m-3" v-for="(value, key) of service.tasks" :key="key" :title="value.name" :subtitle="value.description">
                                 <div class="badge rel-info bg-secondary ">{{service.name}}</div>
 
-                                <v-card-actions class="float-right">
-                                    <v-btn @click="initProcessCreator(service, key)">Start crunching!</v-btn>
+                                <v-card-actions outlined class="outlined float-right">
+                                    <v-btn @click="initProcessCreator(service, key)"><img  title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" />Start crunching!</v-btn>
                                 </v-card-actions>
                             </v-card>
                         </template>

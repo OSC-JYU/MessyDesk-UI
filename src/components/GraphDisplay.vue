@@ -280,9 +280,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
         store.current_node = event.node
 
         store.view = flow.getViewport()
-        console.log(view)
-        
-        //flow.fitView()
+
     })
 
     flow.onPaneClick((event) => {
