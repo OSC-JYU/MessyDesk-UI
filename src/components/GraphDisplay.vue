@@ -116,7 +116,11 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                         <template #node-text="{ data }">
                             <TextNode :data="data" />
                         </template>
-                        
+         
+                        <template #node-data="{ data }">
+                            <JSONNode :data="data" />
+                        </template>
+
                         <template #node-set="{ data }">
                             <SetNode :data="data" />
                         </template>
@@ -196,6 +200,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     import PDFNode from './nodes/PDFNode.vue'
     import TextNode from './nodes/TextNode.vue'
     import SetNode from './nodes/SetNode.vue'
+    import JSONNode from './nodes/JSONNode.vue'
 
     import { useShuffle } from './useShuffle'
     import { useLayout } from './useLayout'
@@ -299,6 +304,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     flow.onNodeDoubleClick((event) => {
         console.log(event.node)
         if(event.node.type == "project" ) {
+            store.view = null
             router.push({ name: 'graph', query: { node: event.node.id.replace('#', '')} })
         } else if(event.node.type == "set") {
             toggleOffcanvas(event.node)

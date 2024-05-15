@@ -34,7 +34,7 @@ const props = defineProps({
     <div class="header">IMAGE SET:  {{ data.label }}</div>
     <div class="m-2">
 
-      {{ data.description }} jotain kuvia
+      {{ data.description }} files
     </div>
 
     <div class="row m-4">

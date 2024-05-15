@@ -40,9 +40,31 @@
 
                 <!-- Desk node not selected-->
                 <div v-if="!store.current_node" class="card-body">
-                    <div v-for="item of state.items">
-                        <router-link   :to="`/graph?node=${item['@rid'].replace('#','')}`" >{{item.label}} ({{ item.file_count }} files)</router-link> 
-                    </div>
+                    <v-list>
+                        <v-list-item
+                            v-for="item in state.items"
+                            :key="item.id"
+                            :subtitle="item.file_count + ' files'"
+                            :title="item.label"
+                            :to="`/graph?node=${item['@rid'].replace('#','')}`"
+                        >
+                            <template v-slot:prepend>
+                                <v-avatar color="grey-lighten-1">
+                                    <v-icon color="white">mdi-desk</v-icon>
+                                </v-avatar>
+                            </template> 
+                            <template v-slot:append>
+                            <v-btn
+                                color="grey-lighten-1"
+                                icon="mdi-information"
+                                variant="text"
+                                :to="`/graph?`"
+                            ></v-btn>
+                            </template>
+                            
+                        </v-list-item>
+                    </v-list>
+
                 </div>
             </div>
             

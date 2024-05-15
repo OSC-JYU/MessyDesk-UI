@@ -1,18 +1,19 @@
 <style scoped>
-.node-pdf {
+
+.node-body {
   min-height: 200px;
+  min-width: 200px;
 }
 
 img {
   max-width:200px;
   margin: 0px
 }
-.node-pdf .header {
-  background-color: #9b4949;
+.header {
+  background-color: #df8a1a;
   color: white; 
   padding:3px
 }
-
 .crunch_add {
   color: #458b55;
   position: absolute;
@@ -46,9 +47,7 @@ const props = defineProps({
   },
 })
 
-
 const { node } = useNode()
-
 
 function openCrunchers(id) {
   store.current_node = node
@@ -58,17 +57,16 @@ function openCrunchers(id) {
 </script>
 
 <template>
-  <div class="node-pdf">
-    <div class="header">{{ data.label }}</div>
-    <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" />
-    <img :src="data.image" />
-    {{ data.description }}
-
-    <Handle id="a" type="target" :position="Position.Left" />
+  <div class="node-body">
+    <div class="header"> {{ data.label }}
+      <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" />
+    </div>
+   
+    <div class="m-2">{{ data.description }} </div>
+    <Handle id="a" type="target" :position="Position.Top" /> 
+    <Handle id="b" type="source" :position="Position.Bottom" />  
     <Handle id="r" type="target" :position="Position.Right" />
-
-    <Handle id="b" type="source" :position="Position.Right" /> 
-    <Handle id="t" type="source" :position="Position.Top" /> 
   </div>
+
 
 </template>
