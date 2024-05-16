@@ -46,7 +46,7 @@
 
               <li class="nav-item">
                   <router-link :to="'/services'" class="dropdown-item">
-                      <i class="fs-5 bi-card-list"></i><span class="ms-1 d-none d-sm-inline">Services</span>
+                      <i class="fs-5 bi-card-list"></i><span class="ms-1 d-none d-sm-inline">System view</span>
                   </router-link>
               </li>
 

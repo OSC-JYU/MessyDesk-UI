@@ -223,7 +223,7 @@
 
     onMounted(async()=> {
   
-      var hocr =  await fetch('/api/files/255:21')
+      var hocr =  await fetch('/api/files/' + route.params.rid)
       hocr = await hocr.text();
       var start = hocr.indexOf("<body>") + "<body>".length
       var end = hocr.indexOf("</body>")
@@ -238,7 +238,7 @@
         
         state.file = response
         //state.file.thumbnail = removeLastPathPart(response.path.replace('data/', '/api/thumbnails/'))
-        state.file.original = 'http://localhost:3000/api/files/270:15'
+        state.file.original = 'http://localhost:3000/api/files/' + route.query.source
 
       
     })

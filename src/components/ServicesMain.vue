@@ -56,20 +56,16 @@
             { id: 'consumers',  label: 'Nomad', position: { x: 600, y: 350 }, data: {description:'Views (or filters) to message stream',label:'NATS Consumers'}, class: 'light' },
 
             { id: 'consumer_apps', type:'pdf', label: 'Nomad', position: { x: 200, y: 350 }, data: {description:'One for every service. The compability layer.',label:'Consumer Apps'}, class: 'light' },
-
-            // { id: 'image', label: 'Image services', position: { x: 0, y: 400 }, type:'image', data: {label:'Image services'} },
-            // { id: 'text', label: 'Text services', position: { x: 250, y: 400 }, type:'text', data: {label:'Text services'}  },
-            // { id: 'pdf', label: 'PDF services', position: { x: 500, y: 400 }, type:'pdf', data: {label:'PDF services'}  }
         ],
 
         edges: [
         { id: 'md', source: 'md_ui', target: 'md_api', animated: true, label: 'uses API' },
         { id: 'ws', source: 'md_api', target: 'md_ui', animated: true, label: 'updates UI via ws' },
-        { id: 'db', source: 'md_api', target: 'db', animated: true, label: 'stores graph' },
+        { id: 'db', source: 'md_api', target: 'db', sourceHandle: 's_r',  animated: true, label: 'stores graph' },
         { id: 'nomad_md', source: 'md_api', target: 'nomad', animated: true, label: 'controls Nomad' },
         { id: 'nats_md', source: 'md_api', target: 'nats', animated: true, label: 'sends messages' },
-        { id: 'nomad_consumers', source: 'consumer_apps', target: 'nomad', animated: true, label: 'sends request to jobs',  targetHandle: 'r', },
-        { id: 'consumers_md', source: 'consumer_apps', target: 'md_api', animated: true, label: 'sends responses to API' },
+        { id: 'nomad_consumers', source: 'consumer_apps', target: 'nomad', animated: true, label: 'sends request to jobs',  targetHandle: 'r', sourceHandle:'l' },
+        { id: 'consumers_md', source: 'consumer_apps', target: 'md_api', targetHandle: 't_b', sourceHandle:'t', animated: true, label: 'sends responses to API' },
         { id: 'consumers_apps', source: 'consumers', target: 'consumer_apps', targetHandle: 'r', animated: true, label: 'listens messages' }
         ],
     })

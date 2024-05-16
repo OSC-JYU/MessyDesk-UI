@@ -63,9 +63,11 @@ function openCrunchers(id) {
     </div>
    
     <div class="m-2">{{ data.description }} </div>
-    <Handle id="a" type="target" :position="Position.Top" /> 
     <Handle id="b" type="source" :position="Position.Bottom" />  
+    <Handle id="s_r" type="source" :position="Position.Right" />  
+    <Handle id="a" type="target" :position="Position.Top" /> 
     <Handle id="r" type="target" :position="Position.Right" />
+    <Handle id="t_b" type="target" :position="Position.Bottom" />
   </div>
 
 

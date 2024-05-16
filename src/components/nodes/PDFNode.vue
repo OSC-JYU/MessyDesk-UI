@@ -69,6 +69,7 @@ function openCrunchers(id) {
 
     <Handle id="b" type="source" :position="Position.Right" /> 
     <Handle id="t" type="source" :position="Position.Top" /> 
+    <Handle id="l" type="source" :position="Position.Left" /> 
   </div>
 
 </template>

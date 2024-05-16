@@ -302,14 +302,27 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     })
 
     flow.onNodeDoubleClick((event) => {
-        console.log(event.node)
+        console.log('incomers')
+        let cruncher, source 
+        const parent = flow.getIncomers(event.node)
+        if(parent.length == 1) {
+            cruncher = parent[0].id.replace('#', '')
+            const granparent = flow.getIncomers(parent[0])
+            if(granparent.length == 1) {
+                source = granparent[0].id.replace('#', '')
+            }
+        }
+        console.log(source)
         if(event.node.type == "project" ) {
             store.view = null
             router.push({ name: 'graph', query: { node: event.node.id.replace('#', '')} })
         } else if(event.node.type == "set") {
             toggleOffcanvas(event.node)
         } else if(event.node.data.type == "file") {
-            router.push({ name: 'files', params: { rid: event.node.id.replace('#', '')} })
+            if(cruncher && source)
+                router.push({ name: 'files', params: { rid: event.node.id.replace('#', '')}, query: {cruncher:cruncher, source:source} })
+            else
+                router.push({ name: 'files', params: { rid: event.node.id.replace('#', '')} })
         }
            
     })
