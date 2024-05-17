@@ -63,6 +63,12 @@ function openCrunchers(id) {
     </div>
    
     <div class="m-2">{{ data.description }} </div>
+    <v-chip v-if="data.model" color="green" variant="flat">
+      {{ data.model }}
+    </v-chip>
+    <v-chip v-if="data.location" color="blue" variant="flat">
+      {{ data.location }}
+    </v-chip>
     <Handle id="a" type="target" :position="Position.Left" />
     <Handle id="b" type="source" :position="Position.Right" /> 
   </div>

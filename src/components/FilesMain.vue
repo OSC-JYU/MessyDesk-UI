@@ -47,8 +47,6 @@
                         <JYUHeader/>
                     </div>
                     <div class="row m-0 p-0  flex-grow-1">
-                        
-
                         <ImageDisplay v-if="state.file  && state.file.type=='image'"/>
                         <HOCRDisplay v-if="state.file && state.file.type=='text'"/>
                     </div>

@@ -3,7 +3,10 @@ img {
   max-width:200px;
   margin: 0px
 }
-.node-image .header {
+.node-image {
+  padding:0px
+}
+.header {
   background-color: #54546f;
   color: white; 
   padding:3px
@@ -56,10 +59,15 @@ function openCrunchers(id) {
     
     <div class="header">{{ data.label }} 
       <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" />
-     
     </div>
     <img :src="data.image" />
-    {{ data.description }} 
+    <div class="m-2">
+      {{ data.description }} 
+      <v-chip v-if="data.model" color="green" variant="outlined">
+        {{ data.model }}
+      </v-chip>
+    </div>
+
 
 
     <Handle id="a" type="target" :position="Position.Left" />

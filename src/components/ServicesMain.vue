@@ -26,6 +26,7 @@
     import ImageNode from './nodes/ImageNode.vue'
     import TextNode from './nodes/TextNode.vue'
     import PDFNode from './nodes/PDFNode.vue'
+    import ConsumerNode from './nodes/ConsumerNode.vue'
     import JYUHeader from './JYUHeader.vue'
     import web from "../web.js";
 
@@ -53,9 +54,9 @@
 
             { id: 'nomad', type:'json', label: 'Nomad', position: { x: -300, y: 350 }, data: {description:'Container orchestration',label:'Nomad'}, class: 'light' },
 
-            { id: 'consumers',  label: 'Nomad', position: { x: 600, y: 350 }, data: {description:'Views (or filters) to message stream',label:'NATS Consumers'}, class: 'light' },
+            { id: 'consumers',  label: 'Nomad', position: { x: 600, y: 520 }, data: {description:'Views (or filters) to message stream',label:'NATS Consumers'}, class: 'light' },
 
-            { id: 'consumer_apps', type:'pdf', label: 'Nomad', position: { x: 200, y: 350 }, data: {description:'One for every service. The compability layer.',label:'Consumer Apps'}, class: 'light' },
+            { id: 'consumer_apps', type:'pdf', label: 'Nomad', position: { x: 200, y: 250 }, data: {description:'Consumer apps are applications that listen event stream and creates request to actual services via Nomad or directly (if external API)',label:'Consumer Apps'}, class: 'light' },
         ],
 
         edges: [
@@ -90,8 +91,9 @@
         const positions = {'pdf': {x:-600, y:0}, 'image': {x:0, y:0}, 'text': {x:600, y:0}}
         for(var mediatype in data) {
             var count = 1
+            var consumers = 0
             for(var item in data[mediatype]) {
-
+                
                 state.nodes.push({
                     id: data[mediatype][item].id + count, 
                     label: data[mediatype][item].id, 
@@ -99,10 +101,32 @@
                     class: 'light', 
                     type: mediatype, 
                     data: {
-                        label: data[mediatype][item].supported_types + ': ' + data[mediatype][item].name,
-                        description: data[mediatype][item].description}
+                        label: data[mediatype][item].supported_types + ': ' + data[mediatype][item].name + ' ' + data[mediatype][item].consumers.length,
+                        description: data[mediatype][item].description.substring(0, 150) + '...',
+                        model: data[mediatype][item].nomad_hcl ? 'nomad_hcl' : '',
+                        location: data[mediatype][item].nomad_hcl ? 'nomad' : 'external'
+                    }
                 })
-                state.edges.push({id: data[mediatype][item].id + Math.random(), target: data[mediatype][item].id + count, source: 'nomad', animated: true, label: 'nomad job'})
+                
+                if(data[mediatype][item].consumers.length) {
+                  
+                    state.nodes.push({
+                        id: task, 
+                        type: 'consumer',
+                        position: { x: 400, y: consumers * 40 + 250 }, 
+                        data: {description: task,label: data[mediatype][item].id + ': ' + data[mediatype][item].consumers.length}, 
+                        class: 'light'
+                    })  
+
+                    consumers++
+
+                }
+
+                if(data[mediatype][item].nomad_hcl) {
+                    state.edges.push({id: data[mediatype][item].id + Math.random(), target: data[mediatype][item].id + count, source: 'nomad', animated: true, label: 'nomad job'})
+                }
+
+
                 var tasks = 1
                 for(var task in data[mediatype][item].tasks) {
                     console.log(task)
@@ -155,6 +179,9 @@
                         </template>
                         <template #node-json="{ data }">
                             <JSONNode :data="data" />
+                        </template>
+                        <template #node-consumer="{ data }">
+                            <ConsumerNode :data="data" />
                         </template>
                         </VueFlow>
 

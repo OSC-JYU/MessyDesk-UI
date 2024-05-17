@@ -4,7 +4,7 @@
 }
 
 img {
-  max-width:200px;
+  max-width:190px;
   margin: 0px
 }
 .node-pdf .header {
@@ -61,8 +61,14 @@ function openCrunchers(id) {
   <div class="node-pdf">
     <div class="header">{{ data.label }}</div>
     <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" />
-    <img :src="data.image" />
-    {{ data.description }}
+    <div class="m-2">
+      <img :src="data.image" />
+      {{ data.description }}
+      <v-chip v-if="data.model" color="green" variant="outlined">
+        {{ data.model }}
+      </v-chip>
+
+    </div>
 
     <Handle id="a" type="target" :position="Position.Left" />
     <Handle id="r" type="target" :position="Position.Right" />
