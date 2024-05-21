@@ -7,6 +7,7 @@ import FilesMain from './components/FilesMain.vue'
 import ProjectMain from './components/ProjectMain.vue'
 import ServicesMain from './components/ServicesMain.vue'
 import CrunchersMain from './components/CrunchersMain.vue'
+import Introduction from './components/Introduction.vue'
 
 import About from './components/About.vue'
 
@@ -62,6 +63,12 @@ const router = createRouter({
       path: '/services',
       name: 'services',
       component: ServicesMain
+    },
+
+    {
+      path: '/intro',
+      name: 'introduction',
+      component: Introduction
     },
 
     {

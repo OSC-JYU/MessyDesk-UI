@@ -43,6 +43,11 @@
           </button>
           <ul class="dropdown-menu dropdown-menu-start dropdown-menu-lg-start">
 
+            <li class="nav-item">
+                  <router-link :to="'/intro'" class="dropdown-item">
+                      <i class="fs-5 bi-card-list"></i><span class="ms-1 d-none d-sm-inline">Introduction</span>
+                  </router-link>
+              </li>
 
               <li class="nav-item">
                   <router-link :to="'/services'" class="dropdown-item">
