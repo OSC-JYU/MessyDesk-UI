@@ -24,7 +24,7 @@
                 image: nodes,
                 list:[
                     {
-                        title: 'Introduction to DH tools', 
+                        title: 'Open playground for digital humanities', 
                         subtitle:'Try easily, fail early',
                         text:` You don't have to setup any tools. Just upload your files and get started. `,
                     },

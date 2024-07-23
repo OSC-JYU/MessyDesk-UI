@@ -364,6 +364,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     watch(
     	() => store.update,
       	async (newValue, oldValue) => {
+            console.log(store.update_data)
             if(store.update_data) updateGraphNode(store.update_data)
         	else loadGraph(route, oldValue)
     })
@@ -432,6 +433,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     }
 
 	async function loadGraph(route, oldValue) {
+        console.log('loading graph')
 		var layout = ''
         graph.result.data = {}
 
@@ -454,7 +456,11 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
         var positions = await getNodePositions()
         console.log(positions)
 
+        elements.nodes = []
+        elements.edges = []
+
         for(var node of graph.result.data.nodes) {
+  
             var flownode = {
                 id: node.data.id, 
                 type: node.data.type.toLowerCase(),

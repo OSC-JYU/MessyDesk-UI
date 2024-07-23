@@ -33,8 +33,9 @@ export const store = reactive({
       return this.tags
   },
   reload(update) {
-      this.update_data = update
-      this.update++
+    this.update_data = null || update
+      //this.update_data = update
+    this.update++
   },
 
   current() {

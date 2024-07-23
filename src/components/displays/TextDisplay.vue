@@ -1,6 +1,5 @@
 <template>
-
-  <v-container>
+    <v-container>
       <v-row>
         <v-btn @click="$router.go(-1)"><v-icon>mdi-arrow-left</v-icon></v-btn>
       </v-row>
@@ -10,7 +9,7 @@
       <v-row>
 
         <v-col cols="9" >
-          <img v-if="state.file" :src="state.file.thumbnail" alt="Image" />
+          <div v-html="state.text"></div>
         </v-col>
 
         <v-col cols="3">
@@ -25,7 +24,7 @@
       </v-row>
     </v-container>
 
-
+    
   </template>
   
   <script setup>
@@ -42,17 +41,24 @@
         cruncher: null
     })
 
+    function replaceWithBr(text) {
+      return text.replace(/\n/g, "<br />")
+    }
+
+
     onMounted(async()=> {
 
         var response = await web.getDocInfo(route.params.rid)
+        var f = await web.getNodeFile(route.params.rid)
         
         state.file = response
-        state.file.thumbnail = removeLastPathPart(response.path.replace('data/', '/api/thumbnails/'))
+        state.text = replaceWithBr(f)
+
         if(route.query.cruncher) {
           var response2 = await web.getDocInfo(route.query.cruncher)
           state.cruncher = response2
-
         }
+
     })
 
     function removeLastPathPart(str) {

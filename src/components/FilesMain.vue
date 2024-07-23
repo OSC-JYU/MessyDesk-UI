@@ -2,6 +2,9 @@
     import JYUHeader from './JYUHeader.vue'
     import ImageDisplay from './displays/ImageDisplay.vue'
     import HOCRDisplay from './displays/HOCRDisplay.vue'
+    import NER_Display from './displays/NER_Display.vue'
+    import TextDisplay from './displays/TextDisplay.vue'
+    import PDFDisplay from './displays/PDFDisplay.vue'
     import web from "../web.js";
     
     import { onMounted, watch, reactive, ref, computed } from "vue";
@@ -21,6 +24,7 @@
         var response = await web.getDocInfo(route.params.rid)
         
         state.file = response
+        console.log(state.file)
         state.file.thumbnail = removeLastPathPart(response.path.replace('data/', '/api/thumbnails/'))
         document.title = state.file.label
     })
@@ -48,7 +52,10 @@
                     </div>
                     <div class="row m-0 p-0  flex-grow-1">
                         <ImageDisplay v-if="state.file  && state.file.type=='image'"/>
-                        <HOCRDisplay v-if="state.file && state.file.type=='text'"/>
+                        <TextDisplay v-if="state.file  && state.file.type=='text'"/>
+                        <PDFDisplay v-if="state.file  && state.file.type=='pdf'"/>
+                        <HOCRDisplay v-if="state.file && state.file.extension=='hocr'"/>
+                        <NER_Display v-if="state.file && state.file.extension=='json' && state.file.label.includes('.ner.json')"/>
                     </div>
                 </div>
             </div>

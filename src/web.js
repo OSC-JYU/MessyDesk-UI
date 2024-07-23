@@ -130,6 +130,11 @@ web.getDocInfo = async function(rid) {
 	return result.data
 }
 
+web.getNodeFile = async function(rid) {
+	var result = await axios.get(`/api/files/${rid.replace('#','')}`)
+	return result.data
+}
+
 web.getSchemaAndData = async function(rid) {
 	var result = await axios.get(`/api/graph/vertices/${rid.replace('#','')}`)
 	return result.data

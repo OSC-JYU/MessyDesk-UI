@@ -21,6 +21,7 @@ height: 100%;
             <!-- CRUNCHERS -->
 
                 <div>
+                    
                     <div v-if="services.result && services.result.for_format && services.result.for_format.length == 0" class="alert alert-warning">No crunchers found</div>
 
                     <div v-if="store.current().data.type == 'set'">
@@ -33,17 +34,37 @@ height: 100%;
                             </template>
                         </ol>
                     </div>
-                    <ol class="list-group border-0" v-for="service in services.result.for_format">
-                        <template v-if="service.tasks">
-                            <v-card class="m-3" v-for="(value, key) of service.tasks" :key="key" :title="value.name" :subtitle="value.description">
-                                <div class="badge rel-info bg-secondary ">{{service.name}}</div>
 
-                                <v-card-actions outlined class="outlined float-right">
-                                    <v-btn @click="initProcessCreator(service, key)"><img  title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" />Start crunching!</v-btn>
-                                </v-card-actions>
-                            </v-card>
+
+                        <template v-for="service in services.result.for_format">
+                            <template v-if="service.id !== 'thumbnailer'">
+                            <h4 class="text-h5 font-weight-bold mb-4 mt-6"> {{ service.name }}</h4>
+                            <p><i> {{ service.description }}</i></p> 
+                            <v-expansion-panels>
+                                <v-expansion-panel v-for="(value, key) of service.tasks" >
+                                    <v-expansion-panel-title> 
+                                        <div class="font-weight-bold "> {{ value.name }}</div>
+                                    </v-expansion-panel-title>
+                                    <v-expansion-panel-text>
+                                         {{ value.description }}
+                                         <div class="d-flex flex-row-reverse mb-6 ">
+                                             <v-btn         
+                                                class="text-none ms-4 text-white"
+                                                color="blue-darken-4"
+                                                rounded="1"
+                                                variant="flat" 
+                                                @click="initProcessCreator(service, key)"><img  title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" />Add</v-btn>
+
+                                         </div>
+                                    </v-expansion-panel-text>
+
+                                </v-expansion-panel>
+                            </v-expansion-panels>
+                            </template>
+
                         </template>
-                    </ol>
+
+
 
                     <div>
                 </div>
@@ -66,12 +87,11 @@ height: 100%;
     const route  = useRoute();
     const router = useRouter();
 
-    var services = reactive({result:[]})
+    var services = reactive({result:{}})
  
 
     async function loadData(rid) {
         services.result = await web.getServicesForFile(rid)
-        
     }
 
 

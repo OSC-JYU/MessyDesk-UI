@@ -8,7 +8,7 @@
         <div class="card-header">
 
             <template v-if="store.current().type != 'process'">
-                <a target="_blank" :href="'/api/files/' + store.current().id.replace('#','')">{{store.current().data.type_label}} {{ store.current().id }}</a>
+                <a target="_blank" :href="'/api/files/' + store.current().id.replace('#','')">{{store.current().data.type_label}} open file</a> ({{ store.current().id }})
             </template>
             <template v-else>{{ store.current().id }}</template>
 

@@ -43,7 +43,8 @@
 	async function deleteNode() {
 		state.error = ''
 		var response = await web.deleteNode(store.current().id)
-		store.reload()
+		store.current_node = null
+		store.reload(null)
 		store.node_deleter_open = false
 	}
 

@@ -61,8 +61,13 @@
 
 				<div class="modal-footer">
 					{{ store.current().data.name }}
-					<button @click="close()" type="button" class="btn btn-secondary" >Cancel</button>
-					<button v-if="store.task_id " @click=createProcess() type="button" class="btn btn-primary">Crunch!</button>
+					<v-btn @click="close()" class="btn btn-secondary" >Cancel</v-btn>
+					<v-btn   
+						class="text-none ms-4 text-white"
+        				color="blue-darken-4"
+        				rounded="0"
+        				variant="elevated" 
+						v-if="store.task_id " @click=createProcess() >Crunch!</v-btn>
 					<img src="icons/cookie-bite-solid.svg"/>
 					<div v-if="state.error" class="alert alert-danger">{{state.error}}</div>
 				</div>
@@ -144,7 +149,7 @@ console.log(state.out_params)
 		store.new_node_type = ''
 		store.new_node_relation = null
 		store.process_creator_open = false
-		router.push({ name: 'graph', query: { node: route.query.desk} })
+		//router.push({ name: 'graph', query: { node: route.query.desk} })
 	}
 
 	function createUserInfo(info, params) {
