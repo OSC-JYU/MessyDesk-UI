@@ -51,7 +51,6 @@
         if(route.query.cruncher) {
           var response2 = await web.getDocInfo(route.query.cruncher)
           state.cruncher = response2
-
         }
     })
 

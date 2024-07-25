@@ -12,9 +12,12 @@ height: 100%;
 
 
     <v-container  class="h-100 w-100 position-absolute">
-
-        <h2 class="position-absolute">Tools</h2>
-        <v-card v-if="store.current_node" class="overflow-y-auto graph-display">
+        
+      <v-row>
+        <v-btn @click="$router.go(-1)"><v-icon>mdi-arrow-left</v-icon></v-btn>
+      </v-row>
+    
+        <v-card v-if="store.current_node" class="overflow-y-auto graph-display mt-4">
 
     
 
@@ -53,7 +56,8 @@ height: 100%;
                                                 color="blue-darken-4"
                                                 rounded="1"
                                                 variant="flat" 
-                                                @click="initProcessCreator(service, key)"><img  title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" />Add</v-btn>
+                                                title="Add cruncher"
+                                                @click="initProcessCreator(service, key)">Add</v-btn>
 
                                          </div>
                                     </v-expansion-panel-text>
@@ -70,6 +74,7 @@ height: 100%;
                 </div>
             </div>
         </v-card>
+       
         <div v-else class="mt-10">ERROR: No node selected</div>
     </v-container>
 

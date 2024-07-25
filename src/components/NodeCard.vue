@@ -67,7 +67,8 @@
             <div v-if="state.params.info">{{ state.params.info }}</div>
         </v-container>
     
-
+{{ store.current().type }}
+{{ store.current().data.type }}
         <div class="card-footer">
    
              <!-- DELETE BUTTON -->

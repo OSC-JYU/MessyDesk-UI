@@ -141,15 +141,15 @@ console.log(state.out_params)
 		//var node = res.data.result[0]
 		//console.log(res)
 		//store.reload()
-		close()
+		close(1)
 
 	}
 
-	function close() {
+	function close(tomain = 0) {
 		store.new_node_type = ''
 		store.new_node_relation = null
 		store.process_creator_open = false
-		//router.push({ name: 'graph', query: { node: route.query.desk} })
+		if(tomain)router.push({ name: 'graph', query: { node: route.query.desk} })
 	}
 
 	function createUserInfo(info, params) {

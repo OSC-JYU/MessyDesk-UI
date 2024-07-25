@@ -28,7 +28,7 @@ const props = defineProps({
 <template>
   <div class="header"> {{ data.label }}</div>
   <p class="p-2" v-if="data.info">{{ data.info }}</p>
-  <p class="p-2" v-else>{{ data }}</p>
+  <p class="p-2" v-else>{{ data.params }}</p>
   
 <img src="icons/cookie-bite-solid.svg" />
 <img :src="data.image" />

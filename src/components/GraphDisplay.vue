@@ -125,6 +125,10 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                             <SetNode :data="data" />
                         </template>
 
+                        <template #node-human.json="{ data }">
+                            <HumanNode :data="data" />
+                        </template>
+
                         <Background />
 
                     </VueFlow>  
@@ -201,6 +205,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     import TextNode from './nodes/TextNode.vue'
     import SetNode from './nodes/SetNode.vue'
     import JSONNode from './nodes/JSONNode.vue'
+    import HumanNode from './nodes/HumanNode.vue'
 
     import { useShuffle } from './useShuffle'
     import { useLayout } from './useLayout'
@@ -302,23 +307,24 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     })
 
     flow.onNodeDoubleClick((event) => {
-        console.log('incomers')
-        let cruncher, source 
-        const parent = flow.getIncomers(event.node)
-        if(parent.length == 1) {
-            cruncher = parent[0].id.replace('#', '')
-            const granparent = flow.getIncomers(parent[0])
-            if(granparent.length == 1) {
-                source = granparent[0].id.replace('#', '')
-            }
-        }
-        console.log(source)
+ 
+        console.log(event.node.data.type)
         if(event.node.type == "project" ) {
             store.view = null
             router.push({ name: 'graph', query: { node: event.node.id.replace('#', '')} })
         } else if(event.node.type == "set") {
             toggleOffcanvas(event.node)
         } else if(event.node.data.type == "file") {
+            // find source file and cruncher of this file
+            let cruncher, source 
+            const parent = flow.getIncomers(event.node)
+            if(parent.length == 1) {
+                cruncher = parent[0].id.replace('#', '')
+                const granparent = flow.getIncomers(parent[0])
+                if(granparent.length == 1) {
+                    source = granparent[0].id.replace('#', '')
+                }
+            }
             if(cruncher && source)
                 router.push({ name: 'files', params: { rid: event.node.id.replace('#', '')}, query: {cruncher:cruncher, source:source} })
             else
@@ -401,10 +407,11 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
         console.log(node)
         const id = node['@rid'] || node.rid || node.id
         const nodetype = node['@type'] || node.type
+        node.type = node['@type'].toLowerCase() // "File" -> "file"
         const newNode = {
             id: id,
             data: node,
-            image: 'api/thumbnails/projects/73_2/files/31_13',
+            image: '',
             type: type,
             position: { x: Math.random() * flow.dimensions.value.width, y: Math.random() * flow.dimensions.value.height },
         }
