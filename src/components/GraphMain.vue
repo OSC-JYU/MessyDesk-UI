@@ -7,38 +7,65 @@
 </style>
 
 <script setup>
+    import { reactive } from "vue";
     import { useRoute } from 'vue-router'
-    import JYUHeader from './JYUHeader.vue'
     import GraphDisplay from './GraphDisplay.vue'
     import NodeDeleter from './NodeDeleter.vue'
     import Uploader from './Uploader.vue'
+    import NodeCard from './NodeCard.vue'
+    import JYUHeader from './JYUHeader.vue'
 
     document.title = "MessyDesk"
 
     const route  = useRoute();
 
+    var state = reactive({node:''})
+
+    function fitToNode(id) {
+        state.node = id + '-' + Math.random()
+    }
+
 
 </script>
 
 
-
 <template>
-    <div class="vh-100 container-fluid m-0 p-0">
-        <div class="row  h-100  w-100 m-0 p-0">
-            <div class="col-12 m-0 p-0">
-                <div class="h-100 d-flex flex-column w-100 m-0 p-0">
-                    <div class="row justify-content-center m-0 p-0">
-                        <JYUHeader/>
-                    </div>
-                    
-                    <div class="row m-0 p-0  flex-grow-1">
-                        <GraphDisplay mode="graph" />
-                        
-                        <Uploader mode="graph" />
-                        <NodeDeleter mode="graph" />
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</template>
+    <v-card class="mx-auto fill-height" color="grey-lighten-3" flat>
+      <v-layout class="fill-height">
+
+        <JYUHeader @fit-to-node="fitToNode"/>
+        
+  
+        <v-main class="fill-height">
+          <v-container class="fill-height pa-0" fluid>
+            <v-row class="fill-height no-gutters" >
+
+
+              <v-col
+                class="d-flex fill-height "
+                cols="9"
+                color="light-blue lighten-3"
+              >
+                <!-- Second column content -->
+                <GraphDisplay mode="graph"  :fit="state.node"  />
+                <Uploader mode="graph" />
+                <NodeDeleter mode="graph" />
+              </v-col>
+
+              <v-col
+                class="d-flex fill-height "
+                cols="3"
+                color="light-blue lighten-1"
+              >
+                <!-- Third column content -->
+                <NodeCard class="h-100 w-100 position-absolute"/>
+               <!--  <NodeCard  @updateGraph="updateGraphNode" class="h-100 w-100 position-absolute"/> -->
+            
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-main>
+      </v-layout>
+    </v-card>
+  </template>
+  

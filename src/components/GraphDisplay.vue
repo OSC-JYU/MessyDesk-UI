@@ -88,10 +88,12 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 <template>
  
 
- <div id="container" >
+ <div id="container" class="w-100">
 		<div class="row h-100" >
-			<div class="col-9 px-0">
 
+
+			<div class="col-12 px-0">
+{{ props }}
 
                 <div class="graph-display">
                     <!-- <VueFlow :nodes="elements.nodes" :edges="elements.edges" fit-view-on-init > -->
@@ -135,12 +137,6 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                 </div>
 			</div>
 
-            <div class="col-3 sidebar p-0 h-100">
-            
-                <NodeCard v-if="props.mode == 'graph'"  @updateGraph="updateGraphNode" class="h-100 w-100 position-absolute"/>
-                <ProjectCard v-if="props.mode == 'projects'"></ProjectCard>
-                
-            </div>
 		</div>
 
         <div class="offcanvas offcanvas-bottom" tabindex="-1" id="ImageSetPanel" ref="offCanvasSet" aria-labelledby="offcanvasBottomLabel">
@@ -229,7 +225,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
 	const offCanvasSet = ref(null)
     var settable = ref(null)
-    var state = reactive({setdata:[]})
+    var state = reactive({setdata:[], rootNodes:[]})
 
     var current_node = reactive({})
     var current_graph_node = reactive({position: {}})
@@ -273,9 +269,10 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     };
 
     const props = defineProps({
-        mode: ''
+        mode: '',
+        fit: {type: String, default: false}
     })
-
+    
 
     flow.onNodeDragStop((event) => {
         store.current_node = event.node
@@ -300,11 +297,13 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     flow.onNodesInitialized ((event) => {
         if(store.view) flow.setViewport(store.view)
         else flow.fitView()
+        getRootNodes()
     })
 
     flow.onMoveEnd ((event) => {
         store.view = flow.getViewport()
     })
+
 
     flow.onNodeDoubleClick((event) => {
  
@@ -361,6 +360,13 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 	})
 
     // watch /list changes
+
+    watch(
+    	() => props.fit,
+      	async (newValue, oldValue) => {
+            if(newValue) fitToNode(newValue.split('-')[0])
+    })
+
     watch(
     	() => route.params,
       	async (newValue, oldValue) => {
@@ -383,6 +389,26 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
         // nextTick(() => {
         //     flow.fitView()
         // })
+    }
+
+    async function fitToNode(id) {
+        console.log('done fitToNode', id)
+        var node = elements.nodes.find(x => x.id == id)
+        store.current_node = node
+        flow.fitView({nodes: [id], duration: 1000, padding: 3})
+       
+    }
+
+    async function getRootNodes() {
+        store.root_nodes = []
+        for(var node of elements.nodes) {
+            const parent = flow.getIncomers(node)
+            if(parent.length == 1) {
+                
+            } else {
+                store.root_nodes.push(node)
+            }
+        }
     }
 
     async function toggleOffcanvas(node) {
@@ -451,8 +477,8 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
         } else {
             await loadProjects()
         }
-
         drawGraph(layout, route, oldValue)
+        
 
 	}
 
@@ -504,6 +530,8 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
             elements.edges.push(flowedge)
         }
         
+        
+
         if(props.mode !== 'projects')
             layoutGraph('LR')
 

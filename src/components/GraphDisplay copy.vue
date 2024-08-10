@@ -27,6 +27,8 @@
 
 
     .process-panel {
+
+        width:400px;
   background-color: #2d3748;
   padding: 10px;
   border-radius: 8px;
@@ -70,7 +72,7 @@
   font-size: 12px;
 }
 .graph-display { 
-  background: url(images/bg.jpg) no-repeat center center fixed; 
+
   background: rgb(94,94,110);
 background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(129,159,176,0.5508404045211834) 7%, rgba(69,130,159,0) 100%);
   -webkit-background-size: cover;
@@ -88,9 +90,63 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
  <div id="container" >
 		<div class="row h-100" >
-			<div class="col-9 px-0">
+
+            <div class="col-3 sidebar p-0 h-100">
+
+<v-layout>
+
+
+                      <v-navigation-drawer
+        expand-on-hover
+        rail
+      >
+        <v-list>
+          <v-list-item
+            prepend-avatar="https://randomuser.me/api/portraits/women/85.jpg"
+            subtitle="sandra_a88@gmailcom"
+            title="Sandra Adams"
+          ></v-list-item>
+        </v-list>
+
+        <v-divider></v-divider>
+
+        <v-list density="compact" nav>
+          <v-list-item prepend-icon="mdi-folder" title="My Files" value="myfiles"></v-list-item>
+          <v-list-item prepend-icon="mdi-account-multiple" title="Shared with me" value="shared"></v-list-item>
+          <v-list-item prepend-icon="mdi-star" title="Starred" value="starred"></v-list-item>
+        </v-list>
+      </v-navigation-drawer>
+    </v-layout>
+                <v-list-item
+                    v-for="file in state.rootNodes"
+                    :key="file.id"
+                    :subtitle="file.type"
+                    :title="file.data.label"
+                    @click="fitToNode(file.id)"
+                >
+                    <template v-slot:prepend>
+                    <v-avatar :color="file.color">
+                        <v-icon color="white">{{ file.icon }}</v-icon>
+                    </v-avatar>
+                    </template>
+
+                    <template v-slot:append>
+                    <v-btn
+                        color="grey-lighten-1"
+                        icon="mdi-information"
+                        variant="text"
+                    ></v-btn>
+                    </template>
+                </v-list-item>
+
+            </div>
+
+			<div class="col-6 px-0">
+
+
                 <div class="graph-display">
-                    <VueFlow  fit-view-on-init>
+                    <!-- <VueFlow :nodes="elements.nodes" :edges="elements.edges" fit-view-on-init > -->
+                    <VueFlow :nodes="elements.nodes" :edges="elements.edges" >
                         <Background />
                         <template #node-project="{ data }">
                             <ProjectNode :data="data" />
@@ -111,37 +167,28 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                         <template #node-text="{ data }">
                             <TextNode :data="data" />
                         </template>
-                        
+         
+                        <template #node-data="{ data }">
+                            <JSONNode :data="data" />
+                        </template>
+
                         <template #node-set="{ data }">
                             <SetNode :data="data" />
                         </template>
 
+                        <template #node-human.json="{ data }">
+                            <HumanNode :data="data" />
+                        </template>
+
                         <Background />
 
-                        <Panel class="process-panel" position="top-right">
-                            <div class="layout-panel">
-
-                            <button title="set horizontal layout" @click="layoutGraph('LR')">
-                                <Icon name="horizontal" />
-                            </button>
-
-                            <button title="set vertical layout" @click="layoutGraph('TB')">
-                                <Icon name="vertical" />
-                            </button>
-                            <button @click="flow.fitView()">fit</button>
-                            <button v-if="store.current_node" title="DEBUG: add node" @click="addNode({rid: Math.random() + 'p', type: 'process', position: { x: 100, y: 100 }}, store.current_node.id)">
-                                <Icon name="plus" />   <i class="fs-5 bi-plus-circle"></i>
-                            </button>
-                            <span v-if="store.current_node" style="color:white" >{{ store.current_node.data.label }}</span>
-                            </div>
-                        </Panel>
                     </VueFlow>  
                 </div>
 			</div>
 
             <div class="col-3 sidebar p-0 h-100">
             
-                <NodeCard v-if="props.mode == 'graph'" @setGraphOptions="setGraphOptions" @saveLayout="saveLayout" @fitGraph="fitGraph" class="h-100 w-100 position-absolute"/>
+                <NodeCard v-if="props.mode == 'graph'"  @updateGraph="updateGraphNode" class="h-100 w-100 position-absolute"/>
                 <ProjectCard v-if="props.mode == 'projects'"></ProjectCard>
                 
             </div>
@@ -192,7 +239,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     //import {getLayoutSettings} from "./GraphOptions.js";
     import { useRouter, useRoute } from 'vue-router'
 
-    import {Position, VueFlow, useVueFlow } from '@vue-flow/core'
+    import { Position, VueFlow, defaultNodeTypes, useVueFlow } from '@vue-flow/core'
     import { Background } from '@vue-flow/background'
 
     //const { getNode, onNodeClick, onNodeDoubleClick, onNodeDragStop} = useVueFlow()
@@ -208,6 +255,8 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     import PDFNode from './nodes/PDFNode.vue'
     import TextNode from './nodes/TextNode.vue'
     import SetNode from './nodes/SetNode.vue'
+    import JSONNode from './nodes/JSONNode.vue'
+    import HumanNode from './nodes/HumanNode.vue'
 
     import { useShuffle } from './useShuffle'
     import { useLayout } from './useLayout'
@@ -223,12 +272,15 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
 
 
+
+	const CLUSTER = 1
+
     const route  = useRoute();
     const router = useRouter();
 
 	const offCanvasSet = ref(null)
     var settable = ref(null)
-    var state = reactive({setdata:[]})
+    var state = reactive({setdata:[], rootNodes:[]})
 
     var current_node = reactive({})
     var current_graph_node = reactive({position: {}})
@@ -285,32 +337,55 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
 
     flow.onNodeClick((event) => {
+        console.log(event.node)
         store.current_node = event.node
+
+        store.view = flow.getViewport()
+
     })
 
     flow.onPaneClick((event) => {
         store.current_node = null
     })
 
+    flow.onNodesInitialized ((event) => {
+        if(store.view) flow.setViewport(store.view)
+        else flow.fitView()
+        getRootNodes()
+    })
+
+    flow.onMoveEnd ((event) => {
+        store.view = flow.getViewport()
+    })
+
     flow.onNodeDoubleClick((event) => {
+ 
+        console.log(event.node.data.type)
         if(event.node.type == "project" ) {
+            store.view = null
             router.push({ name: 'graph', query: { node: event.node.id.replace('#', '')} })
         } else if(event.node.type == "set") {
             toggleOffcanvas(event.node)
+        } else if(event.node.data.type == "file") {
+            // find source file and cruncher of this file
+            let cruncher, source 
+            const parent = flow.getIncomers(event.node)
+            if(parent.length == 1) {
+                cruncher = parent[0].id.replace('#', '')
+                const granparent = flow.getIncomers(parent[0])
+                if(granparent.length == 1) {
+                    source = granparent[0].id.replace('#', '')
+                }
+            }
+            if(cruncher && source)
+                router.push({ name: 'files', params: { rid: event.node.id.replace('#', '')}, query: {cruncher:cruncher, source:source} })
+            else
+                router.push({ name: 'files', params: { rid: event.node.id.replace('#', '')} })
         }
            
     })
 
-    // flow.onPaneReady((event) => {
-    //     // timeout is needed to wait for pane to be ready?
-    //     setTimeout(()=>{
-    //         flow.fitView()
-    //     },1000);
-    // })
 
-function test() {
-    console.log('pane clicked')
-}
 
     //
 	watch(
@@ -344,10 +419,10 @@ function test() {
         	loadGraph(route, oldValue)
     })
 
-
     watch(
     	() => store.update,
       	async (newValue, oldValue) => {
+            console.log(store.update_data)
             if(store.update_data) updateGraphNode(store.update_data)
         	else loadGraph(route, oldValue)
     })
@@ -357,9 +432,29 @@ function test() {
         //nodes.value = layout(nodes.value, edges.value, direction)
         elements.nodes = layout(elements.nodes, elements.edges, direction)
 
-        nextTick(() => {
-            flow.fitView()
-        })
+        // nextTick(() => {
+        //     flow.fitView()
+        // })
+    }
+
+    async function fitToNode(id) {
+        console.log('done fitToNode', id)
+        var node = elements.nodes.find(x => x.id == id)
+        store.current_node = node
+        flow.fitView({nodes: [id], duration: 1000, padding: 3})
+       
+    }
+
+    async function getRootNodes() {
+        state.rootNodes = []
+        for(var node of elements.nodes) {
+            const parent = flow.getIncomers(node)
+            if(parent.length == 1) {
+                console.log(node.data.type, parent[0].data.type)
+            } else {
+                state.rootNodes.push(node)
+            }
+        }
     }
 
     async function toggleOffcanvas(node) {
@@ -370,12 +465,13 @@ function test() {
     }
 
     function updateGraphNode(update) {
-        console.log(update)
-        cy.nodes().forEach(function( ele ){
-            if(ele.id() == update.id) {
-                ele.data('name', update.name)
+
+        var target_node = elements.nodes.find(x => x.id == update.id)
+        if(target_node) {
+            if(update.name) {
+                target_node.data.label = update.name
             }
-        });
+        }
     }
 
     function addNode(target, type, node) {
@@ -383,10 +479,11 @@ function test() {
         console.log(node)
         const id = node['@rid'] || node.rid || node.id
         const nodetype = node['@type'] || node.type
+        node.type = node['@type'].toLowerCase() // "File" -> "file"
         const newNode = {
             id: id,
             data: node,
-            image: 'api/thumbnails/projects/73_2/files/31_13',
+            image: '',
             type: type,
             position: { x: Math.random() * flow.dimensions.value.width, y: Math.random() * flow.dimensions.value.height },
         }
@@ -415,6 +512,7 @@ function test() {
     }
 
 	async function loadGraph(route, oldValue) {
+        console.log('loading graph')
 		var layout = ''
         graph.result.data = {}
 
@@ -425,8 +523,8 @@ function test() {
         } else {
             await loadProjects()
         }
-
         drawGraph(layout, route, oldValue)
+        
 
 	}
 
@@ -437,7 +535,11 @@ function test() {
         var positions = await getNodePositions()
         console.log(positions)
 
+        elements.nodes = []
+        elements.edges = []
+
         for(var node of graph.result.data.nodes) {
+  
             var flownode = {
                 id: node.data.id, 
                 type: node.data.type.toLowerCase(),
@@ -474,26 +576,17 @@ function test() {
             elements.edges.push(flowedge)
         }
         
-       flow.addNodes(elements.nodes)
-       flow.addEdges(elements.edges)
+        
 
         if(props.mode !== 'projects')
             layoutGraph('LR')
-
-        // nextTick(() => {
-        //     flow.fitView()
-        // })
-       // flow.fitView()
-        //var layout = getLayoutSettings(layout_name)
-        
-
-
 
     }
 
     function getDefaultPosition() {
         return {x: 0, y: 0}
     }
+
 
     function setNodePositions(node_layout, layout) {
 

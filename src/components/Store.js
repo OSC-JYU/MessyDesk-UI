@@ -28,6 +28,8 @@ export const store = reactive({
   exporter_open: false,
   crunchers_open: false,
   graph_style: [],
+  root_nodes: [],
+  project: {},
 
   gtags() {
       return this.tags

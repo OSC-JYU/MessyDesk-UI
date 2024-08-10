@@ -44,24 +44,44 @@
 
 
 <template>
-    <div class="vh-100 container-fluid m-0 p-0">
-        <div class="row  h-100  w-100 m-0 p-0">
-            <div class="col-12 m-0 p-0">
-                <div class="h-100 d-flex flex-column w-100 m-0 p-0">
-                    <div class="row justify-content-center m-0 p-0">
-                        <JYUHeader/>
-                    </div>
-                    <div class="row m-0 p-0  flex-grow-1">
-                        <ImageDisplay v-if="state.file  && state.file.type=='image'"/>
-                        <TextDisplay v-if="state.file  && state.file.type=='text'"/>
-                        <HumanJSONDisplay v-if="state.file  && state.file.type=='human.json'"/>
-                        <PDFDisplay v-if="state.file  && state.file.type=='pdf'"/>
-                        <HOCRDisplay v-if="state.file && state.file.extension=='hocr'"/>
-                        <NER_Display v-if="state.file && state.file.extension=='json' && state.file.label.includes('.ner.json')"/>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</template>
+    <v-card class="mx-auto fill-height" color="grey-lighten-3" flat>
+      <v-layout class="fill-height">
+
+        <JYUHeader/>
+  
+        <v-main class="fill-height">
+          <v-container class="fill-height pa-0" fluid>
+            <v-row class="fill-height no-gutters" >
+
+           
+
+              <v-col
+                class="d-flex fill-height "
+                cols="10"
+                color="light-blue lighten-3"
+              >
+                <!-- Second column content -->
+                <ImageDisplay v-if="state.file  && state.file.type=='image'"/>
+                <TextDisplay v-if="state.file  && state.file.type=='text'"/>
+                <HumanJSONDisplay v-if="state.file  && state.file.type=='human.json'"/>
+                <PDFDisplay v-if="state.file  && state.file.type=='pdf'"/>
+                <HOCRDisplay v-if="state.file && state.file.extension=='hocr'"/>
+                <NER_Display v-if="state.file && state.file.extension=='json' && state.file.label.includes('.ner.json')"/>
+              </v-col>
+
+              <v-col
+                class="d-flex fill-height "
+                cols="2"
+                color="light-blue lighten-1"
+              >
+                <!-- Third column content -->
+                Column 3
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-main>
+      </v-layout>
+    </v-card>
+  </template>
+
 
