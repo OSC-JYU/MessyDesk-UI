@@ -49,7 +49,8 @@ const props = defineProps({
 
 function openCrunchers(id) {
   store.current_node = node
-  router.push({ name: 'crunchers', query: { node: node.id.replace('#', ''), desk:route.query.node} })
+  store.crunchers_open = true
+  //router.push({ name: 'crunchers', query: { node: node.id.replace('#', ''), desk:route.query.node} })
 }
 
 </script>

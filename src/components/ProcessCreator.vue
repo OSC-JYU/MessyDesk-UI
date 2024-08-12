@@ -1,7 +1,7 @@
 <template>
 
 	<!-- Modal -->
-	<div v-if="store.process_creator_open" class="modal modal-lg fade show" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" style="display:block">
+	<div v-if="store.process_creator_open___" class="modal modal-lg fade show" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" style="display:block">
 		<div class="modal-dialog">
 			<div class="modal-content">
 				<div class="modal-header">
@@ -25,9 +25,6 @@
 							
 
 							
-
-							
-								
 								
 								<div >
 									<input v-model="state.out_params[key]" type="text" class="form-control" placeholder=""  aria-label="Username" aria-describedby="basic-addon1">
@@ -54,7 +51,6 @@
 					</div>
 				
 					
-
 				
 				</div>
 

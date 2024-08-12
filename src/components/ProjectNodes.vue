@@ -5,14 +5,14 @@
 
  <div id="container" >
 		<div class="row h-100" >
-            <div class="sidebar p-0 h-100" >
+            <div class="sidebar p-0 h-100">
 
                 <v-list-item
-                    v-for="file in store.root_nodes"
+                    v-for="file in store.projects"
                     :key="file.id"
-                    :subtitle="file.type"
-                    :title="file.data.label"
-                    @click="$emit('fitToNode', file.id)"
+                    :subtitle="'files:  ' + file.file_count"
+                    :title="file.label"
+                    @click="$emit('fitToNode', file['@rid'])"
                 >
                     <template v-slot:prepend>
                     <v-avatar :color="file.color">

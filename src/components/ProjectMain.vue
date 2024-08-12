@@ -1,115 +1,118 @@
-<style scoped>
-    .thumb {
-        height: 120px;
-        padding:10px
-    }
-</style>
-
 <script setup>
-
-    import { onMounted, watch, reactive, ref, nextTick } from "vue";
-     import { useRouter, useRoute } from 'vue-router'
+    import { reactive } from "vue";
+    import {store} from "./Store.js";
     import web from "../web.js";
-
     import JYUHeader from './JYUHeader.vue'
     import GraphDisplay from './GraphDisplay.vue'
-    import NodeCreator from './NodeCreator.vue'
-
-    const route  = useRoute();
-    const router = useRouter();
-
-    var state = reactive({projects:[]})
+    import ProjectCard from './ProjectCard.vue'
 
 
     document.title = "MessyDesk - projects"
 
+    var state = reactive({node:'', dialog: false, project_name:''})
 
-    async function loadProjects() {
-        state.projects = await web.getProjects()
-        // convert projects to graph format
-        // for(var node of graph.result.data.nodes) {
-        //     node.data = {id:node['@rid']}
-        //     node.data.name = node.label
-        //     node.data.type = node['@type']
-        //     node.data.description = node.file_count + ' files'
-        //     node.data.paths = node.paths
-        // }
-        
+    function fitToNode(id) {
+        state.node = id + '-' + Math.random() // add random so that we trigger watch event even if we click same node again
     }
 
-    async function loadProject(project) {
-        console.log(project)
-        router.push({ name: 'graph', query: { node: project['@rid'].replace('#', '')} })
+    function openProjectDialog() {
+
+        state.dialog = true
     }
 
-    onMounted(async()=> {
-		loadProjects()
-	})
+    async function createProject() {
+        if(state.project_name == '') {
+            state.error = 'Give project name!'
+        } else {
+            state.error = ''
+            await web.createProject(state.project_name)
+            state.dialog = false
+            var response = await web.getProjects()
+            state.items = response
+            store.reload()
+        }
+    }
+
+    function cancel() {
+        state.dialog = false
+        state.project_name = ''
+    }
+
+
 </script>
 
 
 <template>
-    <v-card class="mx-auto" color="grey-lighten-3" m>
-      <v-layout>
-        <v-app-bar
-          color="#6B7F97"
-          image="https://picsum.photos/1920/1080?random"
-         
-        >
-          <template v-slot:image>
-            <v-img
-              
-            ></v-img>
-          </template>
-  
-          <template v-slot:prepend>
-            <v-app-bar-nav-icon></v-app-bar-nav-icon>
-          </template>
-  
-          <v-app-bar-title>MessyDesk - JYU</v-app-bar-title>Projects
-  
-          <v-spacer></v-spacer>
-  
+    <v-card class="mx-auto fill-height" color="grey-lighten-3" flat>
+      <v-layout class="fill-height">
 
+        <JYUHeader mode="projects"  @fit-to-node="fitToNode" @create-project="openProjectDialog"/>
+        
   
-          <v-btn icon>
-            <v-icon>mdi-dots-vertical</v-icon>
-          </v-btn>
-        </v-app-bar>
-  
-        <v-main color="#EDE1CE">
-      
-          <v-container fluid>
-            <v-row  dense>
-              <v-col  cols="6">
-                <v-card v-for="project in state.projects" :key="project.id"
-                  :subtitle="`files:  ${project.file_count}`"
-                  :title="`${project.label}`"
-                  :text="project.info"
-                  @click="loadProject(project)"
-                  >
-                  <v-row>
-                    <v-col cols="4">
+        <v-main class="fill-height">
+           
+          <v-container class="fill-height pa-0" fluid>
+            <v-row class="fill-height no-gutters" >
 
-                    </v-col>
-                    <v-col cols="8">
-                        <template v-for="image in project.paths" :key="image">
-                      <img class="thumb" :src="image" /> 
-                  </template>
-                    </v-col>
-                  </v-row>
 
-                </v-card>
+              <v-col
+                class="d-flex fill-height "
+                cols="9"
+                color="light-blue lighten-3"
+              >
+                <!-- Second column content -->
+                <GraphDisplay mode="projects"   :fit="state.node"  />
+
               </v-col>
 
-              <v-col cols="6">
-                node
+              <v-col
+                class="d-flex fill-height "
+                cols="3"
+                color="light-blue lighten-1"
+              >
+                <!-- Third column content -->
+                
+                <ProjectCard class="h-100 w-100 position-absolute"/>
+            
               </v-col>
-
             </v-row>
           </v-container>
         </v-main>
       </v-layout>
     </v-card>
+
+    <v-dialog
+      v-model="state.dialog"
+      width="auto"
+    >
+      <v-card
+        max-width="600"
+        prepend-icon="mdi-update"
+        title="Create new project"
+      >
+      <v-card-text>
+
+        <v-col>
+            <v-text-field v-model="state.project_name"
+                label="Project name*"
+                required
+              ></v-text-field>
+        </v-col>
+      </v-card-text>
+        <template v-slot:actions>
+            <v-btn
+            class="ms-auto"
+            text="Cancel"
+            @click="cancel()"
+          ></v-btn>
+          <v-btn
+            class="ms-auto"
+            text="Create"
+            @click="createProject()"
+          ></v-btn>
+        </template>
+      </v-card>
+    </v-dialog>
+
+
   </template>
-  

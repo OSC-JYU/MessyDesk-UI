@@ -18,59 +18,7 @@
         height:50% !important;
     }
 
-    .process-panel,
-.layout-panel {
-  display: flex;
-  gap: 10px;
-  z-index: 10000;
-}
 
-
-    .process-panel {
-
-        width:400px;
-  background-color: #2d3748;
-  padding: 10px;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-  display: flex;
-  flex-direction: column;
-}
-
-.process-panel button {
-  border: none;
-  cursor: pointer;
-  background-color: #4a5568;
-  border-radius: 8px;
-  color: white;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-}
-
-.process-panel button {
-  font-size: 16px;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.checkbox-panel {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.process-panel button:hover,
-.layout-panel button:hover {
-  background-color: #2563eb;
-  transition: background-color 0.2s;
-}
-
-.process-panel label {
-  color: white;
-  font-size: 12px;
-}
 .graph-display { 
 
   background: rgb(94,94,110);
@@ -93,7 +41,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
 
 			<div class="col-12 px-0">
-{{ props }}
+
 
                 <div class="graph-display">
                     <!-- <VueFlow :nodes="elements.nodes" :edges="elements.edges" fit-view-on-init > -->
@@ -177,8 +125,6 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
     import { onMounted, watch, reactive, ref, nextTick } from "vue";
     import web from "../web.js";
-    import NodeCard from "./NodeCard.vue";
-    import ProjectCard from "./ProjectCard.vue";
 
     import {store} from "./Store.js";
     //import {getLayoutSettings} from "./GraphOptions.js";
@@ -225,7 +171,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
 	const offCanvasSet = ref(null)
     var settable = ref(null)
-    var state = reactive({setdata:[], rootNodes:[]})
+    var state = reactive({setdata:[], rootNodes:[], node_added: 0, node_updated: 0})
 
     var current_node = reactive({})
     var current_graph_node = reactive({position: {}})
@@ -254,7 +200,10 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                         if(wsdata.description) target_node.data.description = wsdata.description
                     }
                 }
-
+            } else {
+                if(wsdata.command == 'add') {
+                    addNode(wsdata.target, wsdata.type, wsdata.node)
+                }
             }
         } catch(e) {
             console.log('WS virhe', e)
@@ -295,13 +244,23 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     })
 
     flow.onNodesInitialized ((event) => {
-        if(store.view) flow.setViewport(store.view)
-        else flow.fitView()
-        getRootNodes()
+        console.log('nodes initialized')
+        if(!state.node_added) {
+            if(store.view && props.mode == "graph") flow.setViewport(store.view)
+            else flow.fitView()
+            if(props.mode == "graph") getRootNodes()
+        } else {
+            fitToNode(state.node_added)
+            state.node_added = 0
+            store.view = flow.getViewport()
+        }
+
     })
 
+
+
     flow.onMoveEnd ((event) => {
-        store.view = flow.getViewport()
+        if(props.mode == "graph") store.view = flow.getViewport()
     })
 
 
@@ -310,6 +269,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
         console.log(event.node.data.type)
         if(event.node.type == "project" ) {
             store.view = null
+            if(store.current_node) store.current_project = store.current_node
             router.push({ name: 'graph', query: { node: event.node.id.replace('#', '')} })
         } else if(event.node.type == "set") {
             toggleOffcanvas(event.node)
@@ -391,11 +351,12 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
         // })
     }
 
-    async function fitToNode(id) {
+    async function fitToNode(id, padding) {
         console.log('done fitToNode', id)
         var node = elements.nodes.find(x => x.id == id)
         store.current_node = node
-        flow.fitView({nodes: [id], duration: 1000, padding: 3})
+        if(!padding) padding = 3
+        flow.fitView({nodes: [id], duration: 1000, padding: padding})
        
     }
 
@@ -429,6 +390,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     }
 
     function addNode(target, type, node) {
+        console.log('adding node')
         console.log(target)
         console.log(node)
         const id = node['@rid'] || node.rid || node.id
@@ -446,9 +408,12 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
         console.log('to node ', target)
         elements.nodes.push(newNode)
         console.log(`source: ${target}, target: ${id}`)
+        state.node_added = id
+        if(target)
+            elements.edges.push({id:Math.random() + 'edge', source: target, target: id})
 
-        elements.edges.push({id:Math.random() + 'edge', source: target, target: id})
         layoutGraph('LR')
+        
     }
 
     function expandSetNode(node, target) {
@@ -606,8 +571,10 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
 
     async function loadProjects() {
+        store.current_project = null
         graph.result.data = {nodes: [], edges:[]}
         graph.result.data.nodes = await web.getProjects()
+        store.projects = graph.result.data.nodes
         // convert projects to graph format
         for(var node of graph.result.data.nodes) {
             node.data = {id:node['@rid']}

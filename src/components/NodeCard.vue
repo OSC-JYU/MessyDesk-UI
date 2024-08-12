@@ -78,6 +78,28 @@
         </div>
     </div>
 
+    <div v-else>
+
+        <v-sheet
+            border="md"
+            class="pa-6 text-black "
+        >
+            <h4 class="text-h5 font-weight-bold mb-4">Cruncher view</h4>
+
+            <p class="mb-8">
+            Here you you can see your files and how you have <b>processed</b> them.
+
+            <br>
+            <br>
+            Import files from hamburger menu and crunch them.
+            <br>
+            <br>
+
+            <v-card color="#EDE1CE" class="pa-6">TIP: You can quickly find your original files from hamburger menu.</v-card>
+            </p>
+        </v-sheet>
+    </div>
+
 </template>
 
 

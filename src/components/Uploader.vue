@@ -12,7 +12,7 @@
 
                     <div class="mb-3">
                       <label for="formFile" class="form-label">Add file to project</label>
-                      <input class="form-control" type="file" id="image" ref="upload">
+                      <input class="form-control" type="file" id="image" ref="upload" accept="image/*,.pdf,text/*" >
                     </div>
 
                     <button @click="sendFile()" class="btn btn-primary">send file</button>
@@ -58,7 +58,7 @@
             try {
                 await web.uploadFile(upload.value.files[0], route.query.node)
                 store.uploader_open = false
-                store.reload()
+                //store.reload()
             } catch(e) {
                 if(e.response && e.response.data.error)
                     alert(e.response.data.error)

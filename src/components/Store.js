@@ -29,7 +29,8 @@ export const store = reactive({
   crunchers_open: false,
   graph_style: [],
   root_nodes: [],
-  project: {},
+  projects: [],
+  current_project: {},
 
   gtags() {
       return this.tags

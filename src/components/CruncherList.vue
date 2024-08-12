@@ -1,23 +1,14 @@
 
 
-<style>
-.graph-display { 
-width: 100%;
-height: 100%;
-}
 
-</style>
 
 <template>
 
 
-    <v-container  class="h-100 w-100 position-absolute">
+    <v-container  >
         
-      <v-row>
-        <v-btn @click="$router.go(-1)"><v-icon>mdi-arrow-left</v-icon></v-btn>
-      </v-row>
-    
-        <v-card v-if="store.current_node" class="overflow-y-auto graph-display mt-4">
+
+        <template v-if="store.current_node" class="overflow-y-auto graph-display mt-4">
 
     
 
@@ -27,7 +18,7 @@ height: 100%;
                     
                     <div v-if="services.result && services.result.for_format && services.result.for_format.length == 0" class="alert alert-warning">No crunchers found</div>
 
-                    <div v-if="store.current().data.type == 'set'">
+                    <!-- <div v-if="store.current().data.type == 'set'">
                         <ol class="card" v-for="service in services.result.for_type">
                             <template v-if="service.tasks">
                                 <li class="list-group-item border-0" v-for="(value, key) of service.tasks" :key="key">
@@ -36,44 +27,84 @@ height: 100%;
                                 </li>
                             </template>
                         </ol>
-                    </div>
+                    </div> -->
 
 
-                        <template v-for="service in services.result.for_format">
+                        <v-sheet v-for="service in services.result.for_format">
                             <template v-if="service.id !== 'thumbnailer'">
-                            <h4 class="text-h5 font-weight-bold mb-4 mt-6"> {{ service.name }}</h4>
-                            <p><i> {{ service.description }}</i></p> 
-                            <v-expansion-panels>
-                                <v-expansion-panel v-for="(value, key) of service.tasks" >
-                                    <v-expansion-panel-title> 
-                                        <div class="font-weight-bold "> {{ value.name }}</div>
-                                    </v-expansion-panel-title>
-                                    <v-expansion-panel-text>
-                                         {{ value.description }}
-                                         <div class="d-flex flex-row-reverse mb-6 ">
-                                             <v-btn         
-                                                class="text-none ms-4 text-white"
-                                                color="blue-darken-4"
-                                                rounded="1"
-                                                variant="flat" 
-                                                title="Add cruncher"
-                                                @click="initProcessCreator(service, key)">Add</v-btn>
+                                <h4 class="text-h5 font-weight-bold mb-4 mt-6"> {{ service.name }}</h4>
+                                <p><i> {{ service.description }}</i></p> 
+                                <v-expansion-panels>
+                                    <v-expansion-panel v-for="(task, task_key) of service.tasks" >
+                                        <v-expansion-panel-title> 
+                                            <div class="font-weight-bold "> {{ task.name }}</div>
+                                        </v-expansion-panel-title>
+                                        <v-expansion-panel-text>
+                                            {{ task.description }}
+                                            <div class="d-flex flex-row-reverse mb-6 ">
+                                                <v-btn         
+                                                    class="text-none ms-4 text-white"
+                                                    color="blue-darken-4"
+                                                    rounded="1"
+                                                    variant="flat" 
+                                                    title="Add cruncher"
+                                                    @click="createProcess(service, task, task_key)">Crunch</v-btn>
 
-                                         </div>
-                                    </v-expansion-panel-text>
+                                            </div>
+                                           
 
-                                </v-expansion-panel>
-                            </v-expansion-panels>
+
+                                                <div >
+                                                    <!-- task specific settings -->
+                                                    <div v-if="task.params_help">
+                                                        <div v-for="(help, key) in task.params_help" :key="key" class="input-group mb-3">
+                                                            <div class="input-group-prepend">
+                                                                <span class="input-group-text" id="basic-addon1">{{ help.name }}</span>
+                                                            </div>
+                                                        
+                                                            
+                                                            <div >
+                                                                <input v-model="task.values[key]" type="text" class="form-control" placeholder=""  aria-label="Username" aria-describedby="basic-addon1">
+                                                                <div>{{ help.help }}</div>
+                                                                <div v-if="help.values"	>{{ help.values }}</div>	
+                                                            </div>
+                                
+
+                                                            
+                                                        </div>
+                                                        
+                                                    </div>
+                                                    <!-- common settings -->
+                                                    <div v-else-if="service.params_help" >
+                                                        <div v-for="(help, key) in service.params_help" :key="key" class="input-group mb-3">
+                                                            <div class="input-group-prepend">
+                                                                <span class="input-group-text" id="basic-addon1">{{ help.name }}</span>
+                                                            </div>
+                                                            <input v-model="task.values[key]"  type="text" class="form-control" placeholder=""  aria-label="Username" aria-describedby="basic-addon1">
+                                                            <div>{{ help.help }}</div>
+                                                        </div>
+                                                </div>
+                                                    <div v-else>This cruncher has no settings, just click "Crunch!".</div>
+                                                </div>
+
+
+
+
+                                        </v-expansion-panel-text>
+                                        
+
+                                    </v-expansion-panel>
+                                </v-expansion-panels>
                             </template>
 
-                        </template>
+                        </v-sheet>
 
 
 
                     <div>
                 </div>
             </div>
-        </v-card>
+        </template>
        
         <div v-else class="mt-10">ERROR: No node selected</div>
     </v-container>
@@ -94,38 +125,71 @@ height: 100%;
 
     var services = reactive({result:{}})
  
+    var state = reactive({
+		current_type: '',
+		current_schema: null,
+		out_params: {},
+		user_info: '',
+		error: ''
+	})
 
     async function loadData(rid) {
-        services.result = await web.getServicesForFile(rid)
+        services.result = await web.getServicesForFile(store.current_node.id)
+        for(var service of services.result.for_format) {
+            for(var task in service.tasks) {
+                service.tasks[task].values = {}
+            }
+        }
     }
 
+    function createUserInfo(info, params) {
+		if(info) {
+			console.log('params:')
+			for(var key of Object.keys(params)) {
+				console.log(key)
+				info = info.replace('{{' + key + '}}', params[key])
+                if(!params[key]) info = info.replace('{{' + key + '}}', 'Not given')
+			}
+            
+			return info
+		} else {
+			return JSON.stringify(params)
+		}
+	}
 
-    function initProcessCreator(data, task_id) {
-        console.log(data)
-        store.process = data
-        store.task_id = task_id
-        store.new_node_label = 'Process'
-        store.new_node_relation = 'WAS_PROCESSED_BY'
-        store.process_creator_open = true
-    }
+    async function createProcess(service, task, task_id) {
+        console.log(service.id)
+        console.log(task)
+		// we must send ELG "params" 
+		// target
+		state.error = ''
 
 
 
+		var process = {id: service.id, task: task_id}
+		process.params = task.values
+		process.params.task = task_id
+	    if(task.info) process.info = task.info
 
+		if(task.info) {
+			console.log('INFO LÖYTYI')
+			process.info = createUserInfo(task.info, task.values)
+		}
+		console.log(process)
+		var res = await web.createFileProcess(process, store.current().id)
+		// //var node = res.data.result[0]
+        store.crunchers_open = false
+		// //console.log(res)
+		// //store.reload()
+		// close(1)
 
-    function removeLastPathPart(str) {
-        const lastIndex = str.lastIndexOf('/');
-        if (lastIndex !== -1) {
-            return str.substring(0, lastIndex);
-        }
-        return str;
-        }
+	}
+
 
     onMounted(async()=> {
-        console.log('pam')
         if(route.query.node) {
            loadData(route.query.node)
-           store.reload()
+          
         }
     })
 

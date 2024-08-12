@@ -5,6 +5,7 @@
     import Importer from './Importer.vue'
     import Exporter from './Exporter.vue'
     import RootNodes from './RootNodes.vue'
+    import ProjectNodes from './ProjectNodes.vue'
     import {store} from "./Store.js";
     import web from "../web.js";
 
@@ -16,7 +17,7 @@
     const state = reactive({drawer:false, node: ''})
     const upload = ref(null);
 
-    const emit = defineEmits(['fit-to-node'])
+    const emit = defineEmits(['fit-to-node', 'create-project'])
 
     function fitToNode(id) {
         console.log(id)
@@ -42,9 +43,16 @@
             <v-app-bar-nav-icon @click.stop="state.drawer = !state.drawer"></v-app-bar-nav-icon>
           </template>
   
-          <v-app-bar-title>
+          <v-app-bar-title title="projects">
             <RouterLink to="/">MessyDesk</RouterLink>
-          </v-app-bar-title>Projektin nimi
+          </v-app-bar-title> 
+
+          <template v-if="store.current_project && store.current_project.data">
+            {{ store.current_project.data.label }}
+          </template>
+          <template v-else>
+            All Your Wonderful Projects  
+          </template>
   
           <v-spacer></v-spacer>
   
@@ -55,13 +63,29 @@
           <v-btn icon>
             <v-icon>mdi-heart</v-icon>
           </v-btn>
-  
-          <v-btn icon>
-            <v-icon>mdi-dots-vertical</v-icon>
-          </v-btn>
+
+          <v-menu location="bottom">
+            <template v-slot:activator="{ props }">
+
+              <v-btn icon  v-bind="props">
+                <v-icon>mdi-dots-vertical</v-icon>
+              </v-btn>
+
+            </template>
+
+            <v-list>
+              <v-list-item>
+                <router-link :to="'/services'" class="dropdown-item">
+                      <i class="fs-5 bi-card-list"></i><span class="ms-1 d-none d-sm-inline">System view</span>
+                  </router-link>
+                
+              </v-list-item>
+            </v-list>
+          </v-menu>
           
     </v-app-bar>
 
+    <!-- Sidebar -->
     <v-navigation-drawer
         v-model="state.drawer"
         width="375"
@@ -70,25 +94,36 @@
       >
    
       <v-list lines="two">
-      <v-list-subheader>Project</v-list-subheader>
+        <v-list-subheader>Project</v-list-subheader>
 
-      <v-list-item
-         @click="store.uploader_open = true"
-      >
-        <template v-slot:prepend>
-          <v-icon  icon="mdi-file"></v-icon>
-        </template>
-     
-          <v-list-item-title >Add file</v-list-item-title>
-      </v-list-item>
+        <v-list-item v-if="props.mode=='graph'"
+          @click="store.uploader_open = true"
+        >
+          <template v-slot:prepend>
+            <v-icon  icon="mdi-file"></v-icon>
+          </template>
+      
+            <v-list-item-title >Add file</v-list-item-title>
+        </v-list-item>
 
-      <v-divider inset></v-divider>
+        <v-list-item v-if="props.mode=='projects'"
+          @click="$emit('create-project')"
+        >
+          <template v-slot:prepend>
+            <v-icon  icon="mdi-file"></v-icon>
+          </template>
+      
+            <v-list-item-title >Create project</v-list-item-title>
+        </v-list-item>
 
+        <v-divider inset></v-divider>
 
-    </v-list>
+      </v-list>
 
-        <RootNodes @fit-to-node="fitToNode" />
-      </v-navigation-drawer>
+        <RootNodes v-if="props.mode=='graph'" @fit-to-node="fitToNode" />
+        <ProjectNodes v-if="props.mode=='projects'" @fit-to-node="fitToNode" />
+
+    </v-navigation-drawer>
 
 
 <Importer />
