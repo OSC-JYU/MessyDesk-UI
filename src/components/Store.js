@@ -27,6 +27,7 @@ export const store = reactive({
   importer_open: false,
   exporter_open: false,
   crunchers_open: false,
+  set_creator_open: false,
   graph_style: [],
   root_nodes: [],
   projects: [],

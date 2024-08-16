@@ -44,6 +44,38 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
 
                 <div class="graph-display">
+                   
+                    <!-- set panel -->
+                    <v-navigation-drawer v-if="store.current_node" v-model="state.setPanel" temporary location="bottom" max-height="800">
+
+                        <v-list-item
+                        
+                      
+                        > <v-icon size="35" color="green">mdi-folder-outline</v-icon>{{ store.current_node.data.label }}</v-list-item>
+
+                        <v-divider></v-divider>
+
+                        <div v-for="file in state.setdata" class="col w-200 shadow-1-strong rounded mb-4">
+                            <div class="card">
+                                <img :src="file.thumb" :alt="file.label" class="image" />
+                                <div class="m-2">
+                                    {{ file.label }}
+                                    <div class="form-check form-switch">
+                                        <input @change="expandSetNode(file, store.current_node.id)" class="form-check-input" type="checkbox" role="switch" :id="file['@rid']">
+                                        <label class="form-check-label" :for="file['@rid']">Show in Desk</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <v-list density="compact" nav>
+                        <v-list-item prepend-icon="mdi-view-dashboard" title="Home" value="home"></v-list-item>
+                        <v-list-item prepend-icon="mdi-forum" title="About" value="about"></v-list-item>
+
+                        </v-list>
+                    </v-navigation-drawer>
+
+
                     <!-- <VueFlow :nodes="elements.nodes" :edges="elements.edges" fit-view-on-init > -->
                     <VueFlow :nodes="elements.nodes" :edges="elements.edges" >
                         <Background />
@@ -79,24 +111,31 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                             <HumanNode :data="data" />
                         </template>
 
+                        <template #node-ner.json="{ data }">
+                            <NERNode :data="data" />
+                        </template>
+
                         <Background />
 
-                    </VueFlow>  
+                        </VueFlow>  
                 </div>
 			</div>
 
 		</div>
 
-        <div class="offcanvas offcanvas-bottom" tabindex="-1" id="ImageSetPanel" ref="offCanvasSet" aria-labelledby="offcanvasBottomLabel">
+        <!-- SET PANEL -->
+        <!-- <div class="offcanvas offcanvas-bottom" tabindex="-1" id="ImageSetPanel" ref="offCanvasSet" aria-labelledby="offcanvasBottomLabel">
             <div class="offcanvas-header">
                 <h5 v-if="store.current_node" class="offcanvas-title" id="offcanvasBottomLabel"> {{ store.current_node.data.label }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body small">
 
+
+
                 <div v-if="state.setdata.length" class="container">
                     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-                        <!-- Images -->
+                       
                         <div v-for="file in state.setdata" class="col w-200 shadow-1-strong rounded mb-4">
                             <div class="card">
                                 <img :src="file.thumb" :alt="file.label" class="image" />
@@ -110,10 +149,8 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                             </div>
                         </div>
                     </div>
-            </div>
-        </div>
-    </div>
-
+            </div> -->
+       
 
 </div>
 
@@ -148,6 +185,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     import SetNode from './nodes/SetNode.vue'
     import JSONNode from './nodes/JSONNode.vue'
     import HumanNode from './nodes/HumanNode.vue'
+    import NERNode from './nodes/NERNode.vue'
 
     import { useShuffle } from './useShuffle'
     import { useLayout } from './useLayout'
@@ -171,7 +209,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
 	const offCanvasSet = ref(null)
     var settable = ref(null)
-    var state = reactive({setdata:[], rootNodes:[], node_added: 0, node_updated: 0})
+    var state = reactive({setdata:[], setPanel: false, rootNodes:[], node_added: 0, node_updated: 0})
 
     var current_node = reactive({})
     var current_graph_node = reactive({position: {}})
@@ -265,6 +303,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
 
     flow.onNodeDoubleClick((event) => {
+        store.current_node = event.node
  
         console.log(event.node.data.type)
         if(event.node.type == "project" ) {
@@ -272,7 +311,8 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
             if(store.current_node) store.current_project = store.current_node
             router.push({ name: 'graph', query: { node: event.node.id.replace('#', '')} })
         } else if(event.node.type == "set") {
-            toggleOffcanvas(event.node)
+            //state.setPanel = true
+            toggleSetPanel()
         } else if(event.node.data.type == "file") {
             // find source file and cruncher of this file
             let cruncher, source 
@@ -372,11 +412,10 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
         }
     }
 
-    async function toggleOffcanvas(node) {
-      const offcanvasElement = new bootstrap.Offcanvas(document.getElementById('ImageSetPanel'));
-      offcanvasElement.toggle(); // Toggle the offcanvas
-      console.log(node)
-      state.setdata = await web.getSetFiles(node.id)
+    async function toggleSetPanel(node) {
+        console.log('df   ')
+        state.setdata = await web.getSetFiles(store.current_node.id)
+        state.setPanel = true
     }
 
     function updateGraphNode(update) {
@@ -589,6 +628,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 
 	async function initView() {
 
+        store.root_nodes = []
         if(!store.user) store.user = await web.getMe()
         if(store.graph_style.length == 0) store.graph_style = await web.getStyle()
 

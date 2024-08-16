@@ -40,6 +40,22 @@
                     </h4>
                 </template>
 
+
+                <template v-else-if="store.current().type == 'set'">
+                    
+                    <h4 :class="['card-title', 'p-2', 'flex-grow-1']"> {{schema.result._attributes.label}}
+                    
+                        <i @click="toggleEdit(schema.result._attributes.label)" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
+                        </i>
+                        <v-text-field v-if="state.edit_label" v-model="state.new_label" @keyup.enter="saveLabel()"></v-text-field>
+
+                    </h4>
+
+  
+                </template>
+
+
+
                 <template v-else>
                     <h4 :class="['card-title', 'p-2', 'flex-grow-1']">     {{schema.result._attributes.label}}
                         <i @click="toggleEdit(schema.result._attributes.label)" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
@@ -66,9 +82,20 @@
         <v-container v-else>
             <div v-if="state.params.info">{{ state.params.info }}</div>
         </v-container>
-    
+
+
+        <v-list-item 
+                        @click="store.uploader_open = true"
+                        >
+                        <template v-slot:prepend>
+                            <v-icon  icon="mdi-file"></v-icon>
+                        </template>
+                    
+                            <v-list-item-title >Add file to set</v-list-item-title>
+                        </v-list-item>
+<!--     
 {{ store.current().type }}
-{{ store.current().data.type }}
+{{ store.current().data.type }} -->
         <div class="card-footer">
    
              <!-- DELETE BUTTON -->
@@ -78,6 +105,7 @@
         </div>
     </div>
 
+    <!-- help view-->
     <div v-else>
 
         <v-sheet

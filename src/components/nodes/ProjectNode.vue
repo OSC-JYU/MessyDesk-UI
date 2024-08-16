@@ -2,7 +2,7 @@
 
 .node-body {
   min-height: 200px;
-  min-width: 200px;
+  min-width: 300px;
 }
 
 img {
@@ -32,15 +32,25 @@ const props = defineProps({
 
 <template>
   <div class="node-body">
-    <div class="header"> {{ data.label }}</div>
-    <img :src="data.image" />
-  {{ data.description }}
-  <div class="row m-4">
-    <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">
-      <img v-for="f in data.paths" :src="f" class="w-200 shadow-1-strong rounded mb-4"/>
-    </div>
-  </div>
-   
+    <div class="header"> Project</div>
+    <v-container>
+      <v-row>
+        <v-col>
+          <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">
+            <img v-for="f in data.paths" :src="f" class="w-200 shadow-1-strong rounded mb-4"/>
+          </div>
+        </v-col>
+
+        <v-col>
+          <h3>{{ data.label }}</h3>
+          {{ data.description }}
+        </v-col>
+
+      </v-row>
+
+    </v-container>
+
+  
   </div>
 
 

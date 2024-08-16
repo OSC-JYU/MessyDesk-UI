@@ -1,17 +1,5 @@
 <template>
-  <v-row>
-    <v-card class="overflow-auto p-3" width="100dvh">
 
-      <v-btn
-          class="text-none text-subtitle-1"
-          color="#5865f2"
-          size="small"
-          variant="flat"
-        >
-          Save corrected text
-        </v-btn>
-    </v-card>
-  </v-row>
   <v-row>
 
     <v-col cols="col-6">

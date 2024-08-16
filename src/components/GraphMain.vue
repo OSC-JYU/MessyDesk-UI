@@ -17,6 +17,7 @@
     import JYUHeader from './JYUHeader.vue'
     import CruncherList from './CruncherList.vue'
     import ProcessCreator from './ProcessCreator.vue'
+    import SetCreator from './SetCreator.vue'
 
     document.title = "MessyDesk"
 
@@ -53,6 +54,7 @@
                 <GraphDisplay mode="graph"  :fit="state.node"  />
                 <Uploader mode="graph" />
                 <NodeDeleter mode="graph" />
+                <SetCreator mode="graph" />
               </v-col>
 
               <v-col

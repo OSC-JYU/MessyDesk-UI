@@ -29,6 +29,15 @@ web.createProject = async function(name, description) {
 	var response = await axios.post('/api/projects', data)
 }
 
+web.createSet = async function(project_rid, name, description) {
+	project_rid = project_rid.replace('#','')
+	var data = {
+		"label": name,
+		"description": description
+	}
+	var response = await axios.post(`/api/projects/${project_rid}/sets`, data)
+}
+
 web.getServices = async function(rid) {
 	var result = await axios.get(`/api/services`)
 	return result.data
@@ -216,10 +225,13 @@ web.getLayoutByTarget = async function(rid) {
 }
 
 
-web.uploadFile = async function(fileObject, rid) {
+web.uploadFile = async function(fileObject, project_rid, set_rid) {
 	var formData = new FormData()
 	formData.append("file", fileObject)
-	await axios.post(`/api/projects/${rid.replace('#','')}/upload`, formData)
+	if(set_rid) 
+		await axios.post(`/api/projects/${project_rid.replace('#','')}/upload/${set_rid.replace('#','')}`, formData)
+	else
+		await axios.post(`/api/projects/${project_rid.replace('#','')}/upload`, formData)
 }
 
 

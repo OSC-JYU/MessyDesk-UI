@@ -1,23 +1,34 @@
+<style >
+
+.highlight {
+  background-color: yellow
+}
+</style>
+
 <template>
     <div class="container">
-      <div class="col-9 m-2">
-        <div v-for="e of entity_order">
-          <h4>{{ e }} <span v-if="state.entities[e]"> {{ state.entities[e].length }}</span><span v-else>0</span></h4>
-          <div v-for="entity of state.entities[e]">
-            {{ entity.word }}
-          </div>
-        </div>
+      <v-row>
+        <v-btn @click="$router.go(-1)"><v-icon>mdi-arrow-left</v-icon></v-btn>
+      </v-row>
+      <v-row>
 
-      </div>
-      <div class="col-3">
-        <template v-if="state.file">
-            <div class="card m-2">
-                <div class="card-header"><h2>{{ state.file.label }}</h2></div>
-                <p>{{ state.file.path }}</p>
+        
+        <div class="col-12 mt-6">
+
+      
+          <div v-for="e of entity_order">
+            <h4>{{ e }} <span v-if="state.entities[e]"> {{ state.entities[e].length }}</span><span v-else>0</span></h4>
+            <div v-for="entity of state.entities[e]">
+              {{ entity.word }}
             </div>
+          </div>
+         
 
-        </template>
-      </div>
+          <h2 class="mt-4">Text</h2>
+
+          <div v-html="state.source_text"></div>
+        </div>
+      </v-row>
     </div>
   </template>
   
@@ -35,24 +46,61 @@
     var state = reactive({
         file: null,
         data: null,
-        entities: {}
+        entities: {},
+        source: null,
+        source_text: ''
     })
+
+    function renderStringAsHtml(str, highlights) {
+    let result = '';
+    let lastIndex = 0;
+    let offset = 0;
+
+    highlights.forEach((highlight) => {
+        // Adjust start and end positions by the current offset
+        let start = highlight.start;
+        let end = highlight.end;
+
+        // Append the part of the string before the highlight
+        result += str.substring(lastIndex, start);
+        
+        // Append the highlighted part with line breaks handled
+        const highlightedText = str.substring(highlight.start, highlight.end);
+        result += `<span class="highlight">${highlightedText}</span>`;
+        lastIndex = highlight.end
+
+    });
+
+    result += str.substring(lastIndex);
+    // Append any remaining part of the string after the last highlight
+    result = result.replace(/\n/g, '<br>');
+
+    return result;
+}
+
+
 
     onMounted(async()=> {
 
         var response = await web.getDocInfo(route.params.rid)
+        state.source = await web.getDocInfo(route.query.source)
         
         state.file = response
         state.data = await web.getFiles(route.params.rid)
+        var source_text = await web.getFiles(state.source['@rid'].replace('#', ''))
         state.json = JSON.parse(state.data.replace(/'/g, '"'))
-        for(var entity of state.json) {
-          console.log(entity['entity_group'])
-          if(state.entities[entity['entity_group']]) {
-            state.entities[entity['entity_group']].push(entity)
-          } else {
-            state.entities[entity['entity_group']] = [entity]
+        if(Array.isArray(state.json)) {
+          
+          for(var entity of state.json[0]) {
+            console.log(entity['entity_group'])
+            if(state.entities[entity['entity_group']]) {
+              state.entities[entity['entity_group']].push(entity)
+            } else {
+              state.entities[entity['entity_group']] = [entity]
+            }
           }
         }
+        state.source_text = renderStringAsHtml(source_text, state.json[0])
     })
 
 

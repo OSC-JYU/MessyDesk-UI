@@ -1,18 +1,16 @@
 <style scoped>
-.node-pdf {
-  min-height: 200px;
-}
-
 img {
-  max-width:190px;
+  max-width:200px;
   margin: 0px
 }
-.node-pdf .header {
-  background-color: #9b4949;
+.node-image {
+  padding:0px
+}
+.header {
+  background-color: #ac9620;;
   color: white; 
   padding:3px
 }
-
 .crunch_add {
   color: #458b55;
   position: absolute;
@@ -46,36 +44,36 @@ const props = defineProps({
   },
 })
 
-
-const { node } = useNode()
+ const { node } = useNode()
 
 
 function openCrunchers(id) {
   store.current_node = node
-  store.crunchers_open = true
+  router.push({ name: 'crunchers', query: { node: node.id.replace('#', ''), desk:route.query.node} })
 }
 
 </script>
 
 <template>
-  <div class="node-pdf">
-    <div class="header">{{ data.label }}</div>
-    <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" />
+  <div class="node-image">
+    
+    <div class="header">{{ data.label }} 
+      
+      <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" />
+    </div>
     <div class="m-2">
-      <img :src="data.image" />
-      {{ data.description }}
+      <v-icon size="45" color="green">mdi-map-marker</v-icon> Natural Entities
+      <v-icon size="65" color="green">mdi-face-man</v-icon>
       <v-chip v-if="data.model" color="green" variant="outlined">
         {{ data.model }}
       </v-chip>
-
     </div>
 
+
+
     <Handle id="a" type="target" :position="Position.Left" />
-    <Handle id="r" type="target" :position="Position.Right" />
 
     <Handle id="b" type="source" :position="Position.Right" /> 
-    <Handle id="t" type="source" :position="Position.Top" /> 
-    <Handle id="l" type="source" :position="Position.Left" /> 
   </div>
 
 </template>

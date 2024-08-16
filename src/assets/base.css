@@ -138,7 +138,7 @@ body,
 .vue-flow__node {
   background-color:white;
   border:1px solid black;
-  max-width: 202px;
+  max-width: 302px;
 }
 
 .vue-flow__node-process {
@@ -159,7 +159,7 @@ body,
 .vue-flow__node-project {
   background-color:white;
   border:1px solid black;
-  max-width: 302px;
+  min-width: 502px;
 }
 
 

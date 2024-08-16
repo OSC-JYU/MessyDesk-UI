@@ -100,10 +100,20 @@
           @click="store.uploader_open = true"
         >
           <template v-slot:prepend>
-            <v-icon  icon="mdi-file"></v-icon>
+            <v-icon  icon="mdi-file-plus"></v-icon>
           </template>
       
             <v-list-item-title >Add file</v-list-item-title>
+        </v-list-item>
+
+        <v-list-item v-if="props.mode=='graph'"
+          @click="store.set_creator_open = true"
+        >
+          <template v-slot:prepend>
+            <v-icon  icon="mdi-folder-plus"></v-icon>
+          </template>
+      
+            <v-list-item-title >Create set</v-list-item-title>
         </v-list-item>
 
         <v-list-item v-if="props.mode=='projects'"

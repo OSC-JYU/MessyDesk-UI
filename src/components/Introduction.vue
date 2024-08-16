@@ -97,7 +97,7 @@
             <div class="col-12 m-0 p-0">
                 <div class="h-100 d-flex flex-column w-100 m-0 p-0">
                     <div class="row justify-content-center m-0 p-0">
-                        <JYUHeader/>
+                       
                     </div>
                     <div class="row mt-2 p-0  fill-height h-100">
                         <v-carousel class="fill-height"

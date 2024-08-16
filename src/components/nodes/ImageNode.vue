@@ -12,7 +12,7 @@ img {
   padding:3px
 }
 .crunch_add {
-  color: #458b55;
+  color: #156a8b;
   position: absolute;
   height: 50px;
   top: -40px;
@@ -21,10 +21,8 @@ img {
 
 }
 .crunch_add:hover {
-  fill: #099f18;
-  line-height: red;
-  size: 120%;
-  background-color: white;
+  color: #189743;
+
 }
 </style>
 
@@ -59,15 +57,27 @@ function openCrunchers(id) {
   <div class="node-image">
     
     <div class="header">{{ data.label }} 
-      <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" />
+      <!-- <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" /> -->
+      <v-icon @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" size="65" >mdi-cookie-plus</v-icon>
     </div>
-    <img :src="data.image" />
-    <div class="m-2">
-      {{ data.description }} 
-      <v-chip v-if="data.model" color="green" variant="outlined">
-        {{ data.model }}
-      </v-chip>
-    </div>
+
+    <v-container >
+      <v-row>
+        <v-col>
+          <img :src="data.image" />
+
+        </v-col>
+        <v-row>
+          <v-col>
+            <h3>{{ data.label }}</h3>
+          </v-col>
+
+        </v-row>
+      </v-row>
+
+
+    </v-container>
+
 
 
 

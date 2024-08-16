@@ -16,7 +16,7 @@
 
                 <div>
                     
-                    <div v-if="services.result && services.result.for_format && services.result.for_format.length == 0" class="alert alert-warning">No crunchers found</div>
+                    <div v-if="state.service_count === 0" class="alert alert-warning">No crunchers found</div>
 
                     <!-- <div v-if="store.current().data.type == 'set'">
                         <ol class="card" v-for="service in services.result.for_type">
@@ -130,12 +130,15 @@
 		current_schema: null,
 		out_params: {},
 		user_info: '',
-		error: ''
+		error: '',
+        service_count: 0
 	})
 
     async function loadData(rid) {
         services.result = await web.getServicesForFile(store.current_node.id)
         for(var service of services.result.for_format) {
+            if(service.id === 'thumbnailer') continue
+            state.service_count += 1
             for(var task in service.tasks) {
                 service.tasks[task].values = {}
             }

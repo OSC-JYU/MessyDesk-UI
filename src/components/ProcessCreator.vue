@@ -159,7 +159,6 @@ console.log(state.out_params)
 		} else {
 			return JSON.stringify(params)
 		}
-
 	}
 
 	function initForm() {

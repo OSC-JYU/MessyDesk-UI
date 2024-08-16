@@ -64,7 +64,7 @@
 
 
               <v-col
-   class="overflow-auto"
+                class="overflow-auto"
                 cols="9"
                 color="light-blue lighten-3"
               >

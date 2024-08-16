@@ -56,27 +56,19 @@
            
 
               <v-col
-                class="d-flex fill-height "
-                cols="10"
+                class="d-flex fill-height overflow-auto"
+                cols="12"
                 color="light-blue lighten-3"
               >
                 <!-- Second column content -->
                 <ImageDisplay v-if="state.file  && state.file.type=='image'"/>
-                <TextDisplay v-if="state.file  && state.file.type=='text'"/>
+                <TextDisplay v-if="state.file  && state.file.type=='text' && state.file.extension=='txt'"/> 
                 <HumanJSONDisplay v-if="state.file  && state.file.type=='human.json'"/>
                 <PDFDisplay v-if="state.file  && state.file.type=='pdf'"/>
                 <HOCRDisplay v-if="state.file && state.file.extension=='hocr'"/>
                 <NER_Display v-if="state.file && state.file.extension=='json' && state.file.label.includes('.ner.json')"/>
               </v-col>
 
-              <v-col
-                class="d-flex fill-height "
-                cols="2"
-                color="light-blue lighten-1"
-              >
-                <!-- Third column content -->
-                Column 3
-              </v-col>
             </v-row>
           </v-container>
         </v-main>
