@@ -51,7 +51,7 @@
             {{ store.current_project.data.label }}
           </template>
           <template v-else>
-            All Your Wonderful Projects  
+            All Your Wonderful Staff  
           </template>
   
           <v-spacer></v-spacer>
@@ -94,7 +94,7 @@
       >
    
       <v-list lines="two">
-        <v-list-subheader>Project</v-list-subheader>
+        <v-list-subheader>Desk</v-list-subheader>
 
         <v-list-item v-if="props.mode=='graph'"
           @click="store.uploader_open = true"
@@ -123,7 +123,7 @@
             <v-icon  icon="mdi-file"></v-icon>
           </template>
       
-            <v-list-item-title >Create project</v-list-item-title>
+            <v-list-item-title >Create desk</v-list-item-title>
         </v-list-item>
 
         <v-divider inset></v-divider>

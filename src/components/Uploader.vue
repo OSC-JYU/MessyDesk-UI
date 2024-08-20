@@ -12,6 +12,7 @@
         title="Upload file"
       >
       <v-card-text>
+        <div v-if="store.current_node && store.current_node.type == 'set'">Upload to set</div>
 
         <v-col>
 

@@ -32,7 +32,7 @@ const props = defineProps({
 
 <template>
   <div class="node-body">
-    <div class="header"> Project</div>
+    <div class="header"> Project ({{ data.file_count }})</div>
     <v-container>
       <v-row>
         <v-col>
@@ -43,7 +43,9 @@ const props = defineProps({
 
         <v-col>
           <h3>{{ data.label }}</h3>
-          {{ data.description }}
+          <div v-if="data.description">{{ data.description }}</div>
+          <div v-else>{{ data.file_count }}</div>
+          
         </v-col>
 
       </v-row>

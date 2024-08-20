@@ -3,14 +3,14 @@
 
 <template>
 
-    <div class="card" v-if="store.current_node && store.current().id && schema.result._attributes">
+    <v-card v-if="store.current_node && store.current().id && schema.result._attributes">
 
-        <div class="card-header">
+        <v-card-title>
 
-            <template v-if="store.current().type != 'process'">
+            <template v-if="store.current().type != 'process' && store.current().type != 'set'">
                 <a target="_blank" :href="'/api/files/' + store.current().id.replace('#','')">{{store.current().data.type_label}} open file</a> ({{ store.current().id }})
             </template>
-            <template v-else>{{ store.current().id }}</template>
+            <template v-else>ID: {{ store.current().id }}</template>
 
 
 
@@ -19,7 +19,7 @@
 
                 <template v-if="store.current().type == 'text'">
                   
-                  <h4 :class="['card-title', 'p-2', 'flex-grow-1']"> {{schema.result._attributes.label}}
+                  <h4 class="text-wrap"> {{schema.result._attributes.label}}
                
                     <i @click="toggleEdit(schema.result._attributes.label)" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
                         </i>
@@ -31,7 +31,7 @@
 
                 <template v-else-if="store.current().type == 'image'">
                     
-                    <h4 :class="['card-title', 'p-2', 'flex-grow-1']"> {{schema.result._attributes.label}}
+                    <h4 class="text-wrap"> {{schema.result._attributes.label}}
                     
                         <i @click="toggleEdit(schema.result._attributes.label)" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
                         </i>
@@ -43,7 +43,7 @@
 
                 <template v-else-if="store.current().type == 'set'">
                     
-                    <h4 :class="['card-title', 'p-2', 'flex-grow-1']"> {{schema.result._attributes.label}}
+                    <h4 class="text-wrap"> {{schema.result._attributes.label}}
                     
                         <i @click="toggleEdit(schema.result._attributes.label)" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
                         </i>
@@ -57,15 +57,15 @@
 
 
                 <template v-else>
-                    <h4 :class="['card-title', 'p-2', 'flex-grow-1']">     {{schema.result._attributes.label}}
+                    <h4 class="text-wrap">     {{schema.result._attributes.label}}
                         <i @click="toggleEdit(schema.result._attributes.label)" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
                         </i>
                         <v-text-field v-if="state.edit_label" v-model="state.new_label" @keyup.enter="saveLabel()"></v-text-field>
 
                     </h4>
                 </template>
-
-            </div>
+                </div>
+            
 
             <div v-if="editable()">
                 <div role="button" @click="state.editing = true" class="btn btn-primary float-end" title="Edit item">
@@ -73,39 +73,31 @@
                 </div>
             </div>
 
-        </div>
+        </v-card-title>
 
         <!-- THUMBNAIL -->
-        <div v-if="store.current().type == 'image' || store.current().type == 'pdf'">
-            <img style="max-height: 160px;" class="nodecard-image" :src="state.thumbnail" />
-        </div>
-        <v-container v-else>
-            <div v-if="state.params.info">{{ state.params.info }}</div>
-        </v-container>
+         <v-card-text>
+
+             <div v-if="store.current().type == 'image' || store.current().type == 'pdf'">
+                 <img style="max-height: 160px;" class="nodecard-image" :src="state.thumbnail" />
+                </div>
+                <v-container v-else>
+                    <div v-if="state.params.info">{{ state.params.info }}</div>
+                    <div v-if="store.current_node && store.current_node.data">{{ store.current_node.data.description }}</div>
+                </v-container>
+        </v-card-text>
 
 
-        <v-list-item 
-                        @click="store.uploader_open = true"
-                        >
-                        <template v-slot:prepend>
-                            <v-icon  icon="mdi-file"></v-icon>
-                        </template>
-                    
-                            <v-list-item-title >Add file to set</v-list-item-title>
-                        </v-list-item>
-<!--     
-{{ store.current().type }}
-{{ store.current().data.type }} -->
-        <div class="card-footer">
+
+        <v-card-actions>
    
              <!-- DELETE BUTTON -->
             <div class="float-end"  v-if="store.current().type != 'Person'">
                 <button @click="store.node_deleter_open = true" class="btn btn-danger" title="delete item"><i class="bi bi-trash"></i></button>
             </div>
-        </div>
-    </div>
+        </v-card-actions>
+    </v-card>
 
-    <!-- help view-->
     <div v-else>
 
         <v-sheet
@@ -126,7 +118,9 @@
             <v-card color="#EDE1CE" class="pa-6">TIP: You can quickly find your original files from hamburger menu.</v-card>
             </p>
         </v-sheet>
-    </div>
+        </div>
+
+
 
 </template>
 

@@ -31,6 +31,7 @@ export const store = reactive({
   graph_style: [],
   root_nodes: [],
   projects: [],
+  setdata: {},
   current_project: {},
 
   gtags() {

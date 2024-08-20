@@ -18,18 +18,22 @@
         height:50% !important;
     }
 
+    .graph-display { 
 
-.graph-display { 
+    background: rgb(94,94,110);
+    background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(129,159,176,0.5508404045211834) 7%, rgba(69,130,159,0) 100%);
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+    width: 100%;
+    height: 100%;
+    }
 
-  background: rgb(94,94,110);
-background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(129,159,176,0.5508404045211834) 7%, rgba(69,130,159,0) 100%);
-  -webkit-background-size: cover;
-  -moz-background-size: cover;
-  -o-background-size: cover;
-  background-size: cover;
-  width: 100%;
-  height: 100%;
-}
+    .set-panel {
+        max-height: 500px !important;
+      
+    }
 
 </style>
 
@@ -46,16 +50,67 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                 <div class="graph-display">
                    
                     <!-- set panel -->
-                    <v-navigation-drawer v-if="store.current_node" v-model="state.setPanel" temporary location="bottom" max-height="800">
+                    <v-navigation-drawer  v-if="store.current_node" v-model="state.setPanel" temporary location="bottom" >
 
-                        <v-list-item
-                        
-                      
-                        > <v-icon size="35" color="green">mdi-folder-outline</v-icon>{{ store.current_node.data.label }}</v-list-item>
+                        <v-list-item> 
+                            <v-icon size="35" color="green">mdi-folder-outline</v-icon>
+                            {{ store.current_node.data.label }}
+                        </v-list-item>
+
+                        <v-btn 
+                        @click="store.uploader_open = true"
+                        >
+                        <template v-slot:prepend>
+                            <v-icon  icon="mdi-file"></v-icon>
+                        </template>
+                    
+                            Add file to set
+                    </v-btn>
 
                         <v-divider></v-divider>
 
-                        <div v-for="file in state.setdata" class="col w-200 shadow-1-strong rounded mb-4">
+                        <v-row class="set-panel">
+                            <v-col
+                            v-for="file in state.setdata"
+                            :key="file.id"
+                            class="d-flex child-flex flow"
+                            cols="2"
+                            >
+
+                            <v-card
+                                class="mx-auto"
+                                
+                            >
+                                <v-img
+                                class="align-end text-white"
+                                width="200"
+                                :src="file.thumb"
+                                cover
+                                >
+                                <v-card-title>{{ file.label }}</v-card-title>
+                                </v-img>
+
+                                <v-card-subtitle class="pt-4">
+                                Image
+                                </v-card-subtitle>
+
+                                <v-card-text>
+                                <div> {{ file.description }}</div>
+
+                                </v-card-text>
+
+                                <v-card-actions>
+
+                                <v-switch v-model="file.expand" @change="expandSetNode(file)" label="Show in Desk" color="primary">expand</v-switch>
+                                </v-card-actions>
+                            </v-card>
+
+                            </v-col>
+                        </v-row>
+
+
+
+                        <!-- <div v-for="file in state.setdata" class="col w-200 shadow-1-strong rounded mb-4">
                             <div class="card">
                                 <img :src="file.thumb" :alt="file.label" class="image" />
                                 <div class="m-2">
@@ -66,13 +121,9 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </div> -->
 
-                        <v-list density="compact" nav>
-                        <v-list-item prepend-icon="mdi-view-dashboard" title="Home" value="home"></v-list-item>
-                        <v-list-item prepend-icon="mdi-forum" title="About" value="about"></v-list-item>
 
-                        </v-list>
                     </v-navigation-drawer>
 
 
@@ -122,35 +173,6 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
 			</div>
 
 		</div>
-
-        <!-- SET PANEL -->
-        <!-- <div class="offcanvas offcanvas-bottom" tabindex="-1" id="ImageSetPanel" ref="offCanvasSet" aria-labelledby="offcanvasBottomLabel">
-            <div class="offcanvas-header">
-                <h5 v-if="store.current_node" class="offcanvas-title" id="offcanvasBottomLabel"> {{ store.current_node.data.label }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-            </div>
-            <div class="offcanvas-body small">
-
-
-
-                <div v-if="state.setdata.length" class="container">
-                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-                       
-                        <div v-for="file in state.setdata" class="col w-200 shadow-1-strong rounded mb-4">
-                            <div class="card">
-                                <img :src="file.thumb" :alt="file.label" class="image" />
-                                <div class="m-2">
-                                    {{ file.label }}
-                                    <div class="form-check form-switch">
-                                        <input @change="expandSetNode(file, store.current_node.id)" class="form-check-input" type="checkbox" role="switch" :id="file['@rid']">
-                                        <label class="form-check-label" :for="file['@rid']">Show in Desk</label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-            </div> -->
-       
 
 </div>
 
@@ -229,7 +251,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
             if(wsdata.target) {
                 console.log('got message:', wsdata.command)
                 if(wsdata.command == 'add') {
-                    addNode(wsdata.target, wsdata.type, wsdata.node)
+                    addNode(wsdata)
                 } else if (wsdata.command == 'update') {
                     console.log('updating ', wsdata.target)
                     var target_node = elements.nodes.find(x => x.id == wsdata.target)
@@ -240,7 +262,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                 }
             } else {
                 if(wsdata.command == 'add') {
-                    addNode(wsdata.target, wsdata.type, wsdata.node)
+                    addNode(wsdata)
                 }
             }
         } catch(e) {
@@ -413,7 +435,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
     }
 
     async function toggleSetPanel(node) {
-        console.log('df   ')
+        
         state.setdata = await web.getSetFiles(store.current_node.id)
         state.setPanel = true
     }
@@ -428,48 +450,47 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
         }
     }
 
-    function addNode(target, type, node) {
+    function addNode(wsdata) {
         console.log('adding node')
-        console.log(target)
-        console.log(node)
-        const id = node['@rid'] || node.rid || node.id
-        const nodetype = node['@type'] || node.type
-        node.type = node['@type'].toLowerCase() // "File" -> "file"
+        console.log(wsdata.target)
+        console.log(wsdata.node)
+        // file uploaded to set is not added to visual graph
+        if(wsdata.set) {
+           // expandSetNode(wsdata.node, wsdata.target)
+        } else {
+            const id = wsdata.node['@rid'] || wsdata.node.rid || wsdata.node.id
+        const nodetype = wsdata.node['@type'] || wsdata.node.type
+        wsdata.node.type = wsdata.node['@type'].toLowerCase() // "File" -> "file"
         const newNode = {
             id: id,
-            data: node,
+            data: wsdata.node,
             image: '',
-            type: type,
+            type: wsdata.type,
             position: { x: Math.random() * flow.dimensions.value.width, y: Math.random() * flow.dimensions.value.height },
         }
         
         console.log('adding node', newNode)
-        console.log('to node ', target)
+        console.log('to node ', wsdata.target)
         elements.nodes.push(newNode)
-        console.log(`source: ${target}, target: ${id}`)
+        console.log(`source: ${wsdata.target}, target: ${id}`)
         state.node_added = id
-        if(target)
-            elements.edges.push({id:Math.random() + 'edge', source: target, target: id})
+        if(wsdata.target)
+            elements.edges.push({id:Math.random() + 'edge', source: wsdata.target, target: id})
 
         layoutGraph('LR')
+        }
+
         
     }
 
-    function expandSetNode(node, target) {
-        if(node['@rid']) node.rid = node['@rid']
-        console.log(node)
-        const newNode = {
-            id: node.rid,
-            data: node,
-            type: node.type,
-            position: { x: Math.random() * flow.dimensions.value.width, y: Math.random() * flow.dimensions.value.height },
-        }
-        elements.value.push(newNode)
-        //flow.addNodes([newNode])
-        elements.value.push({id:6, source: target, target: node.rid})
+    async function expandSetNode(node) {
+
+        await web.setNodeAttribute(node['@rid'], {key: 'expand', value: node.expand })
+        loadGraph()
+
     }
 
-	async function loadGraph(route, oldValue) {
+	async function loadGraph() {
         console.log('loading graph')
 		var layout = ''
         graph.result.data = {}
@@ -481,13 +502,13 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
         } else {
             await loadProjects()
         }
-        drawGraph(layout, route, oldValue)
+        drawGraph()
         
 
 	}
 
 
-    async function drawGraph(layout_name, route, oldValue) {
+    async function drawGraph() {
 
 
         var positions = await getNodePositions()
@@ -506,7 +527,9 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
                     label: node.data.name,
                     description: node.data.description,
                     paths: node.data.paths,
-                    info: node.data.info
+                    info: node.data.info,
+                    file_count: node.data.file_count,
+                    count: node.data.count
                 }
             }
             if(node.data._type)
@@ -619,7 +642,7 @@ background: linear-gradient(0deg, rgba(94,94,110,0.8463585263206845) 0%, rgba(12
             node.data = {id:node['@rid']}
             node.data.name = node.label
             node.data.type = node['@type']
-            node.data.description = node.file_count + ' files'
+            node.data.file_count = node.file_count + ' files'
             node.data.paths = node.paths
         }
         

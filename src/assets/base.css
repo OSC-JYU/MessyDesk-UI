@@ -162,6 +162,9 @@ body,
   min-width: 502px;
 }
 
+.md-project {
+  background-color:white;
+}
 
 /*
 .selected .header{

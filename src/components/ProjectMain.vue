@@ -7,7 +7,7 @@
     import ProjectCard from './ProjectCard.vue'
 
 
-    document.title = "MessyDesk - projects"
+    document.title = "MessyDesk - desks"
 
     var state = reactive({node:'', dialog: false, project_name:''})
 
@@ -22,7 +22,7 @@
 
     async function createProject() {
         if(state.project_name == '') {
-            state.error = 'Give project name!'
+            state.error = 'Give desk a name!'
         } else {
             state.error = ''
             await web.createProject(state.project_name)
@@ -88,13 +88,13 @@
       <v-card
         max-width="600"
         prepend-icon="mdi-update"
-        title="Create new project"
+        title="Create new desk"
       >
       <v-card-text>
 
         <v-col>
             <v-text-field v-model="state.project_name"
-                label="Project name*"
+                label="Desk name*"
                 required
               ></v-text-field>
         </v-col>

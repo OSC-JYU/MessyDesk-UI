@@ -16,7 +16,8 @@ img {
 .header {
   background-color: #005757;
   color: white; 
-  padding:3px
+  padding:3px;
+  text-align: left !important;
 }
 </style>
 
@@ -35,15 +36,12 @@ const props = defineProps({
 
 <template>
   <div class="node-body nodrag">
-    <div class="header">IMAGE SET</div>
+    <div class="header"><v-icon size="35" color="green">mdi-folder-outline</v-icon> IMAGE SET ({{ data.count }} images) </div>
     <v-container>
       <h3>{{ data.label }}</h3>
 
       <v-row>
-        <v-col>
-          <v-icon size="65" color="green">mdi-folder-outline</v-icon><br>
-          0 images 
-        </v-col>
+
 
         <v-col>
           <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">

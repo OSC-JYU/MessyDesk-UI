@@ -2,30 +2,35 @@
 <template>
     <div >
 
-		<v-sheet 
-        class="pa-6 text-black ">
-			<div v-if="store.current_node && state.project" class="card-header">
-                <h3 >{{ store.current_node.data.label }}</h3>
+		<v-sheet class="pa-6 text-black md-project">
+			<div v-if="store.current_node && state.project" >
+                <h3 class="font-weight-bold mb-4">{{ store.current_node.data.label }}</h3>
+                description:
+                <v-card class="pa-6">{{ store.current_node.description}}
+                    
+                    <v-icon @click="store.current_node = null">mdi-pencil</v-icon>
+                </v-card>
+                
 			</div>
 
                     
             <div v-else>
 
 
-                <h4 class="text-h5 font-weight-bold mb-4">Project view</h4>
+                <h4 class="text-h5 font-weight-bold mb-4">Desks view</h4>
 
                 <p class="mb-8">
-                Here you you can see your projects and you can arrange them visually.
+                Here you you can see your desks and you can arrange them visually.
 
                 <br>
                 <br>
-                Double click project node to open it.
+                Double click desk node to open it.
                 <br>
                 <br>
 
 
 
-                <v-card class="pa-6">TIP: You can quickly find your projects from hamburger menu.</v-card>
+                <v-card class="pa-6">TIP: You can quickly find your desks from hamburger menu.</v-card>
                 </p>
             </div>
             
