@@ -164,6 +164,14 @@ web.createFileProcess = async function(process, file_rid) {
 	return result
 }
 
+web.createSetProcess = async function(process, set_rid) {
+
+	const url = `/api/queue/${process.id}/sets/${set_rid.replace('#', '')}`
+	console.log(url)
+	var result = await axios.post(url, process)
+	return result
+}
+
 web.createNode = async function(data) {
 
 	var result = await axios.post(`/api/graph/vertices`, data)

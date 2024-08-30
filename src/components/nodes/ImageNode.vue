@@ -48,7 +48,6 @@ const props = defineProps({
 function openCrunchers(id) {
   store.current_node = node
   store.crunchers_open = true
-  //router.push({ name: 'crunchers', query: { node: node.id.replace('#', ''), desk:route.query.node} })
 }
 
 </script>
@@ -61,15 +60,17 @@ function openCrunchers(id) {
       <v-icon @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" size="65" >mdi-cookie-plus</v-icon>
     </div>
 
-    <v-container >
+    <v-container class="ma-2">
       <v-row>
-        <v-col>
+        <v-col class="d-flex align-center justify-center">
           <img :src="data.image" />
 
         </v-col>
         <v-row>
-          <v-col>
-            <h3>{{ data.label }}</h3>
+          <v-col class="d-flex align-center justify-center">
+           
+            <pre v-if="data.description != data.label"> {{ data.description }}</pre>
+            
           </v-col>
 
         </v-row>

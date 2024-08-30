@@ -166,6 +166,10 @@ body,
   background-color:white;
 }
 
+pre {
+  white-space: pre-wrap;
+}
+
 /*
 .selected .header{
   border-top: 5px solid red;

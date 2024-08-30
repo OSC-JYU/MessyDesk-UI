@@ -3,88 +3,63 @@
 
 <template>
 
-    <v-card v-if="store.current_node && store.current().id && schema.result._attributes">
+    <v-sheet v-if="store.current_node && store.current().id && schema.result._attributes" class="pa-6 text-black md-node">
 
-        <v-card-title>
+
 
             <template v-if="store.current().type != 'process' && store.current().type != 'set'">
-                <a target="_blank" :href="'/api/files/' + store.current().id.replace('#','')">{{store.current().data.type_label}} open file</a> ({{ store.current().id }})
+                <a class="text-medium-emphasis" target="_blank" :href="'/api/files/' + store.current().id.replace('#','')">{{store.current().data.type_label}} open file</a> ({{ store.current().id }})
             </template>
-            <template v-else>ID: {{ store.current().id }}</template>
+            <template v-else><span class="text-medium-emphasis">ID: {{ store.current().id }}</span></template>
 
-
-
-            <div class="d-flex bd-highlight">
-
-
-                <template v-if="store.current().type == 'text'">
-                  
-                  <h4 class="text-wrap"> {{schema.result._attributes.label}}
-               
-                    <i @click="toggleEdit(schema.result._attributes.label)" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
-                        </i>
-                    <v-text-field v-if="state.edit_label" v-model="state.new_label" @keyup.enter="saveLabel()"></v-text-field>
-
-
-                    </h4>
-                </template>
-
-                <template v-else-if="store.current().type == 'image'">
-                    
-                    <h4 class="text-wrap"> {{schema.result._attributes.label}}
-                    
-                        <i @click="toggleEdit(schema.result._attributes.label)" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
-                        </i>
-                        <v-text-field v-if="state.edit_label" v-model="state.new_label" @keyup.enter="saveLabel()"></v-text-field>
-
-                    </h4>
-                </template>
-
-
-                <template v-else-if="store.current().type == 'set'">
-                    
-                    <h4 class="text-wrap"> {{schema.result._attributes.label}}
-                    
-                        <i @click="toggleEdit(schema.result._attributes.label)" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
-                        </i>
-                        <v-text-field v-if="state.edit_label" v-model="state.new_label" @keyup.enter="saveLabel()"></v-text-field>
-
-                    </h4>
-
-  
-                </template>
-
-
-
-                <template v-else>
-                    <h4 class="text-wrap">     {{schema.result._attributes.label}}
-                        <i @click="toggleEdit(schema.result._attributes.label)" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
-                        </i>
-                        <v-text-field v-if="state.edit_label" v-model="state.new_label" @keyup.enter="saveLabel()"></v-text-field>
-
-                    </h4>
-                </template>
-                </div>
+            <h3 v-if="state.edit_label_open == false" @click="editLabel()" class="font-weight-bold mb-4">{{ store.current_node.data.label }}</h3>
+            <v-card v-else class="pa-6"> 
+                <v-text-field @keyup.enter="saveLabel()"
+                    label="Description"
+                    v-model="state.edit_label"
+                    name="input-7-1"
+                    variant="filled"
+                    auto-grow
+                ></v-text-field>
+                <v-card-actions>
+                    <v-btn @click="closeLabel()">Cancel</v-btn>
+                    <v-btn @click="saveLabel()">Save</v-btn>
+                </v-card-actions>
             
+            </v-card>
+                
+                
+            <div v-if="empty(store.current_node.data.description)" @click="editDescription()" class="text-medium-emphasis">add description</div>
+            <pre v-if="state.edit_description_open == false" @click="editDescription()">{{ store.current_node.data.description}}</pre>
+            
+            <v-card v-else class="pa-6"> 
+                <v-textarea 
+                label="Description"
+                v-model="state.edit_description"
+                name="input-7-1"
+                variant="filled"
+                auto-grow
+                ></v-textarea>
+                <v-card-actions>
+                    <v-btn @click="closeDescription()">Cancel</v-btn>
+                    <v-btn @click="saveDescription()">Save</v-btn>
+                </v-card-actions>
+            
+            </v-card>
+    
 
-            <div v-if="editable()">
-                <div role="button" @click="state.editing = true" class="btn btn-primary float-end" title="Edit item">
-                    <i class="bi bi-pen" style="font-size: 1rem; color: white;"></i>
-                </div>
-            </div>
 
-        </v-card-title>
+
+ 
 
         <!-- THUMBNAIL -->
          <v-card-text>
 
              <div v-if="store.current().type == 'image' || store.current().type == 'pdf'">
                  <img style="max-height: 160px;" class="nodecard-image" :src="state.thumbnail" />
-                </div>
-                <v-container v-else>
-                    <div v-if="state.params.info">{{ state.params.info }}</div>
-                    <div v-if="store.current_node && store.current_node.data">{{ store.current_node.data.description }}</div>
-                </v-container>
+            </div>
+            <p v-if="store.current().data.info"><i><v-icon class="mr-2">mdi-information</v-icon>{{ store.current().data.info }}</i></p>
+
         </v-card-text>
 
 
@@ -96,7 +71,7 @@
                 <button @click="store.node_deleter_open = true" class="btn btn-danger" title="delete item"><i class="bi bi-trash"></i></button>
             </div>
         </v-card-actions>
-    </v-card>
+    </v-sheet>
 
     <div v-else>
 
@@ -137,8 +112,10 @@
     const router = useRouter();
 
     var state = reactive({
-        edit_label: false,
-        new_label: '',
+        edit_description: '',
+        edit_description_open: false,
+        edit_label: '',
+        edit_label_open: false,
         thumbnail: '',
         params: '',
         editing: false,
@@ -212,17 +189,8 @@
 
     })
 
-    // users can edit only their own links + data. Admin can edit all
-    function editable() {
-        if(store.current().data.id == '#' + route.query.node) {
-            if(store.current().data.id == store.user.rid || store.user.access == 'admin')
-                return true
-        }
-        return false
-    }
-
-    function setEdit() {
-        reset()
+    function empty(string) {
+        return (!string || string.length === 0 );
     }
 
     function reset() {
@@ -259,11 +227,37 @@
     }
 
 
-    async function saveLabel() {
-        var result = await web.setNodeAttribute(store.current().id, {key:'label', value: state.new_label})
-        emit('updateGraph', {id: store.current().id, name: state.new_label})
-        state.edit_label = false
-        
+    function editLabel() {
+        state.edit_label = store.current_node.data.label
+        state.edit_label_open = true
+    }
+
+    function closeLabel() {
+        state.edit_label = ''
+        state.edit_label_open = false
+    }
+
+    function saveLabel() {
+        web.setNodeAttribute(store.current_node.id, {key:'label', value: state.edit_label})
+        store.current_node.data.label = state.edit_label
+        state.edit_label = ''
+        state.edit_label_open = false
+    }
+    function editDescription() {
+        state.edit_description = store.current_node.data.description
+        state.edit_description_open = true
+    }
+
+    function closeDescription() {
+        state.edit_description = ''
+        state.edit_description_open = false
+    }
+
+    function saveDescription() {
+        web.setNodeAttribute(store.current_node.id, {key:'description', value: state.edit_description})
+        store.current_node.data.description = state.edit_description
+        state.edit_description = ''
+        state.edit_description_open = false
     }
 
 

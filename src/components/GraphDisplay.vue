@@ -142,6 +142,10 @@
                             <ProcessingNode :data="data" />
                         </template>
 
+                        <template #node-setprocess="{ data }">
+                            <SetProcessingNode :data="data" />
+                        </template>
+
                         <template #node-pdf="{ data }">
                             <PDFNode :data="data" />
                         </template>
@@ -166,6 +170,10 @@
                             <NERNode :data="data" />
                         </template>
 
+                        <template #node-empty="{ data }">
+                            <EmptyNode :data="data" />
+                        </template>
+                        
                         <Background />
 
                         </VueFlow>  
@@ -202,12 +210,14 @@
     import ImageNode from './nodes/ImageNode.vue'
     import ProjectNode from './nodes/ProjectNode.vue'
     import ProcessingNode from './nodes/ProcessingNode.vue'
+    import SetProcessingNode from './nodes/SetProcessingNode.vue'
     import PDFNode from './nodes/PDFNode.vue'
     import TextNode from './nodes/TextNode.vue'
     import SetNode from './nodes/SetNode.vue'
     import JSONNode from './nodes/JSONNode.vue'
     import HumanNode from './nodes/HumanNode.vue'
     import NERNode from './nodes/NERNode.vue'
+    import EmptyNode from './nodes/EmptyNode.vue'
 
     import { useShuffle } from './useShuffle'
     import { useLayout } from './useLayout'
@@ -258,6 +268,7 @@
                     if(target_node) {
                         if(wsdata.image) target_node.data.image = wsdata.image
                         if(wsdata.description) target_node.data.description = wsdata.description
+                        if(wsdata.count) target_node.data.count = wsdata.count
                     }
                 }
             } else {
@@ -557,6 +568,17 @@
             elements.edges.push(flowedge)
         }
         
+        if(elements.nodes.length === 0) {   
+        
+            elements.nodes.push({
+                id: '1',
+                type: 'empty',
+                position: { x: 0, y: 0 },
+                data: {
+                    type: 'empty',
+                    label: 'Your Desk is empty!',}
+                })
+            }
         
 
         if(props.mode !== 'projects')
@@ -644,6 +666,8 @@
             node.data.type = node['@type']
             node.data.file_count = node.file_count + ' files'
             node.data.paths = node.paths
+            node.data.info = node.info
+            node.data.description = node.description
         }
         
     }

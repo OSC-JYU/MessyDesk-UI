@@ -19,11 +19,26 @@ img {
   padding:3px;
   text-align: left !important;
 }
+
+.crunch_add {
+  color: #156a8b;
+  position: absolute;
+  height: 50px;
+  top: -40px;
+  right: -40px;
+  cursor: pointer;
+
+}
+.crunch_add:hover {
+  color: #189743;
+
+}
 </style>
 
 
 <script setup>
-import { Handle, Position } from '@vue-flow/core'
+import { Handle, Position, useNode } from '@vue-flow/core'
+import {store} from "../Store.js";
 
 const props = defineProps({
   data: {
@@ -32,11 +47,19 @@ const props = defineProps({
   },
 })
 
+const { node } = useNode()
+
+function openCrunchers(id) {
+  store.current_node = node
+  store.crunchers_open = true
+}
+
 </script>
 
 <template>
   <div class="node-body nodrag">
     <div class="header"><v-icon size="35" color="green">mdi-folder-outline</v-icon> IMAGE SET ({{ data.count }} images) </div>
+    <v-icon @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" size="65" >mdi-cookie-plus</v-icon>
     <v-container>
       <h3>{{ data.label }}</h3>
 
@@ -49,10 +72,10 @@ const props = defineProps({
           </div>
         </v-col>
       </v-row>
+      <div class="m-2">
+        <pre>{{ data.description }}</pre> 
+      </div>
     </v-container>
-    <div class="m-2">
-      {{ data.description }} 
-    </div>
 
     <div class="row m-4">
       <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">

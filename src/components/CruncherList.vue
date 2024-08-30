@@ -34,6 +34,7 @@
                             <template v-if="service.id !== 'thumbnailer'">
                                 <h4 class="text-h5 font-weight-bold mb-4 mt-6"> {{ service.name }}</h4>
                                 <p><i> {{ service.description }}</i></p> 
+                               
                                 <v-expansion-panels>
                                     <v-expansion-panel v-for="(task, task_key) of service.tasks" >
                                         <v-expansion-panel-title> 
@@ -41,35 +42,26 @@
                                         </v-expansion-panel-title>
                                         <v-expansion-panel-text>
                                             {{ task.description }}
-                                            <div class="d-flex flex-row-reverse mb-6 ">
-                                                <v-btn         
-                                                    class="text-none ms-4 text-white"
-                                                    color="blue-darken-4"
-                                                    rounded="1"
-                                                    variant="flat" 
-                                                    title="Add cruncher"
-                                                    @click="createProcess(service, task, task_key)">Crunch</v-btn>
-
-                                            </div>
+         
                                            
 
-
-                                                <div >
-                                                    <!-- task specific settings -->
-                                                    <div v-if="task.params_help">
-                                                        <div v-for="(help, key) in task.params_help" :key="key" class="input-group mb-3">
+                                            
+                                            <div >
+                                                <!-- task specific settings -->
+                                                <div v-if="task.params_help">
+                                                    <div v-for="(help, key) in task.params_help" :key="key" class="input-group mb-3">
                                                             <div class="input-group-prepend">
                                                                 <span class="input-group-text" id="basic-addon1">{{ help.name }}</span>
                                                             </div>
-                                                        
+                                                            
                                                             
                                                             <div >
                                                                 <input v-model="task.values[key]" type="text" class="form-control" placeholder=""  aria-label="Username" aria-describedby="basic-addon1">
                                                                 <div>{{ help.help }}</div>
                                                                 <div v-if="help.values"	>{{ help.values }}</div>	
                                                             </div>
-                                
-
+                                                            
+                                                            
                                                             
                                                         </div>
                                                         
@@ -83,9 +75,26 @@
                                                             <input v-model="task.values[key]"  type="text" class="form-control" placeholder=""  aria-label="Username" aria-describedby="basic-addon1">
                                                             <div>{{ help.help }}</div>
                                                         </div>
-                                                </div>
+                                                    </div>
                                                     <div v-else>This cruncher has no settings, just click "Crunch!".</div>
                                                 </div>
+
+                                                <div class="d-flex flex-row-reverse mb-6 ">
+                                                <v-btn         
+                                                class="text-none ms-4 text-white"
+                                                color="blue-darken-4"
+                                                rounded="1"
+                                                variant="flat" 
+                                                title="Add cruncher"
+                                                @click="createProcess(service, task, task_key)">
+                                                <template v-if="store.current().data.type == 'set'">Crunch files in Set</template>
+                                                <template v-else>Crunch file</template>
+                                            </v-btn>
+                                                
+                                            </div>
+
+                                                <v-alert type="info" v-if="task.supported_formats">supported formats: {{ task.supported_formats.join(', ') }}</v-alert>
+                                                <v-alert type="info" v-else>supported formats: {{ service.supported_formats.join(', ') }}</v-alert>
 
 
 
@@ -179,7 +188,12 @@
 			process.info = createUserInfo(task.info, task.values)
 		}
 		console.log(process)
-		var res = await web.createFileProcess(process, store.current().id)
+
+        if(store.current_node.data.type == 'set') {
+            var res = await web.createSetProcess(process, store.current().id)
+        } else  {
+            var res = await web.createFileProcess(process, store.current().id)
+        }
 		// //var node = res.data.result[0]
         store.crunchers_open = false
 		// //console.log(res)
