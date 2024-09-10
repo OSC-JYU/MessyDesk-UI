@@ -52,20 +52,26 @@
                     <!-- set panel -->
                     <v-navigation-drawer  v-if="store.current_node" v-model="state.setPanel" temporary location="bottom" >
 
-                        <v-list-item> 
+                        <v-toolbar color="#005757" density="compact">
+                        <template v-slot:prepend>
+                            <v-app-bar-nav-icon></v-app-bar-nav-icon>
+                        </template>
+
+                        <v-toolbar-title>
                             <v-icon size="35" color="green">mdi-folder-outline</v-icon>
                             {{ store.current_node.data.label }}
-                        </v-list-item>
+                        </v-toolbar-title>
+                        </v-toolbar>
 
                         <v-btn 
-                        @click="store.uploader_open = true"
-                        >
-                        <template v-slot:prepend>
-                            <v-icon  icon="mdi-file"></v-icon>
-                        </template>
-                    
-                            Add file to set
-                    </v-btn>
+                            @click="store.uploader_open = true"
+                            >
+                            <template v-slot:prepend>
+                                <v-icon  icon="mdi-file"></v-icon>
+                            </template>
+                        
+                                Add file to set
+                        </v-btn>
 
                         <v-divider></v-divider>
 
@@ -203,7 +209,7 @@
     //const { getNode, onNodeClick, onNodeDoubleClick, onNodeDragStop} = useVueFlow()
     const flow = useVueFlow({
         defaultZoom: 0.5,
-        maxZoom: 3,
+        maxZoom: 4,
         minZoom: 0.1,
     })
 
@@ -297,7 +303,7 @@
     flow.onNodeDragStop((event) => {
         store.current_node = event.node
         console.log(event.node.position)
-        //saveLayout()
+        event.node.position = {x:Math.round(event.node.position.x/100, 10)*100, y:Math.round(event.node.position.y/100, 10)*100}
         connection.send(JSON.stringify({id:event.node.id, position:event.node.position}))
     })
 

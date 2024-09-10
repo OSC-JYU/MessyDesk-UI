@@ -58,7 +58,7 @@ function openCrunchers(id) {
 
 <template>
   <div class="node-body nodrag">
-    <div class="header"><v-icon size="35" color="green">mdi-folder-outline</v-icon> IMAGE SET ({{ data.count }} images) </div>
+    <div class="header"><v-icon size="35" color="green">mdi-folder-outline</v-icon> IMAGE SET <span v-if="data.count">  ({{ data.count }} images)</span><span v-else>(empty)</span> </div>
     <v-icon @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" size="65" >mdi-cookie-plus</v-icon>
     <v-container>
       <h3>{{ data.label }}</h3>

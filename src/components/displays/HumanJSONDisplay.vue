@@ -1,4 +1,4 @@
-<style>
+<style scoped>
   canvas {background-color: rgb(245, 244, 243);}
 </style>
 

@@ -1,3 +1,18 @@
+<style scoped>
+.full-background {
+    background-image:  url('../assets/images/right-column-bg2.png');
+    background-size: cover; /* Ensures the image covers the entire div */
+    background-repeat: no-repeat; /* Prevents the image from repeating */
+    background-position: center; /* Centers the image within the div */
+    width: 100%; /* Optional: make the div take up the full width of its container */
+    height: 100%; /* Optional: make the div take up the full height of its container */
+  
+}
+
+</style>
+
+
+
 <script setup>
     import { reactive } from "vue";
     import {store} from "./Store.js";
@@ -56,7 +71,7 @@
 
 
               <v-col
-                class="d-flex fill-height "
+                class="d-flex fill-height pb-0"
                 cols="9"
                 color="light-blue lighten-3"
               >
@@ -65,8 +80,8 @@
 
               </v-col>
 
-              <v-col
-                class="d-flex fill-height "
+              <v-col 
+                class="pa-0 full-background"
                 cols="3"
                 color="light-blue lighten-1"
               >

@@ -3,7 +3,7 @@
 
 <template>
 
-    <v-sheet v-if="store.current_node && store.current().id && schema.result._attributes" class="pa-6 text-black md-node">
+    <v-card v-if="store.current_node && store.current().id && schema.result._attributes" class="pa-6 text-black ">
 
 
 
@@ -53,35 +53,36 @@
  
 
         <!-- THUMBNAIL -->
-         <v-card-text>
+         <v-card-text class="pa-0">
 
              <div v-if="store.current().type == 'image' || store.current().type == 'pdf'">
-                 <img style="max-height: 160px;" class="nodecard-image" :src="state.thumbnail" />
+                 <img  class="nodecard-image" :src="state.thumbnail" />
             </div>
             <p v-if="store.current().data.info"><i><v-icon class="mr-2">mdi-information</v-icon>{{ store.current().data.info }}</i></p>
 
         </v-card-text>
 
 
-
-        <v-card-actions>
+        <div class="card-actions d-flex justify-end w-100 pa-2" >
+            
    
              <!-- DELETE BUTTON -->
-            <div class="float-end"  v-if="store.current().type != 'Person'">
-                <button @click="store.node_deleter_open = true" class="btn btn-danger" title="delete item"><i class="bi bi-trash"></i></button>
-            </div>
-        </v-card-actions>
-    </v-sheet>
+            <v-btn  @click="store.node_deleter_open = true" right-0 class="btn btn-danger mr-10" color="red" title="delete item"><i class="bi bi-trash"></i></v-btn>
+            
+        </div>
+    </v-card>
 
     <div v-else>
 
         <v-sheet
-            border="md"
             class="pa-6 text-black "
         >
-            <h4 class="text-h5 font-weight-bold mb-4">Cruncher view</h4>
-
-            <p class="mb-8">
+            <h4 v-if="store.current_project && store.current_project.data" class="text-h5 font-weight-bold mb-4">{{ store.current_project.data.label }}</h4>
+            <h4 v-else class="text-h5 font-weight-bold mb-4">Desk</h4>
+            
+            <p v-if="store.current_project && store.current_project.data" class="">{{ store.current_project.data.description }}</p>
+            <hr/>
+            <p class="mb-8 font-italic">
             Here you you can see your files and how you have <b>processed</b> them.
 
             <br>

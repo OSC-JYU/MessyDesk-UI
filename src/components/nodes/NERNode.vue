@@ -55,7 +55,7 @@ function openCrunchers(id) {
 </script>
 
 <template>
-  <div class="node-image">
+  <div class="node-image nodrag">
     
     <div class="header">{{ data.label }} 
       

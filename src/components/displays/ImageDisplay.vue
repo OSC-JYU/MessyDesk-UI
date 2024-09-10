@@ -10,10 +10,19 @@
       <v-row>
 
         <v-col cols="9" >
-          <img v-if="state.file" :src="state.file.thumbnail" alt="Image" />
+          <!-- <img v-if="state.file" :src="state.file.thumbnail" alt="Image" />  -->
+          <image-select-area v-if="state.file"
+            :image-url="state.file.thumbnail"
+            :width="900"
+            :height="700"
+            border-color="#0FB839"
+            border-width="2"
+            @save-data="saveROI"
+          />
         </v-col>
 
         <v-col cols="3">
+          {{ state.ROIs }}
           <template v-if="state.cruncher">
             <v-card>
                 <v-card-title>{{ state.cruncher.label }}</v-card-title>
@@ -32,6 +41,7 @@
 
     import { onMounted, watch, reactive, ref, computed } from "vue";
     import { useRouter, useRoute } from 'vue-router'
+    import ImageSelectArea from 'vue3-image-multiselect-areas';
   
     import web from "../../web.js";
 
@@ -39,7 +49,8 @@
 
     var state = reactive({
         file: null,
-        cruncher: null
+        cruncher: null,
+        ROIs: []
     })
 
     onMounted(async()=> {
@@ -54,6 +65,11 @@
         }
     })
 
+    async function saveROI(data) {
+      console.log(data)
+      state.ROIs.push(data)
+
+    }
     function removeLastPathPart(str) {
         const lastIndex = str.lastIndexOf('/');
         if (lastIndex !== -1) {
@@ -76,5 +92,11 @@
   .column img {
     max-width: 100%;
     height: auto;
+  }
+  .delete-button {
+    color: red;
+  }
+  canvas {
+    background-color: none;
   }
   </style>

@@ -57,7 +57,7 @@ function openCrunchers(id) {
 </script>
 
 <template>
-  <div class="node-body">
+  <div class="node-body nodrag">
     <div class="header"> {{ data.label }}
       <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" />
     </div>

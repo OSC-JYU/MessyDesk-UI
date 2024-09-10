@@ -1,9 +1,17 @@
 
 <style>
-//This changes the width for all the offcanvas in the app
-.offcanvas{
-     height:50% !important;
-} 
+
+
+.full-background {
+    background-image:  linear-gradient(rgba(19,84,122,.8), rgba(128,208,199,.8)),url('../assets/images/right-column-bg2.png');
+    background-size: cover; /* Ensures the image covers the entire div */
+    background-repeat: no-repeat; /* Prevents the image from repeating */
+    background-position: center; /* Centers the image within the div */
+    width: 100%; /* Optional: make the div take up the full width of its container */
+    height: 100%; /* Optional: make the div take up the full height of its container */
+
+}
+
 </style>
 
 <script setup>
@@ -46,7 +54,7 @@
 
 
               <v-col
-                class="d-flex fill-height "
+                class="pb-0 fill-height "
                 cols="9"
                 color="light-blue lighten-3"
               >
@@ -58,7 +66,7 @@
               </v-col>
 
               <v-col
-                class="d-flex fill-height "
+                class="pa-0 full-background"
                 cols="3"
                 color="light-blue lighten-1"
               >
