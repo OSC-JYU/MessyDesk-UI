@@ -19,7 +19,7 @@ export const store = reactive({
   queries: [],
   menus: [],
   groups: [],
-  maps: [],
+  cruncher_filter: '',
   graph_node_update: '',
   process_creator_open: false,
   uploader_open: false,

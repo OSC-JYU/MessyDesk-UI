@@ -39,9 +39,18 @@ const props = defineProps({
     <pre class="p-2" v-if="data.description">{{ data.description }}</pre>
   
   <p class="p-2" v-if="data.info"><i>{{ data.info }}</i></p>
-  <p class="p-2" v-else>{{ data.params }}</p>
-
-  <img src="icons/cookie-bite-solid-white.svg" />
+  
+  <v-row align="center">
+    <v-col cols="auto">
+      <img src="icons/cookie-bite-solid-white.svg" />
+    </v-col>
+    <v-col>
+      <p class="p-2" v-if="data.info">
+        <v-icon class="mr-2">mdi-information</v-icon>
+        <i>{{ data.info }}</i>
+      </p>
+    </v-col>
+  </v-row>
 
   <Handle id="a" type="target" :position="Position.Left" />
 

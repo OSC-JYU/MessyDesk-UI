@@ -11,18 +11,20 @@
 
         <v-col cols="9" >
           <!-- <img v-if="state.file" :src="state.file.thumbnail" alt="Image" />  -->
-          <image-select-area v-if="state.file"
+          <image-select-area v-if="state.file && state.image_loaded"
             :image-url="state.file.thumbnail"
-            :width="900"
-            :height="700"
-            border-color="#0FB839"
-            border-width="2"
+            :width="state.width"
+            :height="state.height"
+            border-color="red"
+            border-width="4"
             @save-data="saveROI"
+            :init-areas="state.file.rois"
           />
         </v-col>
 
         <v-col cols="3">
-          {{ state.ROIs }}
+        <!-- <div v-if="state.file && state.file.rois">{{ state.file.rois }}</div> -->
+          <v-btn v-if="state.ROIs.length > 0" @click="saveROIs2DB" color="primary">Save ROIs</v-btn>
           <template v-if="state.cruncher">
             <v-card>
                 <v-card-title>{{ state.cruncher.label }}</v-card-title>
@@ -50,8 +52,13 @@
     var state = reactive({
         file: null,
         cruncher: null,
-        ROIs: []
+        ROIs: [],
+        width: 400,
+        height: 400,
+        image_loaded: false
     })
+
+    const image = new Image();
 
     onMounted(async()=> {
 
@@ -63,12 +70,22 @@
           var response2 = await web.getDocInfo(route.query.cruncher)
           state.cruncher = response2
         }
+        console.log(state.file.thumbnail)
+        image.src = state.file.thumbnail; 
+        image.onload = () => {
+          state.width = image.width;
+          state.height = image.height;
+          state.image_loaded = true
+        };
+
     })
 
     async function saveROI(data) {
-      console.log(data)
-      state.ROIs.push(data)
+      state.ROIs = data
+    }
 
+    async function saveROIs2DB(data) {
+      await web.createROIs(state.file['@rid'], state.ROIs)
     }
     function removeLastPathPart(str) {
         const lastIndex = str.lastIndexOf('/');

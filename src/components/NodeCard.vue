@@ -61,7 +61,9 @@
             <p v-if="store.current().data.info"><i><v-icon class="mr-2">mdi-information</v-icon>{{ store.current().data.info }}</i></p>
 
         </v-card-text>
-
+        <div v-if="schema.result._attributes && schema.result._attributes.metadata"  >
+            <span>width: {{ schema.result._attributes.metadata.width }} height: {{ schema.result._attributes.metadata.height }}</span>
+        </div>
 
         <div class="card-actions d-flex justify-end w-100 pa-2" >
             

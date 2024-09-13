@@ -39,7 +39,7 @@ const props = defineProps({
       <v-row>
         <v-col>
           <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">
-            <img v-for="f in data.paths" :src="f" class="w-200 shadow-1-strong rounded mb-4"/>
+            <img v-for="f in data.paths" :src="f" class="w-200 shadow-1-strong rounded mb-4" draggable="false"/>
           </div>
         </v-col>
 

@@ -546,7 +546,8 @@
                     paths: node.data.paths,
                     info: node.data.info,
                     file_count: node.data.file_count,
-                    count: node.data.count
+                    count: node.data.count,
+                    roi_count: node.data.roi_count
                 }
             }
             if(node.data._type)

@@ -24,6 +24,22 @@ img {
   color: #189743;
 
 }
+.roi_add {
+  color: white;
+  top: 20px;
+  right: 20px;
+  cursor: pointer;
+  background-color: #54546f;
+}
+
+.roi_add:hover {
+  color: white;
+  top: 20px;
+  right: 20px;
+  cursor: pointer;
+  background-color: #49b369;
+}
+
 </style>
 
 
@@ -45,10 +61,12 @@ const props = defineProps({
  const { node } = useNode()
 
 
-function openCrunchers(id) {
+function openCrunchers(filter) {
   store.current_node = node
   store.crunchers_open = true
+  store.cruncher_filter = filter
 }
+
 
 </script>
 
@@ -56,26 +74,28 @@ function openCrunchers(id) {
   <div class="node-image nodrag">
     
     <div class="header">{{ data.label }} 
-      <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" /> 
-      
+      <img @click="openCrunchers('')" title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" /> 
     </div>
-
+    
     <v-container class="ma-2">
       <v-row>
         <v-col class="d-flex align-center justify-center">
-          <img :src="data.image" />
-
+          <img :src="data.image" draggable="false"/>
+          
         </v-col>
         <v-row>
           <v-col class="d-flex align-center justify-center">
-           
+            
             <pre v-if="data.description != data.label"> {{ data.description }}</pre>
             
           </v-col>
-
+          
         </v-row>
       </v-row>
-
+      
+      <div v-if="data.roi_count" class="roi_add" @click="openCrunchers('ROI')" >
+        <v-icon  title="Add ROI Cruncher"  size="35" >mdi-selection</v-icon> {{ data.roi_count }} regions of interest 
+      </div>
 
     </v-container>
 

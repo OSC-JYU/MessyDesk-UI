@@ -144,7 +144,7 @@
 	})
 
     async function loadData(rid) {
-        services.result = await web.getServicesForFile(store.current_node.id)
+        services.result = await web.getServicesForFile(store.current_node.id, store.cruncher_filter)
         for(var service of services.result.for_format) {
             if(service.id === 'thumbnailer') continue
             state.service_count += 1
@@ -191,7 +191,9 @@
 
         if(store.current_node.data.type == 'set') {
             var res = await web.createSetProcess(process, store.current().id)
-        } else  {
+        } else  if (store.cruncher_filter == 'ROI') {
+            var res = await web.createROIProcess(process, store.current().id)
+        } else {
             var res = await web.createFileProcess(process, store.current().id)
         }
 		// //var node = res.data.result[0]

@@ -43,8 +43,10 @@ web.getServices = async function(rid) {
 	return result.data
 }
 
-web.getServicesForFile = async function(file_rid) {
-	var result = await axios.get(`/api/services/files/${file_rid.replace('#','')}`)
+web.getServicesForFile = async function(file_rid, filter) {
+	var filter_query = ''
+	if(filter) filter_query = '?filter='+filter
+	var result = await axios.get(`/api/services/files/${file_rid.replace('#','')}${filter_query}`)
 	return result.data
 }
 
@@ -136,6 +138,18 @@ web.getStyle = async function() {
 
 web.getDocInfo = async function(rid) {
 	var result = await axios.get(`/api/documents/${rid.replace('#','')}`)
+	console.log('docinfo')
+	console.log(result.data)
+	if(result.data && result.data.rois) {
+		var count = 0
+		for(var roi of result.data.rois) {
+			//roi.id = roi['@rid']
+			roi['index'] = count
+			roi['id'] = count
+			count++	
+		}
+		
+	}
 	return result.data
 }
 
@@ -159,6 +173,14 @@ web.getMyGraph = async function(rel_types=[], node_types=[],q_return='') {
 web.createFileProcess = async function(process, file_rid) {
 
 	const url = `/api/queue/${process.id}/files/${file_rid.replace('#', '')}`
+	console.log(url)
+	var result = await axios.post(url, process)
+	return result
+}
+
+web.createROIProcess = async function(process, file_rid) {
+
+	const url = `/api/queue/${process.id}/files/${file_rid.replace('#', '')}/roi`
 	console.log(url)
 	var result = await axios.post(url, process)
 	return result
@@ -219,6 +241,11 @@ web.removeEdgeByRID = async function(rid) {
 
 web.connectSchema = async function(from, relation, to) {
 	var result = await axios.post(`/api/graph/edges`, {from:from, relation:relation, to: to})
+	return result
+}
+
+web.createROIs = async function(rid, data) {
+	var result = await axios.post(`/api/graph/vertices/${rid.replace('#','')}/rois`, data)
 	return result
 }
 

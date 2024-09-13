@@ -83,7 +83,7 @@
                         icon="mdi-close"
                         @click="store.crunchers_open = false"
                     ></v-btn>
-                    <v-toolbar-title>Available crunchers for {{ store.current_node.type }}</v-toolbar-title>
+                    <v-toolbar-title>Available crunchers for {{ store.current_node.type }} {{ store.cruncher_filter }}</v-toolbar-title>
 
 
                     <v-spacer></v-spacer>
