@@ -75,7 +75,7 @@
               </v-col>
             </v-row>
 
-            <v-dialog v-model="store.crunchers_open" width="auto" min-width="800">
+            <v-dialog v-model="store.crunchers_open" width="auto" min-width="900">
 
                 <v-card>
                     <v-toolbar>

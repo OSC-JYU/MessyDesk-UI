@@ -1,6 +1,7 @@
 <script setup>
     import JYUHeader from './JYUHeader.vue'
     import ImageDisplay from './displays/ImageDisplay.vue'
+    import OSDDisplay from './displays/OSDDisplay.vue'
     import HOCRDisplay from './displays/HOCRDisplay.vue'
     import NER_Display from './displays/NER_Display.vue'
     import TextDisplay from './displays/TextDisplay.vue'
@@ -63,6 +64,7 @@
                 <!-- Second column content -->
                 <ImageDisplay v-if="state.file  && state.file.type=='image'"/>
                 <TextDisplay v-if="state.file  && state.file.type=='text' && state.file.extension=='txt'"/> 
+                <OSDDisplay v-if="state.file  && state.file.type=='osd.json'"/> 
                 <HumanJSONDisplay v-if="state.file  && state.file.type=='human.json'"/>
                 <PDFDisplay v-if="state.file  && state.file.type=='pdf'"/>
                 <HOCRDisplay v-if="state.file && state.file.extension=='hocr'"/>

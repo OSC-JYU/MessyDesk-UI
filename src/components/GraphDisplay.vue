@@ -176,6 +176,10 @@
                             <NERNode :data="data" />
                         </template>
 
+                        <template #node-osd.json="{ data }">
+                            <OSDNode :data="data" />
+                        </template>
+
                         <template #node-empty="{ data }">
                             <EmptyNode :data="data" />
                         </template>
@@ -221,6 +225,7 @@
     import TextNode from './nodes/TextNode.vue'
     import SetNode from './nodes/SetNode.vue'
     import JSONNode from './nodes/JSONNode.vue'
+    import OSDNode from './nodes/OSDNode.vue'
     import HumanNode from './nodes/HumanNode.vue'
     import NERNode from './nodes/NERNode.vue'
     import EmptyNode from './nodes/EmptyNode.vue'
