@@ -31,7 +31,7 @@
 
 
                         <v-sheet v-for="service in services.result.for_format">
-                            <template v-if="service.id !== 'thumbnailer'">
+                            <template v-if="service.id !== 'thumbnailer' && Object.keys(service.tasks).length > 0">
                                 <h4 class="text-h5 font-weight-bold mb-4 mt-6"> {{ service.name }}</h4>
                                 <p><i> {{ service.description }}</i></p> 
                                

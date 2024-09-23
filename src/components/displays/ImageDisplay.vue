@@ -6,8 +6,9 @@
       </v-row>
       <v-row class="mt-6">
         <div v-if="state.file"><h2>{{ state.file.label }}</h2></div>
+        <v-btn v-if="state.ROIs.length > 0" @click="saveROIs2DB" color="primary">Save ROIs</v-btn>
       </v-row>
-      <v-row>
+      <v-row class="column_image">
 
         <v-col cols="9" >
           <!-- <img v-if="state.file" :src="state.file.thumbnail" alt="Image" />  -->
@@ -24,12 +25,13 @@
 
         <v-col cols="3">
         <!-- <div v-if="state.file && state.file.rois">{{ state.file.rois }}</div> -->
-          <v-btn v-if="state.ROIs.length > 0" @click="saveROIs2DB" color="primary">Save ROIs</v-btn>
+          
           <template v-if="state.cruncher">
             <v-card>
                 <v-card-title>{{ state.cruncher.label }}</v-card-title>
                 <v-card-text>{{ state.cruncher.info }}</v-card-text>
             </v-card>
+            {{ state.ROIs }}
           </template>
         </v-col>  
 
@@ -85,7 +87,7 @@
     }
 
     async function saveROIs2DB(data) {
-      await web.createROIs(state.file['@rid'], state.ROIs)
+      await web.createROIs(state.file['@rid'], state.ROIs, state.width, state.height)
     }
     function removeLastPathPart(str) {
         const lastIndex = str.lastIndexOf('/');
@@ -115,5 +117,9 @@
   }
   canvas {
     background-color: none;
+  }
+  .column_image {
+    height: 90%;
+    overflow-y: scroll;
   }
   </style>

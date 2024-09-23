@@ -66,10 +66,13 @@
     async function sendFile() {
         if(upload.value.files.length && route.query.node) {
             try {
-                if(store.current_node && store.current_node.type == 'set')
-                    await web.uploadFile(upload.value.files[0], route.query.node, store.current_node.id)
-                else
-                    await web.uploadFile(upload.value.files[0], route.query.node)
+                if(store.current_node && store.current_node.type == 'set') {
+                  await web.uploadFile(upload.value.files[0], route.query.node, store.current_node.id)
+
+                } else {
+                  await web.uploadFile(upload.value.files[0], route.query.node)
+                }
+
                 store.uploader_open = false
                 //store.reload()
             } catch(e) {

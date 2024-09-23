@@ -1,4 +1,10 @@
+<style scoped>
 
+.overflow-scroll {
+    overflow-y: scroll;
+    height: 85%;
+}
+</style>
 
 
 <template>
@@ -11,6 +17,9 @@
                 <a class="text-medium-emphasis" target="_blank" :href="'/api/files/' + store.current().id.replace('#','')">{{store.current().data.type_label}} open file</a> ({{ store.current().id }})
             </template>
             <template v-else><span class="text-medium-emphasis">ID: {{ store.current().id }}</span></template>
+            <div v-if="schema.result._attributes && schema.result._attributes.metadata"  >
+            <span>width: {{ schema.result._attributes.metadata.width }} height: {{ schema.result._attributes.metadata.height }}</span>
+        </div>
 
             <h3 v-if="state.edit_label_open == false" @click="editLabel()" class="font-weight-bold mb-4">{{ store.current_node.data.label }}</h3>
             <v-card v-else class="pa-6"> 
@@ -53,7 +62,7 @@
  
 
         <!-- THUMBNAIL -->
-         <v-card-text class="pa-0">
+         <v-card-text class="pa-0 overflow-scroll">
 
              <div v-if="store.current().type == 'image' || store.current().type == 'pdf'">
                  <img  class="nodecard-image" :src="state.thumbnail" />
@@ -61,9 +70,6 @@
             <p v-if="store.current().data.info"><i><v-icon class="mr-2">mdi-information</v-icon>{{ store.current().data.info }}</i></p>
 
         </v-card-text>
-        <div v-if="schema.result._attributes && schema.result._attributes.metadata"  >
-            <span>width: {{ schema.result._attributes.metadata.width }} height: {{ schema.result._attributes.metadata.height }}</span>
-        </div>
 
         <div class="card-actions d-flex justify-end w-100 pa-2" >
             

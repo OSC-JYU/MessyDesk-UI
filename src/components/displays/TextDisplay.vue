@@ -6,7 +6,7 @@
       <v-row class="mt-6">
         <div v-if="state.file"><h2>{{ state.file.label }}</h2></div>
       </v-row>
-      <v-row>
+      <v-row class="column_text">
 
         <v-col cols="9" >
           <div v-html="state.text"></div>
@@ -15,8 +15,8 @@
         <v-col cols="3">
           <template v-if="state.cruncher">
             <v-card>
-                <v-card-title>{{ state.cruncher.label }}</v-card-title>
-                <v-card-text>{{ state.cruncher.info }}</v-card-text>
+                <!-- <v-card-title>{{ state.cruncher.label }}</v-card-title>
+                <v-card-text>{{ state.cruncher.info }}</v-card-text> -->
             </v-card>
           </template>
         </v-col>  
@@ -83,5 +83,10 @@
   .column img {
     max-width: 100%;
     height: auto;
+  }
+
+  .column_text {
+    height: 90%;
+    overflow-y: scroll;
   }
   </style>

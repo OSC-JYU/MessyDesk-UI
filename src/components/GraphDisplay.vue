@@ -45,8 +45,7 @@
 
 
 			<div class="col-12 px-0">
-
-
+                
                 <div class="graph-display">
                    
                     <!-- set panel -->
@@ -132,7 +131,6 @@
 
                     </v-navigation-drawer>
 
-
                     <!-- <VueFlow :nodes="elements.nodes" :edges="elements.edges" fit-view-on-init > -->
                     <VueFlow :nodes="elements.nodes" :edges="elements.edges" >
                         <Background />
@@ -187,6 +185,10 @@
                         <Background />
 
                         </VueFlow>  
+
+                        <v-icon  style="position: absolute; bottom: 10px; right: 30px;" @click="layoutGraph('LR')" title="original files only"  size="25" >mdi-root</v-icon>
+                        <v-icon  style="position: absolute; bottom: 10px; right: 30px;" @click="layoutGraph('LR')" title="order left to right"  size="25" >mdi-arrow-right-box</v-icon>
+                        <v-icon  style="position: absolute; bottom: 10px; right: 00px;" @click="layoutGraph('TB')" title="order to top down"  size="25" >mdi-arrow-down-box</v-icon>
                 </div>
 			</div>
 
@@ -209,6 +211,7 @@
 
     import { Position, VueFlow, defaultNodeTypes, useVueFlow } from '@vue-flow/core'
     import { Background } from '@vue-flow/background'
+    const { updateNode } = useVueFlow()
 
     //const { getNode, onNodeClick, onNodeDoubleClick, onNodeDragStop} = useVueFlow()
     const flow = useVueFlow({
@@ -274,6 +277,8 @@
                 if(wsdata.command == 'add') {
                     addNode(wsdata)
                 } else if (wsdata.command == 'update') {
+                    if(state.setPanel) loadSet()  // update set panel if open
+
                     console.log('updating ', wsdata.target)
                     var target_node = elements.nodes.find(x => x.id == wsdata.target)
                     if(target_node) {
@@ -288,7 +293,7 @@
                 }
             }
         } catch(e) {
-            console.log('WS virhe', e)
+            console.log('WS error', e)
             console.log(event.data)
         }
     }
@@ -317,6 +322,13 @@
         console.log(event.node)
         store.current_node = event.node
 
+        // updateNode(event.node.id, {hidden: true})
+
+        // var node = elements.nodes.find(x => x.id == event.node.id)
+        // node.hidden = true
+
+        //elements.nodes = elements.nodes.map((node) => ({ ...node, hidden: true }))
+
         store.view = flow.getViewport()
 
     })
@@ -325,17 +337,29 @@
         store.current_node = null
     })
 
+    // here is the place to fit to node
     flow.onNodesInitialized ((event) => {
-        console.log('nodes initialized')
-        if(!state.node_added) {
+
+        // set is created
+        if(store.update_data) {
+            console.log('update data', store.update_data)
+            fitToNode(store.update_data.id)
+
+        // restore view to stored viewport
+        } else {
+            if(!state.node_added) {
             if(store.view && props.mode == "graph") flow.setViewport(store.view)
             else flow.fitView()
             if(props.mode == "graph") getRootNodes()
+
+        // node is added
         } else {
             fitToNode(state.node_added)
             state.node_added = 0
             store.view = flow.getViewport()
         }
+        }
+
 
     })
 
@@ -421,8 +445,9 @@
     	() => store.update,
       	async (newValue, oldValue) => {
             console.log(store.update_data)
-            if(store.update_data) updateGraphNode(store.update_data)
-        	else loadGraph(route, oldValue)
+            //if(store.update_data) updateGraphNode(store.update_data)
+        	//else loadGraph(route, oldValue)
+            loadGraph(route, oldValue)
     })
 
     async function layoutGraph(direction) {
@@ -452,17 +477,28 @@
                 
             } else {
                 store.root_nodes.push(node)
+               // var outs = flow.getOutgoers(node)
+               // for(var out of outs) {
+                //    updateNode(out.id, {hidden: true})
+               // }
+                //node.data.hidden = true
+                //updateNode(node.id, {hidden: true})
             }
         }
     }
 
     async function toggleSetPanel(node) {
-        
         state.setdata = await web.getSetFiles(store.current_node.id)
         state.setPanel = true
     }
 
+    async function loadSet() {
+        state.setdata = await web.getSetFiles(store.current_node.id)
+    }
+
     function updateGraphNode(update) {
+
+        console.log('updateGraphNode', update)
 
         var target_node = elements.nodes.find(x => x.id == update.id)
         if(target_node) {

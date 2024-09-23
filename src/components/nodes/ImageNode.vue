@@ -1,6 +1,6 @@
 <style scoped>
 img {
-  max-width:200px;
+  max-width:280px;
   margin: 0px
 }
 .node-image {
@@ -25,20 +25,23 @@ img {
 
 }
 .roi_add {
+  position: relative;
   color: white;
-  top: 20px;
-  right: 20px;
+  top: 0px;
+  right: 0px;
   cursor: pointer;
   background-color: #54546f;
 }
 
 .roi_add:hover {
   color: white;
-  top: 20px;
-  right: 20px;
   cursor: pointer;
   background-color: #49b369;
 }
+
+.image_display {
+
+  max-height: 250px;}
 
 </style>
 
@@ -77,12 +80,13 @@ function openCrunchers(filter) {
       <img @click="openCrunchers('')" title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" /> 
     </div>
     
-    <v-container class="ma-2">
+    <v-container   style="max-height: 360px; overflow: hidden;">
       <v-row>
-        <v-col class="d-flex align-center justify-center">
+        <v-col class="d-flex align-center justify-center ">
           <img :src="data.image" draggable="false"/>
           
         </v-col>
+      </v-row>
         <v-row>
           <v-col class="d-flex align-center justify-center">
             
@@ -90,16 +94,16 @@ function openCrunchers(filter) {
             
           </v-col>
           
-        </v-row>
+        
       </v-row>
       
-      <div v-if="data.roi_count" class="roi_add" @click="openCrunchers('ROI')" >
-        <v-icon  title="Add ROI Cruncher"  size="35" >mdi-selection</v-icon> {{ data.roi_count }} regions of interest 
-      </div>
+
 
     </v-container>
 
-
+    <div v-if="data.roi_count" class="roi_add" @click="openCrunchers('ROI')" >
+      <v-icon  title="Add ROI Cruncher"  size="35" >mdi-selection</v-icon> {{ data.roi_count }} regions of interest 
+    </div>
 
 
     <Handle id="a" type="target" :position="Position.Left" />

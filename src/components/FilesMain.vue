@@ -57,7 +57,7 @@
            
 
               <v-col
-                class="d-flex fill-height overflow-auto"
+                class="d-flex fill-height overflow-aut"
                 cols="12"
                 color="light-blue lighten-3"
               >

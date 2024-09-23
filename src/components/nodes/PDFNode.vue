@@ -50,9 +50,10 @@ const props = defineProps({
 const { node } = useNode()
 
 
-function openCrunchers(id) {
+function openCrunchers() {
   store.current_node = node
   store.crunchers_open = true
+  store.cruncher_filter = ''
 }
 
 </script>

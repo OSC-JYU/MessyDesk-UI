@@ -33,7 +33,7 @@
                 color="light-blue lighten-3"
               >
                 <!-- Second column content -->
-                <ProcessCreator />
+                <!-- <ProcessCreator /> -->
                 <CruncherList />
               </v-col>
 

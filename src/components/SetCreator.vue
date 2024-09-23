@@ -62,13 +62,16 @@
         mode: ''
     })
 
+  const emit = defineEmits(['updateGraph'])
 
     async function createSet() {
         if(state.set_name && route.query.node) {
             try {
-                await web.createSet(route.query.node, state.set_name, state.description)
+                var response = await web.createSet(route.query.node, state.set_name, state.description)
+                console.log(response)
                 store.set_creator_open = false
-                //store.reload()
+                //emit('updateGraph', response['@rid'])
+                store.reload({id:response['@rid']})
             } catch(e) {
                 if(e.response && e.response.data.error)
                     alert(e.response.data.error)

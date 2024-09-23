@@ -51,7 +51,7 @@
             {{ store.current_project.data.label }}
           </template>
           <template v-else>
-            All Your Wonderful Staff  
+            All Your Wonderful Stuff  
           </template>
   
           <v-spacer></v-spacer>

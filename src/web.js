@@ -36,6 +36,7 @@ web.createSet = async function(project_rid, name, description) {
 		"description": description
 	}
 	var response = await axios.post(`/api/projects/${project_rid}/sets`, data)
+	return response.data
 }
 
 web.getServices = async function(rid) {
@@ -244,8 +245,9 @@ web.connectSchema = async function(from, relation, to) {
 	return result
 }
 
-web.createROIs = async function(rid, data) {
-	var result = await axios.post(`/api/graph/vertices/${rid.replace('#','')}/rois`, data)
+web.createROIs = async function(rid, data, width, height) {
+	var postdata = {rois: data, width: width, height: height}
+	var result = await axios.post(`/api/graph/vertices/${rid.replace('#','')}/rois`, postdata)
 	return result
 }
 
