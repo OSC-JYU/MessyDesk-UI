@@ -67,6 +67,15 @@ function openCrunchers(id) {
       <v-chip v-if="data.model" color="green" variant="outlined">
         {{ data.model }}
       </v-chip>
+      <v-row>
+        <v-col class="d-flex align-center justify-center">
+          
+          <pre v-if="data.description != data.label"> {{ data.description }}</pre>
+          
+        </v-col>
+        
+        
+      </v-row>
     </div>
 
 

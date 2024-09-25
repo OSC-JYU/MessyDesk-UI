@@ -94,7 +94,7 @@
       >
    
       <v-list lines="two">
-        <v-list-subheader>Desk</v-list-subheader>
+        <v-list-subheader><router-link :to="'/'" >Back to Main</router-link></v-list-subheader>
 
         <v-list-item v-if="props.mode=='graph'"
           @click="store.uploader_open = true"

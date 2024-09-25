@@ -17,9 +17,9 @@
         <v-col>
 
               <v-file-input
-                label="Select File (image, pdf, text)"
+                label="Select File (image, pdf, txt)"
                 show-size
-                ref="upload" accept="image/*,.pdf,text/*" 
+                ref="upload" accept="image/*,.pdf,text/plain" 
             ></v-file-input>
         </v-col>
       </v-card-text>

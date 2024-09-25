@@ -29,11 +29,10 @@ img {
   color: white;
   top: 0px;
   right: 0px;
-  cursor: pointer;
   background-color: #54546f;
 }
 
-.roi_add:hover {
+.roi_crunch:hover {
   color: white;
   cursor: pointer;
   background-color: #49b369;
@@ -101,8 +100,9 @@ function openCrunchers(filter) {
 
     </v-container>
 
-    <div v-if="data.roi_count" class="roi_add" @click="openCrunchers('ROI')" >
-      <v-icon  title="Add ROI Cruncher"  size="35" >mdi-selection</v-icon> {{ data.roi_count }} regions of interest 
+    <div  title="double click to add/edit regions" class="roi_add"  >
+      <v-icon size="35" >mdi-selection</v-icon> {{ data.roi_count? data.roi_count : 0 }} Regions of Interest 
+      <v-icon v-if="data.roi_count" title="Add region cruncher" @click="openCrunchers('ROI')" class="roi_crunch" size="35" >mdi-cookie</v-icon>
     </div>
 
 
