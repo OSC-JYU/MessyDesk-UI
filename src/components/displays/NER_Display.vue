@@ -1,35 +1,46 @@
 <style >
 
+.column_text {
+    height: 90%;
+    overflow-y: scroll;
+  }
+
 .highlight {
   background-color: yellow
 }
 </style>
 
 <template>
-    <div class="container">
+
+    <v-container>
       <v-row>
         <v-btn @click="$router.go(-1)"><v-icon>mdi-arrow-left</v-icon></v-btn>
       </v-row>
-      <v-row>
-
-        
-        <div class="col-12 mt-6">
-
-      
-          <div v-for="e of entity_order">
-            <h4>{{ e }} <span v-if="state.entities[e]"> {{ state.entities[e].length }}</span><span v-else>0</span></h4>
-            <div v-for="entity of state.entities[e]">
-              {{ entity.word }}
-            </div>
-          </div>
-         
-
-          <h2 class="mt-4">Text</h2>
-
-          <div v-html="state.source_text"></div>
-        </div>
+      <v-row class="mt-6">
+        <div v-if="state.file"><h2>Text</h2></div>
       </v-row>
-    </div>
+      <v-row class="column_text">
+
+        <v-col cols="9" >
+          <div v-html="state.source_text"></div>
+        </v-col>
+
+        <v-col cols="3">
+          <div v-for="e of entity_order">
+            <template v-if="state.entities[e] && state.entities[e].length">
+              <h4>{{ e }} <span> {{ state.entities[e].length }}</span></h4>
+              <div v-for="entity of state.entities[e]">
+                {{ entity.word }}
+              </div>
+            </template>
+          </div>
+        </v-col>  
+
+      </v-row>
+    </v-container>
+
+
+
   </template>
   
   <script setup>
@@ -41,7 +52,7 @@
 
     const route = useRoute();
 
-    const entity_order = ['PERSON', 'GPE', 'DATE', 'ORG']
+    const entity_order = ['PERSON', 'GPE', 'DATE', 'ORG', 'LOC', 'EVENT', 'PRODUCT', 'NORP', 'FIBC', 'JON']
 
     var state = reactive({
         file: null,
@@ -91,7 +102,7 @@
         state.json = JSON.parse(state.data.replace(/'/g, '"'))
         if(Array.isArray(state.json)) {
           
-          for(var entity of state.json[0]) {
+          for(var entity of state.json) {
             console.log(entity['entity_group'])
             if(state.entities[entity['entity_group']]) {
               state.entities[entity['entity_group']].push(entity)
@@ -100,7 +111,8 @@
             }
           }
         }
-        state.source_text = renderStringAsHtml(source_text, state.json[0])
+        console.log(state.json)
+        state.source_text = renderStringAsHtml(source_text, state.json)
     })
 
 

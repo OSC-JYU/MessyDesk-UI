@@ -7,7 +7,7 @@ let web = {}
 	//axios.defaults.baseURL = ''
 
 web.search = async function(search) {
-	var result = await axios.get(`/api/search?search=${search}`)
+	var result = await axios.post(`/api/search`, {query: search})
 	return result.data
 }
 

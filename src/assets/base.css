@@ -194,3 +194,9 @@ pre {
   position: absolute;
   bottom: 0;
 }
+
+em {
+  font-style: normal;
+  font-weight: bold;  
+  background-color: yellow;
+}
