@@ -2,8 +2,17 @@
 
 .column_text {
     height: 90%;
-    overflow-y: scroll;
+    
   }
+
+.column_text2 {
+  height: 100%;
+  overflow-y: scroll;
+}
+.paper {
+  border: 1px solid black;
+  background-color: white;
+}
 
 .highlight {
   background-color: yellow
@@ -19,18 +28,19 @@
       <v-row class="mt-6">
         <div v-if="state.file"><h2>Text</h2></div>
       </v-row>
+      
       <v-row class="column_text">
 
-        <v-col cols="9" >
+        <v-col cols="9" class="column_text2 paper">
           <div v-html="state.source_text"></div>
         </v-col>
 
-        <v-col cols="3">
+        <v-col cols="3" class="column_text2">
           <div v-for="e of entity_order">
             <template v-if="state.entities[e] && state.entities[e].length">
               <h4>{{ e }} <span> {{ state.entities[e].length }}</span></h4>
               <div v-for="entity of state.entities[e]">
-                {{ entity.word }}
+                <a :href="'#highlight-'+entity.start">{{ entity.word }}</a> 
               </div>
             </template>
           </div>
@@ -77,7 +87,7 @@
         
         // Append the highlighted part with line breaks handled
         const highlightedText = str.substring(highlight.start, highlight.end);
-        result += `<span class="highlight">${highlightedText}</span>`;
+        result += `<span class="highlight" id="highlight-${highlight.start}">${highlightedText}</span>`;
         lastIndex = highlight.end
 
     });
@@ -99,7 +109,7 @@
         state.file = response
         state.data = await web.getFiles(route.params.rid)
         var source_text = await web.getFiles(state.source['@rid'].replace('#', ''))
-        state.json = JSON.parse(state.data.replace(/'/g, '"'))
+        state.json = state.data
         if(Array.isArray(state.json)) {
           
           for(var entity of state.json) {

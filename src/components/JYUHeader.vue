@@ -57,7 +57,7 @@
           <v-spacer></v-spacer>
   
           <v-btn icon>
-            <v-icon>mdi-magnify</v-icon>
+            <router-link :to="'/search'" ><v-icon>mdi-magnify</v-icon></router-link>
           </v-btn>
   
           <v-btn icon>

@@ -8,15 +8,20 @@
       </v-row>
       <v-row class="column_text">
 
-        <v-col cols="9" >
-          <div v-html="state.text"></div>
+        <v-col cols="9" class="column_text2 paper">
+          <div ref="textContainer" v-html="state.text"></div>
         </v-col>
 
-        <v-col cols="3">
+        <v-col cols="3" class="column_text2">
           <template v-if="state.cruncher">
             <v-card>
-                <!-- <v-card-title>{{ state.cruncher.label }}</v-card-title>
-                <v-card-text>{{ state.cruncher.info }}</v-card-text> -->
+                 <v-card-title>Saved selections (text ROIs)</v-card-title>
+                <v-card-text>
+                  <v-alert>not implemented yet</v-alert>
+                  <v-btn @click="getSelectedText">Get Selected Text</v-btn>
+                  {{ state.selectedText }} {{ state.selectionStart }} {{ state.selectionEnd }}
+                </v-card-text> 
+                
             </v-card>
           </template>
         </v-col>  
@@ -29,17 +34,53 @@
   
   <script setup>
 
-    import { onMounted, watch, reactive, ref, computed } from "vue";
-    import { useRouter, useRoute } from 'vue-router'
+    import { onMounted, reactive, ref } from "vue";
+    import { useRoute } from 'vue-router'
   
     import web from "../../web.js";
 
     const route = useRoute();
 
+    const textContainer = ref(null)
+
     var state = reactive({
         file: null,
-        cruncher: null
+        cruncher: null,
+        selectedText: '',
+        selectionStart: -1,
+        selectionEnd: -1,
+        text: ''
     })
+
+    function getSelectedText() {
+  
+      const selection = window.getSelection();
+      //var selectedText = window.getSelection().toString();
+      //console.log(selectedText)
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+
+       // Ensure the selection is within the text container
+       if (textContainer.value.contains(range.commonAncestorContainer)) {
+          state.selectedText = selection.toString();
+
+          // Use Range to calculate the start and end positions
+          const preSelectionRange = range.cloneRange();
+          preSelectionRange.selectNodeContents(textContainer.value);
+          preSelectionRange.setEnd(range.startContainer, range.startOffset);
+
+          // Calculate the character offset by measuring the length of the pre-selection range
+          state.selectionStart = preSelectionRange.toString().length;
+          state.selectionEnd = state.selectionStart + state.selectedText.length;
+        } else {
+          // Clear values if selection is outside the container
+          state.selectedText = '';
+          state.selectionStart = -1;
+          state.selectionEnd = -1;
+        }
+
+      }
+    }
 
     function replaceWithBr(text) {
       return text.replace(/\n/g, "<br />")
@@ -87,6 +128,15 @@
 
   .column_text {
     height: 90%;
-    overflow-y: scroll;
+    
   }
+
+.column_text2 {
+  height: 100%;
+  overflow-y: scroll;
+}
+.paper {
+  border: 1px solid black;
+  background-color: white;
+}
   </style>

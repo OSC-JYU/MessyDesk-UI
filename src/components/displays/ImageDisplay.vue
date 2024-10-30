@@ -8,9 +8,9 @@
         <div v-if="state.file"><h2>{{ state.file.label }}</h2></div>
         
       </v-row>
-      <v-row class="column_image">
+      <v-row class="column_base">
         
-        <v-col cols="9" >
+        <v-col cols="9" class="column_image paper">
           <!-- <img v-if="state.file" :src="state.file.thumbnail" alt="Image" />  -->
           <image-select-area v-if="state.file && state.image_loaded"
           :image-url="state.file.thumbnail"
@@ -23,11 +23,61 @@
           />
         </v-col>
         
-        <v-col cols="3">
+        <v-col cols="3" class="column_image">
           <!-- <div v-if="state.file && state.file.rois">{{ state.file.rois }}</div> -->
           
-          <v-alert type="info" >Click and drag to create regions of interest (ROI).</v-alert>
-          <v-btn v-if="state.ROIs.length > 0" @click="saveROIs2DB" class="mt-3" color="primary">Save ROIs</v-btn>
+          <v-alert type="info" >Click and drag to create saved selections (ROI).</v-alert>
+
+          <template v-if="state.ROIs.length > 0">
+            <v-list density="compact" >
+              <v-list-subheader>Saved selections</v-list-subheader>
+
+              <v-list-item
+                v-for="(item, i) in state.ROIs"
+                :key="i"
+                :value="item"
+                color="primary"
+              >
+                <template v-slot:prepend>
+                  <v-icon icon="mdi-selection mdi"></v-icon>
+                </template>
+
+                <v-list-item-title v-text="item.comment"></v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </template>
+          <template v-else> 
+            
+            <v-list density="compact" v-if="state.file">
+              <v-list-subheader>Saved selections</v-list-subheader>
+
+              <v-list-item
+                v-for="(item, i) in state.file.rois"
+                :key="i"
+                :value="item"
+                color="primary"
+              >
+                <template v-slot:prepend>
+                  <v-icon icon="mdi-selection mdi"></v-icon>
+                </template>
+
+                <v-list-item-title v-text="item.comment"></v-list-item-title>
+              </v-list-item>
+            </v-list>
+
+          </template>
+
+
+
+          <template v-if="state.ROIs.length > 0">
+
+            <v-alert type="warning" >unsaved changes!</v-alert>
+          
+            <v-btn @click="saveROIs2DB" class="mt-3" color="primary">Save selections</v-btn>
+          </template>
+
+
+
 
           <!-- <template v-if="state.cruncher">
             <v-card>
@@ -91,6 +141,7 @@
 
     async function saveROIs2DB(data) {
       await web.createROIs(state.file['@rid'], state.ROIs, state.width, state.height)
+      state.ROIs = []
     }
     function removeLastPathPart(str) {
         const lastIndex = str.lastIndexOf('/');
@@ -121,10 +172,17 @@
   canvas {
     background-color: none;
   }
+  .column_base {
+    height: 90%; 
+  }
   .column_image {
-    height: 90%;
+    height: 100%;
     overflow-y: scroll;
   }
+  .paper {
+  border: 1px solid black;
+  background-color: white;
+}
   .delete-button-roi {
     background-color: red;
   }

@@ -4,6 +4,11 @@ em {
   font-weight: bold;
   color: red important;  }
 
+  .column_text2 {
+  height: 100%;
+  overflow-y: scroll;
+}
+
 </style>
 
 <script setup>
@@ -50,7 +55,7 @@ em {
            
 
               <v-col
-                class="d-flex fill-height overflow-aut"
+                class="d-flex fill-height overflow-y-auto"
                 cols="12"
                 color="light-blue lighten-3"
               >
@@ -69,6 +74,7 @@ em {
 
                   
                   <template v-if="state.result.response">
+                    <!-- {{ state.result.response.docs}} -->
                   <v-card v-for="item in state.result.response.docs" :key="item" class="mt-2">
                     <v-card-title >
                       <div @click="go(item.id)">{{item.node}}  ({{item.type}}) {{item.label}} </div>

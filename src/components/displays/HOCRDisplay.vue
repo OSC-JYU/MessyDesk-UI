@@ -1,6 +1,6 @@
 <template>
 
-  <v-row>
+  <v-row class="m-2">
 
     <v-col cols="col-6">
       <v-card class="overflow-auto" height="100dvh">
