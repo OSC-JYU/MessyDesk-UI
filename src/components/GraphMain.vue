@@ -26,6 +26,8 @@
     import CruncherList from './CruncherList.vue'
     import ProcessCreator from './ProcessCreator.vue'
     import SetCreator from './SetCreator.vue'
+    import SearchDialog from './SearchDialog.vue'
+    import SearchMain from './SearchMain.vue'
 
     document.title = "MessyDesk"
 
@@ -53,6 +55,7 @@
             <v-row class="fill-height no-gutters" >
 
 
+
               <v-col
                 class="pb-0 fill-height "
                 cols="9"
@@ -65,14 +68,16 @@
                 <SetCreator mode="graph" />
               </v-col>
 
-              <v-col
-                class="pa-0 full-background"
+
+              <v-col  lass="pa-0 full-background"
                 cols="3"
-                color="light-blue lighten-1"
-              >
-                <!-- Third column content -->
-                <NodeCard class="h-100 w-100 position-absolute"/>
+                color="light-blue lighten-1">
+                <keep-alive>
+                  <NodeCard class="h-100 w-100 position-absolute" />
+                </keep-alive>
               </v-col>
+
+
             </v-row>
 
             <v-dialog v-model="store.crunchers_open" width="auto" min-width="900">
@@ -97,6 +102,7 @@
             </v-dialog>
 
             <ProcessCreator />
+            <!-- <SearchDialog /> -->
 
           </v-container>
         </v-main>

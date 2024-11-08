@@ -244,6 +244,7 @@
 
     // import * as bootstrap from "bootstrap/dist/js/bootstrap"
     import * as bootstrap from 'bootstrap';
+import { el } from "vuetify/locale";
     window.bootstrap = bootstrap;
 
     const { graph_dagre, layout, previousDirection } = useLayout()
@@ -291,6 +292,15 @@
                         if(wsdata.description) target_node.data.description = wsdata.description
                         if(wsdata.count) target_node.data.count = wsdata.count
                     }
+                    // stop processing animation from process node
+                    if(wsdata.process) {
+                        console.log('----------------------- wsdata.process', wsdata.process)
+                        var process_node = elements.nodes.find(x => x.id == wsdata.process)
+                        if(process_node) {
+                            process_node.data.image = ''
+                        } 
+                    }
+
                 }
             } else {
                 if(wsdata.command == 'add') {
@@ -326,16 +336,7 @@
     flow.onNodeClick((event) => {
         console.log(event.node)
         store.current_node = event.node
-
-        // updateNode(event.node.id, {hidden: true})
-
-        // var node = elements.nodes.find(x => x.id == event.node.id)
-        // node.hidden = true
-
-        //elements.nodes = elements.nodes.map((node) => ({ ...node, hidden: true }))
-
         store.view = flow.getViewport()
-
     })
 
     flow.onPaneClick((event) => {
@@ -344,7 +345,7 @@
 
     // here is the place to fit to node
     flow.onNodesInitialized ((event) => {
-
+console.log('nodes initialized')
         // set is created
         if(store.update_data) {
             console.log('update data', store.update_data)
@@ -353,16 +354,31 @@
         // restore view to stored viewport
         } else {
             if(!state.node_added) {
-            if(store.view && props.mode == "graph") flow.setViewport(store.view)
-            else flow.fitView()
-            if(props.mode == "graph") getRootNodes()
+                console.log('no reorder target')
+                if(props.mode == "graph") {
+                    // we coming back from double click and the graph was not in order
+                    if(store.reorder_target) {
+                        fitToNode(store.reorder_target,1)
+                        store.reorder_target = null
+                    // we are coming back from double click and the graph was in order
+                    } else if(store.view) {
+                        flow.setViewport(store.view)
 
-        // node is added
-        } else {
-            fitToNode(state.node_added)
-            state.node_added = 0
-            store.view = flow.getViewport()
-        }
+                    } else flow.fitView()
+                }
+                
+                if(props.mode == "graph") getRootNodes()
+
+            // node is added
+            } else {
+                console.log('reorder target', store.reorder_target)
+                if(state.node_added) fitToNode(state.node_added)
+                else fitToNode(store.reorder_target)
+
+                store.reorder_target = state.node_added
+                state.node_added = 0
+                store.view = flow.getViewport()
+            }
         }
 
 
@@ -372,11 +388,13 @@
 
     flow.onMoveEnd ((event) => {
         if(props.mode == "graph") store.view = flow.getViewport()
+        console.log('storing view')
     })
 
 
     flow.onNodeDoubleClick((event) => {
         store.current_node = event.node
+        
  
         console.log(event.node.data.type)
         if(event.node.type == "project" ) {
@@ -522,14 +540,15 @@
            // expandSetNode(wsdata.node, wsdata.target)
         } else {
             const id = wsdata.node['@rid'] || wsdata.node.rid || wsdata.node.id
-        const nodetype = wsdata.node['@type'] || wsdata.node.type
-        wsdata.node.type = wsdata.node['@type'].toLowerCase() // "File" -> "file"
-        const newNode = {
-            id: id,
-            data: wsdata.node,
-            image: '',
-            type: wsdata.type,
-            position: { x: Math.random() * flow.dimensions.value.width, y: Math.random() * flow.dimensions.value.height },
+            const nodetype = wsdata.node['@type'] || wsdata.node.type
+            wsdata.node.type = wsdata.node['@type'].toLowerCase() // "File" -> "file"
+            wsdata.node.image = wsdata.image
+            const newNode = {
+                id: id,
+                data: wsdata.node,
+                image: wsdata.image,
+                type: wsdata.type,
+                position: { x: Math.random() * flow.dimensions.value.width, y: Math.random() * flow.dimensions.value.height },
         }
         
         console.log('adding node', newNode)
@@ -543,7 +562,13 @@
         layoutGraph('LR')
         }
 
-        
+        // stop processing animation from process node
+        if(wsdata.type != 'process') {
+            var target_node = elements.nodes.find(x => x.id == wsdata.target)
+            if(target_node) {
+                target_node.data.image = ''
+            }            
+        }
     }
 
     async function expandSetNode(node) {
@@ -565,6 +590,7 @@
         } else {
             await loadProjects()
         }
+
         drawGraph()
         
 

@@ -11,7 +11,7 @@
 
     <v-card v-if="store.current_node && store.current().id && schema.result._attributes" class="pa-6 text-black ">
 
-
+      
 
             <template v-if="store.current().type != 'process' && store.current().type != 'set'">
                 <a class="text-medium-emphasis" target="_blank" :href="'/api/files/' + store.current().id.replace('#','')">{{store.current().data.type_label}} open file</a> ({{ store.current().id }})

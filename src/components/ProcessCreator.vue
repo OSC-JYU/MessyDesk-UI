@@ -114,14 +114,11 @@
 
     })
 
+
 	async function createProcess() {
 		// we must send ELG "params" 
 		// target
 		state.error = ''
-console.log(store.current().id)
-console.log(store.task_id)
-console.log(store.process)
-console.log(state.out_params)
 
 		var process = {id: store.process.id, task: store.task_id}
 		process.params = state.out_params

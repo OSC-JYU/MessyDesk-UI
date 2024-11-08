@@ -56,12 +56,23 @@
   
           <v-spacer></v-spacer>
   
-          <v-btn icon>
-            <router-link :to="'/search'" ><v-icon>mdi-magnify</v-icon></router-link>
-          </v-btn>
+          
+        <v-btn icon>
+          <router-link :to="'/search'"><v-icon>mdi-magnify</v-icon>
+            <v-tooltip activator="parent" location="top">search</v-tooltip>
+          </router-link>
+        </v-btn>
+
   
+          <!-- <v-btn icon>
+            <v-icon @click="store.search_open= !store.search_open">mdi-magnify</v-icon>
+          </v-btn>
+           -->
+
           <v-btn icon>
-            <v-icon>mdi-heart</v-icon>
+            <router-link :to="'/entities'" ><v-icon>mdi-account-group-outline</v-icon>
+              <v-tooltip activator="parent" location="top">entity management</v-tooltip>
+            </router-link>
           </v-btn>
 
           <v-menu location="bottom">

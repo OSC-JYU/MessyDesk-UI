@@ -9,7 +9,9 @@ img {
 .header {
   background-color: #ac9620;;
   color: white; 
-  padding:3px
+  padding:3px;
+  padding-left:10px;
+  padding-right:10px
 }
 .crunch_add {
   color: #458b55;
@@ -57,12 +59,12 @@ function openCrunchers(id) {
 <template>
   <div class="node-image nodrag">
     
-    <div class="header">{{ data.label }} 
+    <div class="header"> Natural Entities 
       
       <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" />
     </div>
     <div class="m-2">
-      <v-icon size="45" color="green">mdi-map-marker</v-icon> Natural Entities
+      <v-icon size="45" color="green">mdi-map-marker</v-icon> 
       <v-icon size="65" color="green">mdi-face-man</v-icon>
       <v-chip v-if="data.model" color="green" variant="outlined">
         {{ data.model }}

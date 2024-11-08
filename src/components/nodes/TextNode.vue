@@ -62,7 +62,7 @@ function openCrunchers(id) {
       <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" />
     </div>
    
-    <div class="m-2">{{ data.description }} </div>
+    <div class="m-2"><pre>{{ data.description.replace(/\n/g, " ") }} </pre></div>
     <v-chip v-if="data.model" color="green" variant="flat">
       {{ data.model }}
     </v-chip>

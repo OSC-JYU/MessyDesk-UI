@@ -8,6 +8,7 @@ import ProjectMain from './components/ProjectMain.vue'
 import ServicesMain from './components/ServicesMain.vue'
 import CrunchersMain from './components/CrunchersMain.vue'
 import SearchMain from './components/SearchMain.vue'
+import EntitiesMain from './components/EntitiesMain.vue'
 import Introduction from './components/Introduction.vue'
 
 import About from './components/About.vue'
@@ -93,6 +94,12 @@ const router = createRouter({
       path: '/search',
       name: 'search',
       component: SearchMain
+    },
+
+    {
+      path: '/entities',
+      name: 'entities',
+      component: EntitiesMain
     },
 
     {

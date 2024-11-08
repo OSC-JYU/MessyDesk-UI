@@ -111,6 +111,17 @@ web.getFiles = async function(dir) {
 	return result.data
 }
 
+web.getEntityTypes = async function(dir) {
+	var result = await axios.get(`/api/entities/types`)
+	return result.data
+}
+
+web.getEntitiesByType = async function(type) {
+	var result = await axios.get(`/api/entities/types/${type}`) 
+	return result.data
+}
+
+
 web.getStats = async function() {
 	var result = await axios.get(`/api/graph/stats`)
 	return result.data

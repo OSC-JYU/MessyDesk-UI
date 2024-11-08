@@ -13,7 +13,7 @@
         </v-col>
 
         <v-col cols="3" class="column_text2">
-          <template v-if="state.cruncher">
+          <template >
             <v-card>
                  <v-card-title>Saved selections (text ROIs)</v-card-title>
                 <v-card-text>

@@ -9,7 +9,16 @@
 
 <template>
 	<div id="app">
-        <router-view class="view" ></router-view>
+        <!-- <router-view class="view" ></router-view> -->
+        <router-view v-slot="{ Component, route }">
+        <!-- keep search alive -->
+      <keep-alive>
+        <component :is="Component" v-if="route.name === 'search'" />
+      </keep-alive>
+     
+      <component :is="Component" v-if="route.name !== 'search'"  />
+     
+    </router-view>
 	</div>
 
 </template>
