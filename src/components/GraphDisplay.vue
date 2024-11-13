@@ -66,7 +66,7 @@
                         </v-toolbar-title>
                         </v-toolbar>
 
-                        <v-btn 
+                        <!-- <v-btn 
                             @click="store.uploader_open = true"
                             >
                             <template v-slot:prepend>
@@ -74,7 +74,7 @@
                             </template>
                         
                                 Add file to set
-                        </v-btn>
+                        </v-btn> -->
 
                         <v-divider></v-divider>
 

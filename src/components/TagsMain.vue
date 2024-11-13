@@ -26,23 +26,23 @@ em {
     var state = reactive({
         search: "",
         result: [],
-        types: [],
-        add: false,
-        current_type: ''
+        tags: [],
+        add: false
     })
 
     async function search(type) {
       state.current_type = type
-      var response = await web.getEntitiesByType(type)
+      var response = await web.getTags(type)
       state.result = response.result
     }
 
     async function create() {
-      var response = await web.createEntity(state.current_type, {label: state.new_label})
+      var response = await web.createTag(state.new_label)
+      state.add = false
     }
 
     onMounted(async()=> {
-      state.types = await web.getEntityTypes()
+      state.tags = await web.getTags()
     })
 
 
@@ -81,6 +81,8 @@ em {
                 <v-col cols="8" class="column_text2 ">
                   
                   <div ref="textContainer" v-html="state.text"></div>
+                  <v-card color="#EDE1CE" class="pa-6">TIP: Tags are freely defined words, that you can attach to documents.</v-card>
+
                 </v-col>
 
                 <v-col
@@ -92,25 +94,31 @@ em {
                 <v-container>
               
            
-                  <h2>Entities</h2>
-                  <span class="m-2 p-2 cursor-pointer" @click="search(type.type)" v-for="type of state.types.result"> {{ type.type }} ({{ type.count }}) </span>
+                  <h2>Tags</h2>    
 
                   <br>
-                  <v-btn v-if="!state.add && state.current_type" class="btn-primary" @click="state.add  = true">Add new</v-btn>
+                  <v-btn v-if="!state.add" class="btn-primary" @click="state.add  = true">Add new</v-btn> 
 
                   <div v-if="state.add">  
-                    <v-card title="Add new Entity">
+                    <v-card title="Add new Tag">
                     <v-card-text>
                       <v-text-field v-model="state.new_label" label="Label"></v-text-field>
                       <v-btn @click="create()">Create</v-btn>
-
                     </v-card-text>
-
                     </v-card>
-
                   </div>
-
+                <v-container>
                   
+                  <v-badge
+                  color="black"
+                  :content="tag.tag.label"
+                  inline
+                  v-for="tag in state.tags.result"
+                >{{tag.label}}</v-badge>
+
+                </v-container>  
+
+
                   <template v-if="state.result && !state.add">
 
                     <v-card v-for="item in state.result" :key="item" class="mt-2">

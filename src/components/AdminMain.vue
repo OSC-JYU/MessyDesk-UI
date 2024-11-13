@@ -26,14 +26,39 @@ em {
     var state = reactive({
         search: "",
         result: [],
+        users: [],
         services: [],
-        tasks: [],
         add: false,
         new_label: "",
         new_email: "",
         tab: 0,
-        sortBy: 'active',
-
+        headers: [
+            {
+                title: 'Name',
+                key: 'label', 
+                sortable: true
+            },
+            {
+                title: 'Email',
+                key: 'id', 
+                sortable: true
+            },
+            {
+                title: 'Rights',
+                key: 'access', 
+                sortable: true
+            },
+            {
+                title: 'RID',
+                key: '@rid', 
+                sortable: true
+            },
+            {
+                title: 'active',
+                key: 'active', 
+                sortable: true
+            },
+        ],
         service_headers: [
             {
                 title: 'Service',
@@ -60,38 +85,24 @@ em {
                 key: 'consumers', 
                 sortable: true
             }
-        ],
-        task_headers: [
-            {
-                title: 'Task',
-                key: 'name', 
-                sortable: true
-            },
-            {
-                title: 'Description',
-                key: 'description', 
-                sortable: true
-            },
-            {
-                title: 'Service',
-                key: 'service', 
-                sortable: true
-            },
-            {
-                title: 'Media',
-                key: 'supported_types', 
-                sortable: true
-            },
-            {
-                title: 'Access',
-                key: 'access', 
-                sortable: true
-            }
         ]
     })
 
+    async function search(type) {
+      state.current_type = type
+      var response = await web.getUsers(type)
+      state.result = response.result
+    }
+
+    async function createUser() {
+      var response = await web.createUser({label:state.new_label, id:state.new_email})
+      console.log(response)
+      state.add = false
+      state.users = await web.getUsers()
+    }
 
     onMounted(async()=> {
+      state.users = await web.getUsers()
       var response = await web.getServices()
       for(var key in response) {
         response[key]['active'] = false
@@ -99,25 +110,6 @@ em {
           response[key]['active'] = true
         }
         state.services.push(response[key])
-
-        // tasks
-        if(response[key]['tasks']) {
-          for(var task in response[key]['tasks']) {
-            //state.tasks.push(response[key]['tasks'][task])
-            var task_data = {name:response[key]['tasks'][task]['name']}
-            task_data.access = 'free'
-            if(response[key]['access']) {
-              task_data.access = response[key]['access']
-            }
-            task_data.description = response[key]['tasks'][task]['description']
-            task_data.service = key
-            task_data.supported_types = response[key]['supported_types'][0]
-            if(response[key]['tasks'][task]['supported_types']) {
-              task_data.supported_types = response[key]['tasks'][task]['supported_types'][0]
-            }
-            state.tasks.push(task_data)
-          }
-        }
       }
     })
 
@@ -152,8 +144,7 @@ em {
               <v-row class="mt-6">
                 <v-tabs v-model="state.tab">
 
-          
-                  <v-tab>Tasks</v-tab>
+                  <v-tab >Users</v-tab>
                   <v-tab>Services</v-tab>
 
                 </v-tabs>
@@ -164,17 +155,44 @@ em {
               <v-tabs-window v-model="state.tab">
 
                 <v-tabs-window-item>
-                  <v-container>
-                    
-                    <v-data-table :items="state.tasks" :headers="state.task_headers">
+                    <v-container>
                       
+                      <template v-if="state.result && !state.add">
+                        <v-data-table :items="state.users" :headers="state.headers">
+                          
+                          <template v-slot:item.active="{ item }">
+                            <v-checkbox-btn
+                            v-model="item.active"
+                            readonly
+                          ></v-checkbox-btn>
+                        </template>
+                        
+                        <template v-slot:item.label="{ item }">
+                          <div @click="go(item['@rid'])">{{item.label}}  </div>
+                        </template>
+                        
                       </v-data-table>
+                      
+                    </template>
+                    
+                    <v-btn v-if="!state.add" class="btn-primary btn-primary" @click="state.add  = true">Add new</v-btn> 
 
+                    <!-- ADD USER -->
+                    <div v-if="state.add">  
+                      <v-card title="Add new user">
+                      <v-card-text>
+                        <v-text-field v-model="state.new_label" label="Lastname, Firstname"></v-text-field>
+                        <v-text-field v-model="state.new_email" label="email"></v-text-field>
+                        <v-btn @click="state.add = false">Cancel</v-btn>
+                        <v-btn @click="createUser()">Create</v-btn>
+                      </v-card-text>
+                      </v-card>
+                    </div>
+                    <!-- ADD USER ends-->
                   </v-container>
 
                 </v-tabs-window-item> 
-
-
+                
                 <v-tabs-window-item>
                   <v-container>
                     
@@ -184,15 +202,18 @@ em {
                         <div >{{item.description}} <p><a target="_blank" :href="item.source_url">{{ item.source_url }}</a></p> </div>
                       </template>
 
+                      <!-- <template v-slot:item.tasks="{ item }">
+                        <div v-for="task in item.tasks" :key="task">
+                        {{task}}</div>
+                      </template> -->
+
                     </v-data-table>
                     
+                    {{ state.services }}
 
                   </v-container>
 
                 </v-tabs-window-item> 
-
-
-
 
               </v-tabs-window>
 

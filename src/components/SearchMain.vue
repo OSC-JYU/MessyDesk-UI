@@ -20,7 +20,7 @@ em {
 
     const route = useRoute();
 
-    document.title = "MessyDesk - search"
+    document.title = "MessyDesk - entities"
 
 
     var state = reactive({

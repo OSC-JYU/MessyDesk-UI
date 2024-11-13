@@ -55,7 +55,13 @@
           </template>
   
           <v-spacer></v-spacer>
-  
+
+          
+          <!-- <v-btn icon v-if="store.current_project">
+          <router-link :to="'/'"><v-icon>mdi-graph</v-icon>
+            <v-tooltip activator="parent" location="top">graph</v-tooltip>
+          </router-link>
+        </v-btn> -->
           
         <v-btn icon>
           <router-link :to="'/search'"><v-icon>mdi-magnify</v-icon>
@@ -63,6 +69,12 @@
           </router-link>
         </v-btn>
 
+
+        <v-btn icon>
+          <router-link :to="'/tags'"><v-icon>mdi-tag</v-icon>
+            <v-tooltip activator="parent" location="top">tags</v-tooltip>
+          </router-link>
+        </v-btn>
   
           <!-- <v-btn icon>
             <v-icon @click="store.search_open= !store.search_open">mdi-magnify</v-icon>
@@ -85,11 +97,24 @@
             </template>
 
             <v-list>
+
               <v-list-item>
-                <router-link :to="'/services'" class="dropdown-item">
-                      <i class="fs-5 bi-card-list"></i><span class="ms-1 d-none d-sm-inline">System view</span>
+                <router-link :to="'/Shibboleth.sso/Logout'" class="dropdown-item">
+                      <i class="fs-5 bi-person"></i><span class="ms-1 d-none d-sm-inline">logout</span>
                   </router-link>
                 
+              </v-list-item>
+
+              <v-list-item>
+                <router-link :to="'/services'" class="dropdown-item">
+                      <i class="fs-5 bi-card-list"></i><span class="ms-1 d-none d-sm-inline">Services</span>
+                  </router-link>
+              </v-list-item>
+
+              <v-list-item v-if="store.user && store.user.access == 'admin'">
+                <router-link :to="'/admin'" class="dropdown-item">
+                      <i class="fs-5 bi-person-fill"></i><span class="ms-1 d-none d-sm-inline">Admin</span>
+                  </router-link>
               </v-list-item>
             </v-list>
           </v-menu>
@@ -117,7 +142,7 @@
             <v-list-item-title >Add file</v-list-item-title>
         </v-list-item>
 
-        <v-list-item v-if="props.mode=='graph'"
+        <!-- <v-list-item v-if="props.mode=='graph'"
           @click="store.set_creator_open = true"
         >
           <template v-slot:prepend>
@@ -125,7 +150,7 @@
           </template>
       
             <v-list-item-title >Create set</v-list-item-title>
-        </v-list-item>
+        </v-list-item> -->
 
         <v-list-item v-if="props.mode=='projects'"
           @click="$emit('create-project')"

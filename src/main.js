@@ -9,6 +9,8 @@ import ServicesMain from './components/ServicesMain.vue'
 import CrunchersMain from './components/CrunchersMain.vue'
 import SearchMain from './components/SearchMain.vue'
 import EntitiesMain from './components/EntitiesMain.vue'
+import TagsMain from './components/TagsMain.vue'
+import AdminMain from './components/AdminMain.vue'
 import Introduction from './components/Introduction.vue'
 
 import About from './components/About.vue'
@@ -97,9 +99,21 @@ const router = createRouter({
     },
 
     {
+      path: '/tags',
+      name: 'tags',
+      component: TagsMain
+    },
+
+    {
       path: '/entities',
       name: 'entities',
       component: EntitiesMain
+    },
+
+    {
+      path: '/admin',
+      name: 'admin',
+      component: AdminMain
     },
 
     {

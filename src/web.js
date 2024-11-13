@@ -6,6 +6,23 @@ let web = {}
 	axios.defaults.baseURL = import.meta.env.VITE_PUBLIC_PATH
 	//axios.defaults.baseURL = ''
 
+// Add a response interceptor
+// axios.interceptors.response.use(function (response) {
+//     // Any status code that lie within the range of 2xx cause this function to trigger
+//     // Do something with response data
+
+//     return response;
+//   }, function (error) {
+// 	//console.log('pam')
+// 	//console.log(error)
+//     // Any status codes that falls outside the range of 2xx cause this function to trigger
+//     // Do something with response error
+// 	//return Promise.reject({error: error});
+// 	return {error: error}
+//     //return Promise.reject(error);
+//   });
+
+
 web.search = async function(search) {
 	var result = await axios.post(`/api/search`, {query: search})
 	return result.data
@@ -42,6 +59,23 @@ web.createSet = async function(project_rid, name, description) {
 web.getServices = async function(rid) {
 	var result = await axios.get(`/api/services`)
 	return result.data
+}
+
+web.getUsers = async function(rid) {
+	var result = await axios.get(`/api/users`)
+	return result.data
+}
+
+web.createUser = async function(data) {
+	try {
+		var result = await axios.post(`/api/users`, data)
+		return result.data
+	} catch (error) {
+		if(error.response)
+			return error.response.data
+		else
+			return error
+	}
 }
 
 web.getServicesForFile = async function(file_rid, filter) {
@@ -121,6 +155,15 @@ web.getEntitiesByType = async function(type) {
 	return result.data
 }
 
+web.getTags = async function() {
+	var result = await axios.get(`/api/tags`)
+	return result.data
+}
+
+web.createTag = async function(label) {
+	var result = await axios.post(`/api/tags`, {label: label})
+	return result.data
+}
 
 web.getStats = async function() {
 	var result = await axios.get(`/api/graph/stats`)
