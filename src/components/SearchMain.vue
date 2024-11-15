@@ -12,21 +12,18 @@ em {
 </style>
 
 <script setup>
-    import JYUHeader from './JYUHeader.vue'
     import web from "../web.js";
     
     import { onMounted, reactive} from "vue";
-    import { useRoute } from 'vue-router'
 
-    const route = useRoute();
+    document.title = "MessyDesk - search"
 
-    document.title = "MessyDesk - entities"
 
 
     var state = reactive({
         search: "",
         result: [],
-        text: " <div style=\"color:red;\" role=\"alert\">The search is not fully functional yet.</div> <h2>How search works?</h2><p>When your crunchers create texts (like OCR) or Region of interests (like NER), or when you write description, the text get indexed and you can find it with search.</p>By default, the search is very aggressive, so it should work well with OCR texts also.<br> <br><br>If you have any ideas of how search should work, then contact ari.hayrinen@jyu.fi "
+        text: ""
     })
 
     async function search() {
@@ -58,13 +55,10 @@ em {
   <v-card class="mx-auto fill-height" color="grey-lighten-3" flat>
     <v-layout class="fill-height">
 
-      <JYUHeader/>
 
       <v-main class="fill-height">
         <v-container class="fill-height pa-0" fluid>
           <v-row class="fill-height no-gutters" >
-
-         
 
             <v-col
               class="d-flex fill-height overflow-aut"
@@ -72,9 +66,7 @@ em {
               color="light-blue lighten-3"
             >
             <v-container>
-              <v-row>
-                <v-btn @click="$router.go(-1)"><v-icon>mdi-arrow-left</v-icon></v-btn>
-              </v-row>
+
               <v-row class="mt-6">
                 <div v-if="state.file"><h2><router-link :to="'/files/' + state.file['@rid'].replace('#','')">{{ state.file.label }}</router-link></h2></div>
               </v-row>
@@ -82,7 +74,10 @@ em {
 
                 <v-col cols="8" class="column_text2 paper">
                   
-                  <div ref="textContainer" v-html="state.text"></div>
+                  <div v-if="state.text" ref="textContainer" v-html="state.text"></div>
+                  <v-card v-else color="#EDE1CE" class="p-2"> <h4>How search works?</h4><p>When your crunchers create texts (like OCR) or Region of interests (like NER), or when you write description, the text get indexed and you can find it with search.</p>By default, the search is very aggressive, so it should work well with OCR texts also.<br> <br><p>If you have any ideas of how search should work, then contact ari.hayrinen@jyu.fi </p> 
+                    </v-card>
+                    <div class="alert alert-info m-2">The search is not fully functional yet.</div>
                 </v-col>
 
                 <v-col
@@ -113,6 +108,8 @@ em {
                   </v-card>
 
                   </template>
+                 
+
                   </v-container>
                 </v-col>
 

@@ -1,5 +1,5 @@
 <script setup>
-    import { onMounted, reactive, ref, watch } from "vue";
+    import { onMounted, reactive, ref } from "vue";
     import { useRoute } from 'vue-router'
     import Search from './Search.vue'
     import Importer from './Importer.vue'
@@ -14,30 +14,16 @@
         mode: ''
     })
 
-    const state = reactive({
-      drawer:false, 
-      node: '',
-      tab: 0
-    })
+    const state = reactive({drawer:false, node: ''})
     const upload = ref(null);
 
-    const emit = defineEmits(['fit-to-node', 'create-project', 'change-tab'])
+    const emit = defineEmits(['fit-to-node', 'create-project'])
 
     function fitToNode(id) {
         console.log(id)
         state.node = id
         emit('fit-to-node', id)
     }
-
-    function changeTab(tab) {
-        emit('change-tab', tab)
-    }
-
-    // watch state.tab
-    watch(() => state.tab, async (newValue, oldValue) => {
-        console.log(newValue)
-        emit('change-tab', newValue)
-    })
 
 </script>
 
@@ -71,21 +57,13 @@
           <v-spacer></v-spacer>
 
           
-          <v-tabs v-model="state.tab" >
-
-<v-tab >Desk</v-tab>
-<v-tab>Search</v-tab>
-<v-tab>Things</v-tab>
-
-</v-tabs>
-          
           <!-- <v-btn icon v-if="store.current_project">
           <router-link :to="'/'"><v-icon>mdi-graph</v-icon>
             <v-tooltip activator="parent" location="top">graph</v-tooltip>
           </router-link>
         </v-btn> -->
           
-        <!-- <v-btn icon>
+        <v-btn icon>
           <router-link :to="'/search'"><v-icon>mdi-magnify</v-icon>
             <v-tooltip activator="parent" location="top">search</v-tooltip>
           </router-link>
@@ -96,18 +74,18 @@
           <router-link :to="'/tags'"><v-icon>mdi-tag</v-icon>
             <v-tooltip activator="parent" location="top">tags</v-tooltip>
           </router-link>
-        </v-btn> -->
+        </v-btn>
   
           <!-- <v-btn icon>
             <v-icon @click="store.search_open= !store.search_open">mdi-magnify</v-icon>
           </v-btn>
            -->
 
-          <!-- <v-btn icon>
+          <v-btn icon>
             <router-link :to="'/entities'" ><v-icon>mdi-account-group-outline</v-icon>
               <v-tooltip activator="parent" location="top">entity management</v-tooltip>
             </router-link>
-          </v-btn> -->
+          </v-btn>
 
           <v-menu location="bottom">
             <template v-slot:activator="{ props }">

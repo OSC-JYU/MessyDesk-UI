@@ -1,7 +1,7 @@
 <template>
     <v-container>
       <v-row>
-        <v-btn @click="$router.go(-1)"><v-icon>mdi-arrow-left</v-icon></v-btn>
+        <v-btn @click="$emit('change-tab',0)"><v-icon>mdi-arrow-left</v-icon></v-btn>
       </v-row>
       <v-row class="mt-6">
         <div v-if="state.file"><h2>{{ state.file.label }}</h2></div>
@@ -34,14 +34,20 @@
   
   <script setup>
 
-    import { onMounted, reactive, ref } from "vue";
-    import { useRoute } from 'vue-router'
+    import { onMounted, reactive, ref, watch } from "vue";
   
     import web from "../../web.js";
-
-    const route = useRoute();
+    import {store} from "../../components/Store.js";
 
     const textContainer = ref(null)
+
+    // tab controls
+    const emit = defineEmits(['change-tab'])
+    const props = defineProps(['tab'])
+    // tab change launces content update. Could be done otherwise propably?
+    watch(() => props.tab, async (newValue, oldValue) => {
+      await load()
+    })
 
     var state = reactive({
         file: null,
@@ -86,19 +92,14 @@
       return text.replace(/\n/g, "<br />")
     }
 
+    async function load() {
+        var f = await web.getNodeFile(store.file['@rid'])
+        state.text = replaceWithBr(f)
+    }
 
     onMounted(async()=> {
 
-        var response = await web.getDocInfo(route.params.rid)
-        var f = await web.getNodeFile(route.params.rid)
-        
-        state.file = response
-        state.text = replaceWithBr(f)
-
-        if(route.query.cruncher) {
-          var response2 = await web.getDocInfo(route.query.cruncher)
-          state.cruncher = response2
-        }
+        load()
 
     })
 

@@ -1,39 +1,49 @@
 <template>
+  <v-container>
+      <v-row class="m-2">
+        <v-btn @click="$emit('change-tab',0)"><v-icon>mdi-arrow-left</v-icon></v-btn>
+      </v-row>
+      <v-row class="m-2">
 
-  <v-row class="m-2">
+        <v-col cols="col-6">
+          <v-card class="overflow-auto" height="90dvh">
+            <v-card-text>
+              
+                <img ref="page_image" class="page_image" @load="onImgLoad" v-if="state.file" :src="state.file.original" alt="Image" />
+                {{ state.page_images }}
 
-    <v-col cols="col-6">
-      <v-card class="overflow-auto" height="100dvh">
-        <v-card-text>
-          
-            <img ref="page_image" class="page_image" @load="onImgLoad" v-if="state.file" :src="state.file.original" alt="Image" />
-            {{ state.page_images }}
+              
+            </v-card-text>
+          </v-card>
+        </v-col>
+        <v-col cols="col-6">
+          <v-card class="overflow-auto" height="100dvh">
+            <v-card-text>
+              <div ref="editor" @click="onclick" v-html="state.hocr"></div>
+            </v-card-text>
+          </v-card>
+        </v-col>
 
-          
-        </v-card-text>
-      </v-card>
-    </v-col>
-    <v-col cols="col-6">
-      <v-card class="overflow-auto" height="100dvh">
-        <v-card-text>
-          <div ref="editor" @click="onclick" v-html="state.hocr"></div>
-        </v-card-text>
-      </v-card>
-    </v-col>
-
-  </v-row>
+      </v-row>
+  </v-container>
 </template>
   
   <script setup>
 
     // heavily based on: https://github.com/rescribe/proofreader
 
-    import { ref, onMounted, onUpdated, reactive } from 'vue';
-    import { useRouter, useRoute } from 'vue-router'
+    import { ref, onMounted, reactive, watch } from 'vue';
   
     import web from "../../web.js";
+    import {store} from "../../components/Store.js";
 
-    const route = useRoute();
+    // tab controls
+    const emit = defineEmits(['change-tab'])
+    const props = defineProps(['tab'])
+    // tab change launces content update. Could be done otherwise propably?
+    watch(() => props.tab, async (newValue, oldValue) => {
+      await load()
+    })
 
     const hocrBaseUrl = 'http://localhost:3000/';
 
@@ -126,24 +136,6 @@
       input.size = 1
       input.value = ele.innerHTML.replace("&amp;", "&")
 
-      // input.addEventListener("input", edited)
-      // input.addEventListener("blur", stopedit)
-      // input.addEventListener("keydown", keyhandler)
-      // input.addEventListener("keyup", selectall)
-
-      // this.removeEventListener("click", edit)
-
-      // if(this.parentNode.parentNode.getElementsByTagName("canvas").length > 0) {
-      //   resetlineimg(this.parentNode)
-      //   c = this.parentNode.previousSibling
-      //   ctx = c.getContext("2d")
-      //   linebox = titletobbox(this.parentNode.title)
-      //   bbox = titletobbox(this.title)
-      //   scaledown = c.dataset.scaledown
-      //   ctx.fillStyle = 'rgb(100, 190, 255, 0.5)';
-      //   ctx.fillRect((bbox.x - linebox.x)/scaledown, (bbox.y - linebox.y)/scaledown, bbox.width/scaledown, bbox.height/scaledown)
-      // }
-
       ele.innerHTML = ""
       ele.appendChild(input)
       input.focus()
@@ -207,11 +199,8 @@
       return bbox
     }
 
-
-
-    onMounted(async()=> {
-  
-      var hocr =  await fetch('/api/files/' + route.params.rid)
+    async function load() {
+      var hocr =  await fetch('/api/files/' + store.file['@rid'].replace('#', ''))
       hocr = await hocr.text();
       var start = hocr.indexOf("<body>") + "<body>".length
       var end = hocr.indexOf("</body>")
@@ -222,13 +211,15 @@
       hocr = hocr.substring(start, end)
       state.hocr = hocr
 
-      var response = await web.getDocInfo(route.params.rid)
+      var response = await web.getDocInfo(store.file['@rid'])
         
         state.file = response
         //state.file.thumbnail = removeLastPathPart(response.path.replace('data/', '/api/thumbnails/'))
-        state.file.original = 'http://localhost:3000/api/files/' + route.query.source
+        state.file.original = 'http://localhost:3000/api/files/' + store.source.replace('#', '')
+    }
 
-      
+    onMounted(async()=> {
+      await load()
     })
 
 

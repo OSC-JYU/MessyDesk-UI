@@ -23,7 +23,7 @@
 
     <v-container>
       <v-row>
-        <v-btn @click="$router.go(-1)"><v-icon>mdi-arrow-left</v-icon></v-btn>
+        <v-btn @click="$emit('change-tab',0)"><v-icon>mdi-arrow-left</v-icon></v-btn>
       </v-row>
       <v-row class="mt-6">
         <div v-if="state.file"><h2>Text</h2></div>
@@ -59,8 +59,11 @@
     import { useRouter, useRoute } from 'vue-router'
   
     import web from "../../web.js";
+    import {store} from "../../components/Store.js";
 
     const route = useRoute();
+    const emit = defineEmits(['change-tab'])
+    const props = defineProps(['tab'])
 
     const entity_order = ['PERSON', 'GPE', 'DATE', 'ORG', 'LOC', 'EVENT', 'PRODUCT', 'NORP', 'FIBC', 'JON']
 
@@ -70,6 +73,11 @@
         entities: {},
         source: null,
         source_text: ''
+    })
+
+        // tab change launces content update. Could be done otherwise propably?
+    watch(() => props.tab, async (newValue, oldValue) => {
+      await load()
     })
 
     function renderStringAsHtml(str, highlights) {
@@ -99,15 +107,12 @@
     return result;
 }
 
-
-
-    onMounted(async()=> {
-
-        var response = await web.getDocInfo(route.params.rid)
-        state.source = await web.getDocInfo(route.query.source)
+    async function load() { 
+      var response = await web.getDocInfo(store.file['@rid'])
+        state.source = await web.getDocInfo(store.source)
         
         state.file = response
-        state.data = await web.getFiles(route.params.rid)
+        state.data = await web.getFiles(state.file['@rid'].replace('#', ''))
         var source_text = await web.getFiles(state.source['@rid'].replace('#', ''))
         state.json = state.data
         if(Array.isArray(state.json)) {
@@ -123,6 +128,10 @@
         }
         console.log(state.json)
         state.source_text = renderStringAsHtml(source_text, state.json)
+    }
+
+    onMounted(async()=> {
+      await load()
     })
 
 

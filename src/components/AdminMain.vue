@@ -12,7 +12,7 @@ em {
 </style>
 
 <script setup>
-    import JYUHeader from './JYUHeader.vue'
+    import JYUHeader_plain from './JYUHeader_plain.vue'
     import web from "../web.js";
     
     import { onMounted, reactive} from "vue";
@@ -124,7 +124,7 @@ em {
 <v-card class="mx-auto fill-height" color="grey-lighten-3" flat>
     <v-layout class="fill-height">
 
-      <JYUHeader/>
+      <JYUHeader_plain/>
 
       <v-main class="fill-height">
         <v-container class="fill-height pa-0" fluid>
@@ -196,7 +196,7 @@ em {
                 <v-tabs-window-item>
                   <v-container>
                     
-                    <v-data-table :items="state.services" :headers="state.service_headers">
+                    <v-data-table :items="state.services" :headers="state.service_headers" :sort-by.sync="sortBy">
 
                       <template v-slot:item.description="{ item }">
                         <div >{{item.description}} <p><a target="_blank" :href="item.source_url">{{ item.source_url }}</a></p> </div>

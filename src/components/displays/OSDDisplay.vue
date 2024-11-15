@@ -29,33 +29,36 @@
   
   <script setup>
 
-    import { onMounted, watch, reactive, ref, computed } from "vue";
-    import { useRouter, useRoute } from 'vue-router'
+    import { onMounted, watch, reactive} from "vue";
   
     import web from "../../web.js";
 
-    const route = useRoute();
+    const emit = defineEmits(['change-tab'])
+    const props = defineProps(['tab'])
+    // tab change launces content update. Could be done otherwise propably?
+    watch(() => props.tab, async (newValue, oldValue) => {
+      await load()
+    })
 
     var state = reactive({
         file: null,
         cruncher: null
     })
 
+    async function load() {
+      var response = await web.getDocInfo(route.params.rid)
+      var f = await web.getNodeFile(route.params.rid)
+      state.file = response
+      console.log(f)
+      state.text = replaceWithBr(JSON.stringify(f, null, 2))
+      if(route.query.cruncher) {
+        var response2 = await web.getDocInfo(route.query.cruncher)
+        state.cruncher = response2
+      }
+    }
 
     onMounted(async()=> {
-
-        var response = await web.getDocInfo(route.params.rid)
-        var f = await web.getNodeFile(route.params.rid)
-        
-        state.file = response
-        console.log(f)
-        state.text = replaceWithBr(JSON.stringify(f, null, 2))
-
-        if(route.query.cruncher) {
-          var response2 = await web.getDocInfo(route.query.cruncher)
-          state.cruncher = response2
-        }
-
+      await load()
     })
 
     function replaceWithBr(text) {

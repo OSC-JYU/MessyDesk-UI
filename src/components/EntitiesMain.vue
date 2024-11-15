@@ -56,8 +56,6 @@ em {
 <v-card class="mx-auto fill-height" color="grey-lighten-3" flat>
     <v-layout class="fill-height">
 
-      <JYUHeader/>
-
       <v-main class="fill-height">
         <v-container class="fill-height pa-0" fluid>
           <v-row class="fill-height no-gutters" >
@@ -70,9 +68,7 @@ em {
               color="light-blue lighten-3"
             >
             <v-container>
-              <v-row>
-                <v-btn @click="$router.go(-1)"><v-icon>mdi-arrow-left</v-icon></v-btn>
-              </v-row>
+
               <v-row class="mt-6">
                 <div v-if="state.file"><h2><router-link :to="'/files/' + state.file['@rid'].replace('#','')">{{ state.file.label }}</router-link></h2></div>
               </v-row>
@@ -80,7 +76,7 @@ em {
 
                 <v-col cols="8" class="column_text2 ">
                   
-                  <div ref="textContainer" v-html="state.text"></div>
+                  <v-card color="#EDE1CE" class="pa-6"> <h4>What are things?</h4><p>Things are entities that YOU (not machine) have created. Things can be persons, places, dates or any other thing you want to call a Thing.</p><p>The idea is that you can link Things to your findings in data. For example, if you used <b>Natural Entity Recognition</b> to extract persons from your files, then you can link them to your Person things. This allows you to separate AI-findings from you own interpretations.</p><p>And finally, Things can have metadata and relations to other things. When sum all this up, you get a directed graph.</p><p class="alert alert-info">Things are not implemented yet.</p><br> <br><br>If you have any ideas of how search should work, then contact ari.hayrinen@jyu.fi </v-card>
                 </v-col>
 
                 <v-col
@@ -89,10 +85,11 @@ em {
                 color="light-blue lighten-3"
               >
                 <!-- Second column content -->
+                 
                 <v-container>
               
            
-                  <h2>Entities</h2>
+                  <h2>Things</h2>
                   <span class="m-2 p-2 cursor-pointer" @click="search(type.type)" v-for="type of state.types.result"> {{ type.type }} ({{ type.count }}) </span>
 
                   <br>

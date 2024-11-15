@@ -2,7 +2,7 @@
 
   <v-container>
       <v-row>
-        <v-btn @click="$router.go(-1)"><v-icon>mdi-arrow-left</v-icon></v-btn>
+        <v-btn @click="$emit('change-tab',0)"><v-icon>mdi-arrow-left</v-icon></v-btn>
       </v-row>
       <v-row class="mt-6">
         <div v-if="state.file"><h2>{{ state.file.label }}</h2></div>
@@ -77,15 +77,6 @@
           </template>
 
 
-
-
-          <!-- <template v-if="state.cruncher">
-            <v-card>
-                <v-card-title>{{ state.cruncher.label }}</v-card-title>
-                <v-card-text>{{ state.cruncher.info }}</v-card-text>
-            </v-card>
-            
-          </template> -->
         </v-col>  
 
       </v-row>
@@ -97,12 +88,18 @@
   <script setup>
 
     import { onMounted, watch, reactive, ref, computed } from "vue";
-    import { useRouter, useRoute } from 'vue-router'
     import ImageSelectArea from 'vue3-image-multiselect-areas';
   
     import web from "../../web.js";
+    import {store} from "../../components/Store.js";
 
-    const route = useRoute();
+    // tab controls
+    const emit = defineEmits(['change-tab'])
+    const props = defineProps(['tab'])
+    // tab change launces content update. Could be done otherwise propably?
+    watch(() => props.tab, async (newValue, oldValue) => {
+      await load()
+    })
 
     var state = reactive({
         file: null,
@@ -115,23 +112,25 @@
 
     const image = new Image();
 
+    async function load() { 
+      
+      state.ROIs = []
+      state.file = null
+      var response = await web.getDocInfo(store.file['@rid'])
+      state.file = response
+      state.file.thumbnail = removeLastPathPart(response.path.replace('data/', '/api/thumbnails/'))
+
+      image.src = state.file.thumbnail; 
+      image.onload = () => {
+        state.width = image.width;
+        state.height = image.height;
+        state.image_loaded = true
+      };
+    }
+
     onMounted(async()=> {
 
-        var response = await web.getDocInfo(route.params.rid)
-        
-        state.file = response
-        state.file.thumbnail = removeLastPathPart(response.path.replace('data/', '/api/thumbnails/'))
-        if(route.query.cruncher) {
-          var response2 = await web.getDocInfo(route.query.cruncher)
-          state.cruncher = response2
-        }
-        console.log(state.file.thumbnail)
-        image.src = state.file.thumbnail; 
-        image.onload = () => {
-          state.width = image.width;
-          state.height = image.height;
-          state.image_loaded = true
-        };
+      await load()
 
     })
 

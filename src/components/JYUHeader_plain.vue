@@ -71,13 +71,7 @@
           <v-spacer></v-spacer>
 
           
-          <v-tabs v-model="state.tab" >
 
-<v-tab >Desk</v-tab>
-<v-tab>Search</v-tab>
-<v-tab>Things</v-tab>
-
-</v-tabs>
           
           <!-- <v-btn icon v-if="store.current_project">
           <router-link :to="'/'"><v-icon>mdi-graph</v-icon>

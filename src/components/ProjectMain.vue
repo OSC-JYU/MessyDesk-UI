@@ -17,17 +17,25 @@
     import { reactive } from "vue";
     import {store} from "./Store.js";
     import web from "../web.js";
-    import JYUHeader from './JYUHeader.vue'
+    import JYUHeader_main from './JYUHeader_main.vue'
     import GraphDisplay from './GraphDisplay.vue'
     import ProjectCard from './ProjectCard.vue'
+    import SearchMain from './SearchMain.vue'
+    import EntitiesMain from './EntitiesMain.vue'
 
 
     document.title = "MessyDesk - desks"
 
-    var state = reactive({node:'', dialog: false, project_name:''})
+    var state = reactive({node:'', dialog: false, project_name:'', tab: 0, error: ''})
 
     function fitToNode(id) {
         state.node = id + '-' + Math.random() // add random so that we trigger watch event even if we click same node again
+    }
+
+    function changeTab(tab) {
+      console.log(tab)
+      state.tab = tab
+      store.tab = tab
     }
 
     function openProjectDialog() {
@@ -61,41 +69,57 @@
     <v-card class="mx-auto fill-height" color="grey-lighten-3" flat>
       <v-layout class="fill-height">
 
-        <JYUHeader mode="projects"  @fit-to-node="fitToNode" @create-project="openProjectDialog"/>
+        <JYUHeader_main mode="projects"  @fit-to-node="fitToNode" @create-project="openProjectDialog" @change-tab="changeTab"/>
         
   
         <v-main class="fill-height">
-           
-          <v-container class="fill-height pa-0" fluid>
-            <v-row class="fill-height no-gutters" >
+
+          <v-tabs-window v-model="state.tab" class="w-100 h-100 fill-height">
+
+            <v-tabs-window-item class="w-100 fill-height"  >
+              <v-container class="fill-height pa-0" fluid>
+                <v-row class="fill-height no-gutters" >
 
 
-              <v-col
-                class="d-flex fill-height pb-0"
-                cols="9"
-                color="light-blue lighten-3"
-              >
-                <!-- Second column content -->
-                <GraphDisplay mode="projects"   :fit="state.node"  />
+                  <v-col
+                    class="d-flex fill-height pb-0"
+                    cols="9"
+                    color="light-blue lighten-3"
+                  >
+                    <!-- Second column content -->
+                    <GraphDisplay mode="projects"   :fit="state.node"  />
 
-              </v-col>
+                  </v-col>
 
-              <v-col 
-                class="pa-0 full-background"
-                cols="3"
-                color="light-blue lighten-1"
-              >
-                <!-- Third column content -->
+                  <v-col 
+                    class="pa-0 full-background"
+                    cols="3"
+                    color="light-blue lighten-1"
+                  >
+                    <!-- Third column content -->
+                    
+                    <ProjectCard class="h-100 w-100 position-absolute"/>
                 
-                <ProjectCard class="h-100 w-100 position-absolute"/>
-            
-              </v-col>
-            </v-row>
-          </v-container>
+                  </v-col>
+                </v-row>
+              </v-container>
+            </v-tabs-window-item>
+
+            <v-tabs-window-item >
+              <SearchMain/>
+            </v-tabs-window-item>
+
+            <v-tabs-window-item >
+              <EntitiesMain/>
+            </v-tabs-window-item>
+
+          </v-tabs-window>
+
         </v-main>
       </v-layout>
     </v-card>
 
+    <!-- PROJECT CREATE DIALOG -->
     <v-dialog
       v-model="state.dialog"
       width="auto"

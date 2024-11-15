@@ -7,7 +7,6 @@
     import RootNodes from './RootNodes.vue'
     import ProjectNodes from './ProjectNodes.vue'
     import {store} from "./Store.js";
-    import web from "../web.js";
 
     const route  = useRoute();
     const props = defineProps({
@@ -58,7 +57,7 @@
           </template>
   
           <v-app-bar-title title="projects">
-            <RouterLink to="/">MessyDesk</RouterLink>
+            <span @click="changeTab(0)">MessyDesk</span>
           </v-app-bar-title> 
 
           <template v-if="store.current_project && store.current_project.data">
@@ -70,14 +69,14 @@
   
           <v-spacer></v-spacer>
 
-          
           <v-tabs v-model="state.tab" >
 
-<v-tab >Desk</v-tab>
-<v-tab>Search</v-tab>
-<v-tab>Things</v-tab>
+            <v-tab >Desks</v-tab>
+            <v-tab>Search</v-tab>
+            <v-tab>Things</v-tab>
 
-</v-tabs>
+          </v-tabs>
+
           
           <!-- <v-btn icon v-if="store.current_project">
           <router-link :to="'/'"><v-icon>mdi-graph</v-icon>

@@ -243,15 +243,16 @@
     import Icon from './Icon.vue'
 
     // import * as bootstrap from "bootstrap/dist/js/bootstrap"
-    import * as bootstrap from 'bootstrap';
-import { el } from "vuetify/locale";
-    window.bootstrap = bootstrap;
+    //import * as bootstrap from 'bootstrap';
+    //import { el } from "vuetify/locale";
+    
+    //window.bootstrap = bootstrap;
 
     const { graph_dagre, layout, previousDirection } = useLayout()
 
     const elements = reactive({nodes: [], edges:[]})
 
-
+    const emit = defineEmits(['open-node'])
 
 
 	const CLUSTER = 1
@@ -336,7 +337,7 @@ import { el } from "vuetify/locale";
     flow.onNodeClick((event) => {
         console.log(event.node)
         store.current_node = event.node
-        store.view = flow.getViewport()
+        //store.view = flow.getViewport()
     })
 
     flow.onPaneClick((event) => {
@@ -345,7 +346,7 @@ import { el } from "vuetify/locale";
 
     // here is the place to fit to node
     flow.onNodesInitialized ((event) => {
-console.log('nodes initialized')
+
         // set is created
         if(store.update_data) {
             console.log('update data', store.update_data)
@@ -353,24 +354,24 @@ console.log('nodes initialized')
 
         // restore view to stored viewport
         } else {
-            if(!state.node_added) {
-                console.log('no reorder target')
-                if(props.mode == "graph") {
-                    // we coming back from double click and the graph was not in order
-                    if(store.reorder_target) {
-                        fitToNode(store.reorder_target,1)
-                        store.reorder_target = null
-                    // we are coming back from double click and the graph was in order
-                    } else if(store.view) {
-                        flow.setViewport(store.view)
+            // if(!state.node_added) {
+            //     console.log('no reorder target')
+            //     if(props.mode == "graph") {
+            //         // we coming back from double click and the graph was not in order
+            //         if(store.reorder_target) {
+            //             fitToNode(store.reorder_target,1)
+            //             store.reorder_target = null
+            //         // we are coming back from double click and the graph was in order
+            //         } else if(store.view) {
+            //             flow.setViewport(store.view)
 
-                    } else flow.fitView()
-                }
+            //         } else flow.fitView()
+            //     }
                 
-                if(props.mode == "graph") getRootNodes()
+            //     if(props.mode == "graph") getRootNodes()
 
-            // node is added
-            } else {
+            // // node is added
+            // } else {
                 console.log('reorder target', store.reorder_target)
                 if(state.node_added) fitToNode(state.node_added)
                 else fitToNode(store.reorder_target)
@@ -378,7 +379,7 @@ console.log('nodes initialized')
                 store.reorder_target = state.node_added
                 state.node_added = 0
                 store.view = flow.getViewport()
-            }
+           // }
         }
 
 
@@ -415,10 +416,11 @@ console.log('nodes initialized')
                     source = granparent[0].id.replace('#', '')
                 }
             }
-            if(cruncher && source)
-                router.push({ name: 'files', params: { rid: event.node.id.replace('#', '')}, query: {cruncher:cruncher, source:source} })
-            else
-                router.push({ name: 'files', params: { rid: event.node.id.replace('#', '')} })
+            emit('open-node', event.node.id, source)
+            // if(cruncher && source)
+            //     router.push({ name: 'files', params: { rid: event.node.id.replace('#', '')}, query: {cruncher:cruncher, source:source} })
+            // else
+            //     router.push({ name: 'files', params: { rid: event.node.id.replace('#', '')} })
         }
            
     })

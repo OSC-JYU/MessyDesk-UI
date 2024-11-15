@@ -15,6 +15,7 @@ export const store = reactive({
   new_node_relation: null,
   current_node: {data:{name:'', type: ''}},
   tags: [],
+  tab: 0,
   schemas: [],
   queries: [],
   menus: [],
@@ -36,9 +37,7 @@ export const store = reactive({
   current_project: {},
   reorder_target: '',
 
-  gtags() {
-      return this.tags
-  },
+
   reload(update) {
     this.update_data = null || update
       //this.update_data = update
@@ -57,6 +56,4 @@ export const store = reactive({
       return this.graph_node_update
   }
 })
-console.log('store...')
-//store.user = await web.getMe()
-//store.groups = await web.getGroups()
+
