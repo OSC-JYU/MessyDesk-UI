@@ -1,9 +1,8 @@
-<style >
+<style scoped>
 
 .column_text {
     height: 90%;
-    
-  }
+}
 
 .column_text2 {
   height: 100%;
@@ -61,9 +60,13 @@
     import web from "../../web.js";
     import {store} from "../../components/Store.js";
 
-    const route = useRoute();
+    // tab controls
     const emit = defineEmits(['change-tab'])
     const props = defineProps(['tab'])
+    // tab change launces content update. Could be done otherwise propably?
+    watch(() => props.tab, async (newValue, oldValue) => {
+      await load()
+    })
 
     const entity_order = ['PERSON', 'GPE', 'DATE', 'ORG', 'LOC', 'EVENT', 'PRODUCT', 'NORP', 'FIBC', 'JON']
 
@@ -75,10 +78,7 @@
         source_text: ''
     })
 
-        // tab change launces content update. Could be done otherwise propably?
-    watch(() => props.tab, async (newValue, oldValue) => {
-      await load()
-    })
+
 
     function renderStringAsHtml(str, highlights) {
     let result = '';

@@ -50,6 +50,7 @@
             
             <v-list density="compact" v-if="state.file">
               <v-list-subheader>Saved selections</v-list-subheader>
+              {{ state.file.thumbnail }}
 
               <v-list-item
                 v-for="(item, i) in state.file.rois"
@@ -118,7 +119,7 @@
       state.file = null
       var response = await web.getDocInfo(store.file['@rid'])
       state.file = response
-      state.file.thumbnail = removeLastPathPart(response.path.replace('data/', '/api/thumbnails/'))
+      state.file.thumbnail = removeLastPathPart('/api/thumbnails/' + response.path)
 
       image.src = state.file.thumbnail; 
       image.onload = () => {
@@ -152,7 +153,7 @@
 
   </script>
   
-  <style >
+  <style scoped>
   .container {
     display: flex;
   }

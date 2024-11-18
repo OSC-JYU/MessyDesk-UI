@@ -9,68 +9,64 @@
 
 <template>
 
-    <v-card v-if="store.current_node && store.current().id && schema.result._attributes" class="pa-6 text-black ">
+    <v-card v-if="store.current_node && store.current().id" class="pa-6 text-black ">
 
       
+        <!-- RAW FILE LINK -->
+        <template v-if="store.current().type != 'process' && store.current().type != 'set'">
+            <a class="text-medium-emphasis" target="_blank" :href="'/api/files/' + store.current().id.replace('#','')">{{store.current().data.type_label}} open file</a> ({{ store.current().id }})
+        </template>
 
-            <template v-if="store.current().type != 'process' && store.current().type != 'set'">
-                <a class="text-medium-emphasis" target="_blank" :href="'/api/files/' + store.current().id.replace('#','')">{{store.current().data.type_label}} open file</a> ({{ store.current().id }})
-            </template>
-            <template v-else><span class="text-medium-emphasis">ID: {{ store.current().id }}</span></template>
-            <div v-if="schema.result._attributes && schema.result._attributes.metadata"  >
-            <span>width: {{ schema.result._attributes.metadata.width }} height: {{ schema.result._attributes.metadata.height }}</span>
-        </div>
 
-            <h3 v-if="state.edit_label_open == false" @click="editLabel()" class="font-weight-bold mb-4">{{ store.current_node.data.label }}</h3>
-            <v-card v-else class="pa-6"> 
-                <v-text-field @keyup.enter="saveLabel()"
-                    label="Description"
-                    v-model="state.edit_label"
-                    name="input-7-1"
-                    variant="filled"
-                    auto-grow
-                ></v-text-field>
-                <v-card-actions>
-                    <v-btn @click="closeLabel()">Cancel</v-btn>
-                    <v-btn @click="saveLabel()">Save</v-btn>
-                </v-card-actions>
-            
-            </v-card>
-                
-                
-            <div v-if="empty(store.current_node.data.description)" @click="editDescription()" class="text-medium-emphasis">add description</div>
-            <pre v-if="state.edit_description_open == false" @click="editDescription()">{{ store.current_node.data.description}}</pre>
-            
-            <v-card v-else class="pa-6"> 
-                <v-textarea 
+        <!-- LABEL-->
+        <h3 v-if="state.edit_label_open == false" @click="editLabel()" class="font-weight-bold mb-4">{{ store.current_node.data.label }}</h3>
+        <v-card v-else class="pa-6"> 
+            <v-text-field @keyup.enter="saveLabel()"
                 label="Description"
-                v-model="state.edit_description"
+                v-model="state.edit_label"
                 name="input-7-1"
                 variant="filled"
                 auto-grow
-                ></v-textarea>
-                <v-card-actions>
-                    <v-btn @click="closeDescription()">Cancel</v-btn>
-                    <v-btn @click="saveDescription()">Save</v-btn>
-                </v-card-actions>
-            
-            </v-card>
+            ></v-text-field>
+            <v-card-actions>
+                <v-btn @click="closeLabel()">Cancel</v-btn>
+                <v-btn @click="saveLabel()">Save</v-btn>
+            </v-card-actions>
+        
+        </v-card>
+                
+             
+        <!-- DESCRIPTION -->
+        <div v-if="empty(store.current_node.data.description)" @click="editDescription()" class="text-medium-emphasis">add description</div>
+        <pre v-if="state.edit_description_open == false" @click="editDescription()">{{ store.current_node.data.description}}</pre>
+        
+        <v-card v-else class="pa-6"> 
+            <v-textarea 
+            label="Description"
+            v-model="state.edit_description"
+            name="input-7-1"
+            variant="filled"
+            auto-grow
+            ></v-textarea>
+            <v-card-actions>
+                <v-btn @click="closeDescription()">Cancel</v-btn>
+                <v-btn @click="saveDescription()">Save</v-btn>
+            </v-card-actions>
+        
+        </v-card>
     
-
-
-
- 
 
         <!-- THUMBNAIL -->
          <v-card-text class="pa-0 overflow-scroll">
 
              <div v-if="store.current().type == 'image' || store.current().type == 'pdf'">
-                 <img  class="nodecard-image" :src="state.thumbnail" />
+                 <img  class="nodecard-image" :src="store.current().data.image" />
             </div>
             <p v-if="store.current().data.info"><i><v-icon class="mr-2">mdi-information</v-icon>{{ store.current().data.info }}</i></p>
 
         </v-card-text>
 
+        <!-- ACTIONS -->
         <div class="card-actions d-flex justify-end w-100 pa-2" >
             
    
@@ -79,6 +75,8 @@
             
         </div>
     </v-card>
+
+
 
     <div v-else>
 
@@ -112,7 +110,7 @@
 
 
 <script setup>
-    import { onMounted, watch, reactive, ref, computed } from "vue";
+    import { reactive, computed } from "vue";
     import { useRouter, useRoute } from 'vue-router'
     import {store} from "./Store.js";
     import web from "../web.js";
@@ -137,23 +135,6 @@
         _access: null
     })
     
-    var graph = reactive({result:[]})
-    var schema = reactive({result:[]})
-    var services = reactive({result:[]})
-    var me = reactive({data:{}})
-    var edit_name = ref('')
-    const upload = ref(null);
-    var add_new = reactive({type:'', label:''})
-    var created = reactive([])
-    var connect_editor = reactive({
-        relation:{data:[]},
-        data:[],
-        current_node: '',
-        current_rel_id: '',
-        current_rel_attr: '',
-        user_groups: []
-
-    })
 
     const current_query = computed(() => {
         var m = {label:''}
@@ -171,68 +152,8 @@
     const emit = defineEmits(['updateGraph'])
 
 
-    watch(
-        () => route.query.node,
-        async (newValue, oldValue) => {
-            if(newValue)
-                loadData(newValue)
-            else
-                schema.result = []
-
-    })
-
-    watch(
-        () => store.current_node,
-        async (newValue, oldValue) => {
-            reset()
-            if(newValue)
-                loadData(store.current().id)
-            else
-                schema.result = []
-    })
-
-    watch(
-      () => store.update,
-      async (newValue, oldValue) => {
-            await loadData(route.query.node) 
-
-    })
-
     function empty(string) {
         return (!string || string.length === 0 );
-    }
-
-    function reset() {
-        state.editing = false
-        state.admin_edit = false
-        state.image_edit = false
-        state.selected = ''
-        store.new_node_type = ''
-        connect_editor.current_rel = ''
-    }
-
-    async function loadData(rid) {
-        schema.result = await web.getSchemaAndData(rid)
-        state.thumbnail = getThumbnail()
-        if (schema.result._attributes['@type'] == 'Process')
-            state.params = await getProcessParams()
-        if (schema.result._attributes['@type'] !== 'Process')
-            services.result = await web.getServicesForFile(rid)
-        
-    }
-
-    function getThumbnail() {
-        if(schema.result._attributes && schema.result._attributes.path)
-            return 'api/thumbnails/' + removeLastPathPart(schema.result._attributes.path.replace('data/', ''))
-    }
-
-
-
-    async function getProcessParams() {
-        var url = 'api/process/' + removeLastPathPart(schema.result._attributes.path.replace('data/', ''))
-        var params = await web.getProcessParams(url)
-        console.log(params)
-        return params.data
     }
 
 
@@ -268,28 +189,5 @@
         state.edit_description = ''
         state.edit_description_open = false
     }
-
-
-    function toggleEdit(label) {
-        state.edit_label = !state.edit_label
-        if(state.edit_label)
-            state.new_label = label
-        
-    }
-
-
-    function removeLastPathPart(str) {
-        const lastIndex = str.lastIndexOf('/');
-        if (lastIndex !== -1) {
-            return str.substring(0, lastIndex);
-        }
-        return str;
-        }
-
-    onMounted(async()=> {
-        if(route.query.node) {
-          //  loadData(route.query.node)
-        }
-    })
 
 </script>

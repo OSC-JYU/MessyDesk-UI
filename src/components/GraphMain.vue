@@ -99,7 +99,7 @@
                 </v-col>
 
 
-                <v-col  lass="pa-0 full-background"
+                <v-col  class="pa-0 full-background"
                   cols="3"
                   color="light-blue lighten-1">
                   <NodeCard class="h-100 w-100 position-absolute" />

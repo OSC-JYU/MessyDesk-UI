@@ -79,7 +79,7 @@ function openCrunchers(filter) {
       <img @click="openCrunchers('')" title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" /> 
     </div>
     
-    <v-container   style="max-height: 360px; overflow: hidden;">
+    <v-container   style="max-height: 360px; padding: 0px; overflow: hidden;">
       <v-row>
         <v-col class="d-flex align-center justify-center ">
           <img :src="data.image" draggable="false"/>
@@ -87,7 +87,7 @@ function openCrunchers(filter) {
         </v-col>
       </v-row>
         <v-row>
-          <v-col class="d-flex align-center justify-center">
+          <v-col class="d-flex align-center justify-center ">
             
             <pre v-if="data.description != data.label"> {{ data.description }}</pre>
             
