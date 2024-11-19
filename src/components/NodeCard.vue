@@ -9,7 +9,7 @@
 
 <template>
 
-    <v-card v-if="store.current_node && store.current().id" class="pa-6 text-black ">
+    <v-sheet v-if="store.current_node && store.current().id" class="pa-6 text-black ">
 
       
         <!-- RAW FILE LINK -->
@@ -74,7 +74,7 @@
             <v-btn  @click="store.node_deleter_open = true" right-0 class="btn btn-danger mr-10" color="red" title="delete item"><i class="bi bi-trash"></i></v-btn>
             
         </div>
-    </v-card>
+    </v-sheet>
 
 
 

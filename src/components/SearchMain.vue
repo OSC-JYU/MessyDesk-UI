@@ -35,7 +35,7 @@ em {
 
 .Process {
   background-color: #5b9b9a;
-  border-radius: 15px;
+  border-radius: 5px;
   text-align: center;
   
 }
@@ -47,6 +47,10 @@ em {
 }
 
 .Set {
+  background-color: #005757;
+}
+
+.User {
   background-color: #005757;
 }
 
@@ -135,7 +139,14 @@ em {
 
               <v-row class="column_text">
                 <!-- LEFT COLUMN -->
-                <v-col cols="1"><div :class="'node-base ' + node['@type']+' '+node.type" v-for="node of state.nodepath" @click="go(node['@rid'])">{{ node.label }}</div></v-col>
+                <v-col cols="1" align="center">
+                  <template v-for="node of state.nodepath">
+                    <div><v-icon size="15" color="green">mdi-arrow-up</v-icon></div>
+                    <div :class="'node-base ' + node['@type']+' '+node.type"  @click="go(node['@rid'])">{{ node.label }}
+                      <img v-if="node.type == 'pdf' || node.type == 'image'" :src="'api/thumbnail/' + node.path" />
+                    </div>
+                  </template>
+                </v-col>
 
                 <!-- MIDDLE COLUMN -->
                 <v-col cols="7" :class="state.text ? 'column_text2 paper' : ''">

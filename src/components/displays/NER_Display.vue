@@ -21,13 +21,14 @@
 <template>
 
     <v-container>
-      <v-row>
-        <v-btn @click="$emit('change-tab',0)"><v-icon>mdi-arrow-left</v-icon></v-btn>
-      </v-row>
-      <v-row class="mt-6">
-        <div v-if="state.file"><h2>Text</h2></div>
-      </v-row>
-      
+      <v-btn
+        class="ma-2"
+        color="primary"
+        icon="mdi-close"
+        style="position: absolute; top: 0; left: -60px; z-index:1000"
+        @click="$emit('change-tab',0)"
+      ></v-btn>
+
       <v-row class="column_text">
 
         <v-col cols="9" class="column_text2 paper">
@@ -35,9 +36,10 @@
         </v-col>
 
         <v-col cols="3" class="column_text2">
+          <div v-if="state.file">{{ state.source.label }}</div>
           <div v-for="e of entity_order">
             <template v-if="state.entities[e] && state.entities[e].length">
-              <h4>{{ e }} <span> {{ state.entities[e].length }}</span></h4>
+              <h5>{{ e }} <span> {{ state.entities[e].length }}</span></h5>
               <div v-for="entity of state.entities[e]">
                 <a :href="'#highlight-'+entity.start">{{ entity.word }}</a> 
               </div>
@@ -151,4 +153,8 @@
     max-width: 100%;
     height: auto;
   }
+  .v-container {
+  max-width: 1600px;
+  margin-left:100px;
+}
   </style>

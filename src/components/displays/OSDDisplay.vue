@@ -1,8 +1,12 @@
 <template>
     <v-container>
-      <v-row>
-        <v-btn @click="$router.go(-1)"><v-icon>mdi-arrow-left</v-icon></v-btn>
-      </v-row>
+      <v-btn
+        class="ma-2"
+        color="primary"
+        icon="mdi-close"
+        style="position: absolute; top: 0; left: -60px; z-index:1000"
+        @click="$emit('change-tab',0)"
+      ></v-btn>
       <v-row class="mt-6">
         <div v-if="state.file"><h2>{{ state.file.label }}</h2></div>
       </v-row>
@@ -13,12 +17,7 @@
         </v-col>
 
         <v-col cols="3">
-          <template v-if="state.cruncher">
-            <v-card>
-                <v-card-title>{{ state.cruncher.label }}</v-card-title>
-                <v-card-text>{{ state.cruncher.info }}</v-card-text>
-            </v-card>
-          </template>
+
         </v-col>  
 
       </v-row>
@@ -32,6 +31,7 @@
     import { onMounted, watch, reactive} from "vue";
   
     import web from "../../web.js";
+    import {store} from "../../components/Store.js";
 
     const emit = defineEmits(['change-tab'])
     const props = defineProps(['tab'])
@@ -46,15 +46,10 @@
     })
 
     async function load() {
-      var response = await web.getDocInfo(route.params.rid)
-      var f = await web.getNodeFile(route.params.rid)
-      state.file = response
-      console.log(f)
-      state.text = replaceWithBr(JSON.stringify(f, null, 2))
-      if(route.query.cruncher) {
-        var response2 = await web.getDocInfo(route.query.cruncher)
-        state.cruncher = response2
-      }
+      var text =  await web.getNodeFile(store.file['@rid'])
+      state.text = replaceWithBr(JSON.stringify(text, null, 2))
+      state.file = await web.getDocInfo(store.file['@rid'])
+
     }
 
     onMounted(async()=> {

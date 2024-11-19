@@ -1,16 +1,17 @@
 <template>
 
   <v-container>
-      <v-row>
-        <v-btn @click="$emit('change-tab',0)"><v-icon>mdi-arrow-left</v-icon></v-btn>
-      </v-row>
-      <v-row class="mt-6">
-        <div v-if="state.file"><h2>{{ state.file.label }}</h2></div>
-        
-      </v-row>
+
+    <v-btn
+        class="ma-2"
+        color="primary"
+        icon="mdi-close"
+        style="position: absolute; top: 0; left: -60px; z-index:1000"
+        @click="$emit('change-tab',0)"
+      ></v-btn>
       <v-row class="column_base">
-        
-        <v-col cols="9" class="column_image paper">
+
+        <v-col cols="9" class="column_image ">
           <!-- <img v-if="state.file" :src="state.file.thumbnail" alt="Image" />  -->
           <image-select-area v-if="state.file && state.image_loaded"
           :image-url="state.file.thumbnail"
@@ -25,6 +26,10 @@
         
         <v-col cols="3" class="column_image">
           <!-- <div v-if="state.file && state.file.rois">{{ state.file.rois }}</div> -->
+          <div v-if="state.file">
+            <h3>{{ state.file.label }}</h3>
+            {{ state.file.description }}
+          </div>
           
           <v-alert type="info" >Click and drag to create saved selections (ROI).</v-alert>
 
@@ -50,7 +55,6 @@
             
             <v-list density="compact" v-if="state.file">
               <v-list-subheader>Saved selections</v-list-subheader>
-              {{ state.file.thumbnail }}
 
               <v-list-item
                 v-for="(item, i) in state.file.rois"
@@ -186,4 +190,8 @@
   .delete-button-roi {
     background-color: red;
   }
+  .v-container {
+  max-width: 1600px;
+  margin-left:100px;
+}
   </style>

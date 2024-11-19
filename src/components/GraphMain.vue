@@ -84,10 +84,10 @@
           <v-tabs-window v-model="state.tab" class="w-100 h-100 fill-height">
 
             <v-tabs-window-item class="w-100 fill-height"  >
-              <v-row class="w-100 fill-height"> 
+              <v-row class="w-100 fill-height m-0 p-0"> 
 
                 <v-col
-                class="pb-0 fill-height "
+                class="p-0 m-0 fill-height "
                 cols="9"
                 color="light-blue lighten-3"
               >
@@ -99,7 +99,7 @@
                 </v-col>
 
 
-                <v-col  class="pa-0 full-background"
+                <v-col  class="p-0 m-0 full-background"
                   cols="3"
                   color="light-blue lighten-1">
                   <NodeCard class="h-100 w-100 position-absolute" />
@@ -116,7 +116,7 @@
               <EntitiesMain/>
             </v-tabs-window-item>
 
-            <v-tabs-window-item>
+            <v-tabs-window-item >
               <v-container class="fill-height pa-0" fluid>
                 <v-row class="fill-height no-gutters" >
 

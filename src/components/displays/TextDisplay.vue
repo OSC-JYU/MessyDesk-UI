@@ -1,11 +1,14 @@
 <template>
     <v-container>
-      <v-row>
-        <v-btn @click="$emit('change-tab',0)"><v-icon>mdi-arrow-left</v-icon></v-btn>
-      </v-row>
-      <v-row class="mt-6">
-        <div v-if="state.file"><h2>{{ state.file.label }}</h2></div>
-      </v-row>
+
+      <v-btn
+        class="ma-2"
+        color="primary"
+        icon="mdi-close"
+        style="position: absolute; top: 0; left: -60px; z-index:1000"
+        @click="$emit('change-tab',0)"
+      ></v-btn>
+
       <v-row class="column_text">
 
         <v-col cols="9" class="column_text2 paper">
@@ -13,17 +16,22 @@
         </v-col>
 
         <v-col cols="3" class="column_text2">
-          <template >
-            <v-card>
-                 <v-card-title>Saved selections (text ROIs)</v-card-title>
-                <v-card-text>
-                  <v-alert>not implemented yet</v-alert>
-                  <v-btn @click="getSelectedText">Get Selected Text</v-btn>
-                  {{ state.selectedText }} {{ state.selectionStart }} {{ state.selectionEnd }}
-                </v-card-text> 
+          <div v-if="state.file">
+            <h4>{{ state.file.label}}</h4>
+            {{ state.file.description }}
+          </div>
+          <v-switch color="primary" @change="toggleSearch()" label="Enabled in search"></v-switch>
+          <v-card title="Region of Interest">
+              <v-alert type="info" class="mt-6">Click and drag to create saved selections (ROI).</v-alert>
+              
+
+                  <v-alert type="warning">not implemented for text yet</v-alert>
+                  <!-- <v-btn @click="getSelectedText">Create ROI</v-btn>
+                  {{ state.selectedText }} {{ state.selectionStart }} {{ state.selectionEnd }} -->
+            
                 
             </v-card>
-          </template>
+          
         </v-col>  
 
       </v-row>
@@ -57,6 +65,10 @@
         selectionEnd: -1,
         text: ''
     })
+
+    function toggleSearch(n) {
+      console.log(n)
+    }
 
     function getSelectedText() {
   
@@ -93,8 +105,9 @@
     }
 
     async function load() {
-        var f = await web.getNodeFile(store.file['@rid'])
-        state.text = replaceWithBr(f)
+      var f = await web.getNodeFile(store.file['@rid'])
+      state.file = await web.getDocInfo(store.file['@rid'])
+      state.text = replaceWithBr(f)
     }
 
     onMounted(async()=> {
@@ -139,5 +152,9 @@
 .paper {
   border: 1px solid black;
   background-color: white;
+}
+.v-container {
+  max-width: 1600px;
+  margin-left:100px;
 }
   </style>

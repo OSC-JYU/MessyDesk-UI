@@ -82,25 +82,25 @@ function openCrunchers(filter) {
     <v-container   style="max-height: 360px; padding: 0px; overflow: hidden;">
       <v-row>
         <v-col class="d-flex align-center justify-center ">
+
           <img :src="data.image" draggable="false"/>
           
         </v-col>
       </v-row>
-        <v-row>
-          <v-col class="d-flex align-center justify-center ">
-            
-            <pre v-if="data.description != data.label"> {{ data.description }}</pre>
-            
-          </v-col>
+
+      <v-row v-if="data.description != data.label">
+        <v-col class="d-flex align-center justify-center p-0">
           
-        
+          <pre>{{ data.description }}</pre>
+          
+        </v-col>
       </v-row>
       
 
 
     </v-container>
 
-    <div  title="double click to add/edit regions" class="roi_add"  >
+    <div v-if="data.roi_count" title="double click to add/edit regions" class="roi_add"  >
       <v-icon size="35" >mdi-selection</v-icon> {{ data.roi_count? data.roi_count : 0 }} Regions of Interest 
       <v-icon v-if="data.roi_count" title="Add region cruncher" @click="openCrunchers('ROI')" class="roi_crunch" size="35" >mdi-cookie</v-icon>
     </div>

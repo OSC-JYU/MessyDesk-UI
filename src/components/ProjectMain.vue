@@ -135,6 +135,7 @@
             <v-text-field v-model="state.project_name"
                 label="Desk name*"
                 required
+                @keyup.enter="createProject()"
               ></v-text-field>
         </v-col>
       </v-card-text>

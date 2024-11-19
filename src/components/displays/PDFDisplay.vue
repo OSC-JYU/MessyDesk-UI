@@ -1,11 +1,13 @@
 <template>
     <v-container>
-      <v-row>
-        <v-btn @click="$emit('change-tab',0)"><v-icon>mdi-arrow-left</v-icon></v-btn>
-      </v-row>
-      <v-row class="mt-6">
-        <div v-if="state.file"><h2>{{ state.file.label }}</h2></div>
-      </v-row>
+      <v-btn
+        class="ma-2"
+        color="primary"
+        icon="mdi-close"
+        style="position: absolute; top: 0; left: -60px; z-index:1000"
+        @click="$emit('change-tab',0)"
+      ></v-btn>
+
       <v-row class="h-100">
 
         <v-col cols="12" fill-height>
@@ -54,4 +56,9 @@
     max-width: 100%;
     height: auto;
   }
+
+  .v-container {
+  max-width: 1600px;
+  margin-left:100px;
+}
   </style>

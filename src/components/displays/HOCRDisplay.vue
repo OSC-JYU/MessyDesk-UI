@@ -1,8 +1,12 @@
 <template>
   <v-container>
-      <v-row class="m-2">
-        <v-btn @click="$emit('change-tab',0)"><v-icon>mdi-arrow-left</v-icon></v-btn>
-      </v-row>
+    <v-btn
+        class="ma-2"
+        color="primary"
+        icon="mdi-close"
+        style="position: absolute; top: 0; left: -60px; z-index:1000"
+        @click="$emit('change-tab',0)"
+      ></v-btn>
       <v-row class="m-2">
 
         <v-col cols="col-6">
@@ -244,6 +248,11 @@
 }
 .container {
   font-family: 'Junicode', sans-serif; /* Use the Junicode font for this container */
+}
+
+.v-container {
+  max-width: 1600px;
+  margin-left:100px;
 }
 
   </style>
