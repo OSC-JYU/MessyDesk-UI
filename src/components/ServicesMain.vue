@@ -1,117 +1,213 @@
 <style scoped>
-    .enabled {
-        background-color: greenyellow;
-        color: black;
-        margin:2px;
-    }
-    .disabled {
-        background-color: pink;
-        color: black;
-        margin:2px;
-    }
-    .has {
-        background-color: rgb(163, 166, 237);
-        color: black;
-        margin:2px;
-    }
+em {
+  font-style: normal;
+  font-weight: bold;
+  color: red important;  }
+
+  .column_text2 {
+  height: 100%;
+  overflow-y: scroll;
+}
+
 </style>
 
 <script setup>
-    import { Position, VueFlow, defaultNodeTypes, useVueFlow } from '@vue-flow/core'
-    import { Background } from '@vue-flow/background'
-
-    import { onMounted, reactive, nextTick, markRaw } from "vue";
-    import ProcessingNode from './nodes/ProcessingNode.vue'
-    import JYUHeader from './JYUHeader.vue'
+    import JYUHeader_plain from './JYUHeader_plain.vue'
     import web from "../web.js";
+    
+    import { onMounted, reactive} from "vue";
+    import { useRoute } from 'vue-router'
 
-        //const { getNode, onNodeClick, onNodeDoubleClick, onNodeDragStop} = useVueFlow()
-    const flow = useVueFlow({
-        defaultZoom: 0.2,
-        maxZoom: 3,
-        minZoom: 0.1,
-    })
+    const route = useRoute();
 
-    const nodeTypes = {
-  custom: markRaw(ProcessingNode),
-}
+    document.title = "MessyDesk - search"
+
 
     var state = reactive({
+        search: "",
+        result: [],
         services: [],
-        nodes: [  
-            { id: 'md_api', label: 'MessyDesk API', position: { x: 200, y: 50 }, class: 'light' },
-            { id: 'md_ui',  label: 'MessyDesk UI', position: { x: 50, y: 0 }, class: 'light' },
-            { id: 'db', type: 'output', label: 'ArcadeDB', position: { x: 100, y: 100 }, class: 'light' },
-            { id: 'nats', label: 'NATS Jetstream', position: { x: 400, y: 100 }, class: 'light' },
-            { id: 'nomad', label: 'Nomad', position: { x: 150, y: 200 }, class: 'light' },
+        tasks: [],
+        add: false,
+        new_label: "",
+        new_email: "",
+        tab: 0,
+        sortBy: 'active',
 
-            { id: 'image', label: 'Image services', position: { x: 0, y: 200 }, type:'processing', data: {label:'Image services'} },
-            { id: 'text', label: 'Text services', position: { x: 150, y: 200 } },
-            { id: 'pdf', label: 'PDF services', position: { x: 300, y: 200 } }
+        service_headers: [
+            {
+                title: 'Service',
+                key: 'name', 
+                sortable: true
+            },
+            {
+                title: 'queue ID',
+                key: 'id', 
+                sortable: true
+            },
+            {
+                title: 'Description',
+                key: 'description', 
+                sortable: true
+            },
+            {
+                title: 'Active',
+                key: 'active', 
+                sortable: true
+            },
+            {
+                title: 'Consumers',
+                key: 'consumers', 
+                sortable: true
+            }
         ],
-
-        edges: [
-        { id: 'md', source: 'md_api', target: 'md_ui', animated: true, label: 'test' }
-        ],
+        task_headers: [
+            {
+                title: 'Task',
+                key: 'name', 
+                sortable: true
+            },
+            {
+                title: 'Description',
+                key: 'description', 
+                sortable: true
+            },
+            {
+                title: 'Service',
+                key: 'service', 
+                sortable: true
+            },
+            {
+                title: 'Media',
+                key: 'supported_types', 
+                sortable: true
+            },
+            {
+                title: 'Access',
+                key: 'access', 
+                sortable: true
+            }
+        ]
     })
 
-    document.title = "MessyDesk - services"
-
-    async function enable(adapter_ID) {
-        console.log(adapter_ID)
-    }
 
     onMounted(async()=> {
-        var response = await web.getServices()
-        var data = {'text':[], 'pdf':[], 'image':[]}
-        for(var s in response) {
-            console.log(response[s]['supported_types'])
-            for(var mediatype of response[s]['supported_types']) {
-                data[mediatype].push(response[s])
-               // state.nodes.push({id: response[s].id, label: response[s].id, position: { x: 0, y: count * 50 }, parentNode: mediatype, class: 'light', expandParent: true})
-                count++
-            }
+      var response = await web.getServices()
+      for(var key in response) {
+        response[key]['active'] = false
+        if(response[key]['consumers'].length) {
+          response[key]['active'] = true
         }
+        state.services.push(response[key])
 
-        for(var mediatype in data) {
-            var count = 1
-            for(var item in data[mediatype]) {
-                state.nodes.push({id: data[mediatype][item].id, label: data[mediatype][item].id, position: { x: 0, y: count * 50 }, class: 'light', parentNode: mediatype, expandParent: true})
-                count++
+        // tasks
+        if(response[key]['tasks']) {
+          for(var task in response[key]['tasks']) {
+            //state.tasks.push(response[key]['tasks'][task])
+            var task_data = {name:response[key]['tasks'][task]['name']}
+            task_data.access = 'free'
+            if(response[key]['access']) {
+              task_data.access = response[key]['access']
             }
-            //
-            count++
+            task_data.description = response[key]['tasks'][task]['description']
+            task_data.service = key
+            task_data.supported_types = response[key]['supported_types'][0]
+            if(response[key]['tasks'][task]['supported_types']) {
+              task_data.supported_types = response[key]['tasks'][task]['supported_types'][0]
+            }
+            state.tasks.push(task_data)
+          }
         }
-        state.services = data
-        nextTick(() => {
-            flow.fitView()
-        })
+      }
     })
+
+
 
 </script>
 
 
 
 <template>
-    <div class="vh-100 container-fluid m-0 p-0">
-        <div class="row  h-100  w-100 m-0 p-0">
-            <div class="col-12 m-0 p-0">
-                <div class="h-100 d-flex flex-column w-100 m-0 p-0">
-                    <div class="row justify-content-center m-0 p-0">
-                        <JYUHeader/>
-                    </div>
 
-                    <VueFlow :nodes="state.nodes" :edges="state.edges" fit-view-on-init>
-                        <Background />
-                        <template #node-processing="{ data }">
-                            <ProcessingNode :data="data" />
-                        </template>
-                        </VueFlow>
+<v-card class="mx-auto fill-height" color="grey-lighten-3" flat>
+    <v-layout class="fill-height">
+
+      <JYUHeader_plain/>
+
+      <v-main class="fill-height">
+        <v-container class="fill-height pa-0" fluid>
+          <v-row class="fill-height no-gutters" >
+
+         
+
+
+            <v-col
+              class="d-flex fill-height overflow-auto"
+              cols="12"
+              color="light-blue lighten-3"
+            >
+
+            <v-container>
+
+              <v-row class="mt-6">
+                <v-tabs v-model="state.tab">
+
+          
+                  <v-tab>Tasks</v-tab>
+                  <v-tab>Services</v-tab>
+
+                </v-tabs>
+
+              </v-row>
+
+
+              <v-tabs-window v-model="state.tab">
+
+                <v-tabs-window-item>
+                  <v-container>
+                    
+                    <v-data-table :items="state.tasks" :headers="state.task_headers">
+                      
+                      </v-data-table>
+
+                  </v-container>
+
+                </v-tabs-window-item> 
+
+
+                <v-tabs-window-item>
+                  <v-container>
+                    
+                    <v-data-table :items="state.services" :headers="state.service_headers">
+
+                      <template v-slot:item.description="{ item }">
+                        <div >{{item.description}} <p><a target="_blank" :href="item.source_url">{{ item.source_url }}</a></p> </div>
+                      </template>
+
+                    </v-data-table>
+                    
+
+                  </v-container>
+
+                </v-tabs-window-item> 
+
+
+
+
+              </v-tabs-window>
+
+
+            </v-container>
+            </v-col>
+
+          </v-row>
+        </v-container>
+      </v-main>
+    </v-layout>
+  </v-card>  
 
 
  
-                </div>
-            </div>
-        </div>
-    </div>
-</template>
+  </template>
+
+

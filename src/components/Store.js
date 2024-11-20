@@ -9,31 +9,41 @@ export const store = reactive({
   y: 0,
   process: {},
   task_id: '',
+  view: null,
   new_node_type: '',
   new_node_id: null,
   new_node_relation: null,
   current_node: {data:{name:'', type: ''}},
   tags: [],
+  tab: 0,
   schemas: [],
   queries: [],
   menus: [],
   groups: [],
-  maps: [],
+  cruncher_filter: '',
   graph_node_update: '',
   process_creator_open: false,
   uploader_open: false,
   node_deleter_open: false,
   importer_open: false,
   exporter_open: false,
+  crunchers_open: false,
+  set_creator_open: false,
+  search_open: false,
   graph_style: [],
+  root_nodes: [],
+  projects: [],
+  setdata: {},
+  current_project: {},
+  reorder_target: '',
 
-  gtags() {
-      return this.tags
-  },
+
   reload(update) {
-      this.update_data = update
-      this.update++
+    this.update_data = null || update
+      //this.update_data = update
+    this.update++
   },
+
   current() {
 		if(this.current_node && !this.current_node.data) {
 			return {data: {name:'', type: ''}}
@@ -46,6 +56,4 @@ export const store = reactive({
       return this.graph_node_update
   }
 })
-console.log('store...')
-//store.user = await web.getMe()
-//store.groups = await web.getGroups()
+

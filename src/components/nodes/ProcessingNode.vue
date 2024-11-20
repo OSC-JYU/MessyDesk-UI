@@ -26,15 +26,37 @@ const props = defineProps({
 </script>
 
 <template>
-  <div class="header"> {{ data.label }}</div>
-  <p class="p-2" v-if="data.info">{{ data.info }}</p>
-  <p class="p-2" v-else>{{ data }}</p>
-  <img src="icons/cookie-bite-solid.svg" />
-
-
-
-
+  <div class="node-body nodrag text-white">
+    
+    <div class="d-flex align-center justify-center">
+    
+    <h3 class="p-2">{{  data.label }}</h3>
+    
+    
+  </div>
+  <pre class="p-2" v-if="data.description">{{ data.description }}</pre>
+  
+  <v-row align="center">
+    <v-col cols="auto">
+      <!-- <img v-if="data.image" :src="data.image" /> -->
+      <img src="icons/cookie-bite-solid-white.svg" />
+      <!-- <img src="icons/wait.gif" /> -->
+    </v-col>
+    <v-col>
+      <p  v-if="data.info">
+        
+        <i>{{ data.info }}</i>
+      </p>
+    </v-col>
+  </v-row>
+  
   <Handle id="a" type="target" :position="Position.Left" />
-
   <Handle id="b" type="source" :position="Position.Right"  />
+
+  </div>
+  
+  
+
+
+
 </template>

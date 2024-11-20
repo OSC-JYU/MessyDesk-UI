@@ -1,52 +1,78 @@
 
 <template>
-    <div>
+    <div >
 
-		<div class="card">
-			<div class="card-header">
-				<div>MessyDesk</div>
-                <div class="d-flex justify-content-between ">
-                    <h4 class="">Desks</h4>
-                    <div class="float-end pointer">
-                        <i  title="Create new Desk" @click="state.creator_open = !state.creator_open" class=" bi bi-plus-circle-fill" style="font-size: 1.2rem; color: #002957;"></i>
-                    </div>
+		<v-sheet class="pa-6 text-black md-project">
+			<div v-if="store.current_node && state.project" >
+                <div class="text-medium-emphasis">{{ store.current_node.data.file_count}}</div>
+
+                <h3 v-if="state.edit_label_open == false" @click="editLabel()" class="font-weight-bold mb-4">{{ store.current_node.data.label }}</h3>
+                <v-card v-else class="pa-6"> 
+                    <v-text-field @keyup.enter="saveLabel()"
+                        label="Description"
+                        v-model="state.edit_label"
+                        name="input-7-1"
+                        variant="filled"
+                        auto-grow
+                    ></v-text-field>
+                    <v-card-actions>
+                        <v-btn @click="closeLabel()">Cancel</v-btn>
+                        <v-btn @click="saveLabel()">Save</v-btn>
+                    </v-card-actions>
+                 
+                </v-card>
+                
+                
+                <div v-if="empty(store.current_node.data.description)" @click="editDescription()" class="text-medium-emphasis">add description</div>
+                <pre v-if="state.edit_description_open == false" @click="editDescription()">{{ store.current_node.data.description}}</pre>
+                    
+                <v-card v-else class="pa-6"> 
+                    <v-textarea 
+                    label="Description"
+                    v-model="state.edit_description"
+                    name="input-7-1"
+                    variant="filled"
+                    auto-grow
+                    ></v-textarea>
+                    <v-card-actions>
+                        <v-btn @click="closeDescription()">Cancel</v-btn>
+                        <v-btn @click="saveDescription()">Save</v-btn>
+                    </v-card-actions>
+                
+                </v-card>
+
+
+                <div >
+                    <v-img v-for="f in store.current_node.data.paths" :src="f" class="w-50 shadow-1-strong rounded ma-4"/>
                 </div>
+                
 			</div>
 
-            <!-- Desk Creator open-->
-            <div class="card m-2" v-if="state.creator_open">
- 
-                <div class="card-header">Create new desk</div>
-                <div class="input-group mb-3">
-                    <input v-model="state.project_name" type="text" class="form-control" aria-label="Desk name" aria-describedby="inputGroup-sizing-default" placeholder="Project title">
-                </div>
-                <button @click="create()" class="btn btn-primary">Create</button>
+                    
+            <div v-else>
 
-                <div v-if="state.error" class="alert alert-warning"> {{ state.error }}</div>
 
-            </div>
+                <h4 class="text-h5 font-weight-bold mb-4">Desks view</h4>
 
-            <!-- Desk Creator closed-->
-            <div v-else>       
-                 
-                <!-- Desk node selected-->
-                <div v-if="store.current_node && state.project">
-                    <!-- <h3>{{ state.project[0].label }}</h3>
-                    <div>{{ state.project[0].description }}</div> -->
-                    <button class="btn">
-                        <router-link   :to="`/graph?node=${store.current_node.id.replace('#','')}`" >open</router-link>
-                    </button>
-                </div>
+                <p class="mb-8">
+                Here you you can see your desks and you can arrange them visually.
 
-                <!-- Desk node not selected-->
-                <div v-if="!store.current_node" class="card-body">
-                    <div v-for="item of state.items">
-                        <router-link   :to="`/graph?node=${item['@rid'].replace('#','')}`" >{{item.label}} ({{ item.file_count }} files)</router-link> 
-                    </div>
-                </div>
+                <br>
+                <br>
+                Double click desk node to open it.
+                <br>
+                <br>
+
+
+
+                <v-card color="#EDE1CE" class="pa-6">TIP: You can quickly find your desks from hamburger menu.</v-card>
+                </p>
             </div>
             
-		</div>
+
+
+            </v-sheet>
+    
 
     </div>
 </template>
@@ -62,7 +88,11 @@
         creator_open: false,
         project_name: '',
         error: '',
-        project: null
+        project: null,
+        edit_description: '',
+        edit_description_open: false,
+        edit_label: '',
+        edit_label_open: false
 
     })
 
@@ -75,21 +105,51 @@
                 state.project = null
     })
 
-    async function create() {
-        if(state.project_name == '') {
-            state.error = 'Give project name!'
-        } else {
-            state.error = ''
-            await web.createProject(state.project_name)
-            state.creator_open = false
-            var response = await web.getProjects()
-            state.items = response
-            store.reload()
-        }
+    function empty(string) {
+        return (!string || string.length === 0 );
     }
 
+    function resetEdits() {
+        state.edit_description = ''
+        state.edit_description_open = false
+        state.edit_label = ''
+        state.edit_label_open = false
+    }
 
+    function editLabel() {
+        state.edit_label = store.current_node.data.label
+        state.edit_label_open = true
+    }
+
+    function closeLabel() {
+        state.edit_label = ''
+        state.edit_label_open = false
+    }
+
+    function saveLabel() {
+        web.setNodeAttribute(store.current_node.id, {key:'label', value: state.edit_label})
+        store.current_node.data.label = state.edit_label
+        state.edit_label = ''
+        state.edit_label_open = false
+    }
+    function editDescription() {
+        state.edit_description = store.current_node.data.description
+        state.edit_description_open = true
+    }
+
+    function closeDescription() {
+        state.edit_description = ''
+        state.edit_description_open = false
+    }
+
+    function saveDescription() {
+        web.setNodeAttribute(store.current_node.id, {key:'description', value: state.edit_description})
+        store.current_node.data.description = state.edit_description
+        state.edit_description = ''
+        state.edit_description_open = false
+    }
     async function getProjectData() {
+        resetEdits()
         if(store.current_node)
             state.project = await web.getProject(store.current_node.id)
 

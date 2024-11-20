@@ -1,33 +1,43 @@
 <template>
 
 	<!-- Modal -->
-	<div v-if="store.uploader_open && route.query.node" class="modal modal-lg fade show" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" style="display:block">
-		<div class="modal-dialog">
-			<div class="modal-content">
-				<div class="modal-header">
-						Upload File 
-				</div>
 
-				<div class="modal-body">
+    <v-dialog
+      v-model="store.uploader_open"
+      width="auto"
+    >
+      <v-card
+        min-width="600"
+        prepend-icon="mdi-update"
+        title="Upload file"
+      >
+      <v-card-text>
+        <div v-if="store.current_node && store.current_node.type == 'set'">Upload to set</div>
 
-                    <div class="mb-3">
-                      <label for="formFile" class="form-label">Add file to project</label>
-                      <input class="form-control" type="file" id="image" ref="upload">
-                    </div>
+        <v-col>
 
-                    <button @click="sendFile()" class="btn btn-primary">send file</button>
-				
-				</div>
-
-                <div class="modal-footer">
-					<button @click="close()" type="button" class="btn btn-secondary" >Cancel</button>
-					
-					<div v-if="state.error" class="alert alert-danger">{{state.error}}</div>
-				</div>
-
-            </div>
-		</div>
-	</div>
+              <v-file-input
+                label="Select File (image, pdf, txt)"
+                show-size
+                ref="upload" accept="image/*,.pdf,text/plain" 
+            ></v-file-input>
+        </v-col>
+      </v-card-text>
+        <template v-slot:actions>
+            <v-btn
+            class="ms-auto"
+            text="Cancel"
+            @click="close()"
+          ></v-btn>
+          <v-divider thickness="0"></v-divider>
+          <v-btn
+            class="ms-auto primary"
+            text="Upload" 
+            @click="sendFile()"
+          ></v-btn>
+        </template>
+      </v-card>
+    </v-dialog>
 
 </template>
 
@@ -56,9 +66,15 @@
     async function sendFile() {
         if(upload.value.files.length && route.query.node) {
             try {
-                await web.uploadFile(upload.value.files[0], route.query.node)
+                if(store.current_node && store.current_node.type == 'set') {
+                  await web.uploadFile(upload.value.files[0], route.query.node, store.current_node.id)
+
+                } else {
+                  await web.uploadFile(upload.value.files[0], route.query.node)
+                }
+
                 store.uploader_open = false
-                store.reload()
+                //store.reload()
             } catch(e) {
                 if(e.response && e.response.data.error)
                     alert(e.response.data.error)

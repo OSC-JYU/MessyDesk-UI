@@ -1,9 +1,11 @@
 <script setup>
-    import { onMounted } from "vue";
+    import { onMounted, reactive, ref, watch } from "vue";
     import { useRoute } from 'vue-router'
     import Search from './Search.vue'
     import Importer from './Importer.vue'
     import Exporter from './Exporter.vue'
+    import RootNodes from './RootNodes.vue'
+    import ProjectNodes from './ProjectNodes.vue'
     import {store} from "./Store.js";
     import web from "../web.js";
 
@@ -12,68 +14,189 @@
         mode: ''
     })
 
+    const state = reactive({
+      drawer:false, 
+      node: '',
+      tab: 0
+    })
+    const upload = ref(null);
+
+    const emit = defineEmits(['fit-to-node', 'create-project', 'change-tab'])
+
+    function fitToNode(id) {
+        console.log(id)
+        state.node = id
+        emit('fit-to-node', id)
+    }
+
+    function changeTab(tab) {
+        emit('change-tab', tab)
+    }
+
+    // watch state.tab
+    watch(() => state.tab, async (newValue, oldValue) => {
+        console.log(newValue)
+        emit('change-tab', newValue)
+    })
+
 </script>
 
 <template>
 
+  <v-app-bar
+          color="teal-darken-4"
+          image="https://picsum.photos/1920/1080?random"
+        >
+          <template v-slot:image>
+            <v-img
+              gradient="to top right, rgba(19,84,122,.8), rgba(128,208,199,.8)"
+            ></v-img>
+          </template>
+  
+          <template v-slot:prepend>
+            <v-app-bar-nav-icon @click.stop="state.drawer = !state.drawer"></v-app-bar-nav-icon>
+          </template>
+  
+          <v-app-bar-title title="projects">
+            <RouterLink to="/">MessyDesk</RouterLink>
+          </v-app-bar-title> 
+
+          <template v-if="store.current_project && store.current_project.data">
+            {{ store.current_project.data.label }}
+          </template>
+          <template v-else>
+            All Your Wonderful Stuff  
+          </template>
+  
+          <v-spacer></v-spacer>
+          
+          
+          
+          <v-tabs v-model="state.tab" >
+            
+            <v-tab >Desk</v-tab>
+            <v-tab>Search</v-tab>
+            <v-tab>Things</v-tab>
+            
+          </v-tabs>
+          <template v-if="store.user && store.user.access == 'admin'">
+            <v-spacer></v-spacer>
+            <v-alert type="warning">{{ store.user.id }}</v-alert>  
+          </template>
+          <!-- <v-btn icon v-if="store.current_project">
+          <router-link :to="'/'"><v-icon>mdi-graph</v-icon>
+            <v-tooltip activator="parent" location="top">graph</v-tooltip>
+          </router-link>
+        </v-btn> -->
+          
+        <!-- <v-btn icon>
+          <router-link :to="'/search'"><v-icon>mdi-magnify</v-icon>
+            <v-tooltip activator="parent" location="top">search</v-tooltip>
+          </router-link>
+        </v-btn>
 
 
-<nav class="navbar navbar-expand-lg ">
-  <div class="container-fluid">
-      <img class="mr-3" src="@/assets/images/logo.svg" height="40px">
-      <a class="navbar-brand" href="/">MessyDesk</a><span v-if="store.current()">{{ store.current().data.name }}</span><div class="badge bg-danger" v-if="store.user && store.user.mode == 'development'" title="KuKaKo is running on developer mode!">LOCAL</div>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <v-btn icon>
+          <router-link :to="'/tags'"><v-icon>mdi-tag</v-icon>
+            <v-tooltip activator="parent" location="top">tags</v-tooltip>
+          </router-link>
+        </v-btn> -->
+  
+          <!-- <v-btn icon>
+            <v-icon @click="store.search_open= !store.search_open">mdi-magnify</v-icon>
+          </v-btn>
+           -->
 
+          <!-- <v-btn icon>
+            <router-link :to="'/entities'" ><v-icon>mdi-account-group-outline</v-icon>
+              <v-tooltip activator="parent" location="top">entity management</v-tooltip>
+            </router-link>
+          </v-btn> -->
 
+          <v-menu location="bottom">
+            <template v-slot:activator="{ props }">
 
+              <v-btn icon  v-bind="props">
+                <v-icon>mdi-dots-vertical</v-icon>
+              </v-btn>
 
+            </template>
 
+            <v-list>
 
-      </ul>
+              <v-list-item>
+                <router-link :to="'/Shibboleth.sso/Logout'" class="dropdown-item">
+                      <i class="fs-5 bi-person"></i><span class="ms-1 d-none d-sm-inline">logout</span>
+                  </router-link>
+                
+              </v-list-item>
 
-        <!-- <Search /> -->
-
-        <div class="btn-group">
-          <button type="button" class="btn navbar dropdown-toggle" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" style="margin-left:50px; padding:15px">
-            Menu
-          </button>
-          <ul class="dropdown-menu dropdown-menu-start dropdown-menu-lg-start">
-
-
-              <li class="nav-item">
-                  <router-link :to="'/services'" class="dropdown-item">
+              <v-list-item>
+                <router-link :to="'/services'" class="dropdown-item">
                       <i class="fs-5 bi-card-list"></i><span class="ms-1 d-none d-sm-inline">Services</span>
                   </router-link>
-              </li>
+              </v-list-item>
 
-
-              <li v-if="store.user && store.user.access == 'admin'" class="nav-item">
-                  <router-link :to="'queries'" class="dropdown-item">
-                      <i class="fs-5 bi-question"></i><span class="ms-1 d-none d-sm-inline">Navigation</span>
+              <v-list-item v-if="store.user && store.user.access == 'admin'">
+                <router-link :to="'/admin'" class="dropdown-item">
+                      <i class="fs-5 bi-person-fill"></i><span class="ms-1 d-none d-sm-inline">Admin</span>
                   </router-link>
-              </li>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+          
+    </v-app-bar>
 
+    <!-- Sidebar -->
+    <v-navigation-drawer
+        v-model="state.drawer"
+        width="375"
+        :location="$vuetify.display.mobile ? 'bottom' : undefined"
+        temporary
+      >
+   
+      <v-list lines="two">
+        <v-list-subheader><router-link :to="'/'" >Back to Main</router-link></v-list-subheader>
 
-          </ul>
-        </div>
+        <v-list-item v-if="props.mode=='graph'"
+          @click="store.uploader_open = true"
+        >
+          <template v-slot:prepend>
+            <v-icon  icon="mdi-file-plus"></v-icon>
+          </template>
+      
+            <v-list-item-title >Add file</v-list-item-title>
+        </v-list-item>
 
-        <div class="btn-group">
-          <button v-if="route.query.node" type="button" class="btn navbar " data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" style="margin-left:50px; padding:15px">
-                        
-            <div @click="store.uploader_open = true" class="dropdown-item">
-                      <i class="fs-5 bi-plus-circle"></i><span class="ms-1 d-none d-sm-inline">Add File</span> </div>
-             
-          </button>
+        <!-- <v-list-item v-if="props.mode=='graph'"
+          @click="store.set_creator_open = true"
+        >
+          <template v-slot:prepend>
+            <v-icon  icon="mdi-folder-plus"></v-icon>
+          </template>
+      
+            <v-list-item-title >Create set</v-list-item-title>
+        </v-list-item> -->
 
-        </div>
+        <v-list-item v-if="props.mode=='projects'"
+          @click="$emit('create-project')"
+        >
+          <template v-slot:prepend>
+            <v-icon  icon="mdi-file"></v-icon>
+          </template>
+      
+            <v-list-item-title >Create desk</v-list-item-title>
+        </v-list-item>
 
-    </div>
-  </div>
-</nav>
+        <v-divider inset></v-divider>
+
+      </v-list>
+
+        <RootNodes v-if="props.mode=='graph'" @fit-to-node="fitToNode" />
+        <ProjectNodes v-if="props.mode=='projects'" @fit-to-node="fitToNode" />
+
+    </v-navigation-drawer>
+
 
 <Importer />
 <Exporter />

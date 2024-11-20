@@ -2,7 +2,7 @@
 
 .node-body {
   min-height: 200px;
-  min-width: 200px;
+  min-width: 300px;
 }
 
 img {
@@ -14,6 +14,8 @@ img {
   color: white; 
   padding:3px
 }
+
+
 </style>
 
 
@@ -32,15 +34,28 @@ const props = defineProps({
 
 <template>
   <div class="node-body">
-    <div class="header"> {{ data.label }}</div>
-    <img :src="data.image" />
-  {{ data.description }}
-  <div class="row m-4">
-    <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">
-      <img v-for="f in data.paths" :src="f" class="w-200 shadow-1-strong rounded mb-4"/>
-    </div>
-  </div>
-   
+    <div class="header"> Desk ({{ data.file_count }})</div>
+    <v-container>
+      <v-row>
+        <v-col>
+          <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">
+            <img v-for="f in data.paths" :src="f" class="w-200 shadow-1-strong rounded mb-4" draggable="false"/>
+          </div>
+        </v-col>
+
+        <v-col>
+          <h3>{{ data.label }}</h3>
+          <!-- <div style="white-space: pre;" v-if="data.description">{{ data.description }}</div> -->
+          <pre v-if="data.description">{{ data.description }}</pre>
+          <div v-else>{{ data.file_count }}</div>
+          
+        </v-col>
+
+      </v-row>
+
+    </v-container>
+
+  
   </div>
 
 

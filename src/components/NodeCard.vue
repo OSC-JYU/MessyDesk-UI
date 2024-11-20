@@ -1,151 +1,108 @@
-<style>
-    .person-photo {
-        width: 80px;
-        margin-left: 0px;
-    }
+<style scoped>
 
-
+.overflow-scroll {
+    overflow-y: scroll;
+    height: 85%;
+}
 </style>
+
 
 <template>
 
-    <!-- information about query-->
-    <!-- <div v-if="route.query.query">
-        <div class="card-header"><h4>{{ current_query.menu }} - {{ current_query.label}}</h4> </div>
+    <v-sheet v-if="store.current_node && store.current().id" class="pa-6 text-black ">
+
+      
+        <!-- RAW FILE LINK -->
+        <template v-if="store.current().type != 'process' && store.current().type != 'set'">
+            <a class="text-medium-emphasis" target="_blank" :href="'/api/files/' + store.current().id.replace('#','')">{{store.current().data.type_label}} open file</a> ({{ store.current().id }})
+        </template>
+
+
+        <!-- LABEL-->
+        <h3 v-if="state.edit_label_open == false" @click="editLabel()" class="font-weight-bold mb-4">{{ store.current_node.data.label }}</h3>
+        <v-card v-else class="pa-6"> 
+            <v-text-field @keyup.enter="saveLabel()"
+                label="Description"
+                v-model="state.edit_label"
+                name="input-7-1"
+                variant="filled"
+                auto-grow
+            ></v-text-field>
+            <v-card-actions>
+                <v-btn @click="closeLabel()">Cancel</v-btn>
+                <v-btn @click="saveLabel()">Save</v-btn>
+            </v-card-actions>
         
-    </div> -->
-
-    <!-- node card --> 
-    <div class="card" v-if="store.current_node && store.current().id && schema.result._attributes">
-
-        <div class="card-header">
-
-            <template v-if="store.current().type != 'process'">
-                <a target="_blank" :href="'/api/files/' + store.current().id.replace('#','')">{{store.current().data.type_label}} {{ store.current().id }}</a>
-            </template>
-            <template v-else>{{ store.current().id }}</template>
-
-
-
-            <div class="d-flex bd-highlight">
-
-
-                <template v-if="store.current().type == 'text'">
-                  
-                  <h4 :class="['card-title', 'p-2', 'flex-grow-1']"> {{schema.result._attributes.label}}
-               
-                      <i @click="toggleEdit()" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
-                      </i>
-                      <input v-if="edit_name" v-model="edit_name" @keyup.enter="saveLabel()"/>
-
-                  </h4>
-              </template>
-
-                <template v-else-if="store.current().type == 'image'">
-                  
-                    <h4 :class="['card-title', 'p-2', 'flex-grow-1']"> {{schema.result._attributes.label}}
-                 
-                        <i @click="toggleEdit()" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
-                        </i>
-                        <input v-if="edit_name" v-model="edit_name" @keyup.enter="saveLabel()"/>
-
-                    </h4>
-                </template>
-
-                <template v-else>
-                   
-                        <h4 :class="['card-title', 'p-2', 'flex-grow-1']">     {{schema.result._attributes.label}}
-                        <i  @click="toggleEdit()" class=" bi bi-pen pointer" style="font-size: 0.9rem; color: blue;margin-left:10px">
-                        </i>
-                        <input v-if="edit_name" v-model="edit_name" @keyup.enter="saveLabel()"/>
-                    </h4>
-
-                </template>
-
-            </div>
-
-            
- 
-
-            <div v-if="editable()">
-                <div role="button" @click="state.editing = true" class="btn btn-primary float-end" title="Edit item">
-                    <i class="bi bi-pen" style="font-size: 1rem; color: white;"></i>
-                </div>
-            </div>
-
-
-
-
-            <!-- {{ schema.result._attributes.path }} -->
-
-
-
-        </div>
+        </v-card>
+                
+             
+        <!-- DESCRIPTION -->
+        <div v-if="empty(store.current_node.data.description)" @click="editDescription()" class="text-medium-emphasis">add description</div>
+        <pre v-if="state.edit_description_open == false" @click="editDescription()">{{ store.current_node.data.description}}</pre>
+        
+        <v-card v-else class="pa-6"> 
+            <v-textarea 
+            label="Description"
+            v-model="state.edit_description"
+            name="input-7-1"
+            variant="filled"
+            auto-grow
+            ></v-textarea>
+            <v-card-actions>
+                <v-btn @click="closeDescription()">Cancel</v-btn>
+                <v-btn @click="saveDescription()">Save</v-btn>
+            </v-card-actions>
+        
+        </v-card>
+    
 
         <!-- THUMBNAIL -->
-        <div v-if="store.current().type == 'image' || store.current().type == 'pdf'">
-            <img style="max-height: 160px;" class="nodecard-image" :src="state.thumbnail" />
-        </div>
-        <v-container v-else>
-            <div v-if="state.params.info">{{ state.params.info }}</div>
-        </v-container>
-       
+         <v-card-text class="pa-0 overflow-scroll">
 
-        <!-- CRUNCHERS -->
-        <div v-if="!['Process', 'Project','Person'].includes(store.current().type)" class="card-body overflow-auto">
-            <h5 v-if="store.current().type != 'process'">Things that you can do with your {{ schema.result._attributes.type }}</h5>
-           <!-- {{ store.current().data }}-->
-
-            <div>
-                <div v-if="services.result && services.result.for_format && services.result.for_format.length == 0" class="alert alert-warning">No crunchers found</div>
-                <div v-if="store.current().data.type == 'set'">
-                    <ol class="card" v-for="service in services.result.for_type">
-                        <template v-if="service.tasks">
-                            <li class="list-group-item border-0" v-for="(value, key) of service.tasks" :key="key">
-                                <div @click="initProcessCreator(service, key)" class="node Service pointer"> {{ value.name }} </div>
-                                <div class="rel-info">{{ value.description }}</div><div class="badge rel-info bg-secondary">{{service.name}}</div>
-                            </li>
-                        </template>
-                    </ol>
-                </div>
-                <ol class="list-group border-0" v-for="service in services.result.for_format">
-                    <template v-if="service.tasks">
-                        <li class="list-group-item border-0" v-for="(value, key) of service.tasks" :key="key">
-                            <div @click="initProcessCreator(service, key)" class="node Service pointer"> {{ value.name }} </div>
-                            <div class="rel-info">{{ value.description }}</div><div class="badge rel-info bg-secondary">{{service.name}}</div>
-                        </li>
-                    </template>
-                </ol>
-
-                <div>
+             <div v-if="store.current().type == 'image' || store.current().type == 'pdf'">
+                 <img  class="nodecard-image" :src="store.current().data.image" />
             </div>
-        </div>
+            <p v-if="store.current().data.info"><i><v-icon class="mr-2">mdi-information</v-icon>{{ store.current().data.info }}</i></p>
 
+        </v-card-text>
 
-  </div>
-       
-    
-<!--
-        <NodeAttributes v-if="schema.result._attributes" :editing="state.editing" :attributes="schema.result._attributes"  @reLoadData="loadData"/>
--->
-
-
-
-        <div :class="['card-body overflow-auto', schema.result._attributes._active ? '' : 'disabled']">
-
-
-
-
-
-        </div>
-        <div class="card-footer">
+        <!-- ACTIONS -->
+        <div class="card-actions d-flex justify-end w-100 pa-2" >
+            
    
              <!-- DELETE BUTTON -->
-            <div class="float-end"  v-if="store.current().type != 'Person'">
-                <button @click="store.node_deleter_open = true" class="btn btn-danger" title="delete item"><i class="bi bi-trash"></i></button>
-            </div>
+            <v-btn  @click="store.node_deleter_open = true" right-0 class="btn btn-danger mr-10" color="red" title="delete item"><i class="bi bi-trash"></i></v-btn>
+            
         </div>
-    </div>
+    </v-sheet>
+
+
+
+    <div v-else>
+
+        <v-sheet
+            class="pa-6 text-black "
+        >
+            <h4 v-if="store.current_project && store.current_project.data" class="text-h5 font-weight-bold mb-4">{{ store.current_project.data.label }}</h4>
+            <h4 v-else class="text-h5 font-weight-bold mb-4">Desk</h4>
+            
+            <p v-if="store.current_project && store.current_project.data" class="">{{ store.current_project.data.description }}</p>
+            <hr/>
+            <p class="mb-8 font-italic">
+            Here you you can see your files and how you have <b>processed</b> them.
+
+            <br>
+            <br>
+            Import files from hamburger menu and crunch them.
+            <br>
+            <br>
+
+            <v-card color="#EDE1CE" class="pa-6">TIP: You can quickly find your original files from hamburger menu.</v-card>
+            </p>
+        </v-sheet>
+        </div>
+
+
 
 </template>
 
@@ -153,7 +110,7 @@
 
 
 <script setup>
-    import { onMounted, watch, reactive, ref, computed } from "vue";
+    import { reactive, computed } from "vue";
     import { useRouter, useRoute } from 'vue-router'
     import {store} from "./Store.js";
     import web from "../web.js";
@@ -162,6 +119,10 @@
     const router = useRouter();
 
     var state = reactive({
+        edit_description: '',
+        edit_description_open: false,
+        edit_label: '',
+        edit_label_open: false,
         thumbnail: '',
         params: '',
         editing: false,
@@ -174,23 +135,6 @@
         _access: null
     })
     
-    var graph = reactive({result:[]})
-    var schema = reactive({result:[]})
-    var services = reactive({result:[]})
-    var me = reactive({data:{}})
-    var edit_name = ref('')
-    const upload = ref(null);
-    var add_new = reactive({type:'', label:''})
-    var created = reactive([])
-    var connect_editor = reactive({
-        relation:{data:[]},
-        data:[],
-        current_node: '',
-        current_rel_id: '',
-        current_rel_attr: '',
-        user_groups: []
-
-    })
 
     const current_query = computed(() => {
         var m = {label:''}
@@ -205,127 +149,45 @@
     })
 
     const permissions = ['user', 'creator', 'admin']
-    const emit = defineEmits(['fitGraph', 'saveLayout', 'setGraphOptions'])
+    const emit = defineEmits(['updateGraph'])
 
 
-    watch(
-        () => route.query.node,
-        async (newValue, oldValue) => {
-            if(newValue)
-                loadData(newValue)
-            else
-                schema.result = []
-
-    })
-
-    watch(
-        () => store.current_node,
-        async (newValue, oldValue) => {
-            reset()
-            if(newValue)
-                loadData(store.current().id)
-            else
-                schema.result = []
-    })
-
-    watch(
-      () => store.update,
-      async (newValue, oldValue) => {
-            await loadData(route.query.node) 
-
-    })
-
-    // users can edit only their own links + data. Admin can edit all
-    function editable() {
-        if(store.current().data.id == '#' + route.query.node) {
-            if(store.current().data.id == store.user.rid || store.user.access == 'admin')
-                return true
-        }
-        return false
-    }
-
-    function setEdit() {
-        reset()
-    }
-
-    function reset() {
-        state.editing = false
-        state.admin_edit = false
-        state.image_edit = false
-        state.selected = ''
-        store.new_node_type = ''
-        connect_editor.current_rel = ''
-    }
-
-    async function loadData(rid) {
-        schema.result = await web.getSchemaAndData(rid)
-        state.thumbnail = getThumbnail()
-        if (schema.result._attributes['@type'] == 'Process')
-            state.params = await getProcessParams()
-        if (schema.result._attributes['@type'] !== 'Process')
-            services.result = await web.getServicesForFile(rid)
-        prepareUserSettings()
-    }
-
-    function getThumbnail() {
-        if(schema.result._attributes && schema.result._attributes.path)
-            return 'api/thumbnails/' + removeLastPathPart(schema.result._attributes.path.replace('data/', ''))
-    }
-
-    async function getProcessParams() {
-        var url = 'api/process/' + removeLastPathPart(schema.result._attributes.path.replace('data/', ''))
-        var params = await web.getProcessParams(url)
-        console.log(params)
-        return params.data
-    }
-
-    function prepareUserSettings() {
-        state._group = null
-        state._access = null
-        if(schema.result._attributes && schema.result._attributes['@type'] == 'Person') {
-            state._group = schema.result._attributes._group
-            state._access = schema.result._attributes._access
-        }
-    }
-
-    function initProcessCreator(data, task_id) {
-        console.log(data)
-        store.process = data
-        store.task_id = task_id
-        store.new_node_label = 'Process'
-        store.new_node_relation = 'WAS_PROCESSED_BY'
-        store.process_creator_open = true
+    function empty(string) {
+        return (!string || string.length === 0 );
     }
 
 
-    async function saveLabel() {
-        var result = await web.setNodeAttribute(store.current().data.id, {key:'label', value: edit_name.value})
-        store.reload({id: store.current().data.id, name: edit_name.value})
-        edit_name.value = ''
+    function editLabel() {
+        state.edit_label = store.current_node.data.label
+        state.edit_label_open = true
     }
 
-
-    function toggleEdit() {
-        if(edit_name.value == '')
-            edit_name.value = store.current().data.name
-        else {
-            edit_name.value = ''
-        }
+    function closeLabel() {
+        state.edit_label = ''
+        state.edit_label_open = false
     }
 
+    function saveLabel() {
+        web.setNodeAttribute(store.current_node.id, {key:'label', value: state.edit_label})
+        store.current_node.data.label = state.edit_label
+        state.edit_label = ''
+        state.edit_label_open = false
+    }
+    function editDescription() {
+        state.edit_description = store.current_node.data.description
+        state.edit_description_open = true
+    }
 
-    function removeLastPathPart(str) {
-        const lastIndex = str.lastIndexOf('/');
-        if (lastIndex !== -1) {
-            return str.substring(0, lastIndex);
-        }
-        return str;
-        }
+    function closeDescription() {
+        state.edit_description = ''
+        state.edit_description_open = false
+    }
 
-    onMounted(async()=> {
-        if(route.query.node) {
-          //  loadData(route.query.node)
-        }
-    })
+    function saveDescription() {
+        web.setNodeAttribute(store.current_node.id, {key:'description', value: state.edit_description})
+        store.current_node.data.description = state.edit_description
+        state.edit_description = ''
+        state.edit_description_open = false
+    }
 
 </script>

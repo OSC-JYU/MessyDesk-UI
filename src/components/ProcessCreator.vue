@@ -1,7 +1,7 @@
 <template>
 
 	<!-- Modal -->
-	<div v-if="store.process_creator_open" class="modal modal-lg fade show" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" style="display:block">
+	<div v-if="store.process_creator_open___" class="modal modal-lg fade show" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" style="display:block">
 		<div class="modal-dialog">
 			<div class="modal-content">
 				<div class="modal-header">
@@ -25,9 +25,6 @@
 							
 
 							
-
-							
-								
 								
 								<div >
 									<input v-model="state.out_params[key]" type="text" class="form-control" placeholder=""  aria-label="Username" aria-describedby="basic-addon1">
@@ -54,15 +51,19 @@
 					</div>
 				
 					
-
 				
 				</div>
 
 
 				<div class="modal-footer">
 					{{ store.current().data.name }}
-					<button @click="close()" type="button" class="btn btn-secondary" >Cancel</button>
-					<button v-if="store.task_id " @click=createProcess() type="button" class="btn btn-primary">Crunch!</button>
+					<v-btn @click="close()" class="btn btn-secondary" >Cancel</v-btn>
+					<v-btn   
+						class="text-none ms-4 text-white"
+        				color="blue-darken-4"
+        				rounded="0"
+        				variant="elevated" 
+						v-if="store.task_id " @click=createProcess() >Crunch!</v-btn>
 					<img src="icons/cookie-bite-solid.svg"/>
 					<div v-if="state.error" class="alert alert-danger">{{state.error}}</div>
 				</div>
@@ -89,6 +90,7 @@
     import web from "../web.js";
 
 	const router = useRouter();
+	const route = useRoute();
 
 
 	var state = reactive({
@@ -112,14 +114,11 @@
 
     })
 
+
 	async function createProcess() {
 		// we must send ELG "params" 
 		// target
 		state.error = ''
-console.log(store.current().id)
-console.log(store.task_id)
-console.log(store.process)
-console.log(state.out_params)
 
 		var process = {id: store.process.id, task: store.task_id}
 		process.params = state.out_params
@@ -135,14 +134,15 @@ console.log(state.out_params)
 		//var node = res.data.result[0]
 		//console.log(res)
 		//store.reload()
-		close()
+		close(1)
 
 	}
 
-	function close() {
+	function close(tomain = 0) {
 		store.new_node_type = ''
 		store.new_node_relation = null
 		store.process_creator_open = false
+		if(tomain)router.push({ name: 'graph', query: { node: route.query.desk} })
 	}
 
 	function createUserInfo(info, params) {
@@ -156,7 +156,6 @@ console.log(state.out_params)
 		} else {
 			return JSON.stringify(params)
 		}
-
 	}
 
 	function initForm() {

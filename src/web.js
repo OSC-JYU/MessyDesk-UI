@@ -6,8 +6,25 @@ let web = {}
 	axios.defaults.baseURL = import.meta.env.VITE_PUBLIC_PATH
 	//axios.defaults.baseURL = ''
 
+// Add a response interceptor
+// axios.interceptors.response.use(function (response) {
+//     // Any status code that lie within the range of 2xx cause this function to trigger
+//     // Do something with response data
+
+//     return response;
+//   }, function (error) {
+// 	//console.log('pam')
+// 	//console.log(error)
+//     // Any status codes that falls outside the range of 2xx cause this function to trigger
+//     // Do something with response error
+// 	//return Promise.reject({error: error});
+// 	return {error: error}
+//     //return Promise.reject(error);
+//   });
+
+
 web.search = async function(search) {
-	var result = await axios.get(`/api/search?search=${search}`)
+	var result = await axios.post(`/api/search`, {query: search})
 	return result.data
 }
 
@@ -29,13 +46,42 @@ web.createProject = async function(name, description) {
 	var response = await axios.post('/api/projects', data)
 }
 
+web.createSet = async function(project_rid, name, description) {
+	project_rid = project_rid.replace('#','')
+	var data = {
+		"label": name,
+		"description": description
+	}
+	var response = await axios.post(`/api/projects/${project_rid}/sets`, data)
+	return response.data
+}
+
 web.getServices = async function(rid) {
 	var result = await axios.get(`/api/services`)
 	return result.data
 }
 
-web.getServicesForFile = async function(file_rid) {
-	var result = await axios.get(`/api/services/files/${file_rid.replace('#','')}`)
+web.getUsers = async function(rid) {
+	var result = await axios.get(`/api/users`)
+	return result.data
+}
+
+web.createUser = async function(data) {
+	try {
+		var result = await axios.post(`/api/users`, data)
+		return result.data
+	} catch (error) {
+		if(error.response)
+			return error.response.data
+		else
+			return error
+	}
+}
+
+web.getServicesForFile = async function(file_rid, filter) {
+	var filter_query = ''
+	if(filter) filter_query = '?filter='+filter
+	var result = await axios.get(`/api/services/files/${file_rid.replace('#','')}${filter_query}`)
 	return result.data
 }
 
@@ -99,6 +145,26 @@ web.getFiles = async function(dir) {
 	return result.data
 }
 
+web.getEntityTypes = async function(dir) {
+	var result = await axios.get(`/api/entities/types`)
+	return result.data
+}
+
+web.getEntitiesByType = async function(type) {
+	var result = await axios.get(`/api/entities/types/${type}`) 
+	return result.data
+}
+
+web.getTags = async function() {
+	var result = await axios.get(`/api/tags`)
+	return result.data
+}
+
+web.createTag = async function(label) {
+	var result = await axios.post(`/api/tags`, {label: label})
+	return result.data
+}
+
 web.getStats = async function() {
 	var result = await axios.get(`/api/graph/stats`)
 	return result.data
@@ -127,6 +193,28 @@ web.getStyle = async function() {
 
 web.getDocInfo = async function(rid) {
 	var result = await axios.get(`/api/documents/${rid.replace('#','')}`)
+	console.log('docinfo')
+	console.log(result.data)
+	if(result.data && result.data.rois) {
+		var count = 0
+		for(var roi of result.data.rois) {
+			//roi.id = roi['@rid']
+			roi['index'] = count
+			roi['id'] = count
+			count++	
+		}
+		
+	}
+	return result.data
+}
+
+web.getNodeFile = async function(rid) {
+	var result = await axios.get(`/api/files/${rid.replace('#','')}`)
+	return result.data
+}
+
+web.getNodePath = async function(rid) {
+	var result = await axios.get(`/api/graph/traverse/${rid.replace('#','')}/in`)
 	return result.data
 }
 
@@ -145,6 +233,22 @@ web.getMyGraph = async function(rel_types=[], node_types=[],q_return='') {
 web.createFileProcess = async function(process, file_rid) {
 
 	const url = `/api/queue/${process.id}/files/${file_rid.replace('#', '')}`
+	console.log(url)
+	var result = await axios.post(url, process)
+	return result
+}
+
+web.createROIProcess = async function(process, file_rid) {
+
+	const url = `/api/queue/${process.id}/files/${file_rid.replace('#', '')}/roi`
+	console.log(url)
+	var result = await axios.post(url, process)
+	return result
+}
+
+web.createSetProcess = async function(process, set_rid) {
+
+	const url = `/api/queue/${process.id}/sets/${set_rid.replace('#', '')}`
 	console.log(url)
 	var result = await axios.post(url, process)
 	return result
@@ -200,6 +304,12 @@ web.connectSchema = async function(from, relation, to) {
 	return result
 }
 
+web.createROIs = async function(rid, data, width, height) {
+	var postdata = {rois: data, width: width, height: height}
+	var result = await axios.post(`/api/graph/vertices/${rid.replace('#','')}/rois`, postdata)
+	return result
+}
+
 web.saveLayout = async function(positions, node) {
 	var result = await axios.post(`/api/layouts`, {data:positions, target: node})
 	return result
@@ -211,10 +321,13 @@ web.getLayoutByTarget = async function(rid) {
 }
 
 
-web.uploadFile = async function(fileObject, rid) {
+web.uploadFile = async function(fileObject, project_rid, set_rid) {
 	var formData = new FormData()
 	formData.append("file", fileObject)
-	await axios.post(`/api/projects/${rid.replace('#','')}/upload`, formData)
+	if(set_rid) 
+		await axios.post(`/api/projects/${project_rid.replace('#','')}/upload/${set_rid.replace('#','')}`, formData)
+	else
+		await axios.post(`/api/projects/${project_rid.replace('#','')}/upload`, formData)
 }
 
 
