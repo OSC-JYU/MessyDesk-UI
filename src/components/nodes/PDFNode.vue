@@ -61,7 +61,7 @@ function openCrunchers() {
 <template>
   <div class="node-pdf nodrag">
     <div class="header">{{ data.label }}</div>
-    <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" />
+    <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" :src="CookieIcon" />
     <div class="m-2">
       <img :src="data.image" draggable="false"/>
       <pre>{{ data.description }}</pre>
