@@ -5,7 +5,7 @@
 		<div class="modal-dialog">
 			<div class="modal-content">
 				<div class="modal-header">
-						Add Cruncher <img src="icons/cookie-bite-solid.svg"/>
+						Add Cruncher <img :src="CookieIcon"/>
 				</div>
 
 
@@ -64,7 +64,7 @@
         				rounded="0"
         				variant="elevated" 
 						v-if="store.task_id " @click=createProcess() >Crunch!</v-btn>
-					<img src="icons/cookie-bite-solid.svg"/>
+						<img :src="CookieIcon"/>
 					<div v-if="state.error" class="alert alert-danger">{{state.error}}</div>
 				</div>
 
@@ -88,6 +88,8 @@
 	import { useRouter, useRoute } from 'vue-router'
     import {store} from "./Store.js";
     import web from "../web.js";
+
+	import CookieIcon from '@/assets/images/cookie-bite-solid_blue.svg';
 
 	const router = useRouter();
 	const route = useRoute();

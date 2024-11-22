@@ -59,7 +59,7 @@ function openCrunchers(id) {
 <template>
   <div class="node-body nodrag">
     <div class="header"> {{ data.label }}
-      <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" />
+      <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" :src="CookieIcon" />
     </div>
    
     <div class="m-2"><pre>{{ data.description.replace(/\n/g, " ") }} </pre></div>

@@ -42,7 +42,7 @@ const props = defineProps({
   
   <v-row align="center">
     <v-col cols="auto">
-      <img src="icons/cookie-bite-solid-white.svg" />
+      <img :src="CookieIcon" />
     </v-col>
     <v-col>
       <p class="p-2" v-if="data.info">

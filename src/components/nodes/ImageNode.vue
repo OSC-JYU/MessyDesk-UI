@@ -76,7 +76,7 @@ function openCrunchers(filter) {
   <div class="node-image nodrag">
     
     <div class="header">{{ data.label }} 
-      <img @click="openCrunchers('')" title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" /> 
+      <img @click="openCrunchers('')" title="Add cruncher" class ="crunch_add" :src="CookieIcon" /> 
     </div>
     
     <v-container   style="max-height: 360px; padding: 0px; overflow: hidden;">

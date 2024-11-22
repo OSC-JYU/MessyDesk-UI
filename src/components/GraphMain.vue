@@ -46,6 +46,8 @@
     import PDFDisplay from './displays/PDFDisplay.vue'
     import HumanJSONDisplay from './displays/HumanJSONDisplay.vue'
 
+    import CookieIcon from '@/assets/images/cookie-bite-solid_blue.svg';
+
     document.title = "MessyDesk"
 
     const route  = useRoute();

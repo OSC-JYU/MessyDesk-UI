@@ -61,7 +61,7 @@ function openCrunchers(id) {
     
     <div class="header"> Natural Entities 
       
-      <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" src="icons/cookie-bite-solid_blue.svg" />
+      <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" :src="CookieIcon" />
     </div>
     <div class="m-2">
       <v-icon size="45" color="green">mdi-map-marker</v-icon> 
