@@ -19,6 +19,12 @@ export default ({ mode }) => {
           }
       },
       base: process.env.VITE_PUBLIC_PATH + '/',
+      // this for Dagre build: https://github.com/vitejs/vite/issues/5759#issuecomment-1034461225
+      build: {
+        commonjsOptions: {
+          ignoreTryCatch: false,
+        }
+      },
       //base: '/s/kukako/',
       //base: '/',
     //   base: process.env.NODE_ENV === 'production'
