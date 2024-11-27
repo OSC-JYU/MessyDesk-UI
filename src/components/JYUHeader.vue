@@ -74,15 +74,17 @@
           
           <v-tabs v-model="state.tab" >
             
-            <v-tab >Desk</v-tab>
+            <v-tab >Crunching</v-tab>
             <v-tab>Search</v-tab>
             <v-tab>Things</v-tab>
             
           </v-tabs>
-          <template v-if="store.user && store.user.access == 'admin'">
+
+          <!-- <template v-if="store.user && store.user.access == 'admin'">
             <v-spacer></v-spacer>
             <v-alert type="warning">{{ store.user.id }}</v-alert>  
-          </template>
+          </template> -->
+
           <!-- <v-btn icon v-if="store.current_project">
           <router-link :to="'/'"><v-icon>mdi-graph</v-icon>
             <v-tooltip activator="parent" location="top">graph</v-tooltip>

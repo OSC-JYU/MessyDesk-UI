@@ -23,6 +23,13 @@ let web = {}
 //   });
 
 
+web.getError = async function(rid) {
+	var result = await axios.get(`/api/errors/${rid}`)
+	if(result.data.response.docs.length == 0)
+		return 'could not find error'
+	return result.data.response.docs[0]
+}
+
 web.search = async function(search) {
 	var result = await axios.post(`/api/search`, {query: search})
 	return result.data

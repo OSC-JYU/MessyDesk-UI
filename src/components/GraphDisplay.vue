@@ -289,9 +289,14 @@
                     console.log('updating ', wsdata.target)
                     var target_node = elements.nodes.find(x => x.id == wsdata.target)
                     if(target_node) {
+                        target_node.data.error = ''
                         if(wsdata.image) target_node.data.image = wsdata.image
                         if(wsdata.description) target_node.data.description = wsdata.description
                         if(wsdata.count) target_node.data.count = wsdata.count
+                        if(wsdata.error) {
+                            target_node.data.error = wsdata.error
+                            target_node.data.image = ''
+                        }
                     }
                     // stop processing animation from process node
                     if(wsdata.process) {
@@ -635,6 +640,9 @@
 
             if(node.data.image) 
                 flownode.data.image = node.data.image
+
+            if(node.data.error) 
+                flownode.data.error = node.data.error
 
             elements.nodes.push(flownode)
         }

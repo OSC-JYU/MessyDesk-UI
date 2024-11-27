@@ -1,4 +1,4 @@
-<style scoped>
+<style >
 
 .column_text {
     height: 90%;
@@ -15,6 +15,27 @@
 
 .highlight {
   background-color: yellow
+}
+
+.PERSON {
+  background-color: rgb(139, 200, 125)
+}
+
+.GPE {
+  background-color: rgb(199, 173, 114)
+}
+
+.DATE {
+
+  background-color: rgb(171, 137, 193)
+}
+
+.NORP {
+  background-color: rgb(137, 188, 193)
+}
+
+.LOC {
+  background-color: rgb(187, 193, 137)
 }
 </style>
 
@@ -37,11 +58,12 @@
 
         <v-col cols="3" class="column_text2">
           <div v-if="state.file">{{ state.source.label }}</div>
+          
           <div v-for="e of entity_order">
             <template v-if="state.entities[e] && state.entities[e].length">
               <h5>{{ e }} <span> {{ state.entities[e].length }}</span></h5>
               <div v-for="entity of state.entities[e]">
-                <a :href="'#highlight-'+entity.start">{{ entity.word }}</a> 
+                <a :href="'#highlight-'+entity.start" :class="entity.entity_group">{{ entity.word }}</a> 
               </div>
             </template>
           </div>
@@ -88,6 +110,7 @@
     let offset = 0;
 
     highlights.forEach((highlight) => {
+      console.log(highlight)
         // Adjust start and end positions by the current offset
         let start = highlight.start;
         let end = highlight.end;
@@ -97,7 +120,7 @@
         
         // Append the highlighted part with line breaks handled
         const highlightedText = str.substring(highlight.start, highlight.end);
-        result += `<span class="highlight" id="highlight-${highlight.start}">${highlightedText}</span>`;
+        result += `<span class="highlight ${highlight.entity_group}" id="highlight-${highlight.start}">${highlightedText}</span>`;
         lastIndex = highlight.end
 
     });
@@ -110,26 +133,27 @@
 }
 
     async function load() { 
+      state.entities = {}
       var response = await web.getDocInfo(store.file['@rid'])
-        state.source = await web.getDocInfo(store.source)
+      state.source = await web.getDocInfo(store.source)
+      
+      state.file = response
+      state.data = await web.getFiles(state.file['@rid'].replace('#', ''))
+      var source_text = await web.getFiles(state.source['@rid'].replace('#', ''))
+      state.json = state.data
+      if(Array.isArray(state.json)) {
         
-        state.file = response
-        state.data = await web.getFiles(state.file['@rid'].replace('#', ''))
-        var source_text = await web.getFiles(state.source['@rid'].replace('#', ''))
-        state.json = state.data
-        if(Array.isArray(state.json)) {
-          
-          for(var entity of state.json) {
-            console.log(entity['entity_group'])
-            if(state.entities[entity['entity_group']]) {
-              state.entities[entity['entity_group']].push(entity)
-            } else {
-              state.entities[entity['entity_group']] = [entity]
-            }
+        for(var entity of state.json) {
+          console.log(entity['entity_group'])
+          if(state.entities[entity['entity_group']]) {
+            state.entities[entity['entity_group']].push(entity)
+          } else {
+            state.entities[entity['entity_group']] = [entity]
           }
         }
-        console.log(state.json)
-        state.source_text = renderStringAsHtml(source_text, state.json)
+      }
+      console.log(state.json)
+      state.source_text = renderStringAsHtml(source_text, state.json)
     }
 
     onMounted(async()=> {

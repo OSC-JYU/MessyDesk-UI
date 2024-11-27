@@ -41,10 +41,13 @@ em {
 }
 
 .Project {
-  background-color: #6e2a2a;
-  border-radius: 15px;
+  background-color: white;
+  color: black;
+  border: solid #16147f;
+  border-width: 10px 0 0 0;
   text-align: center;
 }
+
 
 .Set {
   background-color: #005757;
@@ -66,6 +69,10 @@ em {
 .pdf {
   background-color: #9b4949;
   color: white;
+}
+
+.tiny {
+  width: 100px;
 }
 </style>
 
@@ -141,9 +148,9 @@ em {
                 <!-- LEFT COLUMN -->
                 <v-col cols="1" align="center">
                   <template v-for="node of state.nodepath">
-                    <div><v-icon size="15" color="green">mdi-arrow-up</v-icon></div>
-                    <div :class="'node-base ' + node['@type']+' '+node.type"  @click="go(node['@rid'])">{{ node.label }}
-                      <img v-if="node.type == 'pdf' || node.type == 'image'" :src="'api/thumbnail/' + node.path" />
+                    <div v-if="node['@type'] !== 'User'"><v-icon size="15" color="green">mdi-arrow-up</v-icon></div>
+                    <div v-if="node['@type'] !== 'User'" :class="'node-base ' + node['@type']+' '+node.type"  >{{ node.label }}
+                      <img class="tiny" v-if="node.type == 'pdf' || node.type == 'image'" :src="'api/thumbnails/' + node.path" />
                     </div>
                   </template>
                 </v-col>
@@ -159,7 +166,7 @@ em {
                   <div >
                     <div v-if="state.text" ref="textContainer" v-html="state.text"></div>
                     <v-card v-else color="#EDE1CE" class="p-2"> <h4>How search works?</h4><p>When your crunchers create texts (like OCR) or Region of interests (like NER), or when you write description, the text get indexed and you can find it with search.</p>By default, the search is very aggressive, so it should work well with OCR texts also.<br> <br><p>If you have any ideas of how search should work, then contact ari.hayrinen@jyu.fi </p> 
-
+                      <div class="alert alert-info m-2">The search is not fully functional yet.</div>
                       </v-card>
                   </div>
 
@@ -167,7 +174,7 @@ em {
 
                 <!-- right COLUMN -->
                 <v-col cols="4" class="column_text2">
-                  <div class="alert alert-info m-2">The search is not fully functional yet.</div>
+                  
                   <v-text-field v-model="state.search" @keydown.enter="search()" label="Search"></v-text-field>
 
 

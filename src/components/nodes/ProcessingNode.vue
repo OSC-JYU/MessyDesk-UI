@@ -13,6 +13,7 @@ img {
 
 <script setup>
 import { Handle, Position } from '@vue-flow/core'
+import CookieIconWhite from '@/assets/images/cookie-bite-solid-white.svg';
 
 
 const props = defineProps({
@@ -35,15 +36,18 @@ const props = defineProps({
     
   </div>
   <pre class="p-2" v-if="data.description">{{ data.description }}</pre>
+  <v-alert icon="mdi-karate" type="error" v-if="data.error"> {{ data.error }}</v-alert>
+  
+  
   
   <v-row align="center">
     <v-col cols="auto">
-      <!-- <img v-if="data.image" :src="data.image" /> -->
-      <img :src="CookieIcon"/>
+      <img v-if="data.image" :src="data.image" />  
+      <img v-else-if="!data.error" :src="CookieIconWhite"/>
       <!-- <img src="icons/wait.gif" /> -->
     </v-col>
     <v-col>
-      <p  v-if="data.info">
+      <p  v-if="data.info && !data.error">
         
         <i>{{ data.info }}</i>
       </p>

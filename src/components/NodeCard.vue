@@ -19,6 +19,7 @@
 
 
         <!-- LABEL-->
+        <div v-if="empty(store.current_node.data.label)" @click="editLabel()" class="text-medium-emphasis">add label</div>
         <h3 v-if="state.edit_label_open == false" @click="editLabel()" class="font-weight-bold mb-4">{{ store.current_node.data.label }}</h3>
         <v-card v-else class="pa-6"> 
             <v-text-field @keyup.enter="saveLabel()"
@@ -55,6 +56,13 @@
         
         </v-card>
     
+        <!-- ERROR -->
+        <v-card-text class="pa-0 overflow-scroll" v-if="store.current_node.data.error">
+            <v-alert type="error"  @click="editDescription()" class="text-medium-emphasis">Something went wrong processing this file</v-alert>
+            <v-btn  @click="getError()">show error</v-btn>
+            <pre>{{ state.full_error }}</pre>
+        </v-card-text>
+
 
         <!-- THUMBNAIL -->
          <v-card-text class="pa-0 overflow-scroll">
@@ -110,7 +118,7 @@
 
 
 <script setup>
-    import { reactive, computed } from "vue";
+    import { reactive, computed, watch } from "vue";
     import { useRouter, useRoute } from 'vue-router'
     import {store} from "./Store.js";
     import web from "../web.js";
@@ -132,9 +140,22 @@
         image_edit: false,
         show_loader: false,
         _group: null,
-        _access: null
+        _access: null,
+        error: null,
+        full_error: null
     })
     
+
+    watch(
+        () => store.current_node,
+        async (newValue, oldValue) => {
+            state.full_error = null
+            state.editing = false
+            state.edit_description = ''
+            state.edit_description_open = false
+            state.edit_label_open = false
+            state.edit_label = ''
+    })
 
     const current_query = computed(() => {
         var m = {label:''}
@@ -153,9 +174,16 @@
 
 
     function empty(string) {
-        return (!string || string.length === 0 );
+        return (!string || string.trim().length === 0 );
     }
 
+    async function getError() {
+        var rid = store.current().id.replace('#','')
+        var response = await web.getError(rid)
+        var error = JSON.parse(response.error)
+        var message = JSON.parse(response.message)
+        state.full_error = 'ERROR:\n\n' + JSON.stringify(error) + '\n\nMESSAGE:\n\n' + JSON.stringify(message) + '\n\n'
+    }
 
     function editLabel() {
         state.edit_label = store.current_node.data.label
@@ -168,6 +196,7 @@
     }
 
     function saveLabel() {
+        if (empty(state.edit_label)) return
         web.setNodeAttribute(store.current_node.id, {key:'label', value: state.edit_label})
         store.current_node.data.label = state.edit_label
         state.edit_label = ''
@@ -189,5 +218,6 @@
         state.edit_description = ''
         state.edit_description_open = false
     }
+
 
 </script>

@@ -36,6 +36,8 @@ import { Handle, Position, useNode } from '@vue-flow/core'
 import { useRouter, useRoute } from 'vue-router'
 import {store} from "../Store.js";
 
+import CookieIcon from '@/assets/images/cookie-bite-solid_blue.svg';
+
 const router = useRouter();
 const route = useRoute();
 

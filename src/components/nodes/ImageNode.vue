@@ -50,6 +50,8 @@ import { Handle, Position, useNode } from '@vue-flow/core'
 import { useRouter, useRoute } from 'vue-router'
 import {store} from "../Store.js";
 
+import CookieIcon from '@/assets/images/cookie-bite-solid_blue.svg';
+
 const router = useRouter();
 const route = useRoute();
 
@@ -89,7 +91,7 @@ function openCrunchers(filter) {
       </v-row>
 
       <v-row v-if="data.description != data.label">
-        <v-col class="d-flex align-center justify-center p-0">
+        <v-col class="d-flex align-center justify-center p-2 m-2">
           
           <pre>{{ data.description }}</pre>
           
