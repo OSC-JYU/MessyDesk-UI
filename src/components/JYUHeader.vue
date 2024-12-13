@@ -29,6 +29,12 @@
         emit('fit-to-node', id)
     }
 
+    function createSource(type) {
+      store.source_creator_type = type
+      store.source_creator_open = true
+      state.drawer = false
+    }
+
     function changeTab(tab) {
         emit('change-tab', tab)
     }
@@ -169,6 +175,31 @@
       
             <v-list-item-title >Add file</v-list-item-title>
         </v-list-item>
+
+
+
+
+
+        <v-list-group value="Actions" v-if="props.mode=='graph'">
+          <template v-slot:activator="{ props }">
+            <v-list-item
+              v-bind="props"
+              title="Add source"
+            >
+            <template v-slot:prepend>
+            <v-icon  icon="mdi-folder-plus"></v-icon>
+          </template>
+          </v-list-item>
+          </template>
+
+          <v-list-item @click="createSource('nextcloud')">Nextcloud
+            <template v-slot:prepend>
+            <v-icon  icon="mdi-cloud-arrow-down"></v-icon>
+          </template>
+
+          </v-list-item>
+          
+        </v-list-group>
 
         <!-- <v-list-item v-if="props.mode=='graph'"
           @click="store.set_creator_open = true"

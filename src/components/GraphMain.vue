@@ -34,6 +34,7 @@
     import CruncherList from './CruncherList.vue'
 
     import SetCreator from './SetCreator.vue'
+    import SourceCreator from './SourceCreator.vue'
 
     import SearchMain from './SearchMain.vue'
     import EntitiesMain from './EntitiesMain.vue'
@@ -98,6 +99,7 @@
                     <Uploader mode="graph" />
                     <NodeDeleter mode="graph" />
                     <SetCreator mode="graph" /> 
+                    <SourceCreator mode="graph" /> 
                 </v-col>
 
 

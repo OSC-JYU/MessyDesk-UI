@@ -29,6 +29,8 @@ export const store = reactive({
   exporter_open: false,
   crunchers_open: false,
   set_creator_open: false,
+  source_creator_open: false,
+  source_creator_type: '',
   search_open: false,
   graph_style: [],
   root_nodes: [],

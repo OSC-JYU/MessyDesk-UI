@@ -63,6 +63,19 @@ web.createSet = async function(project_rid, name, description) {
 	return response.data
 }
 
+web.createSource = async function(project_rid, state, type) {
+	project_rid = project_rid.replace('#','')
+	var data = {
+		"type": type,
+		"label": state.source_name,
+		"url": state.url,
+		"description": state.description
+	}
+
+	var response = await axios.post(`/api/projects/${project_rid}/sources`, data)
+	return response.data
+}
+
 web.getServices = async function(rid) {
 	var result = await axios.get(`/api/services`)
 	return result.data

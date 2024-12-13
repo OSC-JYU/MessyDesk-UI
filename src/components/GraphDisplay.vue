@@ -170,6 +170,10 @@
                             <SetNode :data="data" />
                         </template>
 
+                        <template #node-nextcloud="{ data }">
+                            <SourceNode :data="data" />
+                        </template>
+
                         <template #node-human.json="{ data }">
                             <HumanNode :data="data" />
                         </template>
@@ -236,6 +240,7 @@
     import OSDNode from './nodes/OSDNode.vue'
     import HumanNode from './nodes/HumanNode.vue'
     import NERNode from './nodes/NERNode.vue'
+    import SourceNode from './nodes/SourceNode.vue'
     import EmptyNode from './nodes/EmptyNode.vue'
 
     import { useShuffle } from './useShuffle'
@@ -282,7 +287,7 @@
             if(wsdata.target) {
                 console.log('got message:', wsdata.command)
                 if(wsdata.command == 'add') {
-                    addNode(wsdata)
+                    addNode(wsdata) 
                 } else if (wsdata.command == 'update') {
                     if(state.setPanel) loadSet()  // update set panel if open
 
@@ -629,8 +634,10 @@
                     roi_count: node.data.roi_count
                 }
             }
-            if(node.data._type)
+            if(node.data._type) {
+                flownode.data._type = node.data._type.toLowerCase(),
                 flownode.type = node.data._type.toLowerCase()
+            }
 
             if(positions && positions[node.data.id]) {
                 flownode.position = positions[node.data.id]
@@ -640,6 +647,9 @@
 
             if(node.data.image) 
                 flownode.data.image = node.data.image
+            
+            if(node.data.metadata)
+                flownode.data.metadata = node.data.metadata
 
             if(node.data.error) 
                 flownode.data.error = node.data.error
