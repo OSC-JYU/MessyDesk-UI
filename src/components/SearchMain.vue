@@ -223,7 +223,7 @@ em {
                           <!-- {{ state.result.response.docs}} -->
                         <v-card @click="go(item.id)" v-for="item in state.result.response.docs" :key="item" class="mt-2">
                           <v-card-title >
-                            <div >{{item.id}}  ({{item.type}}) {{item.label}} </div>
+                            <div > {{item.label}} ({{item.type}}) {{item.id}} </div>
                           </v-card-title>
                           <v-card-subtitle v-if="item.description">{{ item.description.replace('\n', '') }}</v-card-subtitle> 
                           <v-card-text v-if="state.result.highlighting[item.id]" v-html="state.result.highlighting[item.id].fulltext"></v-card-text>
