@@ -123,7 +123,7 @@
       state.file = null
       var response = await web.getDocInfo(store.file['@rid'])
       state.file = response
-      state.file.thumbnail = removeLastPathPart('/api/thumbnails/' + response.path)
+      state.file.thumbnail = removeLastPathPart('api/thumbnails/' + response.path)
 
       image.src = state.file.thumbnail; 
       image.onload = () => {

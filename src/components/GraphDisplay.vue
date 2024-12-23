@@ -51,6 +51,7 @@
 			<div class="col-12 px-0">
                 
                 <div class="graph-display">
+                  
                    
                     <!-- set panel -->
                     <v-navigation-drawer  v-if="store.current_node" v-model="state.setPanel" temporary location="bottom" >
@@ -93,7 +94,7 @@
                                 <v-img
                                 class="align-end text-white"
                                 width="200"
-                                :src="file.thumb"
+                                :src="file.thumb + '/thumbnail.jpg'"
                                 cover
                                 >
                                 <v-card-title>{{ file.label }}</v-card-title>
@@ -193,10 +194,13 @@
                         <Background />
 
                         </VueFlow>  
+                        <!-- center view-->
+                        <v-icon  style="position: absolute; bottom: 10px; right: 30px;" @click="flow.fitView({duration: 1000, padding: padding})" title="reset view"  size="25" >mdi-fullscreen</v-icon>
+
                         <template v-if="props && props.mode == 'graph'">
-                            <v-icon  style="position: absolute; bottom: 10px; right: 30px;" @click="layoutGraph('LR')" title="original files only"  size="25" >mdi-root</v-icon>
-                            <v-icon  style="position: absolute; bottom: 10px; right: 30px;" @click="layoutGraph('LR')" title="order left to right"  size="25" >mdi-arrow-right-box</v-icon>
-                            <v-icon  style="position: absolute; bottom: 10px; right: 00px;" @click="layoutGraph('TB')" title="order to top down"  size="25" >mdi-arrow-down-box</v-icon>
+                            <v-icon  style="position: absolute; bottom: 10px; right: 30px;" @click="flow.fitView({duration: 1000, padding: padding})" title="reset view"  size="25" >mdi-fullscreen</v-icon>
+                            <!-- <v-icon  style="position: absolute; bottom: 10px; right: 90px;" @click="layoutGraph('LR')" title="original files only"  size="25" >mdi-arrow-right-box</v-icon>
+                            <v-icon  style="position: absolute; bottom: 10px; right: 60px;" @click="layoutGraph('TB')" title="order to top down"  size="25" >mdi-arrow-down-box</v-icon> -->
                         </template>
                 </div>
 			</div>
@@ -379,17 +383,21 @@
             //     }
                 
             //     if(props.mode == "graph") getRootNodes()
-
+            if(!state.node_added) {
+                if(props.mode == "projects" && store.view) {
+                    console.log('restoring view')
+                    flow.setViewport(store.view)
+                }
             // // node is added
-            // } else {
+             } else {
                 console.log('reorder target', store.reorder_target)
                 if(state.node_added) fitToNode(state.node_added)
                 else fitToNode(store.reorder_target)
 
                 store.reorder_target = state.node_added
                 state.node_added = 0
-                store.view = flow.getViewport()
-           // }
+                //store.view = flow.getViewport()
+            }
         }
 
 
@@ -398,18 +406,16 @@
 
 
     flow.onMoveEnd ((event) => {
-        if(props.mode == "graph") store.view = flow.getViewport()
+        if(props.mode == "projects") store.view = flow.getViewport()
         console.log('storing view')
     })
 
 
     flow.onNodeDoubleClick((event) => {
         store.current_node = event.node
-        
- 
-        console.log(event.node.data.type)
+
         if(event.node.type == "project" ) {
-            store.view = null
+            //store.view = null
             if(store.current_node) store.current_project = store.current_node
             router.push({ name: 'graph', query: { node: event.node.id.replace('#', '')} })
         } else if(event.node.type == "set") {
@@ -427,10 +433,7 @@
                 }
             }
             emit('open-node', event.node.id, source)
-            // if(cruncher && source)
-            //     router.push({ name: 'files', params: { rid: event.node.id.replace('#', '')}, query: {cruncher:cruncher, source:source} })
-            // else
-            //     router.push({ name: 'files', params: { rid: event.node.id.replace('#', '')} })
+
         }
            
     })
@@ -648,6 +651,9 @@
             if(node.data.image) 
                 flownode.data.image = node.data.image
             
+            if(node.data.service) 
+                flownode.data.service = node.data.service
+
             if(node.data.metadata)
                 flownode.data.metadata = node.data.metadata
 

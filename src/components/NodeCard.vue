@@ -35,7 +35,7 @@
             </v-card-actions>
         
         </v-card>
-                
+              
              
         <!-- DESCRIPTION -->
         <div v-if="empty(store.current_node.data.description)" @click="editDescription()" class="text-medium-emphasis">add description</div>
@@ -62,7 +62,6 @@
             <v-btn  @click="getError()">show error</v-btn>
             <pre>{{ state.full_error }}</pre>
         </v-card-text>
-
 
         <!-- THUMBNAIL -->
          <v-card-text class="pa-0 overflow-scroll">

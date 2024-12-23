@@ -50,18 +50,25 @@
                                                 <!-- task specific settings -->
                                                 <div v-if="task.params_help">
                                                     <div v-for="(help, key) in task.params_help" :key="key" class="input-group mb-3">
-                                                            <div class="input-group-prepend">
-                                                                <span class="input-group-text" id="basic-addon1">{{ help.name }}</span>
-                                                            </div>
+                                                            <v-container style="width: 100%">
+                                                                <b>{{ help.name }}</b>
+                                                                <div><i>{{ help.help }}</i></div>
+                                                            </v-container>
                                                             
                                                             
-                                                            <div >
+                                                           
+                                                           <template v-if="help.display && help.display == 'checkbox'">
+                                                                <v-checkbox v-model="task.values[key]" v-for="value in help.values" :label="value.label" :value="value.value"></v-checkbox>
+                                                            </template>
+                                                            <template v-else-if="help.display && help.display == 'dropdown'">
+                                                                <v-select v-model="task.values[key]" :items="help.values"></v-select>
+                                                            </template>
+                                                            <template v-else>   
                                                                 <input v-model="task.values[key]" type="text" class="form-control" placeholder=""  aria-label="Username" aria-describedby="basic-addon1">
-                                                                <div>{{ help.help }}</div>
-                                                                <div v-if="help.values"	>{{ help.values }}</div>	
-                                                            </div>
+                                                            </template>
+                                                       
                                                             
-                                                            
+            
                                                             
                                                         </div>
                                                         
@@ -69,11 +76,12 @@
                                                     <!-- common settings -->
                                                     <div v-else-if="service.params_help" >
                                                         <div v-for="(help, key) in service.params_help" :key="key" class="input-group mb-3">
-                                                            <div class="input-group-prepend">
-                                                                <span class="input-group-text" id="basic-addon1">{{ help.name }}</span>
-                                                            </div>
+                                                            <v-container style="width: 100%">
+                                                                <b>{{ help.name }}</b>
+                                                                <div><i>{{ help.help }}</i></div>
+                                                            </v-container>
                                                             <input v-model="task.values[key]"  type="text" class="form-control" placeholder=""  aria-label="Username" aria-describedby="basic-addon1">
-                                                            <div>{{ help.help }}</div>
+                                                           
                                                         </div>
                                                     </div>
                                                     <div v-else>This cruncher has no settings, just click "Crunch!".</div>
@@ -150,6 +158,12 @@
             state.service_count += 1
             for(var task in service.tasks) {
                 service.tasks[task].values = {}
+                if(service.tasks[task].params_help) {
+                    for(var param in service.tasks[task].params_help) {
+                        //service.tasks[task].values[param] = service.tasks[task].params_help[param].default
+                        if(service.tasks[task].params_help[param].multi) service.tasks[task].values[param] = []
+                    }
+                }
             }
         }
     }

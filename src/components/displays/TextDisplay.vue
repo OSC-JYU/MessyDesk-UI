@@ -20,7 +20,7 @@
             <h4>{{ state.file.label}}</h4>
             {{ state.file.description }}
           </div>
-          <v-switch color="primary" @change="toggleSearch()" label="Enabled in search"></v-switch>
+          <!-- <v-switch color="primary" @change="toggleSearch()" label="Enabled in search"></v-switch> -->
           <v-card title="Region of Interest">
               <v-alert type="info" class="mt-6">Click and drag to create saved selections (ROI).</v-alert>
               
