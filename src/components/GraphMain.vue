@@ -69,7 +69,7 @@
       var response = await web.getDocInfo(node_rid)
       store.file = response
       store.source = source_rid
-      state.tab = 3
+      state.tab = 3  // this tab is for file display
     }
 
 

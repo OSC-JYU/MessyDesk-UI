@@ -28,7 +28,7 @@
           <!-- <div v-if="state.file && state.file.rois">{{ state.file.rois }}</div> -->
           <div v-if="state.file">
             <h3>{{ state.file.label }}</h3>
-            {{ state.file.description }}
+            <DescriptionEditor :description="state.file.description" :rid="state.file['@rid']"/>
           </div>
           
           <v-alert type="info" >Click and drag to create saved selections (ROI).</v-alert>
@@ -98,10 +98,12 @@
     import web from "../../web.js";
     import {store} from "../../components/Store.js";
 
+    import DescriptionEditor from './DescriptionEditor.vue'
+
     // tab controls
     const emit = defineEmits(['change-tab'])
     const props = defineProps(['tab'])
-    // tab change launces content update. Could be done otherwise propably?
+    // tab change launces content update. Could be done otherwise probaply?
     watch(() => props.tab, async (newValue, oldValue) => {
       await load()
     })

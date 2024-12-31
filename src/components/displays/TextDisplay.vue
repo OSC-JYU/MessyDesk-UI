@@ -18,7 +18,8 @@
         <v-col cols="3" class="column_text2">
           <div v-if="state.file">
             <h4>{{ state.file.label}}</h4>
-            {{ state.file.description }}
+            <DescriptionEditor :description="state.file.description" :rid="state.file['@rid']"/>
+
           </div>
           <!-- <v-switch color="primary" @change="toggleSearch()" label="Enabled in search"></v-switch> -->
           <v-card title="Region of Interest">
@@ -46,6 +47,7 @@
   
     import web from "../../web.js";
     import {store} from "../../components/Store.js";
+    import DescriptionEditor from './DescriptionEditor.vue'
 
     const textContainer = ref(null)
 

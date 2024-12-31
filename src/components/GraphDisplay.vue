@@ -87,31 +87,28 @@
                             cols="2"
                             >
 
-                            <v-card
-                                class="mx-auto"
-                                
-                            >
-                                <v-img
-                                class="align-end text-white"
-                                width="200"
-                                :src="file.thumb + '/thumbnail.jpg'"
-                                cover
-                                >
-                                <v-card-title>{{ file.label }}</v-card-title>
-                                </v-img>
+                            <v-card class="mx-auto">
+                                <div @dblclick="openSetFile(file)" class="d-flex flex-no-wrap justify-space-between">
+                                    <v-img
+                                    class="align-end text-white"
+                                    width="200"
+                                    :src="file.thumb + '/thumbnail.jpg'"
+                                    cover
+                                    >
+                                    <v-card-title>{{ file.label }}</v-card-title>
+                                    </v-img>
 
-                                <v-card-subtitle class="pt-4">
-                                Image
-                                </v-card-subtitle>
+                                    <v-card-subtitle class="pt-4">
+                                    Image
+                                    </v-card-subtitle>
 
-                                <v-card-text>
-                                <div> {{ file.description }}</div>
-
-                                </v-card-text>
+                                    <v-card-text>
+                                        <div> {{ file.description }}</div>
+                                    </v-card-text>
+                                </div>
 
                                 <v-card-actions>
-
-                                <v-switch v-model="file.expand" @change="expandSetNode(file)" label="Show in Desk" color="primary">expand</v-switch>
+                                    <v-switch v-model="file.expand" @change="expandSetNode(file)" label="Show in Desk" color="primary">expand</v-switch>
                                 </v-card-actions>
                             </v-card>
 
@@ -488,6 +485,11 @@
             loadGraph(route, oldValue)
     })
 
+    function openSetFile(file) {
+        
+        emit('open-node', file['@rid'])
+    } 
+
     async function layoutGraph(direction) {
 
         //nodes.value = layout(nodes.value, edges.value, direction)
@@ -532,18 +534,6 @@
 
     async function loadSet() {
         state.setdata = await web.getSetFiles(store.current_node.id)
-    }
-
-    function updateGraphNode(update) {
-
-        console.log('updateGraphNode', update)
-
-        var target_node = elements.nodes.find(x => x.id == update.id)
-        if(target_node) {
-            if(update.name) {
-                target_node.data.label = update.name
-            }
-        }
     }
 
     function addNode(wsdata) {

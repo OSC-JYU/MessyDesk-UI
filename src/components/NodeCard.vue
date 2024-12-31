@@ -213,7 +213,7 @@
 
     function saveDescription() {
         web.setNodeAttribute(store.current_node.id, {key:'description', value: state.edit_description})
-        store.current_node.data.description = state.edit_description
+        //store.current_node.data.description = state.edit_description
         state.edit_description = ''
         state.edit_description_open = false
     }
