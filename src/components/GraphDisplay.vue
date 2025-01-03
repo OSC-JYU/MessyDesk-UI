@@ -63,7 +63,7 @@
 
                         <v-toolbar-title>
                             <v-icon size="35" color="green">mdi-folder-outline</v-icon>
-                            {{ store.current_node.data.label }}
+                            {{ store.current_node.data.label }} <span v-if="state.setdata.file_count">({{ state.setdata.file_count }} files )</span>
                         </v-toolbar-title>
                         </v-toolbar>
 
@@ -81,14 +81,14 @@
 
                         <v-row class="set-panel">
                             <v-col
-                            v-for="file in state.setdata"
+                            v-for="(file, index) in state.setdata.files"
                             :key="file.id"
                             class="d-flex child-flex flow"
                             cols="2"
                             >
 
                             <v-card class="mx-auto">
-                                <div @dblclick="openSetFile(file)" class="d-flex flex-no-wrap justify-space-between">
+                                <div @dblclick="openSetFile(file, index)" class="d-flex flex-no-wrap justify-space-between">
                                     <v-img
                                     class="align-end text-white"
                                     width="200"
@@ -485,9 +485,8 @@
             loadGraph(route, oldValue)
     })
 
-    function openSetFile(file) {
-        
-        emit('open-node', file['@rid'])
+    function openSetFile(file, index) {
+        emit('open-node', file['@rid'], store.current_node.id, state.setdata.file_count, index )
     } 
 
     async function layoutGraph(direction) {

@@ -38,7 +38,8 @@ em {
     }
 
     async function create() {
-      var response = await web.createEntity(state.current_type, {label: state.new_label})
+      var response = await web.createEntity(state.current_type, state.new_label)
+      state.add = false
     }
 
     onMounted(async()=> {
@@ -84,41 +85,41 @@ em {
                 cols="4"
                 color="light-blue lighten-3"
               >
+
                 <!-- Second column content -->
                  
                 <v-container>
               
            
-                  <h2>Things</h2>
+                  
                   <span class="m-2 p-2 cursor-pointer" @click="search(type.type)" v-for="type of state.types.result"> {{ type.type }} ({{ type.count }}) </span>
 
                   <br>
+
+                  
+                  <v-container v-if="state.result && !state.add">
+
+                    <v-template v-for="item in state.result" :key="item" class="mt-2">
+                      
+                     
+                        <v-chip class="ma-2" :color="item.color" label> <v-icon :icon="'mdi-' + item.icon.toLowerCase()" start></v-icon>  {{item.label}} </v-chip>
+       
+                    </v-template>
+
+                  </v-container>
+
                   <v-btn v-if="!state.add && state.current_type" class="btn-primary" @click="state.add  = true">Add new</v-btn>
+
+
 
                   <div v-if="state.add">  
                     <v-card title="Add new Entity">
-                    <v-card-text>
-                      <v-text-field v-model="state.new_label" label="Label"></v-text-field>
-                      <v-btn @click="create()">Create</v-btn>
-
-                    </v-card-text>
-
+                      <v-card-text>
+                        <v-text-field v-model="state.new_label" label="Label"></v-text-field>
+                        <v-btn @click="create()">Create</v-btn>
+                      </v-card-text>
                     </v-card>
-
                   </div>
-
-                  
-                  <template v-if="state.result && !state.add">
-
-                    <v-card v-for="item in state.result" :key="item" class="mt-2">
-                      
-                      <v-card-title >
-                        <div @click="go(item.id)">  {{item.label}} {{item.lastname}}</div>
-                      </v-card-title>
-                      <v-card-subtitle>{{ item.type}}</v-card-subtitle> 
-                    </v-card>
-
-                  </template>
                   </v-container>
                 </v-col>
 

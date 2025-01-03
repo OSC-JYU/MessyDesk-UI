@@ -145,8 +145,12 @@ web.getProject = async function(rid) {
 	return result.data
 }
 
-web.getSetFiles = async function(rid) {
-	var result = await axios.get(`/api/sets/${rid.replace('#', '')}/files`)
+web.getSetFiles = async function(rid, skip, limit) {
+	var query = ''
+	if(skip && limit) query = '?skip=' + skip + '&limit=' + limit
+	else if(skip) query += '?skip=' + skip
+	else if(limit) query += '?limit=' + limit
+	var result = await axios.get(`/api/sets/${rid.replace('#', '')}/files${query}`)
 	return result.data
 }
 
@@ -172,6 +176,11 @@ web.getEntityTypes = async function(dir) {
 
 web.getEntitiesByType = async function(type) {
 	var result = await axios.get(`/api/entities/types/${type}`) 
+	return result.data
+}
+
+web.createEntity = async function(type, label) {
+	var result = await axios.post(`/api/entities`, {type: type, label: label})
 	return result.data
 }
 

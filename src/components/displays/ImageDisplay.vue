@@ -24,8 +24,17 @@
           />
         </v-col>
         
-        <v-col cols="3" class="column_image">
+        <v-col cols="3" class="column_image" @keydown.left="prev()" >
           <!-- <div v-if="state.file && state.file.rois">{{ state.file.rois }}</div> -->
+
+        <!-- Set browse arrows -->
+
+        <v-btn @click="prev()" :disabled="state.skip == 1"><v-icon>mdi-chevron-left</v-icon></v-btn>
+          {{state.skip }} / {{state.file_count}} {{state.skip}}
+          <v-btn @click="next()" @keydown.right="next()" :disabled="state.skip == state.file_count"><v-icon>mdi-chevron-right</v-icon></v-btn>
+          
+
+
           <div v-if="state.file">
             <h3>{{ state.file.label }}</h3>
             <DescriptionEditor :description="state.file.description" :rid="state.file['@rid']"/>
@@ -103,9 +112,11 @@
     // tab controls
     const emit = defineEmits(['change-tab'])
     const props = defineProps(['tab'])
+
     // tab change launces content update. Could be done otherwise probaply?
+    // WARINING! tab is harcoded!
     watch(() => props.tab, async (newValue, oldValue) => {
-      await load()
+      if(newValue == 3) await load()
     })
 
     var state = reactive({
@@ -114,15 +125,43 @@
         ROIs: [],
         width: 400,
         height: 400,
-        image_loaded: false
+        image_loaded: false,
+        skip: 0,
+        file_count: 0
     })
 
     const image = new Image();
+
+    async function prev() {
+      if((state.skip -1) < 1) return
+      state.ROIs = []
+      state.skip = state.skip - 1
+      var response = await web.getSetFiles(store.current_node.id, state.skip - 1, 1)
+      state.file = response.files[0]
+      state.file.thumbnail = removeLastPathPart('api/thumbnails/' + state.file.path)
+      image.src = state.file.thumbnail; 
+    }
+
+    async function next() {
+      if((state.skip ) > state.file_count) return
+      state.ROIs = []
+      state.skip = state.skip + 1
+      var response = await web.getSetFiles(store.current_node.id, state.skip -1 , 1)
+      var response2 = await web.getDocInfo(response.files[0]['@rid'])
+      state.file = response2
+      state.file.thumbnail = removeLastPathPart('api/thumbnails/' + state.file.path)
+      image.src = state.file.thumbnail; 
+    }
+
 
     async function load() { 
       
       state.ROIs = []
       state.file = null
+      state.file_count = store.file_count || null
+      if(store.skip >= 0) state.skip = store.skip + 1
+      else state.skip = null
+
       var response = await web.getDocInfo(store.file['@rid'])
       state.file = response
       state.file.thumbnail = removeLastPathPart('api/thumbnails/' + response.path)

@@ -65,10 +65,12 @@
       store.tab = tab
     }
 
-    async function openNode(node_rid, source_rid) {
+    async function openNode(node_rid, source_rid, total_count, skip) {
       var response = await web.getDocInfo(node_rid)
       store.file = response
       store.source = source_rid
+      store.file_count = total_count
+      store.skip = skip
       state.tab = 3  // this tab is for file display
     }
 
@@ -86,6 +88,8 @@
         
           <v-tabs-window v-model="state.tab" class="w-100 h-100 fill-height">
 
+            
+            <!-- Graph view -->
             <v-tabs-window-item class="w-100 fill-height"  >
               <v-row class="w-100 fill-height m-0 p-0"> 
 
@@ -112,14 +116,19 @@
             </v-tabs-window-item> 
 
 
+            <!-- Search view -->
             <v-tabs-window-item>
               <SearchMain />
             </v-tabs-window-item>
 
+
+              <!-- Things view -->
             <v-tabs-window-item>
               <EntitiesMain/>
             </v-tabs-window-item>
 
+
+            <!-- File view -->
             <v-tabs-window-item >
               <v-container class="fill-height pa-0" fluid>
                 <v-row class="fill-height no-gutters" >
