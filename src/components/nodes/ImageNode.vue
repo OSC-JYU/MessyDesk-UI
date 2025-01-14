@@ -4,7 +4,8 @@ img {
   margin: 0px
 }
 .node-image {
-  padding:0px
+  padding:0px;
+  cursor: pointer;
 }
 .header {
   background-color: #54546f;

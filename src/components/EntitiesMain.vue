@@ -8,6 +8,9 @@ em {
   height: 100%;
   overflow-y: scroll;
 }
+.v-chip {
+  margin: 2px;
+}
 
 </style>
 
@@ -31,6 +34,7 @@ em {
         current_type: ''
     })
 
+    
     async function search(type) {
       state.current_type = type
       var response = await web.getEntitiesByType(type)
@@ -43,7 +47,8 @@ em {
     }
 
     onMounted(async()=> {
-      state.types = await web.getEntityTypes()
+      state.types = await web.getEntities()
+      state.entity_schema = await web.getEntitySchema()
     })
 
 
@@ -92,7 +97,7 @@ em {
               
            
                   
-                  <span class="m-2 p-2 cursor-pointer" @click="search(type.type)" v-for="type of state.types.result"> {{ type.type }} ({{ type.count }}) </span>
+                  <span class="m-2 p-2 cursor-pointer" @click="search(type.type)" v-for="type of state.types"> {{ type.type }} ({{ type.count }}) </span>
 
                   <br>
 
@@ -107,6 +112,16 @@ em {
                     </v-template>
 
                   </v-container>
+
+
+                  <v-expansion-panels >
+                    <v-expansion-panel v-for="type in state.types" :key="type.type">
+                      <v-expansion-panel-title>{{ type.type }}</v-expansion-panel-title>
+                      <v-expansion-panel-text >
+                        <v-chip v-for="item in type.items" :key="item['@rid']" :color="item.color" ><v-icon :icon="'mdi-' + item.icon.toLowerCase()" start></v-icon> {{ item.label }}</v-chip>
+                      </v-expansion-panel-text> 
+                    </v-expansion-panel>
+                  </v-expansion-panels>
 
                   <v-btn v-if="!state.add && state.current_type" class="btn-primary" @click="state.add  = true">Add new</v-btn>
 

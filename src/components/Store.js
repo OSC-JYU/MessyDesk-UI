@@ -38,6 +38,8 @@ export const store = reactive({
   setdata: {},
   current_project: {},
   reorder_target: '',
+  settings_show_descriptions: true,
+  settings_show_entities: true,
 
 
   reload(update) {

@@ -39,6 +39,22 @@
         stroke-width: 4;
     }
 
+
+    img {
+  max-width:280px;
+  margin: 0px
+}
+.node-image {
+  padding:0px
+}
+
+
+
+.image_display {
+
+  max-height: 250px;}
+
+
 </style>
 
 <template>
@@ -87,48 +103,40 @@
                             cols="2"
                             >
 
-                            <v-card class="mx-auto">
-                                <div @dblclick="openSetFile(file, index)" class="d-flex flex-no-wrap justify-space-between">
-                                    <v-img
-                                    class="align-end text-white"
-                                    width="200"
-                                    :src="file.thumb + '/thumbnail.jpg'"
-                                    cover
-                                    >
-                                    <v-card-title>{{ file.label }}</v-card-title>
-                                    </v-img>
+                            <!-- SET VIEW NODE-->
+                            <SetViewNode @dblclick="openSetFile(file, index)" :data="file"></SetViewNode>
 
-                                    <v-card-subtitle class="pt-4">
-                                    Image
-                                    </v-card-subtitle>
 
-                                    <v-card-text>
-                                        <div> {{ file.description }}</div>
-                                    </v-card-text>
-                                </div>
-
-                                <v-card-actions>
+                            <!-- <div @dblclick="openSetFile(file, index)">
+                                <div class="node-image nodrag" >
+                                    
+                                    <div class="header">{{ file.label }} 
+                                    </div>
                                     <v-switch v-model="file.expand" @change="expandSetNode(file)" label="Show in Desk" color="primary">expand</v-switch>
-                                </v-card-actions>
-                            </v-card>
+                                    
+                                    <v-container style="max-height: 360px; padding: 0px; overflow: hidden; position: relative;">
+                                    <v-row>
+                                        <v-col class="d-flex align-center justify-center">
+                                        <img :src="file.thumb + '/thumbnail.jpg'" draggable="false" style="width: 100%; height: auto;" />
+                                        </v-col>
+                                    </v-row>
+                                    
+                                    <v-row 
+                                        v-if="file.description != file.label" 
+                                        class="description-overlay m-0"
+                                        style="position: absolute; bottom: 0; width: 100%; background: rgba(0, 0, 0, 0.6); color: white; padding: 10px;">
+                                        <v-col class="d-flex justify-center">
+                                        <pre style="margin: 0; overflow-wrap: break-word;">{{ file.description }}</pre>
+                                        </v-col>
+                                        <v-chip v-for="entity of file.entities" :key="entity.id"  color="primary" style="background-color: white;">{{ entity.label }}</v-chip>
+                                    </v-row>
+                                    
+                                    </v-container>
+                                </div>
+                            </div> -->
 
                             </v-col>
                         </v-row>
-
-
-
-                        <!-- <div v-for="file in state.setdata" class="col w-200 shadow-1-strong rounded mb-4">
-                            <div class="card">
-                                <img :src="file.thumb" :alt="file.label" class="image" />
-                                <div class="m-2">
-                                    {{ file.label }}
-                                    <div class="form-check form-switch">
-                                        <input @change="expandSetNode(file, store.current_node.id)" class="form-check-input" type="checkbox" role="switch" :id="file['@rid']">
-                                        <label class="form-check-label" :for="file['@rid']">Show in Desk</label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div> -->
 
 
                     </v-navigation-drawer>
@@ -244,15 +252,12 @@
     import SourceNode from './nodes/SourceNode.vue'
     import EmptyNode from './nodes/EmptyNode.vue'
 
+    import SetViewNode from './nodes/SetViewNode.vue'
+
     import { useShuffle } from './useShuffle'
     import { useLayout } from './useLayout'
     import Icon from './Icon.vue'
 
-    // import * as bootstrap from "bootstrap/dist/js/bootstrap"
-    //import * as bootstrap from 'bootstrap';
-    //import { el } from "vuetify/locale";
-    
-    //window.bootstrap = bootstrap;
 
     const { graph_dagre, layout, previousDirection } = useLayout()
 

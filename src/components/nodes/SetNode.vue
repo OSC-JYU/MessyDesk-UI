@@ -7,6 +7,7 @@
 .node-body {
   min-height: 200px;
   min-width: 300px;
+  cursor: pointer;
 }
 
 img {

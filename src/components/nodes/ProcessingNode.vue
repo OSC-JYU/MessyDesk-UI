@@ -1,4 +1,7 @@
 <style scoped>
+.node-body {
+  cursor: default;
+}
 img {
   width:60px;
 }

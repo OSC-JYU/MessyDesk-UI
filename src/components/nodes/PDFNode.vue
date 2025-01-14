@@ -1,6 +1,7 @@
 <style scoped>
 .node-pdf {
   min-height: 200px;
+  cursor: pointer;
 }
 
 img {

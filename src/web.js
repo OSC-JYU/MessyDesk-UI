@@ -169,7 +169,12 @@ web.getFiles = async function(dir) {
 	return result.data
 }
 
-web.getEntityTypes = async function(dir) {
+web.getEntities = async function(dir) {
+	var result = await axios.get(`/api/entities`)
+	return result.data
+}
+
+web.getEntitySchema = async function(dir) {
 	var result = await axios.get(`/api/entities/types`)
 	return result.data
 }
@@ -182,6 +187,12 @@ web.getEntitiesByType = async function(type) {
 web.createEntity = async function(type, label) {
 	var result = await axios.post(`/api/entities`, {type: type, label: label})
 	return result.data
+}
+
+web.linkEntityToItem =  async function(entityRID, itemRId) {
+	var result = await axios.post(`/api/entities/${entityRID.replace('#','')}/vertex/${itemRId.replace('#','')}`)
+	return result.data
+
 }
 
 web.getTags = async function() {

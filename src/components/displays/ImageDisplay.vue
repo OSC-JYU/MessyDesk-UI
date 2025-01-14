@@ -1,3 +1,9 @@
+<style scoped>
+  .v-chip {
+    margin: 2px;
+  }
+</style>
+
 <template>
 
   <v-container>
@@ -30,21 +36,37 @@
         <!-- Set browse arrows -->
 
         <v-btn @click="prev()" :disabled="state.skip == 1"><v-icon>mdi-chevron-left</v-icon></v-btn>
-          {{state.skip }} / {{state.file_count}} {{state.skip}}
+          {{state.skip }} / {{state.file_count}} 
           <v-btn @click="next()" @keydown.right="next()" :disabled="state.skip == state.file_count"><v-icon>mdi-chevron-right</v-icon></v-btn>
-          
 
 
-          <div v-if="state.file">
+          <div v-if="state.file" class="mb-6">
             <h3>{{ state.file.label }}</h3>
             <DescriptionEditor :description="state.file.description" :rid="state.file['@rid']"/>
+            <v-chip v-for="entity of state.file.entities" :key="entity.type" :color="entity.color" variant="outlined">
+            <v-icon :icon="'mdi-' + entity.icon.toLowerCase()" start></v-icon> {{ entity.label }}
+          </v-chip>
           </div>
           
-          <v-alert type="info" >Click and drag to create saved selections (ROI).</v-alert>
 
-          <template v-if="state.ROIs.length > 0">
+          <!-- <v-alert type="info" >Click and drag to create saved selections (ROI).</v-alert>-->
+
+         
+
+          <v-expansion-panels v-model="state.panels">
+            <v-expansion-panel v-for="type in state.entities" :key="type.type">
+              <v-expansion-panel-title>{{ type.type }}</v-expansion-panel-title>
+              <v-expansion-panel-text >
+                <v-chip @click="linkToItem(item['@rid'])" v-for="item in type.items" :key="item['@rid']" :color="item.color" ><v-icon :icon="'mdi-' + item.icon.toLowerCase()" start></v-icon> {{ item.label }}</v-chip>
+              </v-expansion-panel-text> 
+            </v-expansion-panel>
+          </v-expansion-panels>
+                
+
+
+            <template v-if="state.ROIs.length > 0">
             <v-list density="compact" >
-              <v-list-subheader>Saved selections</v-list-subheader>
+
 
               <v-list-item
                 v-for="(item, i) in state.ROIs"
@@ -61,9 +83,10 @@
             </v-list>
           </template>
           <template v-else> 
-            
+           
             <v-list density="compact" v-if="state.file">
-              <v-list-subheader>Saved selections</v-list-subheader>
+              
+
 
               <v-list-item
                 v-for="(item, i) in state.file.rois"
@@ -80,6 +103,10 @@
             </v-list>
 
           </template>
+
+         
+
+
 
 
 
@@ -127,7 +154,9 @@
         height: 400,
         image_loaded: false,
         skip: 0,
-        file_count: 0
+        file_count: 0,
+        panels: [0,0],
+        entities: {}
     })
 
     const image = new Image();
@@ -153,6 +182,11 @@
       image.src = state.file.thumbnail; 
     }
 
+    async function linkToItem(entityID) {
+      console.log(entityID)
+      console.log(state.file['@rid'])
+      await web.linkEntityToItem(entityID, state.file['@rid'])
+    }
 
     async function load() { 
       
@@ -165,6 +199,8 @@
       var response = await web.getDocInfo(store.file['@rid'])
       state.file = response
       state.file.thumbnail = removeLastPathPart('api/thumbnails/' + response.path)
+
+      state.entities = await web.getEntityTypes()
 
       image.src = state.file.thumbnail; 
       image.onload = () => {
