@@ -4,7 +4,8 @@ img {
   margin: 0px
 }
 .node-image {
-  padding:0px
+  padding:0px;
+
 }
 .header {
   background-color: #54546f;
@@ -18,7 +19,8 @@ img {
   max-height: 250px;}
 
 .v-chip {
-  margin: 2px;
+  margin-top: 6px;
+  margin-left:10px;
 }
 </style>
 
@@ -44,9 +46,11 @@ const props = defineProps({
     
     
     <v-container style="max-height: 360px; padding: 0px; overflow: hidden; position: relative;">
+
       <v-row >
         <v-chip v-if="store.settings_show_entities" v-for="entity of data.entities" :key="entity.id"  :color="entity.color" ><v-icon v-if="entity.icon" :icon="'mdi-' + entity.icon.toLowerCase()" start></v-icon> {{ entity.label }}</v-chip>
       </v-row>
+
       <v-row>
         <v-col class="d-flex align-center justify-center">
           <img :src="data.thumb + '/thumbnail.jpg'" draggable="false" style="width: 100%; height: auto;" />
@@ -57,8 +61,7 @@ const props = defineProps({
 
       <v-row 
         v-if="data.description != data.label" 
-        class="description-overlay m-0"
-        style="position: absolute; bottom: 0; width: 100%; background: rgba(0, 0, 0, 0.6); color: white; padding: 10px;">
+        class="description-overlay m-0">
 
         <v-col v-if="store.settings_show_descriptions" class="d-flex justify-center">
           <pre style="margin: 0; overflow-wrap: break-word;">{{ data.description }}</pre>

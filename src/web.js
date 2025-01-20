@@ -1,4 +1,5 @@
 import axios from "axios"
+import { en } from "vuetify/locale"
 let web = {}
 // if(window.location.hostname == 'localhost')
 // 	axios.defaults.baseURL = ''
@@ -179,6 +180,12 @@ web.getEntitySchema = async function(dir) {
 	return result.data
 }
 
+web.getEntityItems = async function(entities) {
+	var entity_rids = entities.map(e => e['@rid'].replace('#', ''))
+	var result = await axios.get(`/api/entities/items?entities=${entity_rids.join(',')}`)
+	return result.data
+}
+
 web.getEntitiesByType = async function(type) {
 	var result = await axios.get(`/api/entities/types/${type}`) 
 	return result.data
@@ -192,7 +199,11 @@ web.createEntity = async function(type, label) {
 web.linkEntityToItem =  async function(entityRID, itemRId) {
 	var result = await axios.post(`/api/entities/${entityRID.replace('#','')}/vertex/${itemRId.replace('#','')}`)
 	return result.data
+}
 
+web.unLinkEntity =  async function(entityRID, itemRId) {
+	var result = await axios.delete(`/api/entities/${entityRID.replace('#','')}/vertex/${itemRId.replace('#','')}`)
+	return result.data
 }
 
 web.getTags = async function() {

@@ -2,6 +2,15 @@
   .v-chip {
     margin: 2px;
   }
+  .header {
+    color: white;
+    text-decoration: none;
+    background-color: #54546f;
+  }
+
+  .options {
+    background-color: #ebedf2;
+  }
 </style>
 
 <template>
@@ -13,13 +22,13 @@
         color="primary"
         icon="mdi-close"
         style="position: absolute; top: 0; left: -60px; z-index:1000"
-        @click="$emit('change-tab',0)"
+        @click="$emit('change-tab',store.tab)" 
       ></v-btn>
       <v-row class="column_base">
 
         <v-col cols="9" class="column_image ">
-          <!-- <img v-if="state.file" :src="state.file.thumbnail" alt="Image" />  -->
-          <image-select-area v-if="state.file && state.image_loaded"
+          <img v-if="state.file" :src="state.file.thumbnail" alt="Image" /> 
+          <!-- <image-select-area v-if="state.file && state.image_loaded"
           :image-url="state.file.thumbnail"
           :width="state.width"
           :height="state.height"
@@ -27,82 +36,120 @@
           border-width="4"
           @save-data="saveROI"
           :init-areas="state.file.rois"
-          />
+          /> -->
         </v-col>
         
-        <v-col cols="3" class="column_image" @keydown.left="prev()" >
+        <v-col cols="3" class="column_image"  >
           <!-- <div v-if="state.file && state.file.rois">{{ state.file.rois }}</div> -->
 
         <!-- Set browse arrows -->
-
-        <v-btn @click="prev()" :disabled="state.skip == 1"><v-icon>mdi-chevron-left</v-icon></v-btn>
+          <template v-if="state.file_count > 0">
+            <v-btn @click="prev()" :disabled="state.skip == 1"><v-icon>mdi-chevron-left</v-icon></v-btn>
           {{state.skip }} / {{state.file_count}} 
-          <v-btn @click="next()" @keydown.right="next()" :disabled="state.skip == state.file_count"><v-icon>mdi-chevron-right</v-icon></v-btn>
+          <v-btn @click="next()" :disabled="state.skip == state.file_count"><v-icon>mdi-chevron-right</v-icon></v-btn>
+          </template>
+
 
 
           <div v-if="state.file" class="mb-6">
-            <h3>{{ state.file.label }}</h3>
+            <div class="header pa-2">{{ state.file.label }}</div>
             <DescriptionEditor :description="state.file.description" :rid="state.file['@rid']"/>
-            <v-chip v-for="entity of state.file.entities" :key="entity.type" :color="entity.color" variant="outlined">
-            <v-icon :icon="'mdi-' + entity.icon.toLowerCase()" start></v-icon> {{ entity.label }}
-          </v-chip>
+
+            <!-- list of entities -->
+ 
+             <v-sheet>
+              <v-chip @click="deleteOrOpenEntity($event, entity.rid)" v-for="entity of state.file.entities" :key="entity.type" :color="entity.color" variant="outlined" >
+                <v-icon :icon="'mdi-' + entity.icon.toLowerCase()" start></v-icon> {{ entity.label}}
+                <v-icon v-if="state.isCtrlPressed" icon="mdi-close-circle" end></v-icon>
+                
+              </v-chip>
+              <p v-if="state.file.entities && state.file.entities.length" class="font-weight-bold">Ctrl + click to remove</p>
+             </v-sheet>
+
           </div>
           
 
           <!-- <v-alert type="info" >Click and drag to create saved selections (ROI).</v-alert>-->
+          
+          
+          <v-list v-model:opened="state.open" class="options">
+            
+            <v-list-group value="Tags">
+              <template v-slot:activator="{ props }">
+                <v-list-item
+                  v-bind="props"
+          
+                  title="Tags"
+                ></v-list-item>
+              </template>
 
-         
+              <v-list-group v-for="type in state.entities" :key="type.type">
+                <template v-slot:activator="{ props }">
+                  <v-list-item
+                    v-bind="props"
+                    :title="type.type"
+                    :prepend-icon="'mdi-' + type.icon"
+                  ></v-list-item>
+                </template>
+                <v-chip @click="linkEntityToItem(item['@rid'])" v-for="item in type.items" :key="item['@rid']" :color="item.color" ><v-icon :icon="'mdi-' + item.icon.toLowerCase()" start></v-icon> {{ item.label }}</v-chip>
 
-          <v-expansion-panels v-model="state.panels">
-            <v-expansion-panel v-for="type in state.entities" :key="type.type">
-              <v-expansion-panel-title>{{ type.type }}</v-expansion-panel-title>
-              <v-expansion-panel-text >
-                <v-chip @click="linkToItem(item['@rid'])" v-for="item in type.items" :key="item['@rid']" :color="item.color" ><v-icon :icon="'mdi-' + item.icon.toLowerCase()" start></v-icon> {{ item.label }}</v-chip>
-              </v-expansion-panel-text> 
-            </v-expansion-panel>
-          </v-expansion-panels>
+              </v-list-group>
+            </v-list-group>
+
+            <v-list-group value="Selections">
+              <template v-slot:activator="{ props }">
+                <v-list-item
+                  v-bind="props"
+                  title="Selections"
+                ></v-list-item>
+              </template>
+
+              <template v-if="state.ROIs.length > 0">
+                  <v-list density="compact" >
+
+
+                    <v-list-item
+                      v-for="(item, i) in state.ROIs"
+                      :key="i"
+                      :value="item"
+                      color="primary"
+                    >
+                      <template v-slot:prepend>
+                        <v-icon icon="mdi-selection mdi"></v-icon>
+                      </template>
+
+                      <v-list-item-title v-text="item.comment"></v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </template>
+                <template v-else> 
                 
+                  <v-list density="compact" v-if="state.file">
+                    
 
 
-            <template v-if="state.ROIs.length > 0">
-            <v-list density="compact" >
+                    <v-list-item
+                      v-for="(item, i) in state.file.rois"
+                      :key="i"
+                      :value="item"
+                      color="primary"
+                    >
+                      <template v-slot:prepend>
+                        <v-icon icon="mdi-selection mdi"></v-icon>
+                      </template>
 
+                      <v-list-item-title v-text="item.comment"></v-list-item-title>
+                    </v-list-item>
+                  </v-list>
 
-              <v-list-item
-                v-for="(item, i) in state.ROIs"
-                :key="i"
-                :value="item"
-                color="primary"
-              >
-                <template v-slot:prepend>
-                  <v-icon icon="mdi-selection mdi"></v-icon>
                 </template>
-
-                <v-list-item-title v-text="item.comment"></v-list-item-title>
-              </v-list-item>
-            </v-list>
-          </template>
-          <template v-else> 
-           
-            <v-list density="compact" v-if="state.file">
-              
+            </v-list-group>
+          </v-list>
 
 
-              <v-list-item
-                v-for="(item, i) in state.file.rois"
-                :key="i"
-                :value="item"
-                color="primary"
-              >
-                <template v-slot:prepend>
-                  <v-icon icon="mdi-selection mdi"></v-icon>
-                </template>
 
-                <v-list-item-title v-text="item.comment"></v-list-item-title>
-              </v-list-item>
-            </v-list>
 
-          </template>
+
 
          
 
@@ -128,7 +175,7 @@
   
   <script setup>
 
-    import { onMounted, watch, reactive, ref, computed } from "vue";
+    import { onMounted, onUnmounted, watch, reactive, ref, computed } from "vue";
     import ImageSelectArea from 'vue3-image-multiselect-areas';
   
     import web from "../../web.js";
@@ -156,7 +203,9 @@
         skip: 0,
         file_count: 0,
         panels: [0,0],
-        entities: {}
+        entities: {},
+        isCtrlPressed: false
+        
     })
 
     const image = new Image();
@@ -182,10 +231,30 @@
       image.src = state.file.thumbnail; 
     }
 
-    async function linkToItem(entityID) {
+    async function linkEntityToItem(entityID) {
       console.log(entityID)
       console.log(state.file['@rid'])
       await web.linkEntityToItem(entityID, state.file['@rid'])
+      var response = await web.getDocInfo(store.file['@rid'])
+      state.file = response
+      state.file.thumbnail = removeLastPathPart('api/thumbnails/' + response.path)
+    }
+
+    async function unLinkEntity(entityID) {
+      console.log(entityID)
+      console.log(state.file['@rid'])
+      await web.unLinkEntity(entityID, state.file['@rid'])
+      var response = await web.getDocInfo(store.file['@rid'])
+      state.file = response
+      state.file.thumbnail = removeLastPathPart('api/thumbnails/' + response.path)
+    }
+
+    async function deleteOrOpenEntity(event, entityID) {
+      if (state.isCtrlPressed) {
+        await unLinkEntity(entityID)
+      } else {
+        console.log('show');
+      }
     }
 
     async function load() { 
@@ -200,7 +269,7 @@
       state.file = response
       state.file.thumbnail = removeLastPathPart('api/thumbnails/' + response.path)
 
-      state.entities = await web.getEntityTypes()
+      state.entities = await web.getEntities()
 
       image.src = state.file.thumbnail; 
       image.onload = () => {
@@ -210,10 +279,29 @@
       };
     }
 
-    onMounted(async()=> {
+    function handleKeyDown(event) {
+      if (event.ctrlKey) {
+        state.isCtrlPressed = true;
+      }
+    }
 
+    function handleKeyUp(event) {
+      state.isCtrlPressed = false;
+      if(event.key == 'ArrowLeft') prev()
+      if(event.key == 'ArrowRight') next()
+    }
+
+    onMounted(async()=> {
+      window.addEventListener("keydown", handleKeyDown);
+      window.addEventListener("keyup", handleKeyUp);
       await load()
 
+    })
+
+   onUnmounted(() => {
+      // Clean up event listeners when the component is destroyed
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
     })
 
     async function saveROI(data) {

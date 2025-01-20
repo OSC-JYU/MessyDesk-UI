@@ -65,7 +65,23 @@ function openCrunchers(id) {
       <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" :src="CookieIcon" />
     </div>
    
-    <div class="m-2"><pre>{{ data.description.replace(/\n/g, " ") }} </pre></div>
+    <v-container style="max-height: 360px; padding: 0px; overflow: hidden; position: relative;">
+      <v-row>
+        <v-col class="d-flex align-center justify-center">
+          <div class="m-2"><pre>{{ data.info }} </pre></div>
+        </v-col>
+      </v-row>
+      
+      <v-row 
+        v-if="data.description" 
+        class="description-overlay m-0">
+        <v-col class="d-flex justify-center">
+          <pre style="margin: 0; overflow-wrap: break-word;">{{ data.description }}</pre>
+        </v-col>
+      </v-row>
+    </v-container>
+
+    
     <v-chip v-if="data.model" color="green" variant="flat">
       {{ data.model }}
     </v-chip>

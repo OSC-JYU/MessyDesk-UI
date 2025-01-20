@@ -64,7 +64,7 @@ function openCrunchers(id) {
       <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" :src="CookieIcon" />
     </div>
    
-    <div class="m-2"><pre>{{ data.description }} </pre></div>
+    <div class="m-2"><pre>{{ data.info }} </pre></div>
     <Handle id="a" type="target" :position="Position.Left" />
     <Handle id="b" type="source" :position="Position.Right" /> 
   </div>

@@ -80,9 +80,9 @@
           
           <v-tabs v-model="state.tab" >
             
-            <v-tab >Crunching</v-tab>
+            <v-tab >Crunch</v-tab>
             <v-tab>Search</v-tab>
-            <v-tab>Things</v-tab>
+            <v-tab>Browse</v-tab>
             
           </v-tabs>
 

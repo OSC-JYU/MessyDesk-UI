@@ -41,7 +41,7 @@
 
 
     img {
-  max-width:280px;
+
   margin: 0px
 }
 .node-image {
@@ -51,8 +51,8 @@
 
 
 .image_display {
-
-  max-height: 250px;}
+  max-height: 250px;
+}
 
 
 </style>
@@ -105,35 +105,6 @@
 
                             <!-- SET VIEW NODE-->
                             <SetViewNode @dblclick="openSetFile(file, index)" :data="file"></SetViewNode>
-
-
-                            <!-- <div @dblclick="openSetFile(file, index)">
-                                <div class="node-image nodrag" >
-                                    
-                                    <div class="header">{{ file.label }} 
-                                    </div>
-                                    <v-switch v-model="file.expand" @change="expandSetNode(file)" label="Show in Desk" color="primary">expand</v-switch>
-                                    
-                                    <v-container style="max-height: 360px; padding: 0px; overflow: hidden; position: relative;">
-                                    <v-row>
-                                        <v-col class="d-flex align-center justify-center">
-                                        <img :src="file.thumb + '/thumbnail.jpg'" draggable="false" style="width: 100%; height: auto;" />
-                                        </v-col>
-                                    </v-row>
-                                    
-                                    <v-row 
-                                        v-if="file.description != file.label" 
-                                        class="description-overlay m-0"
-                                        style="position: absolute; bottom: 0; width: 100%; background: rgba(0, 0, 0, 0.6); color: white; padding: 10px;">
-                                        <v-col class="d-flex justify-center">
-                                        <pre style="margin: 0; overflow-wrap: break-word;">{{ file.description }}</pre>
-                                        </v-col>
-                                        <v-chip v-for="entity of file.entities" :key="entity.id"  color="primary" style="background-color: white;">{{ entity.label }}</v-chip>
-                                    </v-row>
-                                    
-                                    </v-container>
-                                </div>
-                            </div> -->
 
                             </v-col>
                         </v-row>
@@ -386,6 +357,8 @@
                 
             //     if(props.mode == "graph") getRootNodes()
             if(!state.node_added) {
+                console.log('no reorder target')
+                flow.fitView()
                 if(props.mode == "projects" && store.view) {
                     console.log('restoring view')
                     flow.setViewport(store.view)

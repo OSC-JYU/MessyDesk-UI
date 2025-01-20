@@ -58,7 +58,7 @@
                                                             
                                                            
                                                            <template v-if="help.display && help.display == 'checkbox'">
-                                                                <v-checkbox v-model="task.values[key]" v-for="value in help.values" :label="value.label" :value="value.value"></v-checkbox>
+                                                                <v-checkbox v-model="task.values[key]" v-for="value in help.values" :label="value.title" :value="value.value"></v-checkbox>
                                                             </template>
                                                             <template v-else-if="help.display && help.display == 'dropdown'">
                                                                 <v-select v-model="task.values[key]" :items="help.values"></v-select>

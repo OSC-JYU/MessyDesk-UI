@@ -124,7 +124,7 @@
 
               <!-- Things view -->
             <v-tabs-window-item>
-              <EntitiesMain/>
+              <EntitiesMain @open-node="openNode"/>
             </v-tabs-window-item>
 
 

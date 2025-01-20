@@ -1,5 +1,5 @@
 {
-  "name": "kukako-ui",
+  "name": "messydesk-ui",
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
@@ -24,8 +24,8 @@
     "vuetify": "^3.5.17"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^2.3.1",
-    "vite": "^2.9.1",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "vite": "^6.0.7",
     "vue-cli-plugin-vuetify": "^2.5.8"
   }
 }

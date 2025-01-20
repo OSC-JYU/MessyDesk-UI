@@ -31,7 +31,7 @@ export default ({ mode }) => {
     // ? '/s/kukako/'
     // : '/',
     server: {
-    
+        port: 3000,
         proxy: {
             '/ws': {
                 target: 'http://localhost:8200',

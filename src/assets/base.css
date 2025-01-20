@@ -200,3 +200,14 @@ em {
   font-weight: bold;  
   background-color: yellow;
 }
+
+.description-overlay {
+  position: absolute; 
+  bottom: 0; 
+  width: 100%; 
+  background: rgba(0, 0, 0, 0.6); 
+  color: white; 
+  padding: 10px;
+  max-height: 150px;
+  overflow-y: hidden;
+}

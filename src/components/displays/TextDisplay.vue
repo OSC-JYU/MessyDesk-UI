@@ -18,23 +18,64 @@
         <v-col cols="3" class="column_text2">
           <div v-if="state.file">
             <h4>{{ state.file.label}}</h4>
+            {{ state.file.info }}
             <DescriptionEditor :description="state.file.description" :rid="state.file['@rid']"/>
-
-          </div>
-          <!-- <v-switch color="primary" @change="toggleSearch()" label="Enabled in search"></v-switch> -->
-          <v-card title="Region of Interest">
-              <v-alert type="info" class="mt-6">Click and drag to create saved selections (ROI).</v-alert>
-              
-
-                  <v-alert type="warning">not implemented for text yet</v-alert>
-                  <!-- <v-btn @click="getSelectedText">Create ROI</v-btn>
-                  {{ state.selectedText }} {{ state.selectionStart }} {{ state.selectionEnd }} -->
-            
+            <!-- list of entities -->
+ 
+            <v-sheet>
+              <v-chip @click="deleteOrOpenEntity($event, entity.rid)" v-for="entity of state.file.entities" :key="entity.type" :color="entity.color" variant="outlined" >
+                <v-icon :icon="'mdi-' + entity.icon.toLowerCase()" start></v-icon> {{ entity.label}}
+                <v-icon v-if="state.isCtrlPressed" icon="mdi-close-circle" end></v-icon>
                 
-            </v-card>
-          
-        </v-col>  
+              </v-chip>
+              <p v-if="state.file.entities && state.file.entities.length" class="font-weight-bold">Ctrl + click to remove</p>
+             </v-sheet>
+          </div>
 
+
+
+          <!-- <v-switch color="primary" @change="toggleSearch()" label="Enabled in search"></v-switch> -->
+
+
+          <v-list v-model:opened="state.open">
+        
+            <v-list-group value="Tags">
+              <template v-slot:activator="{ props }">
+                <v-list-item
+                  v-bind="props"
+          
+                  title="Tags"
+                ></v-list-item>
+              </template>
+
+              <v-list-group v-for="type in state.entities" :key="type.type">
+                <template v-slot:activator="{ props }">
+                  <v-list-item
+                    v-bind="props"
+                    :title="type.type"
+                    :prepend-icon="'mdi-' + type.icon"
+                  ></v-list-item>
+                </template>
+                <v-chip @click="linkEntityToItem(item['@rid'])" v-for="item in type.items" :key="item['@rid']" :color="item.color" ><v-icon :icon="'mdi-' + item.icon.toLowerCase()" start></v-icon> {{ item.label }}</v-chip>
+
+              </v-list-group>
+            </v-list-group>
+
+            <v-list-group value="Selections">
+              <template v-slot:activator="{ props }">
+                <v-list-item
+                  v-bind="props"
+                  title="Selections"
+                ></v-list-item>
+              </template>
+
+              <v-alert type="info" class="mt-6">Click and drag to create saved selections (ROI).</v-alert> 
+              <v-alert type="warning">not implemented for text yet</v-alert>
+            </v-list-group>
+
+          </v-list>
+
+        </v-col>  
       </v-row>
     </v-container>
 
@@ -65,7 +106,9 @@
         selectedText: '',
         selectionStart: -1,
         selectionEnd: -1,
-        text: ''
+        text: '',
+        entities: {},
+        open: []
     })
 
     function toggleSearch(n) {
@@ -109,6 +152,7 @@
     async function load() {
       var f = await web.getNodeFile(store.file['@rid'])
       state.file = await web.getDocInfo(store.file['@rid'])
+      state.entities = await web.getEntities()
       state.text = replaceWithBr(f)
     }
 
@@ -159,4 +203,12 @@
   max-width: 1600px;
   margin-left:100px;
 }
-  </style>
+
+.v-chip {
+  margin: 2px;
+}
+
+.v-list-group__items .v-list-item {
+  padding-left: 30px;
+}
+</style>
