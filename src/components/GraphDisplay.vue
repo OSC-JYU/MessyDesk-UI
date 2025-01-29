@@ -83,7 +83,7 @@
                         </v-toolbar-title>
                         </v-toolbar>
 
-                        <!-- <v-btn 
+                        <v-btn 
                             @click="store.uploader_open = true"
                             >
                             <template v-slot:prepend>
@@ -91,7 +91,7 @@
                             </template>
                         
                                 Add file to set
-                        </v-btn> -->
+                        </v-btn>
 
                         <v-divider></v-divider>
 
@@ -104,7 +104,7 @@
                             >
 
                             <!-- SET VIEW NODE-->
-                            <SetViewNode @dblclick="openSetFile(file, index)" :data="file"></SetViewNode>
+                            <SetViewNode @dblclick="openSetFile(file, index)" :data="file" @expand-node="expandSetNode(file)"></SetViewNode>
 
                             </v-col>
                         </v-row>

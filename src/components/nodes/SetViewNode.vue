@@ -35,6 +35,7 @@ const props = defineProps({
   },
 })
 
+const emit = defineEmits(['expand-node'])
 
 </script>
 
@@ -51,12 +52,12 @@ const props = defineProps({
         <v-chip v-if="store.settings_show_entities" v-for="entity of data.entities" :key="entity.id"  :color="entity.color" ><v-icon v-if="entity.icon" :icon="'mdi-' + entity.icon.toLowerCase()" start></v-icon> {{ entity.label }}</v-chip>
       </v-row>
 
+      <v-switch class="mt-2" v-model="data.expand" @change="emit('expand-node', data)" label="Show in Desk" color="primary">expand</v-switch>
       <v-row>
         <v-col class="d-flex align-center justify-center">
           <img :src="data.thumb + '/thumbnail.jpg'" draggable="false" style="width: 100%; height: auto;" />
         </v-col>
       </v-row>
-      <!-- <v-switch v-model="file.expand" @change="expandSetNode(file)" label="Show in Desk" color="primary">expand</v-switch> -->
 
 
       <v-row 

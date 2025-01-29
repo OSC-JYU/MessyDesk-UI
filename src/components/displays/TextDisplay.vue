@@ -72,7 +72,6 @@
               <v-alert type="info" class="mt-6">Click and drag to create saved selections (ROI).</v-alert> 
               <v-alert type="warning">not implemented for text yet</v-alert>
             </v-list-group>
-
           </v-list>
 
         </v-col>  

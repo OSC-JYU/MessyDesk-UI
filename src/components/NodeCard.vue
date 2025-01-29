@@ -13,7 +13,8 @@
 
       
         <!-- RAW FILE LINK -->
-        <template v-if="store.current().type != 'process' && store.current().type != 'set'">
+         {{ store.current().id }}
+        <template v-if="!['set', 'process', 'source'].includes(store.current().type)">
             <a class="text-medium-emphasis" target="_blank" :href="'/api/files/' + store.current().id.replace('#','')">{{store.current().data.type_label}} open file</a> ({{ store.current().id }})
         </template>
 
@@ -21,6 +22,7 @@
         <!-- LABEL-->
         <div v-if="empty(store.current_node.data.label)" @click="editLabel()" class="text-medium-emphasis">add label</div>
         <h3 v-if="state.edit_label_open == false" @click="editLabel()" class="font-weight-bold mb-4">{{ store.current_node.data.label }}</h3>
+        
         <v-card v-else class="pa-6"> 
             <v-text-field @keyup.enter="saveLabel()"
                 label="Description"
@@ -35,6 +37,7 @@
             </v-card-actions>
         
         </v-card>
+        <div v-if="store.current_node.data.count">files: {{ store.current_node.data.count }}</div>
               
              
         <!-- DESCRIPTION -->

@@ -14,7 +14,7 @@ img {
 
 }
 .header {
-  background-color: #005757;
+  background-color: #561a80;
   color: white; 
   padding:3px;
   text-align: left !important;
@@ -63,7 +63,7 @@ function openCrunchers(filter) {
     <v-icon @click="openCrunchers('')" title="Add cruncher" class ="crunch_add" size="65" >mdi-cookie-plus</v-icon>
     <v-container>
       <h3>{{ data.label }}</h3>
-      <div v-if="data.metadata">There is {{ data.metadata.size }} Mt staff in {{ data.metadata.count }} files</div>
+      <div v-if="data.metadata">There is {{ data.metadata.size }} Mt stuff in {{ data.metadata.count }} files</div>
 
       <v-row>
 

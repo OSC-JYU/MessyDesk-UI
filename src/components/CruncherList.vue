@@ -202,8 +202,9 @@
 			process.info = createUserInfo(task.info, task.values)
 		}
 		console.log(process)
-
-        if(store.current_node.data.type == 'set') {
+        if(store.current_node.data.type == 'source') {
+            var res = await web.createSetProcess(process, store.current().id)
+        } else if(store.current_node.data.type == 'set') {
             var res = await web.createSetProcess(process, store.current().id)
         } else  if (store.cruncher_filter == 'ROI') {
             var res = await web.createROIProcess(process, store.current().id)
