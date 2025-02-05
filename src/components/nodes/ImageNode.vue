@@ -90,7 +90,7 @@ function openCrunchers(filter) {
       </v-row>
       
       <v-row 
-        v-if="data.description != data.label" 
+        v-if="data.description" 
         class="description-overlay m-0">
         <v-col class="d-flex justify-center">
           <pre style="margin: 0; overflow-wrap: break-word;">{{ data.description }}</pre>

@@ -40,6 +40,7 @@
   
     import web from "../../web.js";
     import {store} from "../../components/Store.js";
+    const apiUrl = import.meta.env.VITE_API_PATH;
 
     // tab controls
     const emit = defineEmits(['change-tab'])
@@ -204,7 +205,7 @@
     }
 
     async function load() {
-      var hocr =  await fetch('/api/files/' + store.file['@rid'].replace('#', ''))
+      var hocr =  await fetch(apiUrl + '/api/files/' + store.file['@rid'].replace('#', ''))
       hocr = await hocr.text();
       var start = hocr.indexOf("<body>") + "<body>".length
       var end = hocr.indexOf("</body>")

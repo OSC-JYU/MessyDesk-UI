@@ -4,8 +4,8 @@ let web = {}
 // if(window.location.hostname == 'localhost')
 // 	axios.defaults.baseURL = ''
 // else
-	axios.defaults.baseURL = import.meta.env.VITE_PUBLIC_PATH
-	//axios.defaults.baseURL = ''
+
+	axios.defaults.baseURL = import.meta.env.VITE_API_PATH
 
 // Add a response interceptor
 // axios.interceptors.response.use(function (response) {

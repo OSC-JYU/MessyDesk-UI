@@ -22,13 +22,14 @@
 
     import { onMounted, watch, reactive, ref, computed} from "vue";
     import {store} from "../../components/Store.js";
+    const apiUrl = import.meta.env.VITE_API_PATH;
 
     // tab controls
     const emit = defineEmits(['change-tab'])
     const props = defineProps(['tab'])
     // tab change launces content update. Could be done otherwise propably?
     watch(() => props.tab, async (newValue, oldValue) => {
-      state.rid = "/api/files/" + store.file['@rid'].replace('#', '')
+      state.rid = apiUrl + "/api/files/" + store.file['@rid'].replace('#', '')
     })
 
     var state = reactive({
@@ -38,7 +39,7 @@
     })
 
     onMounted(async()=> {
-        state.rid = "/api/files/" + store.file['@rid'].replace('#', '')
+        state.rid = apiUrl + "/api/files/" + store.file['@rid'].replace('#', '')
     })
 
   </script>

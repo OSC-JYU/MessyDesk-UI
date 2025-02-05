@@ -229,6 +229,9 @@
     import { useLayout } from './useLayout'
     import Icon from './Icon.vue'
 
+    const apiUrl = import.meta.env.VITE_API_PATH
+    const wsURL = import.meta.env.MODE === 'production' ? `wss://${window.location.host}/${apiUrl}/ws` : 'ws://localhost:8200/ws'
+
 
     const { graph_dagre, layout, previousDirection } = useLayout()
 
@@ -255,7 +258,7 @@
     var editing = ref(false)
 
     // Websocket for UI updates
-    let connection = new WebSocket('ws://localhost:8200/ws');
+    let connection = new WebSocket(wsURL);
     connection.onmessage = (event) => {
         console.log('tuli message')
         console.log(event)
@@ -273,7 +276,7 @@
                     if(target_node) {
                         target_node.data.error = ''
                         if(wsdata.image) target_node.data.image = wsdata.image
-                        if(wsdata.description) target_node.data.description = wsdata.description
+                        if("description" in wsdata) target_node.data.description = wsdata.description
                         if(wsdata.count) target_node.data.count = wsdata.count
                         if(wsdata.error) {
                             target_node.data.error = wsdata.error
@@ -597,13 +600,20 @@
                     type: node.data.type.toLowerCase(),
                     label: node.data.name,
                     description: node.data.description,
-                    paths: node.data.paths,
                     info: node.data.info,
                     file_count: node.data.file_count,
                     count: node.data.count,
                     roi_count: node.data.roi_count
                 }
             }
+
+            if(node.data.paths) {
+                flownode.data.paths = []
+                for(var path of node.data.paths) {
+                    flownode.data.paths.push(apiUrl + path)
+                }
+            }
+
             if(node.data._type) {
                 flownode.data._type = node.data._type.toLowerCase(),
                 flownode.type = node.data._type.toLowerCase()
@@ -616,7 +626,7 @@
             }
 
             if(node.data.image) 
-                flownode.data.image = node.data.image
+                flownode.data.image = apiUrl + node.data.image
             
             if(node.data.service) 
                 flownode.data.service = node.data.service

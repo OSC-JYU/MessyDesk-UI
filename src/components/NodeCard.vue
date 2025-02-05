@@ -15,7 +15,7 @@
         <!-- RAW FILE LINK -->
          {{ store.current().id }}
         <template v-if="!['set', 'process', 'source'].includes(store.current().type)">
-            <a class="text-medium-emphasis" target="_blank" :href="'/api/files/' + store.current().id.replace('#','')">{{store.current().data.type_label}} open file</a> ({{ store.current().id }})
+            <a class="text-medium-emphasis" target="_blank" :href="apiUrl + '/api/files/' + store.current().id.replace('#','')">{{store.current().data.type_label}} open file</a> ({{ store.current().id }})
         </template>
 
 
@@ -124,6 +124,7 @@
     import { useRouter, useRoute } from 'vue-router'
     import {store} from "./Store.js";
     import web from "../web.js";
+    const apiUrl = import.meta.env.VITE_API_PATH;
 
     const route  = useRoute();
     const router = useRouter();

@@ -182,6 +182,7 @@
     import {store} from "../../components/Store.js";
 
     import DescriptionEditor from './DescriptionEditor.vue'
+    const apiUrl = import.meta.env.VITE_API_PATH
 
     // tab controls
     const emit = defineEmits(['change-tab'])
@@ -216,7 +217,7 @@
       state.skip = state.skip - 1
       var response = await web.getSetFiles(store.current_node.id, state.skip - 1, 1)
       state.file = response.files[0]
-      state.file.thumbnail = removeLastPathPart('api/thumbnails/' + state.file.path)
+      state.file.thumbnail = removeLastPathPart('/api/thumbnails/' + state.file.path)
       image.src = state.file.thumbnail; 
     }
 
@@ -227,7 +228,7 @@
       var response = await web.getSetFiles(store.current_node.id, state.skip -1 , 1)
       var response2 = await web.getDocInfo(response.files[0]['@rid'])
       state.file = response2
-      state.file.thumbnail = removeLastPathPart('api/thumbnails/' + state.file.path)
+      state.file.thumbnail = removeLastPathPart('/api/thumbnails/' + state.file.path)
       image.src = state.file.thumbnail; 
     }
 
@@ -237,7 +238,7 @@
       await web.linkEntityToItem(entityID, state.file['@rid'])
       var response = await web.getDocInfo(store.file['@rid'])
       state.file = response
-      state.file.thumbnail = removeLastPathPart('api/thumbnails/' + response.path)
+      state.file.thumbnail = removeLastPathPart('/api/thumbnails/' + response.path)
     }
 
     async function unLinkEntity(entityID) {
@@ -246,7 +247,7 @@
       await web.unLinkEntity(entityID, state.file['@rid'])
       var response = await web.getDocInfo(store.file['@rid'])
       state.file = response
-      state.file.thumbnail = removeLastPathPart('api/thumbnails/' + response.path)
+      state.file.thumbnail = removeLastPathPart('/api/thumbnails/' + response.path)
     }
 
     async function deleteOrOpenEntity(event, entityID) {
@@ -267,7 +268,7 @@
 
       var response = await web.getDocInfo(store.file['@rid'])
       state.file = response
-      state.file.thumbnail = removeLastPathPart('api/thumbnails/' + response.path)
+      state.file.thumbnail = removeLastPathPart('/api/thumbnails/' + response.path)
 
       state.entities = await web.getEntities()
 
@@ -315,6 +316,9 @@
     function removeLastPathPart(str) {
         const lastIndex = str.lastIndexOf('/');
         if (lastIndex !== -1) {
+          if(apiUrl)
+            return apiUrl + str.substring(0, lastIndex);
+          else
             return str.substring(0, lastIndex);
         }
         return str;

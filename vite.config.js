@@ -7,8 +7,10 @@ import vue from '@vitejs/plugin-vue'
 
 export default ({ mode }) => {
     // Load app-level env vars to node-level env vars.
+    console.log(mode)
     process.env = {...process.env, ...loadEnv(mode, process.cwd())};
     console.log('PUBLIC URL: ' + process.env.VITE_PUBLIC_PATH)
+    console.log('API URL: ' + process.env.VITE_API_PATH)
 
     return defineConfig({
       // To access env vars here use process.env.TEST_VAR
