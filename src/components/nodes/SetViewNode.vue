@@ -61,10 +61,9 @@ const emit = defineEmits(['expand-node'])
 
 
       <v-row 
-        v-if="data.description != data.label" 
+        v-if="data.description" 
         class="description-overlay m-0">
-
-        <v-col v-if="store.settings_show_descriptions" class="d-flex justify-center">
+        <v-col class="d-flex justify-center">
           <pre style="margin: 0; overflow-wrap: break-word;">{{ data.description }}</pre>
         </v-col>
       </v-row>

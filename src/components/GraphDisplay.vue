@@ -484,7 +484,7 @@
         console.log('done fitToNode', id)
         var node = elements.nodes.find(x => x.id == id)
         store.current_node = node
-        if(!padding) padding = 3
+        if(!padding) padding = 5
         flow.fitView({nodes: [id], duration: 1000, padding: padding})
        
     }
@@ -520,6 +520,10 @@
         console.log('adding node')
         console.log(wsdata.target)
         console.log(wsdata.node)
+        // remove "empty table, empty mind" node
+        if(elements.nodes.length == 1) {
+            elements.nodes = elements.nodes.filter((node) => node.id !== "1")
+        }
         // file uploaded to set is not added to visual graph
         if(wsdata.set) {
            // expandSetNode(wsdata.node, wsdata.target)
