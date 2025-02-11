@@ -260,14 +260,21 @@
     // Websocket for UI updates
     let connection = new WebSocket(wsURL);
     connection.onmessage = (event) => {
-        console.log('tuli message')
-        console.log(event)
+        // console.log('tuli message')
+        // console.log(event)
         try {
             var wsdata = JSON.parse(event.data)
             if(wsdata.target) {
                 console.log('got message:', wsdata.command)
                 if(wsdata.command == 'add') {
                     addNode(wsdata) 
+                    // check if we another node (set processing produces Process and Set)
+                    if(wsdata.set_node) {
+                        wsdata.target = wsdata.node['@rid']
+                        wsdata.node = wsdata.set_node
+                        wsdata.type = 'set'
+                        addNode(wsdata)
+                    }
                 } else if (wsdata.command == 'update') {
                     if(state.setPanel) loadSet()  // update set panel if open
 

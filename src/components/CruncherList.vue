@@ -203,7 +203,7 @@
 		}
 		console.log(process)
         if(store.current_node.data.type == 'source') {
-            var res = await web.createSetProcess(process, store.current().id)
+            var res = await web.createSourceProcess(process, store.current().id)
         } else if(store.current_node.data.type == 'set') {
             var res = await web.createSetProcess(process, store.current().id)
         } else  if (store.cruncher_filter == 'ROI') {
