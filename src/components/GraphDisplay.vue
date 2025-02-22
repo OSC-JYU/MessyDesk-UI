@@ -84,7 +84,7 @@
                         </v-toolbar>
 
                         <v-btn 
-                            @click="store.uploader_open = true"
+                            @click="store.set_uploader_open = true"
                             >
                             <template v-slot:prepend>
                                 <v-icon  icon="mdi-file"></v-icon>

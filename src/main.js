@@ -13,6 +13,7 @@ import TagsMain from './components/TagsMain.vue'
 import AdminMain from './components/AdminMain.vue'
 import Introduction from './components/Introduction.vue'
 
+import Login from './components/Login.vue'
 import About from './components/About.vue'
 
 
@@ -120,13 +121,16 @@ const router = createRouter({
       path: '/about',
       name: 'about',
       component: About
-  }
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: Login
+    }
   ]
 })
 
 //const app = createApp(App)
-
-createApp(App).use(vuetify).use(router).mount('#app')
 
 const i18n = createI18n({
   locale: "fi",
@@ -135,6 +139,10 @@ const i18n = createI18n({
   globalInjection: true, // <--- add this
   messages
 })
+
+createApp(App).use(vuetify).use(router).use(i18n).mount('#app')
+
+
 
 // tell Vue to use router
 //app.use(router)

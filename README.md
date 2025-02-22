@@ -31,3 +31,5 @@ npm run dev
 ```sh
 npm run build
 ```
+
+CAT: https://www.pexels.com/photo/close-up-photo-of-yellow-and-white-cat-57416/

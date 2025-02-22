@@ -12,6 +12,42 @@
         title="Upload file"
       >
       <v-card-text>
+
+        <v-col>
+
+              <v-file-input
+                label="Select File (image, pdf, txt)"
+                show-size
+                ref="upload" accept="image/*,.pdf,text/plain" 
+            ></v-file-input>
+        </v-col>
+      </v-card-text>
+        <template v-slot:actions>
+            <v-btn
+            class="ms-auto"
+            text="Cancel"
+            @click="close()"
+          ></v-btn>
+          <v-divider thickness="0"></v-divider>
+          <v-btn
+            class="ms-auto primary"
+            text="Upload" 
+            @click="sendFile()"
+          ></v-btn>
+        </template>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog
+      v-model="store.set_uploader_open"
+      width="auto"
+    >
+      <v-card
+        min-width="600"
+        prepend-icon="mdi-update"
+        title="Upload file to Set"
+      >
+      <v-card-text>
         <div v-if="store.current_node && store.current_node.type == 'set'">Upload to set</div>
 
         <v-col>
@@ -66,7 +102,7 @@
     async function sendFile() {
         if(upload.value.files.length && route.query.node) {
             try {
-                if(store.current_node && store.current_node.type == 'set') {
+                if(store.set_creator_open && store.current_node && store.current_node.type == 'set') {
                   await web.uploadFile(upload.value.files[0], route.query.node, store.current_node.id)
 
                 } else {
@@ -87,6 +123,7 @@
 	function close() {
 
 		store.uploader_open = false
+		store.set_uploader_open = false
 	}
 
 

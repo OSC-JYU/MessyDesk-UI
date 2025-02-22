@@ -1,5 +1,9 @@
 {
 	"en": {
+		"register": {
+			"not_registered": "You do not have permission to use the digital humanities services yet.",
+			"organisation": "Services are managed by Your organisation"
+		},
 	  "nav": {
 		"home": "Your homepage",
 		"about": "About",
@@ -17,6 +21,10 @@
 
 
 	"fi": {
+		"register": {
+			"not_registered": "Sinulla ei ole vielä käyttöoikeuksia digitaalisen humanismin palveluihin.",
+			"organisation": "Palvelua hallinnoi JYU:n Avoimen Tiedon Keskus"
+		},
 	  "nav": {
 		"home": "Kotisivusi",
 		"about": "tietoja",
