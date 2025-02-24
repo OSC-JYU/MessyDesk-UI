@@ -121,7 +121,10 @@ em {
                   
                  
                   
-                  <v-card v-if="state.items.length == 0" color="#EDE1CE" class="pa-6"> <h4>What are things?</h4><p>Things are entities that YOU (not machine) have created. Things can be persons, places, events, tags or any other thing you want to call a Thing.</p><p>The idea is that you can link Things to your findings in data. For example, if you used <b>Natural Entity Recognition</b> to extract persons from your files, then you can link them to your Person things. This allows you to separate AI-findings from you own interpretations.</p><p>And finally, Things can have metadata and relations to other things. When we sum all this up, you get a directed graph.</p><p class="alert alert-info">Things are under development.</p> </v-card>
+                  <v-card v-if="state.items.length == 0" color="rgb(186, 219, 204)" class="pa-6"> <h4>What are Tags?</h4><p>Tags are tools to help you organise your data. Tags can be persons, places, events, generic tags or any other thing you want to call a Tag.</p>
+                    <!-- <p>The idea is that you can link Things to your findings in data. For example, if you used <b>Natural Entity Recognition</b> to extract persons from your files, then you can link them to your Person things. This allows you to separate AI-findings from you own interpretations.</p><p>And finally, Things can have metadata and relations to other things. When we sum all this up, you get a directed graph.</p> -->
+                    <p class="alert alert-info">Tags are under development.</p> 
+                  </v-card>
 
                   <v-row class="set-panel">
                             <v-col
@@ -162,11 +165,11 @@ em {
                   <v-btn v-if="!state.add" class="btn-primary mt-4" @click="state.add  = true" color="primary" >Add new</v-btn>
 
                   <div v-if="state.add" class="mt-4">  
-                    <v-card title="Add new Entity">
+                    <v-card title="Add new Tag">
                       <v-card-text>
-                        <v-select :items="state.entity_schema" v-model="state.current_type" label="Type" :item-props="entityProps"></v-select>
+                        <v-select :items="state.entity_schema" v-model="state.current_type" label="Tag Type" :item-props="entityProps"></v-select>
 
-                        <v-text-field v-model="state.new_label" label="Label"></v-text-field>
+                        <v-text-field v-model="state.new_label" label="Tag Label"></v-text-field>
 
                       </v-card-text>
                       <v-card-actions>

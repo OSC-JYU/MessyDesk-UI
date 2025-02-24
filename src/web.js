@@ -1,28 +1,15 @@
 import axios from "axios"
 import { en } from "vuetify/locale"
 let web = {}
-// if(window.location.hostname == 'localhost')
-// 	axios.defaults.baseURL = ''
-// else
 
-	axios.defaults.baseURL = import.meta.env.VITE_API_PATH
+axios.defaults.baseURL = import.meta.env.VITE_API_PATH
 
-// Add a response interceptor
-// axios.interceptors.response.use(function (response) {
-//     // Any status code that lie within the range of 2xx cause this function to trigger
-//     // Do something with response data
 
-//     return response;
-//   }, function (error) {
-// 	//console.log('pam')
-// 	//console.log(error)
-//     // Any status codes that falls outside the range of 2xx cause this function to trigger
-//     // Do something with response error
-// 	//return Promise.reject({error: error});
-// 	return {error: error}
-//     //return Promise.reject(error);
-//   });
 
+web.ready = async function() {
+	var response = await axios.get('/api')
+	return response
+}
 
 web.getError = async function(rid) {
 	var result = await axios.get(`/api/errors/${rid}`)
@@ -85,6 +72,19 @@ web.getServices = async function(rid) {
 web.getUsers = async function(rid) {
 	var result = await axios.get(`/api/users`)
 	return result.data
+}
+
+web.addPermissionRequest = async function() {
+	try {
+		var result = await axios.post(`/api/permissions/request`, {})
+		return result.data
+	} catch (error) {
+		throw(error)
+		if(error.response)
+			return error.response.data
+		else
+			return error
+	}
 }
 
 web.createUser = async function(data) {
@@ -155,15 +155,6 @@ web.getSetFiles = async function(rid, skip, limit) {
 	return result.data
 }
 
-web.getMenus = async function() {
-	var result = await axios.get(`/api/menus`)
-	return result.data
-}
-
-web.getMaps = async function() {
-	var result = await axios.get(`/api/maps`)
-	return result.data
-}
 
 web.getFiles = async function(dir) {
 	var result = await axios.get(`/api/files/` + dir)

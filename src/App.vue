@@ -5,28 +5,32 @@
     import "bootstrap"
     import { onMounted, onUnmounted, reactive } from 'vue'
     import {store} from "./components/Store.js";
+    import web from "./web.js";
 
     var intervalID = null
 
   var session = reactive({error: null})
 
 async function login() {
-  if(store.logged_out) return
+  //if(store.logged_out) return
   try {
-    var response = await fetch('/api')
-    // valid session but not registered user
-    if (response.status == 401 && !window.location.pathname.includes('login')) {
-      window.location.href = 'login'
-    // expired session
-    } else if (response.status == 302) {
-      store.logged_out = true
-    } else if (response.status == 200 && window.location.pathname.includes('login')) {
-      // go to to main site
-      window.location.href = '/'
-    }
+    var response = await web.ready()
+    // if we are in login page and we have a valid session
+    if(window.location.pathname.includes('login'))
+      window.location.href = import.meta.env.VITE_PUBLIC_PATH || '/'
+
   } catch (e) {
     console.log(e)
-    session.error = e
+    // valid session but not user permissions
+    if (e.request.status == 401 && !window.location.pathname.includes('login')) {
+      window.location.href = 'login'
+
+    // expired session
+    } else if (e.request.status == 302) {
+      store.logged_out = true
+    } else {
+      store.logged_out = true
+    }
   }
 
 }

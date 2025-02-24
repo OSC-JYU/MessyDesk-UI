@@ -155,6 +155,24 @@
       state.text = replaceWithBr(f)
     }
 
+    async function linkEntityToItem(entityID) {
+      console.log(entityID)
+      console.log(state.file['@rid'])
+      await web.linkEntityToItem(entityID, state.file['@rid'])
+      var response = await web.getDocInfo(store.file['@rid'])
+      state.file = response
+      state.file.thumbnail = removeLastPathPart('/api/thumbnails/' + response.path)
+    }
+
+    async function unLinkEntity(entityID) {
+      console.log(entityID)
+      console.log(state.file['@rid'])
+      await web.unLinkEntity(entityID, state.file['@rid'])
+      var response = await web.getDocInfo(store.file['@rid'])
+      state.file = response
+      state.file.thumbnail = removeLastPathPart('/api/thumbnails/' + response.path)
+    }
+
     onMounted(async()=> {
 
         load()

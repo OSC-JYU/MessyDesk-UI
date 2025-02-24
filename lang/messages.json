@@ -2,7 +2,10 @@
 	"en": {
 		"register": {
 			"not_registered": "You do not have permission to use the digital humanities services yet.",
-			"organisation": "Services are managed by Your organisation"
+			"organisation": "Services are managed by Your organisation",
+			"request_button": "Send request",
+			"request_error": "Request failed!",
+			"request_success": "Request succeeded!"
 		},
 	  "nav": {
 		"home": "Your homepage",
@@ -23,7 +26,10 @@
 	"fi": {
 		"register": {
 			"not_registered": "Sinulla ei ole vielä käyttöoikeuksia digitaalisen humanismin palveluihin.",
-			"organisation": "Palvelua hallinnoi JYU:n Avoimen Tiedon Keskus"
+			"organisation": "Palvelua hallinnoi JYU:n Avoimen Tiedon Keskus",
+			"request_button": "Lähetä pyyntö",
+			"request_error": "Pyyntö ei onnistunut!",
+			"request_success": "Pyyntö onnistui!"
 		},
 	  "nav": {
 		"home": "Kotisivusi",

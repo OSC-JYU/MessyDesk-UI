@@ -52,10 +52,11 @@ const emit = defineEmits(['expand-node'])
         <v-chip v-if="store.settings_show_entities" v-for="entity of data.entities" :key="entity.id"  :color="entity.color" ><v-icon v-if="entity.icon" :icon="'mdi-' + entity.icon.toLowerCase()" start></v-icon> {{ entity.label }}</v-chip>
       </v-row>
 
-      <v-switch class="mt-2" v-model="data.expand" @change="emit('expand-node', data)" label="Show in Desk" color="primary">expand</v-switch>
+      <!-- <v-switch class="mt-2" v-model="data.expand" @change="emit('expand-node', data)" label="Show in Desk" color="primary">expand</v-switch> -->
       <v-row>
         <v-col class="d-flex align-center justify-center">
-          <img :src="data.thumb + '/thumbnail.jpg'" draggable="false" style="width: 100%; height: auto;" />
+          <img v-if="data.type == 'image' || data.type == 'pdf'" :src="data.thumb + '/thumbnail.jpg'" draggable="false" style="width: 100%; height: auto;" />
+          <div v-else>{{ data.info }}</div>
         </v-col>
       </v-row>
 

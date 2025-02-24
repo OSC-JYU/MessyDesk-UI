@@ -165,7 +165,7 @@ em {
                   <!-- ITEM DISPLAY -->
                   <div >
                     <div v-if="state.text" ref="textContainer" v-html="state.text"></div>
-                    <v-card v-else color="#EDE1CE" class="p-2"> <h4>How search works?</h4><p>When your crunchers create texts (like OCR) or Region of interests (like NER), or when you write description, the text get indexed and you can find it with search.</p>By default, the search is very aggressive, so it should work well with OCR texts also.<br> <br><p>If you have any ideas of how search should work, then contact ari.hayrinen@jyu.fi </p> 
+                    <v-card v-else color="rgb(186, 219, 204)" class="p-2"> <h4>How search works?</h4><p>When your crunchers create texts (like OCR),the text get indexed and you can find it with search.</p>By default, the search is very aggressive, so it should work well with OCR texts also.<br> 
                       <div class="alert alert-info m-2">The search is not fully functional yet.</div>
                       </v-card>
                   </div>

@@ -107,7 +107,7 @@
             <br>
             <br>
 
-            <v-card color="#EDE1CE" class="pa-6">TIP: You can quickly find your original files from hamburger menu.</v-card>
+            <!-- <v-card color="#EDE1CE" class="pa-6">TIP: You can quickly find your original files from hamburger menu.</v-card> -->
             </p>
         </v-sheet>
         </div>

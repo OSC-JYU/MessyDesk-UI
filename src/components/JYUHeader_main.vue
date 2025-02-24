@@ -73,7 +73,7 @@
 
             <v-tab >Desks</v-tab>
             <v-tab>Search</v-tab>
-            <v-tab>Things</v-tab>
+            <v-tab>Tags</v-tab>
 
           </v-tabs>
 
@@ -120,9 +120,9 @@
             <v-list>
 
               <v-list-item>
-                <router-link :to="'/Shibboleth.sso/Logout'" class="dropdown-item">
-                      <i class="fs-5 bi-person"></i><span class="ms-1 d-none d-sm-inline">logout</span>
-                  </router-link>
+                <a href="/Shibboleth.sso/Logout" class="dropdown-item">
+                      <i class="fs-5 bi-person"></i><span class="ms-1 d-none d-sm-inline">Logout</span>
+                </a>
                 
               </v-list-item>
 
