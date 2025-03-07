@@ -50,6 +50,7 @@ img {
 import { Handle, Position, useNode } from '@vue-flow/core'
 import { useRouter, useRoute } from 'vue-router'
 import {store} from "../Store.js";
+const apiUrl = import.meta.env.VITE_API_PATH
 
 import CookieIcon from '@/assets/images/cookie-bite-solid_blue.svg';
 

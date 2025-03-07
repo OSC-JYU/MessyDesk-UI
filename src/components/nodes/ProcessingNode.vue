@@ -19,6 +19,7 @@ import { Handle, Position } from '@vue-flow/core'
 import CookieIconWhite from '@/assets/images/cookie-bite-solid-white.svg';
 
 
+
 const props = defineProps({
   data: {
     type: Object,

@@ -11,17 +11,11 @@
 
     <v-sheet v-if="store.current_node && store.current().id" class="pa-6 text-black ">
 
-      
-        <!-- RAW FILE LINK -->
-         {{ store.current().id }}
-        <template v-if="!['set', 'process', 'source'].includes(store.current().type)">
-            <a class="text-medium-emphasis" target="_blank" :href="apiUrl + '/api/files/' + store.current().id.replace('#','')">{{store.current().data.type_label}} open file</a> ({{ store.current().id }})
-        </template>
-
 
         <!-- LABEL-->
         <div v-if="empty(store.current_node.data.label)" @click="editLabel()" class="text-medium-emphasis">add label</div>
-        <h3 v-if="state.edit_label_open == false" @click="editLabel()" class="font-weight-bold mb-4">{{ store.current_node.data.label }}</h3>
+        <h4 v-if="state.edit_label_open == false" @click="editLabel()" class="font-weight-bold mb-4">{{ store.current_node.data.label }}</h4>
+        
         
         <v-card v-else class="pa-6"> 
             <v-text-field @keyup.enter="saveLabel()"
@@ -37,12 +31,14 @@
             </v-card-actions>
         
         </v-card>
+        <hr/>
         <div v-if="store.current_node.data.count">files: {{ store.current_node.data.count }}</div>
               
              
         <!-- DESCRIPTION -->
         <div v-if="empty(store.current_node.data.description)" @click="editDescription()" class="text-medium-emphasis">add description</div>
-        <pre v-if="state.edit_description_open == false" @click="editDescription()">{{ store.current_node.data.description}}</pre>
+        
+        <pre v-if="state.edit_description_open == false" @click="editDescription()" class="mb-8 font-italic">{{ store.current_node.data.description}}</pre>
         
         <v-card v-else class="pa-6"> 
             <v-textarea 
@@ -73,8 +69,15 @@
                  <img  class="nodecard-image" :src="store.current().data.image" />
             </div>
             <p v-if="store.current().data.info"><i><v-icon class="mr-2">mdi-information</v-icon>{{ store.current().data.info }}</i></p>
+            <template v-if="!['set', 'process', 'source'].includes(store.current().type)">
+                <a class="text-medium-emphasis" target="_blank" :href="apiUrl + '/api/files/' + store.current().id.replace('#','')">
+                    <v-btn  color="primary" class="mt-3">open full file</v-btn>
+                </a> 
+
+            </template>
 
         </v-card-text>
+
 
         <!-- ACTIONS -->
         <div class="card-actions d-flex justify-end w-100 pa-2" >

@@ -13,6 +13,8 @@
       >
       <v-card-text>
 
+
+
         <v-col>
 
               <v-file-input
@@ -22,19 +24,32 @@
             ></v-file-input>
         </v-col>
       </v-card-text>
-        <template v-slot:actions>
-            <v-btn
-            class="ms-auto"
-            text="Cancel"
-            @click="close()"
-          ></v-btn>
-          <v-divider thickness="0"></v-divider>
+
+
+      <v-container v-if="state.loading" class="fill-height fluid">
+        <img :src="apiUrl + 'icons/wait.gif'" />
+        <v-row >
+          <v-col align="center" justify="center"> <v-progress-circular
+          :width="3"
+          color="green"
+          indeterminate
+        ></v-progress-circular> Digesting...</v-col>
+        </v-row>
+      </v-container>
+     
+      <template v-if="!state.loading" v-slot:actions>
           <v-btn
-            class="ms-auto primary"
-            text="Upload" 
-            @click="sendFile()"
-          ></v-btn>
-        </template>
+          class="ms-auto"
+          text="Cancel"
+          @click="close()"
+        ></v-btn>
+        <v-divider thickness="0"></v-divider>
+        <v-btn
+          class="ms-auto primary"
+          text="Upload" 
+          @click="sendFile()"
+        ></v-btn>
+      </template>
       </v-card>
     </v-dialog>
 
@@ -79,20 +94,22 @@
 
 
 <script setup>
-    import { watch, reactive, ref} from "vue";
+  import { watch, reactive, ref} from "vue";
 	import { useRoute } from 'vue-router'
-    import {store} from "./Store.js";
-    import web from "../web.js";
+  import {store} from "./Store.js";
+  import web from "../web.js";
+  const apiUrl = import.meta.env.VITE_API_PATH
 
 	const route = useRoute();
-    const upload = ref(null);
+  const upload = ref(null);
 
 
 	var state = reactive({
-		error: ''
+		loading: false,
+    error: ''
 	})
 	var new_node = reactive({})
-    var created = reactive([])
+  var created = reactive([])
 
 	const props = defineProps({
         mode: ''
@@ -101,6 +118,7 @@
 
     async function sendFile() {
         if(upload.value.files.length && route.query.node) {
+          state.loading = true
             try {
                 if(store.set_creator_open && store.current_node && store.current_node.type == 'set') {
                   await web.uploadFile(upload.value.files[0], route.query.node, store.current_node.id)
@@ -109,6 +127,7 @@
                   await web.uploadFile(upload.value.files[0], route.query.node)
                 }
 
+                state.loading = false
                 store.uploader_open = false
                 //store.reload()
             } catch(e) {

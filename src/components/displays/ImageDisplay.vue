@@ -53,6 +53,7 @@
 
           <div v-if="state.file" class="mb-6">
             <div class="header pa-2">{{ state.file.label }}</div>
+       
             <DescriptionEditor :description="state.file.description" :rid="state.file['@rid']"/>
 
             <!-- list of entities -->
@@ -83,7 +84,7 @@
                 ></v-list-item>
               </template>
 
-              <v-list-group v-for="type in state.entities" :key="type.type">
+              <v-list-group color="primary" v-for="type in state.entities" :key="type.type">
                 <template v-slot:activator="{ props }">
                   <v-list-item
                     v-bind="props"
@@ -95,8 +96,9 @@
 
               </v-list-group>
             </v-list-group>
+        
 
-            <v-list-group value="Selections">
+            <!-- <v-list-group value="Selections">
               <template v-slot:activator="{ props }">
                 <v-list-item
                   v-bind="props"
@@ -143,13 +145,16 @@
                   </v-list>
 
                 </template>
-            </v-list-group>
+            </v-list-group> -->
           </v-list>
 
 
 
-
-
+          
+            <a v-if="state.file" class="text-medium-emphasis" title="open file in browser tab" target="_blank" :href="apiUrl + '/api/files/' + state.file['@rid'].replace('#','')">
+              <v-btn  color="primary" class="mt-3">open full file</v-btn>
+            </a> 
+       
 
          
 
@@ -226,8 +231,8 @@
       state.ROIs = []
       state.skip = state.skip + 1
       var response = await web.getSetFiles(store.current_node.id, state.skip -1 , 1)
-      var response2 = await web.getDocInfo(response.files[0]['@rid'])
-      state.file = response2
+      //var response2 = await web.getDocInfo(response.files[0]['@rid'])
+      state.file = response.files[0]
       state.file.thumbnail = removeLastPathPart('/api/thumbnails/' + state.file.path)
       image.src = state.file.thumbnail; 
     }
@@ -236,7 +241,7 @@
       console.log(entityID)
       console.log(state.file['@rid'])
       await web.linkEntityToItem(entityID, state.file['@rid'])
-      var response = await web.getDocInfo(store.file['@rid'])
+      var response = await web.getDocInfo(state.file['@rid'])
       state.file = response
       state.file.thumbnail = removeLastPathPart('/api/thumbnails/' + response.path)
     }
@@ -245,7 +250,7 @@
       console.log(entityID)
       console.log(state.file['@rid'])
       await web.unLinkEntity(entityID, state.file['@rid'])
-      var response = await web.getDocInfo(store.file['@rid'])
+      var response = await web.getDocInfo(state.file['@rid'])
       state.file = response
       state.file.thumbnail = removeLastPathPart('/api/thumbnails/' + response.path)
     }
