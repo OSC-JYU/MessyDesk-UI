@@ -69,8 +69,8 @@
                  <img  class="nodecard-image" :src="store.current().data.image" />
             </div>
             <p v-if="store.current().data.info"><i><v-icon class="mr-2">mdi-information</v-icon>{{ store.current().data.info }}</i></p>
-            <template v-if="!['set', 'process', 'source'].includes(store.current().type)">
-                <a class="text-medium-emphasis" target="_blank" :href="apiUrl + '/api/files/' + store.current().id.replace('#','')">
+            <template v-if="!['set', 'process', 'source','project'].includes(store.current().type)">
+                <a title="opens file in new tab" class="text-medium-emphasis" target="_blank" :href="apiUrl + '/api/files/' + store.current().id.replace('#','')">
                     <v-btn  color="primary" class="mt-3">open full file</v-btn>
                 </a> 
 
