@@ -16,8 +16,8 @@ async function login() {
   try {
     var response = await web.ready()
     // if we are in login page and we have a valid session
-    if(window.location.pathname.includes('login'))
-      window.location.href = import.meta.env.VITE_PUBLIC_PATH || '/'
+   if(window.location.pathname.includes('login'))
+     window.location.href = import.meta.env.VITE_PUBLIC_PATH || '/'
 
   } catch (e) {
     console.log(e)

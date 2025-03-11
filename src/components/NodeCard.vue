@@ -69,9 +69,10 @@
                  <img  class="nodecard-image" :src="store.current().data.image" />
             </div>
             <p v-if="store.current().data.info"><i><v-icon class="mr-2">mdi-information</v-icon>{{ store.current().data.info }}</i></p>
-            <template v-if="!['set', 'process', 'source','project'].includes(store.current().type)">
+            
+            <template v-if="!['set', 'process', 'source','project', 'setprocess'].includes(store.current().type)">
                 <a title="opens file in new tab" class="text-medium-emphasis" target="_blank" :href="apiUrl + '/api/files/' + store.current().id.replace('#','')">
-                    <v-btn  color="primary" class="mt-3">open full file</v-btn>
+                    <v-btn  color="secondary" class="mt-3">open full file</v-btn>
                 </a> 
 
             </template>
@@ -102,16 +103,17 @@
             <p v-if="store.current_project && store.current_project.data" class="">{{ store.current_project.data.description }}</p>
             <hr/>
             <p class="mb-8 font-italic">
-            Here you you can see your files and how you have <b>processed</b> them.
+            Here you you can see your files and how you have <b>processed</b> them with Crunchers.
 
             <br>
-            <br>
-            Import files from hamburger menu and crunch them.
-            <br>
-            <br>
+           
+            <v-card color="#EDE1CE" class="pa-6 mt-6">Upload files and click the cookie in order to see available crunchers.</v-card>
+
+        </p>
+            <v-btn color="primary" @click="store.uploader_open = true" >Upload file</v-btn>
 
             <!-- <v-card color="#EDE1CE" class="pa-6">TIP: You can quickly find your original files from hamburger menu.</v-card> -->
-            </p>
+            
         </v-sheet>
         </div>
 

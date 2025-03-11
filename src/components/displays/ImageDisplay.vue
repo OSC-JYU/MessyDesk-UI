@@ -44,9 +44,9 @@
 
         <!-- Set browse arrows -->
           <template v-if="state.file_count > 0">
-            <v-btn @click="prev()" :disabled="state.skip == 1"><v-icon>mdi-chevron-left</v-icon></v-btn>
+            <v-btn @click="prev()" :disabled="state.skip == 1" color="secondary"><v-icon>mdi-chevron-left</v-icon></v-btn>
           {{state.skip }} / {{state.file_count}} 
-          <v-btn @click="next()" :disabled="state.skip == state.file_count"><v-icon>mdi-chevron-right</v-icon></v-btn>
+          <v-btn @click="next()" :disabled="state.skip == state.file_count" color="secondary"><v-icon>mdi-chevron-right</v-icon></v-btn>
           </template>
 
 
@@ -351,7 +351,7 @@
     background-color: none;
   }
   .column_base {
-    height: 90%; 
+    height: 100%; 
   }
   .column_image {
     height: 100%;

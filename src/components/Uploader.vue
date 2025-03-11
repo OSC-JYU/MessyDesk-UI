@@ -63,7 +63,7 @@
         title="Upload file to Set"
       >
       <v-card-text>
-        <div v-if="store.current_node && store.current_node.type == 'set'">Upload to set</div>
+
 
         <v-col>
 
@@ -74,21 +74,33 @@
             ></v-file-input>
         </v-col>
       </v-card-text>
-        <template v-slot:actions>
-            <v-btn
-            class="ms-auto"
-            text="Cancel"
-            @click="close()"
-          ></v-btn>
-          <v-divider thickness="0"></v-divider>
+
+      <v-container v-if="state.loading" class="fill-height fluid">
+        <img :src="apiUrl + 'icons/wait.gif'" />
+        <v-row >
+          <v-col align="center" justify="center"> <v-progress-circular
+          :width="3"
+          color="green"
+          indeterminate
+        ></v-progress-circular> Digesting...</v-col>
+        </v-row>
+      </v-container>
+
+      <template v-slot:actions>
           <v-btn
-            class="ms-auto primary"
-            text="Upload" 
-            @click="sendFile()"
-          ></v-btn>
-        </template>
-      </v-card>
-    </v-dialog>
+          class="ms-auto"
+          text="Cancel"
+          @click="close()"
+        ></v-btn>
+        <v-divider thickness="0"></v-divider>
+        <v-btn
+          class="ms-auto primary"
+          text="Upload" 
+          @click="sendFile()"
+        ></v-btn>
+      </template>
+    </v-card>
+  </v-dialog>
 
 </template>
 
@@ -120,7 +132,7 @@
         if(upload.value.files.length && route.query.node) {
           state.loading = true
             try {
-                if(store.set_creator_open && store.current_node && store.current_node.type == 'set') {
+                if(store.set_uploader_open && store.current_node && store.current_node.type == 'set') {
                   await web.uploadFile(upload.value.files[0], route.query.node, store.current_node.id)
 
                 } else {
@@ -129,6 +141,7 @@
 
                 state.loading = false
                 store.uploader_open = false
+                store.set_uploader_open = false
                 //store.reload()
             } catch(e) {
                 if(e.response && e.response.data.error)

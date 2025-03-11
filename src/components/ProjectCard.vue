@@ -67,6 +67,7 @@
 
                 <v-card color="#EDE1CE" class="pa-6">TIP: You can quickly find your desks from hamburger menu.</v-card>
                 </p>
+                <v-btn color="primary" @click="$emit('create-project')">Create desk</v-btn>
             </div>
             
 
@@ -82,6 +83,8 @@
     import { onMounted, watch, reactive, ref, computed } from "vue";
     import {store} from "./Store.js";
     import web from "../web.js";
+
+    const emit = defineEmits(['create-project'])
 
     var state = reactive({
         items: [],

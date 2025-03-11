@@ -60,7 +60,7 @@ function openCrunchers(filter) {
 
 <template>
   <div class="node-body nodrag">
-    <div class="header"><v-icon size="35" color="green">mdi-folder-outline</v-icon> IMAGE SET <span v-if="data.count">  ({{ data.count }} images)</span><span v-else>(empty)</span> </div>
+    <div class="header"><v-icon size="35" color="green">mdi-folder-outline</v-icon> SET <span v-if="data.count">  ({{ data.count }} files)</span><span v-else>(empty)</span> </div>
     <v-icon @click="openCrunchers('')" title="Add cruncher" class ="crunch_add" size="65" >mdi-cookie-plus</v-icon>
     <v-container>
      

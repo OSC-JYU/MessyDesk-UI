@@ -5,6 +5,10 @@ let web = {}
 axios.defaults.baseURL = import.meta.env.VITE_API_PATH
 
 
+web.sso = async function () {
+	var response = await axios.get('/api/sso')
+	return response
+}
 
 web.ready = async function() {
 	var response = await axios.get('/api')

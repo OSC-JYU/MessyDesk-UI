@@ -98,7 +98,7 @@
                   >
                     <!-- Third column content -->
                     
-                    <ProjectCard class="h-100 w-100 position-absolute"/>
+                    <ProjectCard @fit-to-node="fitToNode" @create-project="openProjectDialog"  class="h-100 w-100 position-absolute"/>
                 
                   </v-col>
                 </v-row>

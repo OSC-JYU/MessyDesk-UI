@@ -16,9 +16,17 @@
         </v-col>
 
         <v-col cols="3" class="column_text2">
+
+
+          <template v-if="state.file_count > 0">
+            <v-btn @click="prev()" :disabled="state.skip == 1" color="secondary"><v-icon>mdi-chevron-left</v-icon></v-btn>
+          {{state.skip }} / {{state.file_count}} 
+          <v-btn @click="next()" :disabled="state.skip == state.file_count" color="secondary"><v-icon>mdi-chevron-right</v-icon></v-btn>
+          </template>
+
           <div v-if="state.file">
             <h4>{{ state.file.label}}</h4>
-            {{ state.file.info }}
+          
             <DescriptionEditor :description="state.file.description" :rid="state.file['@rid']"/>
             <!-- list of entities -->
  
@@ -74,6 +82,10 @@
             </v-list-group>
           </v-list>
 
+          <a v-if="state.file" class="text-medium-emphasis" title="open file in browser tab" target="_blank" :href="apiUrl + '/api/files/' + state.file['@rid'].replace('#','')">
+              <v-btn  color="primary" class="mt-3">open full file</v-btn>
+            </a> 
+
         </v-col>  
       </v-row>
     </v-container>
@@ -83,11 +95,12 @@
   
   <script setup>
 
-    import { onMounted, reactive, ref, watch } from "vue";
+    import { onMounted, onUnmounted, reactive, ref, watch } from "vue";
   
     import web from "../../web.js";
     import {store} from "../../components/Store.js";
     import DescriptionEditor from './DescriptionEditor.vue'
+    const apiUrl = import.meta.env.VITE_API_PATH
 
     const textContainer = ref(null)
 
@@ -110,6 +123,27 @@
         open: []
     })
 
+    async function prev() {
+      if((state.skip -1) < 1) return
+      state.ROIs = []
+      state.skip = state.skip - 1
+      var response = await web.getSetFiles(store.current_node.id, state.skip - 1, 1)
+      state.file = response.files[0]
+      var f = await web.getNodeFile(response.files[0]['@rid'])
+      state.text = replaceWithBr(f)
+    }
+
+    async function next() {
+      if((state.skip ) > state.file_count) return
+      state.ROIs = []
+      state.skip = state.skip + 1
+      var response = await web.getSetFiles(store.current_node.id, state.skip -1 , 1)
+      state.file = response.files[0]
+      var f = await web.getNodeFile(response.files[0]['@rid'])
+      state.text = replaceWithBr(f)
+    }
+
+    
     function toggleSearch(n) {
       console.log(n)
     }
@@ -148,35 +182,69 @@
       return text.replace(/\n/g, "<br />")
     }
 
-    async function load() {
-      var f = await web.getNodeFile(store.file['@rid'])
-      state.file = await web.getDocInfo(store.file['@rid'])
-      state.entities = await web.getEntities()
-      state.text = replaceWithBr(f)
-    }
+
 
     async function linkEntityToItem(entityID) {
       console.log(entityID)
       console.log(state.file['@rid'])
       await web.linkEntityToItem(entityID, state.file['@rid'])
-      var response = await web.getDocInfo(store.file['@rid'])
+      var response = await web.getDocInfo(state.file['@rid'])
       state.file = response
-      state.file.thumbnail = removeLastPathPart('/api/thumbnails/' + response.path)
+
     }
 
     async function unLinkEntity(entityID) {
       console.log(entityID)
       console.log(state.file['@rid'])
       await web.unLinkEntity(entityID, state.file['@rid'])
-      var response = await web.getDocInfo(store.file['@rid'])
+      var response = await web.getDocInfo(state.file['@rid'])
       state.file = response
-      state.file.thumbnail = removeLastPathPart('/api/thumbnails/' + response.path)
     }
 
+    async function deleteOrOpenEntity(event, entityID) {
+      if (state.isCtrlPressed) {
+        await unLinkEntity(entityID)
+      } else {
+        console.log('show');
+      }
+    }
+
+    function handleKeyDown(event) {
+      if (event.ctrlKey) {
+        state.isCtrlPressed = true;
+      }
+    }
+
+    function handleKeyUp(event) {
+      state.isCtrlPressed = false;
+      if(event.key == 'ArrowLeft') prev()
+      if(event.key == 'ArrowRight') next()
+    }
+
+    async function load() {
+      state.file = null
+      state.file_count = store.file_count || null
+      if(store.skip >= 0) state.skip = store.skip + 1
+      else state.skip = null
+
+      var f = await web.getNodeFile(store.file['@rid'])
+      state.file = await web.getDocInfo(store.file['@rid'])
+      state.entities = await web.getEntities()
+      state.text = replaceWithBr(f)
+    }
+
+
     onMounted(async()=> {
+      window.addEventListener("keydown", handleKeyDown);
+      window.addEventListener("keyup", handleKeyUp);
+      await load()
 
-        load()
+    })
 
+   onUnmounted(() => {
+      // Clean up event listeners when the component is destroyed
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
     })
 
     function removeLastPathPart(str) {
@@ -204,7 +272,7 @@
   }
 
   .column_text {
-    height: 90%;
+    height: 100%;
     
   }
 
