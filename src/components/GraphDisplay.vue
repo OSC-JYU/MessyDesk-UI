@@ -621,7 +621,7 @@
             if(node.data.paths) {
                 flownode.data.paths = []
                 for(var path of node.data.paths) {
-                    flownode.data.paths.push(apiUrl + path)
+                    flownode.data.paths.push(path)
                 }
             }
 
