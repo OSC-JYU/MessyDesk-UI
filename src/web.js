@@ -318,6 +318,12 @@ web.deleteNode = async function(rid) {
 	return response
 }
 
+web.deleteProject = async function(rid) {
+
+	var response = await axios.delete(`/api/projects/${rid.replace('#','')}`)
+	return response
+}
+
 web.connect = async function(from, relation, to) {
 
 	var result = await axios.post(`/api/graph/edges`, {from:from, relation:relation, to:to})

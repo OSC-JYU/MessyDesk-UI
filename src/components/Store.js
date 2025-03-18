@@ -27,6 +27,7 @@ export const store = reactive({
   uploader_open: false,
   set_uploader_open: false,
   node_deleter_open: false,
+  project_deleter_open: false,
   importer_open: false,
   exporter_open: false,
   crunchers_open: false,

@@ -5,16 +5,18 @@
             <v-row align="center" justify="center">
                 <v-col cols="12" sm="8" md="4">
                     <v-card class="elevation-12">
-                        <v-img
-                        height="200px"
-                        :src="Bg"
-                      
-                        ></v-img>
+
                                         
                         <v-card-title>
                         MessyDesk
                         </v-card-title>
                         
+                        <v-img
+                        height="200px"
+                        :src="Bg"
+                      
+                        ></v-img>
+
                         <v-chip class="tex-align-center, ma-5" color="primary"> {{ state.user.mail }} </v-chip>
                         <v-chip class="tex-align-center, ma-5"> {{ state.user.name }} </v-chip>
                         
@@ -71,7 +73,7 @@
     }
 
     onMounted(async() => {
-        var response = await fetch('/api/sso')
+        var response = await web.sso()
         state.user = await response.json()
     })
 </script>

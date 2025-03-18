@@ -180,7 +180,7 @@
 
 
 
-        <v-list-group value="Actions" v-if="props.mode=='graph'">
+        <!-- <v-list-group value="Actions" v-if="props.mode=='graph'">
           <template v-slot:activator="{ props }">
             <v-list-item
               v-bind="props"
@@ -199,9 +199,9 @@
 
           </v-list-item>
           
-        </v-list-group>
+        </v-list-group> -->
 
-        <v-list-item v-if="props.mode=='graph'"
+        <!-- <v-list-item v-if="props.mode=='graph'"
           @click="store.set_creator_open = true"
         >
           <template v-slot:prepend>
@@ -209,17 +209,9 @@
           </template>
       
             <v-list-item-title >Create set</v-list-item-title>
-        </v-list-item>
+        </v-list-item> -->
 
-        <v-list-item v-if="props.mode=='projects'"
-          @click="$emit('create-project')"
-        >
-          <template v-slot:prepend>
-            <v-icon  icon="mdi-file"></v-icon>
-          </template>
-      
-            <v-list-item-title >Create desk</v-list-item-title>
-        </v-list-item>
+
 
         <v-divider inset></v-divider>
 

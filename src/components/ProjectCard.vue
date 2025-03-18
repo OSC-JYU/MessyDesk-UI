@@ -45,7 +45,16 @@
                 <div >
                     <v-img v-for="f in store.current_node.data.paths" :src="f" class="w-50 shadow-1-strong rounded ma-4"/>
                 </div>
+           
+                 <!-- ACTIONS -->
+                <div class=" d-flex justify-end w-100 pa-2" >
+                    
+        
+                    <!-- DELETE BUTTON -->
+                <v-btn  @click="store.project_deleter_open = true" right-0 class="btn btn-danger mr-10" color="red" title="Delete Desk"><i class="bi bi-trash"></i></v-btn>
                 
+            </div>
+
 			</div>
 
                     

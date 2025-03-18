@@ -29,7 +29,7 @@ async function login() {
     } else if (e.request.status == 302) {
       store.logged_out = true
     } else {
-      store.logged_out = true
+      store.logged_out = false
     }
   }
 
