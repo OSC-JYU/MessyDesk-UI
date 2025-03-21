@@ -182,7 +182,7 @@ em {
                   <v-chip v-for="desk in state.desks" color="green" @click:close="state.desks = state.desks.filter(d => d != desk)" closable>{{state.projects.find(p => p.value == desk).title}}</v-chip>
 
                   <!-- FILTERS-->
-                  <v-expansion-panels multiple>
+                  <!-- <v-expansion-panels multiple>
                       <v-expansion-panel title="Filters">
                         <v-expansion-panel-text>
   
@@ -213,7 +213,7 @@ em {
 
                           </v-expansion-panel-text>
                       </v-expansion-panel>
-                    </v-expansion-panels>
+                    </v-expansion-panels> -->
 
 
                     <!-- SEARCH RESULTS -->
@@ -231,6 +231,7 @@ em {
 
                       </template>
                     </v-container>
+                    <div v-if="state.result.response && state.result.response.numFound == 0">No matches</div>
 
                 </v-col>
               </v-row>

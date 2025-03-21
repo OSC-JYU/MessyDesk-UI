@@ -160,7 +160,8 @@
                 service.tasks[task].values = {}
                 if(service.tasks[task].params_help) {
                     for(var param in service.tasks[task].params_help) {
-                        //service.tasks[task].values[param] = service.tasks[task].params_help[param].default
+                        // sefault value for text input
+                        service.tasks[task].values[param] = service.tasks[task].params_help[param].default
                         if(service.tasks[task].params_help[param].multi) service.tasks[task].values[param] = []
                     }
                 }
