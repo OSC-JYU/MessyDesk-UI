@@ -27,11 +27,30 @@ em {
         search: "",
         result: [],
         users: [],
+        from_request:'',
         services: [],
+        requests: [],
         add: false,
         new_label: "",
         new_email: "",
         tab: 0,
+        request_headers: [
+            {
+                title: 'Name',
+                key: 'label', 
+                sortable: true
+            },
+            {
+                title: 'Email',
+                key: 'id', 
+                sortable: true
+            },
+            {
+                title: 'Rights',
+                key: 'access', 
+                sortable: true
+            },
+        ],
         headers: [
             {
                 title: 'Name',
@@ -94,15 +113,40 @@ em {
       state.result = response.result
     }
 
+    function openUserDialog(label, email, rid) {
+      console.log(rid)
+      state.tab = 1
+      state.new_label = label
+      state.new_email = email
+      state.from_request = rid
+      state.add = true
+    }
+
+    async function removeRequest(rid) {
+      await web.removePermissionRequest(rid)
+      state.requests = await web.getPermissionRequests()
+    }
+
     async function createUser() {
       var response = await web.createUser({label:state.new_label, id:state.new_email})
-      console.log(response)
-      state.add = false
+      if(state.from_request != '') {
+        await web.removePermissionRequest(state.from_request)
+        state.requests = await web.getPermissionRequests()
+      }
       state.users = await web.getUsers()
+      cancelCreateUser()
+    }
+
+    function cancelCreateUser() {
+      state.add = false
+      state.from_request = ''
+      state.new_email = ''
+      state.new_label = ''
     }
 
     onMounted(async()=> {
       state.users = await web.getUsers()
+      state.requests = await web.getPermissionRequests()
       var response = await web.getServices()
       for(var key in response) {
         response[key]['active'] = false
@@ -144,7 +188,8 @@ em {
               <v-row class="mt-6">
                 <v-tabs v-model="state.tab">
 
-                  <v-tab >Users</v-tab>
+                  <v-tab >Requests</v-tab>
+                  <v-tab>Users</v-tab>
                   <v-tab>Services</v-tab>
 
                 </v-tabs>
@@ -153,6 +198,27 @@ em {
 
 
               <v-tabs-window v-model="state.tab">
+
+
+                <v-tabs-window-item>
+                  <v-container>
+                    
+                    <v-data-table :items="state.requests" :headers="state.request_headers" >
+
+                      <template v-slot:item.access="{ item }">
+                        <v-btn color="primary" @click="openUserDialog(item['id'], item['id'], item['@rid'])">Accept</v-btn>
+                        <v-btn color="danger" @click="removeRequest(item['@rid'])" class="ml-8"><v-icon>mdi-trash-can</v-icon>Remove</v-btn>
+                      </template>
+
+
+                    </v-data-table>
+                    
+      
+
+                  </v-container>
+
+                </v-tabs-window-item> 
+
 
                 <v-tabs-window-item>
                     <v-container>
@@ -183,8 +249,9 @@ em {
                       <v-card-text>
                         <v-text-field v-model="state.new_label" label="Lastname, Firstname"></v-text-field>
                         <v-text-field v-model="state.new_email" label="email"></v-text-field>
-                        <v-btn @click="state.add = false">Cancel</v-btn>
-                        <v-btn @click="createUser()">Create</v-btn>
+                        <v-btn @click="cancelCreateUser()">Cancel</v-btn>
+                        <v-btn @click="createUser()" color="primary" class="ml-6">Create</v-btn>
+                        From request {{ state.from_request }}
                       </v-card-text>
                       </v-card>
                     </div>
@@ -196,7 +263,7 @@ em {
                 <v-tabs-window-item>
                   <v-container>
                     
-                    <v-data-table :items="state.services" :headers="state.service_headers" :sort-by.sync="sortBy">
+                    <v-data-table :items="state.services" :headers="state.service_headers" >
 
                       <template v-slot:item.description="{ item }">
                         <div >{{item.description}} <p><a target="_blank" :href="item.source_url">{{ item.source_url }}</a></p> </div>
@@ -215,13 +282,17 @@ em {
 
                 </v-tabs-window-item> 
 
+
+
               </v-tabs-window>
 
-
+              
+              
             </v-container>
-            </v-col>
-
-          </v-row>
+          </v-col>
+        
+          
+        </v-row>
         </v-container>
       </v-main>
     </v-layout>

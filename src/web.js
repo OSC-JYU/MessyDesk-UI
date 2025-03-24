@@ -91,6 +91,17 @@ web.addPermissionRequest = async function() {
 	}
 }
 
+
+web.getPermissionRequests = async function() {
+	var result = await axios.get(`/api/permissions/request`)
+	return result.data
+}
+
+web.removePermissionRequest = async function(rid) {
+	var result = await axios.delete(`/api/permissions/request/${rid.replace('#','')}`)
+	return result.data
+}
+
 web.createUser = async function(data) {
 	try {
 		var result = await axios.post(`/api/users`, data)
