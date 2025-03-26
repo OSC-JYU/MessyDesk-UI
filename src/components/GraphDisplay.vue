@@ -31,7 +31,8 @@
     }
 
     .set-panel {
-        max-height: 500px !important;
+        height: 500px !important;
+        margin-top:20px;
       
     }
 
@@ -72,30 +73,49 @@
                     <!-- set panel -->
                     <v-navigation-drawer  v-if="store.current_node" v-model="state.setPanel" temporary location="bottom" >
 
-                        <v-toolbar color="#005757" density="compact">
+                        <v-toolbar color="#005757" density="compact" style="position: fixed; z-index: 1000;">
                         <template v-slot:prepend>
-                            <v-app-bar-nav-icon></v-app-bar-nav-icon>
+                            
+                            <v-menu>
+                                <template v-slot:activator="{ props }">
+                                <v-app-bar-nav-icon v-bind="props"></v-app-bar-nav-icon>
+                                </template>
+
+                                <v-list>
+                                    <v-list-item>
+                                        <v-list-item-title>                        
+                                            <v-btn 
+                                                @click="store.set_uploader_open = true"
+                                                >
+                                                <template v-slot:prepend>
+                                                    <v-icon  icon="mdi-file"></v-icon>
+                                                </template>
+                                                    Add file to set 
+                                            </v-btn>
+                                        </v-list-item-title>
+                                    </v-list-item>
+                                </v-list>
+                            </v-menu>
                         </template>
 
                         <v-toolbar-title>
                             <v-icon size="35" color="green">mdi-folder-outline</v-icon>
                             {{ store.current_node.data.label }} <span v-if="state.setdata.file_count">({{ state.setdata.file_count }} files )</span>
+                            
                         </v-toolbar-title>
+                        
+                        <v-pagination
+                            v-model="page"
+                            :length="totalPages"
+                            :total-visible="16"
+                            class="mt-4"
+                            ></v-pagination>
+                            
                         </v-toolbar>
 
-                        <v-btn 
-                            @click="store.set_uploader_open = true"
-                            >
-                            <template v-slot:prepend>
-                                <v-icon  icon="mdi-file"></v-icon>
-                            </template>
-                        
-                                Add file to set
-                        </v-btn>
-
                         <v-divider></v-divider>
-
-                        <v-row class="set-panel">
+                        
+                        <v-row class="set-panel mt-8">
                             <v-col
                             v-for="(file, index) in state.setdata.files"
                             :key="file.id"
@@ -104,6 +124,7 @@
                             >
 
                             <!-- SET VIEW NODE-->
+                             
                             <SetViewNode @dblclick="openSetFile(file, index)" :data="file" @expand-node="expandSetNode(file)"></SetViewNode>
 
                             </v-col>
@@ -191,7 +212,7 @@
 
 <script setup>
 
-    import { onMounted, watch, reactive, ref, nextTick } from "vue";
+    import { onMounted, watch, reactive, ref, computed } from "vue";
     import web from "../web.js";
 
     import {store} from "./Store.js";
@@ -241,6 +262,7 @@
 
 
 	const CLUSTER = 1
+    const filesPerPage = 10; // Number of files per page
 
     const route  = useRoute();
     const router = useRouter();
@@ -256,6 +278,12 @@
 	var tags = reactive({result:[]})
     var me = reactive({data:{}})
     var editing = ref(false)
+    var page = ref(1)  // set page for pagination
+    var totalPages = ref(1)  // set page count for pagination
+    // const totalPages = computed(() => {
+    //     return 10
+    //     return Math.ceil(state.setdata.file_count / filesPerPage);
+    // });
 
     // Websocket for UI updates
     let connection = new WebSocket(wsURL);
@@ -473,6 +501,13 @@
             loadGraph(route, oldValue)
     })
 
+    watch(
+    	() => page.value,
+      	async (newValue, oldValue) => {
+            loadSet()
+    
+    })
+
     function openSetFile(file, index) {
         emit('open-node', file['@rid'], store.current_node.id, state.setdata.file_count, index )
     } 
@@ -515,12 +550,15 @@
     }
 
     async function toggleSetPanel(node) {
+        page.value = 1
         state.setdata = await web.getSetFiles(store.current_node.id)
+        totalPages.value =  Math.ceil(state.setdata.file_count / filesPerPage) - 1;
+        console.log(totalPages)
         state.setPanel = true
     }
 
     async function loadSet() {
-        state.setdata = await web.getSetFiles(store.current_node.id)
+        state.setdata = await web.getSetFiles(store.current_node.id, page.value * filesPerPage, filesPerPage)
     }
 
     function addNode(wsdata) {

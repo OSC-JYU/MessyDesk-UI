@@ -201,7 +201,7 @@
           
         </v-list-group> -->
 
-        <!-- <v-list-item v-if="props.mode=='graph'"
+         <v-list-item v-if="props.mode=='graph'"
           @click="store.set_creator_open = true"
         >
           <template v-slot:prepend>
@@ -209,7 +209,7 @@
           </template>
       
             <v-list-item-title >Create set</v-list-item-title>
-        </v-list-item> -->
+        </v-list-item> 
 
 
 
