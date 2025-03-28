@@ -552,13 +552,13 @@
     async function toggleSetPanel(node) {
         page.value = 1
         state.setdata = await web.getSetFiles(store.current_node.id)
-        totalPages.value =  Math.ceil(state.setdata.file_count / filesPerPage) - 1;
+        totalPages.value =  Math.ceil(state.setdata.file_count / filesPerPage) ;
         console.log(totalPages)
         state.setPanel = true
     }
 
     async function loadSet() {
-        state.setdata = await web.getSetFiles(store.current_node.id, page.value * filesPerPage, filesPerPage)
+        state.setdata = await web.getSetFiles(store.current_node.id, (page.value - 1) * filesPerPage, filesPerPage)
     }
 
     function addNode(wsdata) {
