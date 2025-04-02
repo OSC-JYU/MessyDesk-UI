@@ -54,6 +54,13 @@
             </v-card-actions>
         
         </v-card>
+
+        <div v-if="state.prompt" class="mt-4 mb-4">
+          <v-alert type="info" variant="tonal">
+            <v-icon start icon="mdi-message-text" class="mr-2"></v-icon>
+            {{ state.prompt }}
+          </v-alert>
+        </div>
     
         <!-- ERROR -->
         <v-card-text class="pa-0 overflow-scroll" v-if="store.current_node.data.error">
@@ -163,6 +170,11 @@
             state.edit_description_open = false
             state.edit_label_open = false
             state.edit_label = ''
+            try {
+                state.prompt = JSON.parse(store.current_node.data.params).system_params.prompts.content
+            } catch(e) {
+                state.prompt = ''
+            }
     })
 
     const current_query = computed(() => {

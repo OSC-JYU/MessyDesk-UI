@@ -27,6 +27,11 @@ web.search = async function(search) {
 	return result.data
 }
 
+web.savePrompt = async function(prompt) {
+	var result = await axios.post(`/api/prompts`, prompt)
+	return result.data
+}
+
 web.rawQuery = async function(query) {
 	var result = await axios.post(`/api/query`, {query: query})
 	return result.data
@@ -70,6 +75,11 @@ web.createSource = async function(project_rid, state, type) {
 
 web.getServices = async function(rid) {
 	var result = await axios.get(`/api/services`)
+	return result.data
+}
+
+web.getPrompts = async function(rid) {
+	var result = await axios.get(`/api/prompts`)
 	return result.data
 }
 

@@ -12,6 +12,12 @@ em {
   margin: 2px;
 }
 
+.set-panel2 {
+       
+        margin-top:20px;
+      
+    }
+
 </style>
 
 <script setup>
@@ -115,7 +121,7 @@ em {
 
                 <v-col cols="8" class="column_text2 ">
 
-                  <v-row class="set-panel">
+                  <v-row class="set-panel2">
                     <v-chip v-for="entity of state.selected_entities" :key="entity.id"  :color="entity.color" @click="unselect(entity)"><v-icon v-if="entity.icon" :icon="'mdi-' + entity.icon.toLowerCase()" start></v-icon>{{ entity.label }}<v-icon end>mdi-close</v-icon></v-chip>
                   </v-row>
                   
@@ -126,7 +132,7 @@ em {
                     <p class="alert alert-info">Tags are under development.</p> 
                   </v-card>
 
-                  <v-row class="set-panel">
+                  <v-row class="set-panel2">
                             <v-col
                             v-for="(file, index) in state.items"
                             :key="file.rid"

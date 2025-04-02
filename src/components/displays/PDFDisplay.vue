@@ -5,7 +5,7 @@
         color="primary"
         icon="mdi-close"
         style="position: absolute; top: 0; left: -60px; z-index:1000"
-        @click="$emit('change-tab',0)"
+        @click="$emit('change-tab',store.tab)"
       ></v-btn>
 
       <v-row class="h-100">

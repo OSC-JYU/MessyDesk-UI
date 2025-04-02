@@ -119,14 +119,7 @@
 
             <v-list>
 
-              <v-list-item>
-                <a href="/Shibboleth.sso/Logout" class="dropdown-item">
-                      <i class="fs-5 bi-person"></i><span class="ms-1 d-none d-sm-inline">Logout</span>
-                </a>
-                
-              </v-list-item>
-
-              <v-list-item>
+              <v-list-item v-if="store.user && store.user.access == 'admin'">
                 <router-link :to="'/services'" class="dropdown-item">
                       <i class="fs-5 bi-card-list"></i><span class="ms-1 d-none d-sm-inline">Services</span>
                   </router-link>
@@ -136,6 +129,18 @@
                 <router-link :to="'/admin'" class="dropdown-item">
                       <i class="fs-5 bi-person-fill"></i><span class="ms-1 d-none d-sm-inline">Admin</span>
                   </router-link>
+              </v-list-item>
+
+              <v-list-item>
+                <a href="/prompts"  class="dropdown-item">
+                      <i class="fs-5 bi-book"></i><span class="ms-1 d-none d-sm-inline">Prompts</span>
+                </a>
+              </v-list-item>
+
+              <v-list-item>
+                <a href="/Shibboleth.sso/Logout" class="dropdown-item">
+                      <i class="fs-5 bi-person"></i><span class="ms-1 d-none d-sm-inline">Logout</span>
+                </a>
               </v-list-item>
             </v-list>
           </v-menu>

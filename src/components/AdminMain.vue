@@ -68,6 +68,11 @@ em {
                 sortable: true
             },
             {
+                title: 'Service Groups',
+                key: 'service_groups', 
+                sortable: true
+            },
+            {
                 title: 'RID',
                 key: '@rid', 
                 sortable: true

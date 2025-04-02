@@ -6,7 +6,7 @@
         color="primary"
         icon="mdi-close"
         style="position: absolute; top: 0; left: -60px; z-index:1000"
-        @click="$emit('change-tab',0)"
+        @click="$emit('change-tab',store.tab)"
       ></v-btn>
 
       <v-row class="column_text">
@@ -179,7 +179,11 @@
     }
 
     function replaceWithBr(text) {
-      return text.replace(/\n/g, "<br />")
+      if(typeof text == 'string') {
+        return text.replace(/\n/g, "<br />")
+      } else {
+        return text
+      }
     }
 
 

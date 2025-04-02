@@ -197,6 +197,11 @@
 		process.params = task.values
 		process.params.task = task_id
 	    if(task.info) process.info = task.info
+        if(service.external_tasks) {
+            process.name = task.name
+            process.description = task.description
+            process.system_params = task.system_params
+        }
 
 		if(task.info) {
 			console.log('INFO LÖYTYI')
