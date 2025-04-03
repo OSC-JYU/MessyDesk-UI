@@ -209,7 +209,7 @@
           
         </v-list-group> -->
 
-         <v-list-item v-if="props.mode=='graph'"
+         <v-list-item v-if="props.mode=='graph' && store.user && store.user.access == 'admin'"
           @click="store.set_creator_open = true"
         >
           <template v-slot:prepend>

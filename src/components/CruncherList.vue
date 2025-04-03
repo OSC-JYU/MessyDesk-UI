@@ -32,22 +32,27 @@
 
                         <v-sheet v-for="service in services.result.for_format">
                             <template v-if="service.id !== 'thumbnailer' && Object.keys(service.tasks).length > 0">
-                                <h4 class="text-h5 font-weight-bold mb-4 mt-6"> {{ service.name }}</h4>
-                                <p><i> {{ service.description }}</i></p> 
+                                <h4 class="text-h5 font-weight-bold mb-4 mt-6"> {{ service.name }} <v-chip label :color="service.access === 'commercial' ? 'danger' : 'success'" variant="tonal" class="ml-2"> {{ service.access === 'commercial' ? 'commercial' : 'free' }} </v-chip></h4>
+                                
+                                <p><i> {{ service.description }}</i>  </p> 
                                
                                 <v-expansion-panels>
                                     <v-expansion-panel v-for="(task, task_key) of service.tasks" >
                                         <v-expansion-panel-title> 
-                                            <div class="font-weight-bold "> {{ task.name }}</div>
+                                            <div class="font-weight-bold "> {{ task.name }}</div> <span class="text-caption ml-2"> {{ task.description }} </span>
+                                            <v-chip label :color="task.owner === 'public' ? 'primary' : 'success'" class="ml-2"> {{ task.owner === 'public' ? 'public' : 'your own' }} </v-chip>
+                                            
                                         </v-expansion-panel-title>
                                         <v-expansion-panel-text>
-                                            {{ task.description }}
-         
-                                           
-
                                             
                                             <div >
                                                 <!-- task specific settings -->
+                                                <div v-if="task.content" class="mt-4 mb-4">
+                                                    <v-alert type="info" variant="tonal">
+                                                        <v-icon start icon="mdi-message-text" class="mr-2"></v-icon>
+                                                        {{ task.content }}
+                                                    </v-alert>
+                                                </div>
                                                 <div v-if="task.params_help">
                                                     <div v-for="(help, key) in task.params_help" :key="key" class="input-group mb-3">
                                                             <v-container style="width: 100%">
@@ -85,6 +90,7 @@
                                                         </div>
                                                     </div>
                                                     <div v-else>This cruncher has no settings, just click "Crunch!".</div>
+                                                    
                                                 </div>
 
                                                 <div class="d-flex flex-row-reverse mb-6 ">
@@ -101,10 +107,8 @@
                                                 
                                             </div>
 
-                                                <v-alert type="info" v-if="task.supported_formats">supported formats: {{ task.supported_formats.join(', ') }}</v-alert>
-                                                <v-alert type="info" v-else>supported formats: {{ service.supported_formats.join(', ') }}</v-alert>
-
-
+                                                <div v-if="task.supported_formats"><b>supported formats: {{ task.supported_formats.join(', ') }}</b></div>
+                                                <div v-else><b>supported formats: {{ service.supported_formats.join(', ') }}</b></div>
 
 
                                         </v-expansion-panel-text>
@@ -156,6 +160,17 @@
         for(var service of services.result.for_format) {
             if(service.id === 'thumbnailer') continue
             state.service_count += 1
+            
+            // Convert tasks object to array, sort by name, and convert back to object
+            const sortedTasks = Object.entries(service.tasks)
+                .sort(([, a], [, b]) => a.name.localeCompare(b.name))
+                .reduce((acc, [key, value]) => {
+                    acc[key] = value;
+                    return acc;
+                }, {});
+            
+            service.tasks = sortedTasks;
+            
             for(var task in service.tasks) {
                 service.tasks[task].values = {}
                 if(service.tasks[task].params_help) {
