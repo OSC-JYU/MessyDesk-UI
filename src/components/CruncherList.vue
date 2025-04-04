@@ -40,7 +40,7 @@
                                     <v-expansion-panel v-for="(task, task_key) of service.tasks" >
                                         <v-expansion-panel-title> 
                                             <div class="font-weight-bold "> {{ task.name }}</div> <span class="text-caption ml-2"> {{ task.description }} </span>
-                                            <v-chip label :color="task.owner === 'public' ? 'primary' : 'success'" class="ml-2"> {{ task.owner === 'public' ? 'public' : 'your own' }} </v-chip>
+                                         
                                             
                                         </v-expansion-panel-title>
                                         <v-expansion-panel-text>
