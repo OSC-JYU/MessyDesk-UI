@@ -44,6 +44,7 @@
     import HOCRDisplay from './displays/HOCRDisplay.vue'
     import NER_Display from './displays/NER_Display.vue'
     import TextDisplay from './displays/TextDisplay.vue'
+    import OCRDisplay from './displays/OCRDisplay.vue'
     import PDFDisplay from './displays/PDFDisplay.vue'
     import HumanJSONDisplay from './displays/HumanJSONDisplay.vue'
 
@@ -142,6 +143,7 @@
                     <!-- Second column content -->
                     <ImageDisplay v-if="store.file  && store.file.type=='image'" @change-tab="changeTab" :tab="state.tab"/>
                     <TextDisplay v-if="store.file  && store.file.type=='text' && store.file.extension=='txt'" @change-tab="changeTab" :tab="state.tab"/> 
+                    <OCRDisplay v-if="store.file  && store.file.type=='ocr.json'" @change-tab="changeTab" :tab="state.tab"/> 
                     <OSDDisplay v-if="store.file  && store.file.type=='osd.json'" @change-tab="changeTab" :tab="state.tab"/> 
                     <HumanJSONDisplay v-if="store.file  && store.file.type=='human.json'" @change-tab="changeTab" :tab="state.tab"/>
                     <PDFDisplay v-if="store.file  && store.file.type=='pdf'" @change-tab="changeTab" :tab="state.tab"/>

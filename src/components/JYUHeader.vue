@@ -147,9 +147,9 @@
               </v-list-item>
 
               <v-list-item>
-                <a href="/prompts"  class="dropdown-item">
+                <router-link :to="'/prompts'"  class="dropdown-item">
                       <i class="fs-5 bi-book"></i><span class="ms-1 d-none d-sm-inline">Prompts</span>
-                </a>
+                </router-link>
               </v-list-item>
 
               <v-list-item>
