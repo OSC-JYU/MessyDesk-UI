@@ -11,6 +11,7 @@
     
     import { onMounted, watch, reactive, ref, computed } from "vue";
     import { useRouter, useRoute } from 'vue-router'
+    const apiUrl = import.meta.env.VITE_API_PATH;
 
     const route = useRoute();
 
@@ -27,7 +28,7 @@
         
         state.file = response
         console.log(state.file)
-        state.file.thumbnail = removeLastPathPart(response.path.replace('data/', '/api/thumbnails/'))
+        state.file.thumbnail = removeLastPathPart(response.path.replace('data/', apiUrl + '/api/thumbnails/'))
         document.title = state.file.label
     })
 

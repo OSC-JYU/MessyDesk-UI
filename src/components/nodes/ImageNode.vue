@@ -4,7 +4,8 @@ img {
   margin: 0px
 }
 .node-image {
-  padding:0px
+  padding:0px;
+  cursor: pointer;
 }
 .header {
   background-color: #54546f;
@@ -49,6 +50,9 @@ img {
 import { Handle, Position, useNode } from '@vue-flow/core'
 import { useRouter, useRoute } from 'vue-router'
 import {store} from "../Store.js";
+const apiUrl = import.meta.env.VITE_API_PATH
+
+import CookieIcon from '@/assets/images/cookie-bite-solid_blue.svg';
 
 const router = useRouter();
 const route = useRoute();
@@ -79,26 +83,22 @@ function openCrunchers(filter) {
       <img @click="openCrunchers('')" title="Add cruncher" class ="crunch_add" :src="CookieIcon" /> 
     </div>
     
-    <v-container   style="max-height: 360px; padding: 0px; overflow: hidden;">
+    <v-container style="max-height: 360px; padding: 0px; overflow: hidden; position: relative;">
       <v-row>
-        <v-col class="d-flex align-center justify-center ">
-
-          <img :src="data.image" draggable="false"/>
-          
-        </v-col>
-      </v-row>
-
-      <v-row v-if="data.description != data.label">
-        <v-col class="d-flex align-center justify-center p-0">
-          
-          <pre>{{ data.description }}</pre>
-          
+        <v-col class="d-flex align-center justify-center">
+          <img :src="data.image" draggable="false" style="width: 100%; height: auto;" />
         </v-col>
       </v-row>
       
-
-
+      <v-row 
+        v-if="data.description" 
+        class="description-overlay m-0">
+        <v-col class="d-flex justify-center">
+          <pre style="margin: 0; overflow-wrap: break-word;">{{ data.description }}</pre>
+        </v-col>
+      </v-row>
     </v-container>
+
 
     <div v-if="data.roi_count" title="double click to add/edit regions" class="roi_add"  >
       <v-icon size="35" >mdi-selection</v-icon> {{ data.roi_count? data.roi_count : 0 }} Regions of Interest 

@@ -57,6 +57,7 @@
     import { useRouter, useRoute } from 'vue-router'
   
     import web from "../../web.js";
+    const apiUrl = import.meta.env.VITE_API_PATH;
 
     const route = useRoute();
     const canvas = ref(null)
@@ -141,7 +142,7 @@
       //state.json = JSON.parse(state.data.replace(/'/g, '"'))
       
       state.file = response
-      state.file.thumbnail = removeLastPathPart(source_image.path.replace('data/', '/api/thumbnails/'))
+      state.file.thumbnail = removeLastPathPart(source_image.path.replace('data/', apiUrl + '/api/thumbnails/'))
       if(route.query.cruncher) {
         var response2 = await web.getDocInfo(route.query.cruncher)
         state.cruncher = response2

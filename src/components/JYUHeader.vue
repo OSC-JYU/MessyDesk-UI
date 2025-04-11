@@ -29,6 +29,12 @@
         emit('fit-to-node', id)
     }
 
+    function createSource(type) {
+      store.source_creator_type = type
+      store.source_creator_open = true
+      state.drawer = false
+    }
+
     function changeTab(tab) {
         emit('change-tab', tab)
     }
@@ -74,15 +80,17 @@
           
           <v-tabs v-model="state.tab" >
             
-            <v-tab >Desk</v-tab>
+            <v-tab >Crunch</v-tab>
             <v-tab>Search</v-tab>
-            <v-tab>Things</v-tab>
+            <v-tab>Tags</v-tab>
             
           </v-tabs>
-          <template v-if="store.user && store.user.access == 'admin'">
+
+          <!-- <template v-if="store.user && store.user.access == 'admin'">
             <v-spacer></v-spacer>
             <v-alert type="warning">{{ store.user.id }}</v-alert>  
-          </template>
+          </template> -->
+
           <!-- <v-btn icon v-if="store.current_project">
           <router-link :to="'/'"><v-icon>mdi-graph</v-icon>
             <v-tooltip activator="parent" location="top">graph</v-tooltip>
@@ -124,14 +132,9 @@
 
             <v-list>
 
-              <v-list-item>
-                <router-link :to="'/Shibboleth.sso/Logout'" class="dropdown-item">
-                      <i class="fs-5 bi-person"></i><span class="ms-1 d-none d-sm-inline">logout</span>
-                  </router-link>
-                
-              </v-list-item>
 
-              <v-list-item>
+
+              <v-list-item v-if="store.user && store.user.access == 'admin'">
                 <router-link :to="'/services'" class="dropdown-item">
                       <i class="fs-5 bi-card-list"></i><span class="ms-1 d-none d-sm-inline">Services</span>
                   </router-link>
@@ -142,6 +145,19 @@
                       <i class="fs-5 bi-person-fill"></i><span class="ms-1 d-none d-sm-inline">Admin</span>
                   </router-link>
               </v-list-item>
+
+              <v-list-item>
+                <router-link :to="'/prompts'"  class="dropdown-item">
+                      <i class="fs-5 bi-book"></i><span class="ms-1 d-none d-sm-inline">Prompts</span>
+                </router-link>
+              </v-list-item>
+
+              <v-list-item>
+                <a href="/Shibboleth.sso/Logout"  class="dropdown-item">
+                      <i class="fs-5 bi-person"></i><span class="ms-1 d-none d-sm-inline">Logout</span>
+                </a>
+              </v-list-item>
+
             </v-list>
           </v-menu>
           
@@ -168,7 +184,32 @@
             <v-list-item-title >Add file</v-list-item-title>
         </v-list-item>
 
-        <!-- <v-list-item v-if="props.mode=='graph'"
+
+
+
+
+        <!-- <v-list-group value="Actions" v-if="props.mode=='graph'">
+          <template v-slot:activator="{ props }">
+            <v-list-item
+              v-bind="props"
+              title="Add source"
+            >
+            <template v-slot:prepend>
+            <v-icon  icon="mdi-folder-plus"></v-icon>
+          </template>
+          </v-list-item>
+          </template>
+
+          <v-list-item @click="createSource('nextcloud')">Nextcloud
+            <template v-slot:prepend>
+            <v-icon  icon="mdi-cloud-arrow-down"></v-icon>
+          </template>
+
+          </v-list-item>
+          
+        </v-list-group> -->
+
+         <v-list-item v-if="props.mode=='graph' && store.user && store.user.access == 'admin'"
           @click="store.set_creator_open = true"
         >
           <template v-slot:prepend>
@@ -176,17 +217,9 @@
           </template>
       
             <v-list-item-title >Create set</v-list-item-title>
-        </v-list-item> -->
+        </v-list-item> 
 
-        <v-list-item v-if="props.mode=='projects'"
-          @click="$emit('create-project')"
-        >
-          <template v-slot:prepend>
-            <v-icon  icon="mdi-file"></v-icon>
-          </template>
-      
-            <v-list-item-title >Create desk</v-list-item-title>
-        </v-list-item>
+
 
         <v-divider inset></v-divider>
 

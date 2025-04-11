@@ -7,7 +7,6 @@
 .node-body {
   min-height: 200px;
   min-width: 300px;
-  cursor: pointer;
 }
 
 img {
@@ -15,7 +14,7 @@ img {
 
 }
 .header {
-  background-color: #005757;
+  background-color: #561a80;
   color: white; 
   padding:3px;
   text-align: left !important;
@@ -60,30 +59,31 @@ function openCrunchers(filter) {
 
 <template>
   <div class="node-body nodrag">
-    <div class="header"><v-icon size="35" color="green">mdi-folder-outline</v-icon> SET <span v-if="data.count">  ({{ data.count }} files)</span><span v-else>(empty)</span> </div>
+    <div class="header"><v-icon size="35" color="green">mdi-star-circle</v-icon> SOURCE {{ data._type }} <span v-if="data.count">  ({{ data.count }} images)</span><span v-else>(empty)</span> </div>
     <v-icon @click="openCrunchers('')" title="Add cruncher" class ="crunch_add" size="65" >mdi-cookie-plus</v-icon>
     <v-container>
-     
+      <h3>{{ data.label }}</h3>
+      <div v-if="data.metadata">There is {{ data.metadata.size }} Mt stuff in {{ data.metadata.count }} files</div>
 
       <v-row>
+
+
         <v-col>
           <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">
-            <img v-for="f in data.paths" :src="f" class="w-200 shadow-1-strong rounded mb-4" draggable="false"/>
+            <img v-for="f in data.paths" :src="f" class="w-200 shadow-1-strong rounded mb-4"/>
           </div>
         </v-col>
-
-        <v-col>
-          <h3>{{ data.label }}</h3>
-          <!-- <div style="white-space: pre;" v-if="data.description">{{ data.description }}</div> -->
-          <pre v-if="data.description">{{ data.description }}</pre>
-          <div v-else>{{ data.file_count }}</div>
-          
-        </v-col>
       </v-row>
-
+      <div class="m-2">
+        <pre>{{ data.description }}</pre> 
+      </div>
     </v-container>
 
-
+    <div class="row m-4">
+      <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">
+        <img v-for="f in data.paths" :src="f" class="shadow-1-strong rounded mb-4"/>
+      </div>
+    </div>
 
     <Handle id="a" type="target" :position="Position.Left" />
     <Handle id="b" type="source" :position="Position.Right" /> 

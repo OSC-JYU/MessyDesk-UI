@@ -2,6 +2,7 @@ import { reactive } from 'vue'
 import web from "../web.js";
 
 export const store = reactive({
+  logged_out : false,
   update: 0,
   update_data: null,
   user: null,
@@ -24,11 +25,15 @@ export const store = reactive({
   graph_node_update: '',
   process_creator_open: false,
   uploader_open: false,
+  set_uploader_open: false,
   node_deleter_open: false,
+  project_deleter_open: false,
   importer_open: false,
   exporter_open: false,
   crunchers_open: false,
   set_creator_open: false,
+  source_creator_open: false,
+  source_creator_type: '',
   search_open: false,
   graph_style: [],
   root_nodes: [],
@@ -36,6 +41,8 @@ export const store = reactive({
   setdata: {},
   current_project: {},
   reorder_target: '',
+  settings_show_descriptions: true,
+  settings_show_entities: true,
 
 
   reload(update) {

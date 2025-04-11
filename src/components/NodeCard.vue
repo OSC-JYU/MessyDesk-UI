@@ -11,15 +11,12 @@
 
     <v-sheet v-if="store.current_node && store.current().id" class="pa-6 text-black ">
 
-      
-        <!-- RAW FILE LINK -->
-        <template v-if="store.current().type != 'process' && store.current().type != 'set'">
-            <a class="text-medium-emphasis" target="_blank" :href="'/api/files/' + store.current().id.replace('#','')">{{store.current().data.type_label}} open file</a> ({{ store.current().id }})
-        </template>
-
 
         <!-- LABEL-->
-        <h3 v-if="state.edit_label_open == false" @click="editLabel()" class="font-weight-bold mb-4">{{ store.current_node.data.label }}</h3>
+        <div v-if="empty(store.current_node.data.label)" @click="editLabel()" class="text-medium-emphasis">add label</div>
+        <h4 v-if="state.edit_label_open == false" @click="editLabel()" class="font-weight-bold mb-4">{{ store.current_node.data.label }}</h4>
+        
+        
         <v-card v-else class="pa-6"> 
             <v-text-field @keyup.enter="saveLabel()"
                 label="Description"
@@ -34,11 +31,14 @@
             </v-card-actions>
         
         </v-card>
-                
+        <hr/>
+        <div v-if="store.current_node.data.count">files: {{ store.current_node.data.count }}</div>
+              
              
         <!-- DESCRIPTION -->
         <div v-if="empty(store.current_node.data.description)" @click="editDescription()" class="text-medium-emphasis">add description</div>
-        <pre v-if="state.edit_description_open == false" @click="editDescription()">{{ store.current_node.data.description}}</pre>
+        
+        <pre v-if="state.edit_description_open == false" @click="editDescription()" class="mb-8 font-italic">{{ store.current_node.data.description}}</pre>
         
         <v-card v-else class="pa-6"> 
             <v-textarea 
@@ -54,7 +54,20 @@
             </v-card-actions>
         
         </v-card>
+
+        <div v-if="state.prompt" class="mt-4 mb-4">
+          <v-alert type="info" variant="tonal">
+            <v-icon start icon="mdi-message-text" class="mr-2"></v-icon>
+            {{ state.prompt }}
+          </v-alert>
+        </div>
     
+        <!-- ERROR -->
+        <v-card-text class="pa-0 overflow-scroll" v-if="store.current_node.data.error">
+            <v-alert type="error"  @click="editDescription()" class="text-medium-emphasis">Something went wrong processing this file</v-alert>
+            <v-btn  @click="getError()">show error</v-btn>
+            <pre>{{ state.full_error }}</pre>
+        </v-card-text>
 
         <!-- THUMBNAIL -->
          <v-card-text class="pa-0 overflow-scroll">
@@ -63,8 +76,16 @@
                  <img  class="nodecard-image" :src="store.current().data.image" />
             </div>
             <p v-if="store.current().data.info"><i><v-icon class="mr-2">mdi-information</v-icon>{{ store.current().data.info }}</i></p>
+            
+            <template v-if="!['set', 'process', 'source','project', 'setprocess'].includes(store.current().type)">
+                <a title="opens file in new tab" class="text-medium-emphasis" target="_blank" :href="apiUrl + '/api/files/' + store.current().id.replace('#','')">
+                    <v-btn  color="secondary" class="mt-3">open full file</v-btn>
+                </a> 
+
+            </template>
 
         </v-card-text>
+
 
         <!-- ACTIONS -->
         <div class="card-actions d-flex justify-end w-100 pa-2" >
@@ -89,16 +110,17 @@
             <p v-if="store.current_project && store.current_project.data" class="">{{ store.current_project.data.description }}</p>
             <hr/>
             <p class="mb-8 font-italic">
-            Here you you can see your files and how you have <b>processed</b> them.
+            Here you you can see your files and how you have <b>processed</b> them with Crunchers.
 
             <br>
-            <br>
-            Import files from hamburger menu and crunch them.
-            <br>
-            <br>
+           
+            <v-card color="#EDE1CE" class="pa-6 mt-6">Upload files and click the cookie in order to see available crunchers.</v-card>
 
-            <v-card color="#EDE1CE" class="pa-6">TIP: You can quickly find your original files from hamburger menu.</v-card>
-            </p>
+        </p>
+            <v-btn color="primary" @click="store.uploader_open = true" >Upload file</v-btn>
+
+            <!-- <v-card color="#EDE1CE" class="pa-6">TIP: You can quickly find your original files from hamburger menu.</v-card> -->
+            
         </v-sheet>
         </div>
 
@@ -110,10 +132,11 @@
 
 
 <script setup>
-    import { reactive, computed } from "vue";
+    import { reactive, computed, watch } from "vue";
     import { useRouter, useRoute } from 'vue-router'
     import {store} from "./Store.js";
     import web from "../web.js";
+    const apiUrl = import.meta.env.VITE_API_PATH;
 
     const route  = useRoute();
     const router = useRouter();
@@ -132,9 +155,27 @@
         image_edit: false,
         show_loader: false,
         _group: null,
-        _access: null
+        _access: null,
+        error: null,
+        full_error: null
     })
     
+
+    watch(
+        () => store.current_node,
+        async (newValue, oldValue) => {
+            state.full_error = null
+            state.editing = false
+            state.edit_description = ''
+            state.edit_description_open = false
+            state.edit_label_open = false
+            state.edit_label = ''
+            try {
+                state.prompt = JSON.parse(store.current_node.data.params).system_params.prompts.content
+            } catch(e) {
+                state.prompt = ''
+            }
+    })
 
     const current_query = computed(() => {
         var m = {label:''}
@@ -153,9 +194,16 @@
 
 
     function empty(string) {
-        return (!string || string.length === 0 );
+        return (!string || string.trim().length === 0 );
     }
 
+    async function getError() {
+        var rid = store.current().id.replace('#','')
+        var response = await web.getError(rid)
+        var error = JSON.parse(response.error)
+        var message = JSON.parse(response.message)
+        state.full_error = 'ERROR:\n\n' + JSON.stringify(error) + '\n\nMESSAGE:\n\n' + JSON.stringify(message) + '\n\n'
+    }
 
     function editLabel() {
         state.edit_label = store.current_node.data.label
@@ -168,6 +216,7 @@
     }
 
     function saveLabel() {
+        if (empty(state.edit_label)) return
         web.setNodeAttribute(store.current_node.id, {key:'label', value: state.edit_label})
         store.current_node.data.label = state.edit_label
         state.edit_label = ''
@@ -185,9 +234,10 @@
 
     function saveDescription() {
         web.setNodeAttribute(store.current_node.id, {key:'description', value: state.edit_description})
-        store.current_node.data.description = state.edit_description
+        //store.current_node.data.description = state.edit_description
         state.edit_description = ''
         state.edit_description_open = false
     }
+
 
 </script>

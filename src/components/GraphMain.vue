@@ -34,6 +34,7 @@
     import CruncherList from './CruncherList.vue'
 
     import SetCreator from './SetCreator.vue'
+    import SourceCreator from './SourceCreator.vue'
 
     import SearchMain from './SearchMain.vue'
     import EntitiesMain from './EntitiesMain.vue'
@@ -43,6 +44,7 @@
     import HOCRDisplay from './displays/HOCRDisplay.vue'
     import NER_Display from './displays/NER_Display.vue'
     import TextDisplay from './displays/TextDisplay.vue'
+    import OCRDisplay from './displays/OCRDisplay.vue'
     import PDFDisplay from './displays/PDFDisplay.vue'
     import HumanJSONDisplay from './displays/HumanJSONDisplay.vue'
 
@@ -64,11 +66,13 @@
       store.tab = tab
     }
 
-    async function openNode(node_rid, source_rid) {
+    async function openNode(node_rid, source_rid, total_count, skip) {
       var response = await web.getDocInfo(node_rid)
       store.file = response
       store.source = source_rid
-      state.tab = 3
+      store.file_count = total_count
+      store.skip = skip
+      state.tab = 3  // this tab is for file display
     }
 
 
@@ -85,6 +89,8 @@
         
           <v-tabs-window v-model="state.tab" class="w-100 h-100 fill-height">
 
+            
+            <!-- Graph view -->
             <v-tabs-window-item class="w-100 fill-height"  >
               <v-row class="w-100 fill-height m-0 p-0"> 
 
@@ -98,6 +104,7 @@
                     <Uploader mode="graph" />
                     <NodeDeleter mode="graph" />
                     <SetCreator mode="graph" /> 
+                    <SourceCreator mode="graph" /> 
                 </v-col>
 
 
@@ -110,14 +117,19 @@
             </v-tabs-window-item> 
 
 
+            <!-- Search view -->
             <v-tabs-window-item>
               <SearchMain />
             </v-tabs-window-item>
 
+
+              <!-- Things view -->
             <v-tabs-window-item>
-              <EntitiesMain/>
+              <EntitiesMain @open-node="openNode"/>
             </v-tabs-window-item>
 
+
+            <!-- File view -->
             <v-tabs-window-item >
               <v-container class="fill-height pa-0" fluid>
                 <v-row class="fill-height no-gutters" >
@@ -131,6 +143,7 @@
                     <!-- Second column content -->
                     <ImageDisplay v-if="store.file  && store.file.type=='image'" @change-tab="changeTab" :tab="state.tab"/>
                     <TextDisplay v-if="store.file  && store.file.type=='text' && store.file.extension=='txt'" @change-tab="changeTab" :tab="state.tab"/> 
+                    <OCRDisplay v-if="store.file  && store.file.type=='ocr.json'" @change-tab="changeTab" :tab="state.tab"/> 
                     <OSDDisplay v-if="store.file  && store.file.type=='osd.json'" @change-tab="changeTab" :tab="state.tab"/> 
                     <HumanJSONDisplay v-if="store.file  && store.file.type=='human.json'" @change-tab="changeTab" :tab="state.tab"/>
                     <PDFDisplay v-if="store.file  && store.file.type=='pdf'" @change-tab="changeTab" :tab="state.tab"/>
@@ -148,7 +161,7 @@
             </v-tabs-window>
 
           <!-- CRUNCHERS dialog-->
-            <v-dialog v-model="store.crunchers_open" width="auto" min-width="900">
+            <v-dialog v-model="store.crunchers_open" width="auto" min-width="900" max-width="900">
 
               <v-card>
                   <v-toolbar>

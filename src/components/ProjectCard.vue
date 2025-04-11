@@ -45,7 +45,16 @@
                 <div >
                     <v-img v-for="f in store.current_node.data.paths" :src="f" class="w-50 shadow-1-strong rounded ma-4"/>
                 </div>
+           
+                 <!-- ACTIONS -->
+                <div class=" d-flex justify-end w-100 pa-2" >
+                    
+        
+                    <!-- DELETE BUTTON -->
+                <v-btn  @click="store.project_deleter_open = true" right-0 class="btn btn-danger mr-10" color="red" title="Delete Desk"><i class="bi bi-trash"></i></v-btn>
                 
+            </div>
+
 			</div>
 
                     
@@ -67,6 +76,7 @@
 
                 <v-card color="#EDE1CE" class="pa-6">TIP: You can quickly find your desks from hamburger menu.</v-card>
                 </p>
+                <v-btn color="primary" @click="$emit('create-project')">Create desk</v-btn>
             </div>
             
 
@@ -82,6 +92,8 @@
     import { onMounted, watch, reactive, ref, computed } from "vue";
     import {store} from "./Store.js";
     import web from "../web.js";
+
+    const emit = defineEmits(['create-project'])
 
     var state = reactive({
         items: [],

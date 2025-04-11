@@ -31,13 +31,30 @@
     }
 
     .set-panel {
-        max-height: 500px !important;
+        height: 500px !important;
+        margin-top:20px;
       
     }
 
     .vue-flow__edge-path, .vue-flow__connection-path {
         stroke-width: 4;
     }
+
+
+    img {
+
+  margin: 0px
+}
+.node-image {
+  padding:0px
+}
+
+
+
+.image_display {
+  max-height: 250px;
+}
+
 
 </style>
 
@@ -51,86 +68,67 @@
 			<div class="col-12 px-0">
                 
                 <div class="graph-display">
+                  
                    
                     <!-- set panel -->
                     <v-navigation-drawer  v-if="store.current_node" v-model="state.setPanel" temporary location="bottom" >
 
-                        <v-toolbar color="#005757" density="compact">
+                        <v-toolbar color="#005757" density="compact" style="position: fixed; z-index: 1000;">
                         <template v-slot:prepend>
-                            <v-app-bar-nav-icon></v-app-bar-nav-icon>
+                            
+                            <v-menu>
+                                <template v-slot:activator="{ props }">
+                                <v-app-bar-nav-icon v-bind="props"></v-app-bar-nav-icon>
+                                </template>
+
+                                <v-list>
+                                    <v-list-item>
+                                        <v-list-item-title>                        
+                                            <v-btn 
+                                                @click="store.set_uploader_open = true"
+                                                >
+                                                <template v-slot:prepend>
+                                                    <v-icon  icon="mdi-file"></v-icon>
+                                                </template>
+                                                    Add file to set 
+                                            </v-btn>
+                                        </v-list-item-title>
+                                    </v-list-item>
+                                </v-list>
+                            </v-menu>
                         </template>
 
                         <v-toolbar-title>
                             <v-icon size="35" color="green">mdi-folder-outline</v-icon>
-                            {{ store.current_node.data.label }}
+                            {{ store.current_node.data.label }} <span v-if="state.setdata.file_count">({{ state.setdata.file_count }} files )</span>
+                            
                         </v-toolbar-title>
+                        
+                        <v-pagination
+                            v-model="page"
+                            :length="totalPages"
+                            :total-visible="16"
+                            class="mt-4"
+                            ></v-pagination>
+                            
                         </v-toolbar>
 
-                        <!-- <v-btn 
-                            @click="store.uploader_open = true"
-                            >
-                            <template v-slot:prepend>
-                                <v-icon  icon="mdi-file"></v-icon>
-                            </template>
-                        
-                                Add file to set
-                        </v-btn> -->
-
                         <v-divider></v-divider>
-
-                        <v-row class="set-panel">
+                        
+                        <v-row class="set-panel mt-8">
                             <v-col
-                            v-for="file in state.setdata"
+                            v-for="(file, index) in state.setdata.files"
                             :key="file.id"
                             class="d-flex child-flex flow"
                             cols="2"
                             >
 
-                            <v-card
-                                class="mx-auto"
-                                
-                            >
-                                <v-img
-                                class="align-end text-white"
-                                width="200"
-                                :src="file.thumb"
-                                cover
-                                >
-                                <v-card-title>{{ file.label }}</v-card-title>
-                                </v-img>
-
-                                <v-card-subtitle class="pt-4">
-                                Image
-                                </v-card-subtitle>
-
-                                <v-card-text>
-                                <div> {{ file.description }}</div>
-
-                                </v-card-text>
-
-                                <v-card-actions>
-
-                                <v-switch v-model="file.expand" @change="expandSetNode(file)" label="Show in Desk" color="primary">expand</v-switch>
-                                </v-card-actions>
-                            </v-card>
+                            <!-- SET VIEW NODE-->
+                             
+                            <SetViewNode @dblclick="openSetFile(file, index)" :data="file" @expand-node="expandSetNode(file)"></SetViewNode>
 
                             </v-col>
                         </v-row>
-
-
-
-                        <!-- <div v-for="file in state.setdata" class="col w-200 shadow-1-strong rounded mb-4">
-                            <div class="card">
-                                <img :src="file.thumb" :alt="file.label" class="image" />
-                                <div class="m-2">
-                                    {{ file.label }}
-                                    <div class="form-check form-switch">
-                                        <input @change="expandSetNode(file, store.current_node.id)" class="form-check-input" type="checkbox" role="switch" :id="file['@rid']">
-                                        <label class="form-check-label" :for="file['@rid']">Show in Desk</label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div> -->
 
 
                     </v-navigation-drawer>
@@ -170,6 +168,10 @@
                             <SetNode :data="data" />
                         </template>
 
+                        <template #node-nextcloud="{ data }">
+                            <SourceNode :data="data" />
+                        </template>
+
                         <template #node-human.json="{ data }">
                             <HumanNode :data="data" />
                         </template>
@@ -189,10 +191,13 @@
                         <Background />
 
                         </VueFlow>  
+                        <!-- center view-->
+                        <v-icon  style="position: absolute; bottom: 10px; right: 30px;" @click="flow.fitView({duration: 1000, padding: padding})" title="reset view"  size="25" >mdi-fullscreen</v-icon>
+
                         <template v-if="props && props.mode == 'graph'">
-                            <v-icon  style="position: absolute; bottom: 10px; right: 30px;" @click="layoutGraph('LR')" title="original files only"  size="25" >mdi-root</v-icon>
-                            <v-icon  style="position: absolute; bottom: 10px; right: 30px;" @click="layoutGraph('LR')" title="order left to right"  size="25" >mdi-arrow-right-box</v-icon>
-                            <v-icon  style="position: absolute; bottom: 10px; right: 00px;" @click="layoutGraph('TB')" title="order to top down"  size="25" >mdi-arrow-down-box</v-icon>
+                            <v-icon  style="position: absolute; bottom: 10px; right: 30px;" @click="flow.fitView({duration: 1000, padding: padding})" title="reset view"  size="25" >mdi-fullscreen</v-icon>
+                            <!-- <v-icon  style="position: absolute; bottom: 10px; right: 90px;" @click="layoutGraph('LR')" title="original files only"  size="25" >mdi-arrow-right-box</v-icon>
+                            <v-icon  style="position: absolute; bottom: 10px; right: 60px;" @click="layoutGraph('TB')" title="order to top down"  size="25" >mdi-arrow-down-box</v-icon> -->
                         </template>
                 </div>
 			</div>
@@ -207,7 +212,7 @@
 
 <script setup>
 
-    import { onMounted, watch, reactive, ref, nextTick } from "vue";
+    import { onMounted, watch, reactive, ref, computed } from "vue";
     import web from "../web.js";
 
     import {store} from "./Store.js";
@@ -236,17 +241,18 @@
     import OSDNode from './nodes/OSDNode.vue'
     import HumanNode from './nodes/HumanNode.vue'
     import NERNode from './nodes/NERNode.vue'
+    import SourceNode from './nodes/SourceNode.vue'
     import EmptyNode from './nodes/EmptyNode.vue'
+
+    import SetViewNode from './nodes/SetViewNode.vue'
 
     import { useShuffle } from './useShuffle'
     import { useLayout } from './useLayout'
     import Icon from './Icon.vue'
 
-    // import * as bootstrap from "bootstrap/dist/js/bootstrap"
-    //import * as bootstrap from 'bootstrap';
-    //import { el } from "vuetify/locale";
-    
-    //window.bootstrap = bootstrap;
+    const apiUrl = import.meta.env.VITE_API_PATH
+    const wsURL = import.meta.env.MODE === 'production' ? `wss://${window.location.host}/${apiUrl}/ws` : 'ws://localhost:8200/ws'
+
 
     const { graph_dagre, layout, previousDirection } = useLayout()
 
@@ -256,6 +262,7 @@
 
 
 	const CLUSTER = 1
+    const filesPerPage = 10; // Number of files per page
 
     const route  = useRoute();
     const router = useRouter();
@@ -271,27 +278,45 @@
 	var tags = reactive({result:[]})
     var me = reactive({data:{}})
     var editing = ref(false)
+    var page = ref(1)  // set page for pagination
+    var totalPages = ref(1)  // set page count for pagination
+    // const totalPages = computed(() => {
+    //     return 10
+    //     return Math.ceil(state.setdata.file_count / filesPerPage);
+    // });
 
     // Websocket for UI updates
-    let connection = new WebSocket('ws://localhost:8200/ws');
+    let connection = new WebSocket(wsURL);
     connection.onmessage = (event) => {
-        console.log('tuli message')
-        console.log(event)
+        // console.log('tuli message')
+        // console.log(event)
         try {
             var wsdata = JSON.parse(event.data)
             if(wsdata.target) {
                 console.log('got message:', wsdata.command)
                 if(wsdata.command == 'add') {
-                    addNode(wsdata)
+                    addNode(wsdata) 
+                    // check if we another node (set processing produces Process and Set)
+                    if(wsdata.set_node) {
+                        wsdata.target = wsdata.node['@rid']
+                        wsdata.node = wsdata.set_node
+                        wsdata.type = 'set'
+                        addNode(wsdata)
+                    }
                 } else if (wsdata.command == 'update') {
                     if(state.setPanel) loadSet()  // update set panel if open
 
                     console.log('updating ', wsdata.target)
                     var target_node = elements.nodes.find(x => x.id == wsdata.target)
                     if(target_node) {
+                        target_node.data.error = ''
                         if(wsdata.image) target_node.data.image = wsdata.image
-                        if(wsdata.description) target_node.data.description = wsdata.description
+                        if("description" in wsdata) target_node.data.description = wsdata.description
                         if(wsdata.count) target_node.data.count = wsdata.count
+                        if(wsdata.error) {
+                            target_node.data.error = wsdata.error
+                            target_node.data.image = ''
+                        }
                     }
                     // stop processing animation from process node
                     if(wsdata.process) {
@@ -369,17 +394,23 @@
             //     }
                 
             //     if(props.mode == "graph") getRootNodes()
-
+            if(!state.node_added) {
+                console.log('no reorder target')
+                flow.fitView()
+                if(props.mode == "projects" && store.view) {
+                    console.log('restoring view')
+                    flow.setViewport(store.view)
+                }
             // // node is added
-            // } else {
+             } else {
                 console.log('reorder target', store.reorder_target)
                 if(state.node_added) fitToNode(state.node_added)
                 else fitToNode(store.reorder_target)
 
                 store.reorder_target = state.node_added
                 state.node_added = 0
-                store.view = flow.getViewport()
-           // }
+                //store.view = flow.getViewport()
+            }
         }
 
 
@@ -388,18 +419,16 @@
 
 
     flow.onMoveEnd ((event) => {
-        if(props.mode == "graph") store.view = flow.getViewport()
+        if(props.mode == "projects") store.view = flow.getViewport()
         console.log('storing view')
     })
 
 
     flow.onNodeDoubleClick((event) => {
         store.current_node = event.node
-        
- 
-        console.log(event.node.data.type)
+
         if(event.node.type == "project" ) {
-            store.view = null
+            //store.view = null
             if(store.current_node) store.current_project = store.current_node
             router.push({ name: 'graph', query: { node: event.node.id.replace('#', '')} })
         } else if(event.node.type == "set") {
@@ -417,10 +446,7 @@
                 }
             }
             emit('open-node', event.node.id, source)
-            // if(cruncher && source)
-            //     router.push({ name: 'files', params: { rid: event.node.id.replace('#', '')}, query: {cruncher:cruncher, source:source} })
-            // else
-            //     router.push({ name: 'files', params: { rid: event.node.id.replace('#', '')} })
+
         }
            
     })
@@ -475,6 +501,17 @@
             loadGraph(route, oldValue)
     })
 
+    watch(
+    	() => page.value,
+      	async (newValue, oldValue) => {
+            loadSet()
+    
+    })
+
+    function openSetFile(file, index) {
+        emit('open-node', file['@rid'], store.current_node.id, state.setdata.file_count, index )
+    } 
+
     async function layoutGraph(direction) {
 
         //nodes.value = layout(nodes.value, edges.value, direction)
@@ -489,7 +526,7 @@
         console.log('done fitToNode', id)
         var node = elements.nodes.find(x => x.id == id)
         store.current_node = node
-        if(!padding) padding = 3
+        if(!padding) padding = 5
         flow.fitView({nodes: [id], duration: 1000, padding: padding})
        
     }
@@ -513,30 +550,25 @@
     }
 
     async function toggleSetPanel(node) {
+        page.value = 1
         state.setdata = await web.getSetFiles(store.current_node.id)
+        totalPages.value =  Math.ceil(state.setdata.file_count / filesPerPage) ;
+        console.log(totalPages)
         state.setPanel = true
     }
 
     async function loadSet() {
-        state.setdata = await web.getSetFiles(store.current_node.id)
-    }
-
-    function updateGraphNode(update) {
-
-        console.log('updateGraphNode', update)
-
-        var target_node = elements.nodes.find(x => x.id == update.id)
-        if(target_node) {
-            if(update.name) {
-                target_node.data.label = update.name
-            }
-        }
+        state.setdata = await web.getSetFiles(store.current_node.id, (page.value - 1) * filesPerPage, filesPerPage)
     }
 
     function addNode(wsdata) {
         console.log('adding node')
         console.log(wsdata.target)
         console.log(wsdata.node)
+        // remove "empty table, empty mind" node
+        if(elements.nodes.length == 1) {
+            elements.nodes = elements.nodes.filter((node) => node.id !== "1")
+        }
         // file uploaded to set is not added to visual graph
         if(wsdata.set) {
            // expandSetNode(wsdata.node, wsdata.target)
@@ -617,15 +649,24 @@
                     type: node.data.type.toLowerCase(),
                     label: node.data.name,
                     description: node.data.description,
-                    paths: node.data.paths,
                     info: node.data.info,
                     file_count: node.data.file_count,
                     count: node.data.count,
                     roi_count: node.data.roi_count
                 }
             }
-            if(node.data._type)
+
+            if(node.data.paths) {
+                flownode.data.paths = []
+                for(var path of node.data.paths) {
+                    flownode.data.paths.push(path)
+                }
+            }
+
+            if(node.data._type) {
+                flownode.data._type = node.data._type.toLowerCase(),
                 flownode.type = node.data._type.toLowerCase()
+            }
 
             if(positions && positions[node.data.id]) {
                 flownode.position = positions[node.data.id]
@@ -634,7 +675,16 @@
             }
 
             if(node.data.image) 
-                flownode.data.image = node.data.image
+                flownode.data.image = apiUrl + node.data.image
+            
+            if(node.data.service) 
+                flownode.data.service = node.data.service
+
+            if(node.data.metadata)
+                flownode.data.metadata = node.data.metadata
+
+            if(node.data.error) 
+                flownode.data.error = node.data.error
 
             elements.nodes.push(flownode)
         }

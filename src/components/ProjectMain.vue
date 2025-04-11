@@ -22,6 +22,7 @@
     import ProjectCard from './ProjectCard.vue'
     import SearchMain from './SearchMain.vue'
     import EntitiesMain from './EntitiesMain.vue'
+    import ProjectDeleter from './ProjectDeleter.vue'
 
 
     document.title = "MessyDesk - desks"
@@ -98,7 +99,8 @@
                   >
                     <!-- Third column content -->
                     
-                    <ProjectCard class="h-100 w-100 position-absolute"/>
+                    <ProjectCard @fit-to-node="fitToNode" @create-project="openProjectDialog"  class="h-100 w-100 position-absolute"/>
+                    <ProjectDeleter  />
                 
                   </v-col>
                 </v-row>

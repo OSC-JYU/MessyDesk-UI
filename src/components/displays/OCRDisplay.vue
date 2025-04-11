@@ -36,42 +36,32 @@
                      @mousemove="handlePanning"
                      @mouseup="stopPanning"
                      @mouseleave="stopPanning">
-                  <img :src="apiUrl + '/api/thumbnails/' + state.expandedImage" 
-                       class="expanded-image" 
-                       :style="{ 
-                         transform: `scale(${state.imageScale}) translate(${state.panX}px, ${state.panY}px)`,
-                         cursor: state.imageScale > 1 ? (state.isPanning ? 'grabbing' : 'grab') : 'pointer'
-                       }"
-                       @click="handleImageClick" />
+                  <div class="image-wrapper">
+                    <img :src="apiUrl + '/api/thumbnails/' + state.expandedImage" 
+                         class="expanded-image" 
+                         :style="{ 
+                           transform: `scale(${state.imageScale}) translate(${state.panX}px, ${state.panY}px)`,
+                           cursor: state.imageScale > 1 ? (state.isPanning ? 'grabbing' : 'grab') : 'pointer'
+                         }"
+                         @click="handleImageClick" />
+                    <div class="ocr-overlay" 
+                         :style="{ 
+                           transform: `scale(${state.imageScale}) translate(${state.panX}px, ${state.panY}px)`
+                         }">
+                      <div v-for="(region, index) in state.ocrRegions" 
+                           :key="index"
+                           class="ocr-region"
+                           :style="getRegionStyle(region)">
+                        <div class="ocr-text">{{ region.text }}</div>
+                      </div>
+                    </div>
+                  </div>
                   <v-btn
                     class="close-expanded-image"
                     icon="mdi-close"
                     size="small"
                     @click="toggleImageExpand(null)"
                   ></v-btn>
-                  <!-- <div v-if="state.showGuide" class="image-guide">
-                    <div class="guide-content">
-                      <div class="guide-title">Image Controls</div>
-                      <div class="guide-item">
-                        <v-icon>mdi-mouse</v-icon>
-                        <span>Scroll to zoom in/out</span>
-                      </div>
-                      <div class="guide-item">
-                        <v-icon>mdi-gesture-drag</v-icon>
-                        <span>Left click + drag to pan when zoomed</span>
-                      </div>
-                      <div class="guide-item">
-                        <v-icon>mdi-close</v-icon>
-                        <span>Click image or X to close</span>
-                      </div>
-                    </div>
-                    <v-btn
-                      class="close-guide"
-                      icon="mdi-close"
-                      size="x-small"
-                      @click="state.showGuide = false"
-                    ></v-btn>
-                  </div> -->
                 </div>
               </template>
             </div>
@@ -79,16 +69,34 @@
             <!-- Image Display -->
             <v-sheet v-if="state.file && (state.file.type === 'pdf' || state.file.type === 'image')" 
                     class="flex-grow-1 d-flex align-center justify-center pa-2">
-              <img :src="apiUrl + '/api/thumbnails/' + state.file.path" 
-                   class="responsive-image" 
-                   :style="{ maxHeight: 'calc(100vh - 200px)' }" />
+              <div class="image-wrapper">
+                <img :src="apiUrl + '/api/thumbnails/' + state.file.path" 
+                     class="responsive-image" 
+                     :style="{ maxHeight: 'calc(100vh - 200px)' }" />
+                <div class="ocr-overlay">
+                  <div v-for="(region, index) in state.ocrRegions" 
+                       :key="index"
+                       class="ocr-region"
+                       :style="getRegionStyle(region)">
+                    <div class="ocr-text">{{ region.text }}</div>
+                  </div>
+                </div>
+              </div>
             </v-sheet>
           </v-sheet>
         </v-col>
 
         <!-- MIDDLE COLUMN - Text Content -->
         <v-col :cols="state.expandedImage ? 4 : 6" class="text-column">
-          <v-sheet class="text-content pa-4" ref="textContainer" v-html="state.text"></v-sheet>
+          <v-sheet class="text-content pa-4" ref="textContainer">
+            <div v-for="(region, index) in state.ocrRegions" 
+                 :key="index"
+                 class="ocr-text-item"
+                 @mouseenter="handleTextHover(index)"
+                 @mouseleave="handleTextLeave">
+              {{ region.text }}
+            </div>
+          </v-sheet>
         </v-col>
 
         <!-- RIGHT COLUMN - Controls and Metadata -->
@@ -219,7 +227,9 @@
       isPanning: false,
       lastPanX: 0,
       lastPanY: 0,
-      showGuide: true
+      showGuide: true,
+      ocrRegions: [],
+      hoveredRegionIndex: -1
   })
 
   async function prev() {
@@ -324,6 +334,100 @@
     if(event.key == 'ArrowRight') next()
   }
 
+  function parseOCRData(ocrData) {
+    try {
+      // If data is already parsed (array), use it directly
+      if (Array.isArray(ocrData)) {
+        return ocrData.map(item => {
+          // Extract coordinates and convert to pixel values
+          const coordinates = item.coordinates;
+          const box = [
+            [coordinates[0].x, coordinates[0].y],
+            [coordinates[1].x, coordinates[1].y],
+            [coordinates[2].x, coordinates[2].y],
+            [coordinates[3].x, coordinates[3].y]
+          ];
+          
+          return {
+            box,
+            text: item.text,
+            confidence: item.confidence,
+            centerY: (coordinates[0].y + coordinates[2].y) / 2, // Calculate center Y for sorting
+            centerX: (coordinates[0].x + coordinates[2].x) / 2  // Calculate center X for sorting
+          };
+        }).sort((a, b) => {
+          // Sort by vertical position first, then horizontal
+          const verticalDiff = a.centerY - b.centerY;
+          if (Math.abs(verticalDiff) > 0.02) { // Group text on same line (using relative coordinates)
+            return verticalDiff;
+          }
+          return a.centerX - b.centerX;
+        });
+      }
+      // If data is a string, parse it
+      if (typeof ocrData === 'string') {
+        const data = JSON.parse(ocrData);
+        return data.map(item => {
+          const coordinates = item.coordinates;
+          const box = [
+            [coordinates[0].x, coordinates[0].y],
+            [coordinates[1].x, coordinates[1].y],
+            [coordinates[2].x, coordinates[2].y],
+            [coordinates[3].x, coordinates[3].y]
+          ];
+          
+          return {
+            box,
+            text: item.text,
+            confidence: item.confidence,
+            centerY: (coordinates[0].y + coordinates[2].y) / 2,
+            centerX: (coordinates[0].x + coordinates[2].x) / 2
+          };
+        }).sort((a, b) => {
+          const verticalDiff = a.centerY - b.centerY;
+          if (Math.abs(verticalDiff) > 0.02) {
+            return verticalDiff;
+          }
+          return a.centerX - b.centerX;
+        });
+      }
+      console.warn('Unexpected OCR data format:', ocrData);
+      return [];
+    } catch (e) {
+      console.error('Error processing OCR data:', e);
+      return [];
+    }
+  }
+
+  function getRegionStyle(region) {
+    const [x1, y1] = region.box[0];
+    const [x2, y2] = region.box[1];
+    const [x3, y3] = region.box[2];
+    const [x4, y4] = region.box[3];
+    
+    return {
+      position: 'absolute',
+      left: `${x1 * 100}%`,
+      top: `${y1 * 100}%`,
+      width: `${(x2 - x1) * 100}%`,
+      height: `${(y3 - y1) * 100}%`,
+      border: '2px solid rgba(255, 0, 0, 0.8)',
+      backgroundColor: 'rgba(255, 0, 0, 0.2)',
+      pointerEvents: 'none',
+      opacity: state.hoveredRegionIndex === state.ocrRegions.indexOf(region) ? 1 : 0,
+      transition: 'opacity 0.2s ease',
+      zIndex: state.hoveredRegionIndex === state.ocrRegions.indexOf(region) ? 1 : 0
+    };
+  }
+
+  function handleTextHover(index) {
+    state.hoveredRegionIndex = index;
+  }
+
+  function handleTextLeave() {
+    state.hoveredRegionIndex = -1;
+  }
+
   async function load() {
     state.file = null
     state.expandedImage = null
@@ -335,6 +439,7 @@
     state.file = await web.getDocInfo(store.file['@rid'])
     state.entities = await web.getEntities()
     state.text = replaceWithBr(f)
+    state.ocrRegions = parseOCRData(f)
     var nodepath = await web.getNodePath(store.file['@rid'])
     state.nodepath = nodepath
   }
@@ -559,5 +664,51 @@
   top: 4px;
   right: 4px;
   color: white;
+}
+
+.image-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.ocr-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.ocr-region {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ocr-text {
+  background: rgba(255, 255, 255, 0.8);
+  padding: 2px 4px;
+  border-radius: 2px;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.ocr-text-item {
+  display: inline-block;
+  margin: 2px;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.ocr-text-item:hover {
+  background: rgba(0, 0, 0, 0.1);
 }
 </style>

@@ -1,30 +1,34 @@
 import axios from "axios"
+import { en } from "vuetify/locale"
 let web = {}
-// if(window.location.hostname == 'localhost')
-// 	axios.defaults.baseURL = ''
-// else
-	axios.defaults.baseURL = import.meta.env.VITE_PUBLIC_PATH
-	//axios.defaults.baseURL = ''
 
-// Add a response interceptor
-// axios.interceptors.response.use(function (response) {
-//     // Any status code that lie within the range of 2xx cause this function to trigger
-//     // Do something with response data
+axios.defaults.baseURL = import.meta.env.VITE_API_PATH
 
-//     return response;
-//   }, function (error) {
-// 	//console.log('pam')
-// 	//console.log(error)
-//     // Any status codes that falls outside the range of 2xx cause this function to trigger
-//     // Do something with response error
-// 	//return Promise.reject({error: error});
-// 	return {error: error}
-//     //return Promise.reject(error);
-//   });
 
+web.sso = async function () {
+	var response = await axios.get('/api/sso')
+	return response
+}
+
+web.ready = async function() {
+	var response = await axios.get('/api')
+	return response
+}
+
+web.getError = async function(rid) {
+	var result = await axios.get(`/api/errors/${rid}`)
+	if(result.data.response.docs.length == 0)
+		return 'could not find error'
+	return result.data.response.docs[0]
+}
 
 web.search = async function(search) {
 	var result = await axios.post(`/api/search`, {query: search})
+	return result.data
+}
+
+web.savePrompt = async function(prompt) {
+	var result = await axios.post(`/api/prompts`, prompt)
 	return result.data
 }
 
@@ -56,13 +60,55 @@ web.createSet = async function(project_rid, name, description) {
 	return response.data
 }
 
+web.createSource = async function(project_rid, state, type) {
+	project_rid = project_rid.replace('#','')
+	var data = {
+		"type": type,
+		"label": state.source_name,
+		"url": state.url,
+		"description": state.description
+	}
+
+	var response = await axios.post(`/api/projects/${project_rid}/sources`, data)
+	return response.data
+}
+
 web.getServices = async function(rid) {
 	var result = await axios.get(`/api/services`)
 	return result.data
 }
 
+web.getPrompts = async function(rid) {
+	var result = await axios.get(`/api/prompts`)
+	return result.data
+}
+
 web.getUsers = async function(rid) {
 	var result = await axios.get(`/api/users`)
+	return result.data
+}
+
+web.addPermissionRequest = async function() {
+	try {
+		var result = await axios.post(`/api/permissions/request`, {})
+		return result.data
+	} catch (error) {
+		throw(error)
+		if(error.response)
+			return error.response.data
+		else
+			return error
+	}
+}
+
+
+web.getPermissionRequests = async function() {
+	var result = await axios.get(`/api/permissions/request`)
+	return result.data
+}
+
+web.removePermissionRequest = async function(rid) {
+	var result = await axios.delete(`/api/permissions/request/${rid.replace('#','')}`)
 	return result.data
 }
 
@@ -125,33 +171,54 @@ web.getProject = async function(rid) {
 	return result.data
 }
 
-web.getSetFiles = async function(rid) {
-	var result = await axios.get(`/api/sets/${rid.replace('#', '')}/files`)
+web.getSetFiles = async function(rid, skip, limit) {
+	var query = ''
+	if(skip && limit) query = '?skip=' + skip + '&limit=' + limit
+	else if(skip) query += '?skip=' + skip
+	else if(limit) query += '?limit=' + limit
+	var result = await axios.get(`/api/sets/${rid.replace('#', '')}/files${query}`)
 	return result.data
 }
 
-web.getMenus = async function() {
-	var result = await axios.get(`/api/menus`)
-	return result.data
-}
-
-web.getMaps = async function() {
-	var result = await axios.get(`/api/maps`)
-	return result.data
-}
 
 web.getFiles = async function(dir) {
 	var result = await axios.get(`/api/files/` + dir)
 	return result.data
 }
 
-web.getEntityTypes = async function(dir) {
+web.getEntities = async function(dir) {
+	var result = await axios.get(`/api/entities`)
+	return result.data
+}
+
+web.getEntitySchema = async function(dir) {
 	var result = await axios.get(`/api/entities/types`)
+	return result.data
+}
+
+web.getEntityItems = async function(entities) {
+	var entity_rids = entities.map(e => e['@rid'].replace('#', ''))
+	var result = await axios.get(`/api/entities/items?entities=${entity_rids.join(',')}`)
 	return result.data
 }
 
 web.getEntitiesByType = async function(type) {
 	var result = await axios.get(`/api/entities/types/${type}`) 
+	return result.data
+}
+
+web.createEntity = async function(type, label) {
+	var result = await axios.post(`/api/entities`, {type: type, label: label})
+	return result.data
+}
+
+web.linkEntityToItem =  async function(entityRID, itemRId) {
+	var result = await axios.post(`/api/entities/${entityRID.replace('#','')}/vertex/${itemRId.replace('#','')}`)
+	return result.data
+}
+
+web.unLinkEntity =  async function(entityRID, itemRId) {
+	var result = await axios.delete(`/api/entities/${entityRID.replace('#','')}/vertex/${itemRId.replace('#','')}`)
 	return result.data
 }
 
@@ -249,7 +316,13 @@ web.createROIProcess = async function(process, file_rid) {
 web.createSetProcess = async function(process, set_rid) {
 
 	const url = `/api/queue/${process.id}/sets/${set_rid.replace('#', '')}`
-	console.log(url)
+	var result = await axios.post(url, process)
+	return result
+}
+
+web.createSourceProcess = async function(process, set_rid) {
+
+	const url = `/api/queue/${process.id}/sources/${set_rid.replace('#', '')}`
 	var result = await axios.post(url, process)
 	return result
 }
@@ -263,6 +336,12 @@ web.createNode = async function(data) {
 web.deleteNode = async function(rid) {
 
 	var response = await axios.delete(`/api/graph/vertices/${rid.replace('#','')}`)
+	return response
+}
+
+web.deleteProject = async function(rid) {
+
+	var response = await axios.delete(`/api/projects/${rid.replace('#','')}`)
 	return response
 }
 
