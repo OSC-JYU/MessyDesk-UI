@@ -27,16 +27,18 @@
       <v-row class="column_base">
 
         <v-col cols="9" class="column_image ">
-          <img v-if="state.file" :src="state.file.thumbnail" alt="Image" /> 
-          <!-- <image-select-area v-if="state.file && state.image_loaded"
-          :image-url="state.file.thumbnail"
-          :width="state.width"
-          :height="state.height"
-          border-color="red"
-          border-width="4"
-          @save-data="saveROI"
-          :init-areas="state.file.rois"
-          /> -->
+          <image-select-area 
+            v-if="state.file && state.image_loaded"
+            :image-url="state.file.thumbnail"
+            :width="state.width"
+            :height="state.height"
+            border-color="green"
+            border-width="2"
+            @save-data="saveROI"
+            :init-areas="state.file.rois"
+            :new-region="newRegion"
+          />
+          <img v-else-if="state.file" :src="state.file.thumbnail" alt="Image" @load="onImageLoad" /> 
         </v-col>
         
         <v-col cols="3" class="column_image"  >
@@ -98,7 +100,7 @@
             </v-list-group>
         
 
-            <!-- <v-list-group value="Selections">
+            <v-list-group value="Selections">
               <template v-slot:activator="{ props }">
                 <v-list-item
                   v-bind="props"
@@ -107,6 +109,7 @@
               </template>
 
               <template v-if="state.ROIs.length > 0">
+                {{ state.ROIs }}
                   <v-list density="compact" >
 
 
@@ -120,7 +123,7 @@
                         <v-icon icon="mdi-selection mdi"></v-icon>
                       </template>
 
-                      <v-list-item-title v-text="item.comment"></v-list-item-title>
+                      <v-list-item-title v-text="item.label"></v-list-item-title>
                     </v-list-item>
                   </v-list>
                 </template>
@@ -145,7 +148,7 @@
                   </v-list>
 
                 </template>
-            </v-list-group> -->
+            </v-list-group> 
           </v-list>
 
 
@@ -162,11 +165,9 @@
 
 
 
-          <template v-if="state.ROIs.length > 0">
-
+          <template v-if="state.hasChanges">
             <v-alert type="warning" >unsaved changes!</v-alert>
-          
-            <v-btn @click="saveROIs2DB" class="mt-3" color="primary">Save selections</v-btn>
+            <v-btn @click="saveROIs2DB" class="mt-3" color="primary">Save regions</v-btn>
           </template>
 
 
@@ -181,12 +182,12 @@
   <script setup>
 
     import { onMounted, onUnmounted, watch, reactive, ref, computed } from "vue";
-    import ImageSelectArea from 'vue3-image-multiselect-areas';
   
     import web from "../../web.js";
     import {store} from "../../components/Store.js";
 
     import DescriptionEditor from './DescriptionEditor.vue'
+    import ImageSelectArea from './ImageSelectArea.vue'
     const apiUrl = import.meta.env.VITE_API_PATH
 
     // tab controls
@@ -210,11 +211,13 @@
         file_count: 0,
         panels: [0,0],
         entities: {},
-        isCtrlPressed: false
-        
+        isCtrlPressed: false,
+        hasChanges: false
     })
 
     const image = new Image();
+
+    const newRegion = ref(null);
 
     async function prev() {
       if((state.skip -1) < 1) return
@@ -268,6 +271,7 @@
       state.ROIs = []
       state.file = null
       state.file_count = store.file_count || null
+      state.hasChanges = false
       if(store.skip >= 0) state.skip = store.skip + 1
       else state.skip = null
 
@@ -312,12 +316,37 @@
 
     async function saveROI(data) {
       state.ROIs = data
+      state.hasChanges = true
     }
 
     async function saveROIs2DB(data) {
       await web.createROIs(state.file['@rid'], state.ROIs, state.width, state.height)
       state.ROIs = []
+      state.hasChanges = false
     }
+
+    const onImageLoad = () => {
+      state.width = image.width;
+      state.height = image.height;
+      state.image_loaded = true;
+    };
+
+    const createNewROI = (event) => {
+      if (event.target.tagName === 'IMG') {
+        const rect = event.target.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        
+        newRegion.value = {
+          left: (x / state.width) * 100,
+          top: (y / state.height) * 100,
+          width: 20,
+          height: 20,
+          label: `Region ${state.ROIs.length + 1}`
+        };
+      }
+    };
+
     function removeLastPathPart(str) {
         const lastIndex = str.lastIndexOf('/');
         if (lastIndex !== -1) {
