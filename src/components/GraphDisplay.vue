@@ -309,10 +309,13 @@
                     console.log('updating ', wsdata.target)
                     var target_node = elements.nodes.find(x => x.id == wsdata.target)
                     if(target_node) {
+                       
                         target_node.data.error = ''
                         if(wsdata.image) target_node.data.image = wsdata.image
                         if("description" in wsdata) target_node.data.description = wsdata.description
                         if(wsdata.count) target_node.data.count = wsdata.count
+                     
+                        if(wsdata.roi_count || wsdata.roi_count == 0) target_node.data.roi_count = wsdata.roi_count
                         if(wsdata.error) {
                             target_node.data.error = wsdata.error
                             target_node.data.image = ''
