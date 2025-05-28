@@ -392,7 +392,7 @@
 
     flow.onMoveEnd ((event) => {
         if(props.mode == "graph") store.view = flow.getViewport()
-        console.log('storing view')
+        
     })
 
 
@@ -726,7 +726,7 @@
 
         store.root_nodes = []
         if(!store.user) store.user = await web.getMe()
-        if(store.graph_style.length == 0) store.graph_style = await web.getStyle()
+        
 
 		if(!props.mode && route.path == '/' ) {
 			router.push({ name: 'graph', query: {}})

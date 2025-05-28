@@ -335,6 +335,21 @@ em {
           </v-chip>
         </v-card-title>
         <v-card-text>
+          
+          <div class="text-subtitle-1 mb-2">Prompt:</div>
+          <template v-if="state.is_editing">
+            <v-textarea
+              v-model="state.edited_prompt.content"
+              class="mb-4"
+              rows="5"
+              auto-grow
+              placeholder="Enter prompt content"
+            ></v-textarea>
+          </template>
+          <template v-else>
+            <div class="mb-4">{{ state.selected_prompt.content }}</div>
+          </template>
+  
           <div class="text-subtitle-1 mb-2">Description:</div>
           <template v-if="state.is_editing">
             <v-textarea
@@ -348,21 +363,7 @@ em {
           <template v-else>
             <div class="mb-4">{{ state.selected_prompt.description }}</div>
           </template>
-          
-          <div class="text-subtitle-1 mb-2">Content:</div>
-          <template v-if="state.is_editing">
-            <v-textarea
-              v-model="state.edited_prompt.content"
-              class="mb-4"
-              rows="5"
-              auto-grow
-              placeholder="Enter prompt content"
-            ></v-textarea>
-          </template>
-          <template v-else>
-            <div class="mb-4">{{ state.selected_prompt.content }}</div>
-          </template>
-          
+
           <div class="text-subtitle-1 mb-2">Type:</div>
           <div class="mb-4">{{ state.is_new_prompt ? state.new_prompt_type : state.selected_prompt.type }}</div>
         </v-card-text>

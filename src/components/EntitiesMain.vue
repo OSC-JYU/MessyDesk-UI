@@ -156,13 +156,16 @@ em {
                 color="light-blue lighten-3"
               >
                 <v-container>
+
+               
             
 
                   <v-expansion-panels >
                     <v-expansion-panel v-for="type in state.types" :key="type.type">
-                      <v-expansion-panel-title>{{ type.type }}</v-expansion-panel-title>
+                      <v-expansion-panel-title>{{ type.type }} ({{ type.count }})</v-expansion-panel-title>
                       <v-expansion-panel-text >
-                        <v-chip @click="selectEntity(item)" v-for="item in type.items" :key="item['@rid']" :color="item.color" ><v-icon :icon="'mdi-' + item.icon.toLowerCase()" start></v-icon> {{ item.label }}</v-chip>
+                        <!-- <v-chip @click="selectEntity(item)" v-for="item in type.items" :key="item['@rid']" :color="item.color" ><v-icon :icon="'mdi-' + item.icon.toLowerCase()" start></v-icon> {{ item.label }}</v-chip> -->
+                        <v-chip @click="selectEntity(item)" v-for="item in type.items" :key="item['@rid']" start>{{ item.label }}</v-chip>
                       </v-expansion-panel-text> 
                     </v-expansion-panel>
                   </v-expansion-panels>

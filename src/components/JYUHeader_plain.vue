@@ -2,8 +2,8 @@
     import { onMounted, reactive, ref, watch } from "vue";
     import { useRoute } from 'vue-router'
     import Search from './Search.vue'
-    import Importer from './Importer.vue'
-    import Exporter from './Exporter.vue'
+
+
     import RootNodes from './RootNodes.vue'
     import ProjectNodes from './ProjectNodes.vue'
     import {store} from "./Store.js";
@@ -188,8 +188,7 @@
     </v-navigation-drawer>
 
 
-<Importer />
-<Exporter />
+
 
 </template>
 

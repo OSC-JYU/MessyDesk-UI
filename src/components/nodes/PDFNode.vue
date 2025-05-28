@@ -29,6 +29,15 @@ img {
   size: 120%;
   background-color: white;
 }
+
+.roi_add {
+  position: relative;
+  padding-left: 10px;
+  color: white;
+  top: 0px;
+  right: 0px;
+  background-color: #54546f;
+}
 </style>
 
 
@@ -72,6 +81,10 @@ function openCrunchers() {
         {{ data.model }}
       </v-chip>
 
+    </div>
+
+    <div v-if="data?.metadata"  class="roi_add"  >
+      {{ data.metadata.page_count || 'n/a' }} pages {{ data.metadata.size }} MB
     </div>
 
     <Handle id="a" type="target" :position="Position.Left" />

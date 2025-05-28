@@ -4,6 +4,36 @@ let web = {}
 
 axios.defaults.baseURL = import.meta.env.VITE_API_PATH
 
+axios.interceptors.response.use(
+	(response) => response,
+	(error) => {
+	  if (error.response) {
+		// Server responded with error status (4xx, 5xx)
+		console.error('API Error:', {
+		  status: error.response.status,
+		  data: error.response.data
+		});
+		return Promise.reject({
+		  status: error.response.status,
+		  message: error.response.data?.message || 'Server error occurred'
+		});
+	  } else if (error.request) {
+		// Request made but no response received
+		console.error('Network Error:', error.request);
+		return Promise.reject({
+		  status: 0,
+		  message: 'Network error - no response received' 
+		});
+	  } else {
+		// Error in request configuration
+		console.error('Request Error:', error.message);
+		return Promise.reject({
+		  status: 0,
+		  message: 'Request configuration error'
+		});
+	  }
+	}
+  );
 
 web.sso = async function () {
 	var response = await axios.get('/api/sso')
@@ -41,11 +71,16 @@ web.getGraph = async function(query, current_node, cluster) {
 	var result = await axios.post('/api/graph/query', {query:query, current: current_node, cluster: cluster})
 	return result
 }
+// Add response interceptor to handle errors globally
 
-web.createProject = async function(name, description) {
+
+
+
+web.createProject = async function(name, description, x, y) {
 	var data = {
 		"label": name,
-		"description": description
+		"description": description,
+		"position": {x: x, y: y}
 	}
 	var response = await axios.post('/api/projects', data)
 }
@@ -373,6 +408,12 @@ web.setNodeAttribute = async function(rid, data) {
 	return result
 }
 
+web.setProjectAttribute = async function(rid, data) {
+	var result = await axios.put(`/api/projects/${rid.replace('#','')}`, data)
+	return result
+}
+
+
 web.removeEdgeByRID = async function(rid) {
 	var result = await axios.delete(`/api/graph/edges/${rid.replace('#','')}`)
 	return result
@@ -395,6 +436,7 @@ web.saveLayout = async function(positions, node) {
 }
 
 web.getLayoutByTarget = async function(rid) {
+	return {}
 	var result = await axios.get(`/api/layouts/${rid.replace('#','')}`)
 	return result.data
 }

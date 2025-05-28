@@ -139,7 +139,7 @@
     }
 
     function saveLabel() {
-        web.setNodeAttribute(store.current_node.id, {key:'label', value: state.edit_label})
+        web.setProjectAttribute(store.current_node.id, {key:'label', value: state.edit_label})
         store.current_node.data.label = state.edit_label
         state.edit_label = ''
         state.edit_label_open = false
@@ -155,7 +155,7 @@
     }
 
     function saveDescription() {
-        web.setNodeAttribute(store.current_node.id, {key:'description', value: state.edit_description})
+        web.setProjectAttribute(store.current_node.id, {key:'description', value: state.edit_description})
         store.current_node.data.description = state.edit_description
         state.edit_description = ''
         state.edit_description_open = false

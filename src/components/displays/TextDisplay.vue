@@ -230,6 +230,8 @@
     state.file = response.files[0]
     var f = await web.getNodeFile(response.files[0]['@rid'])
     state.text = replaceWithBr(f)
+    var nodepath = await web.getNodePath(response.files[0]['@rid'])
+    state.nodepath = nodepath
   }
 
   async function next() {
@@ -240,6 +242,9 @@
     state.file = response.files[0]
     var f = await web.getNodeFile(response.files[0]['@rid'])
     state.text = replaceWithBr(f)
+    var nodepath = await web.getNodePath(response.files[0]['@rid'])
+    state.nodepath = nodepath
+    
   }
 
   

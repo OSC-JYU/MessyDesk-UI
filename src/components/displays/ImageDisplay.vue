@@ -33,7 +33,6 @@
             :width="state.width"
             :height="state.height"
             border-color="green"
-            border-width="2"
             @save-data="saveROI"
             :init-areas="state.file.rois"
             :new-region="newRegion"

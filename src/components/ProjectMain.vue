@@ -40,7 +40,8 @@
     }
 
     function openProjectDialog() {
-
+        state.error = ''
+        state.project_name = ''
         state.dialog = true
     }
 
@@ -49,11 +50,15 @@
             state.error = 'Give desk a name!'
         } else {
             state.error = ''
-            await web.createProject(state.project_name)
-            state.dialog = false
-            var response = await web.getProjects()
-            state.items = response
-            store.reload()
+            try {
+                await web.createProject(state.project_name, '', Math.floor(Math.random() * 200), Math.floor(Math.random() * 200))
+                state.dialog = false
+                var response = await web.getProjects()
+                state.items = response
+                store.reload()
+            } catch (error) {
+                state.error = error.message
+            }
         }
     }
 
@@ -140,6 +145,7 @@
                 @keyup.enter="createProject()"
               ></v-text-field>
         </v-col>
+        <v-alert v-if="state.error" type="error">{{ state.error }}</v-alert>
       </v-card-text>
         <template v-slot:actions>
             <v-btn

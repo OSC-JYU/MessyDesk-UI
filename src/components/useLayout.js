@@ -14,7 +14,6 @@ export function useLayout() {
   const previousDirection = ref('LR')
 
   function layout(nodes, edges, direction) {
-    console.log(nodes)
     // we create a new graph instance, in case some nodes/edges were removed, otherwise dagre would act as if they were still there
     const dagreGraph = new dagre.graphlib.Graph()
 

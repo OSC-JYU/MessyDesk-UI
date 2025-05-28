@@ -54,12 +54,32 @@
 .image_display {
   max-height: 250px;
 }
+.v-banner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
 
 
 </style>
 
 <template>
- 
+<v-banner v-if="state.process_update"
+   
+      lines="one"
+    >
+      <template v-slot:text>
+        {{ state.message }}
+      </template>
+
+      <template v-slot:actions>
+        <v-btn color="deep-purple-accent-4">
+          {{ state.action }}
+        </v-btn>
+      </template>
+    </v-banner>
 
  <div id="container" class="w-100">
 		<div class="row h-100" >
@@ -180,8 +200,16 @@
                             <NERNode :data="data" />
                         </template>
 
+                        <template #node-zip="{ data }">
+                            <ZIPNode :data="data" />
+                        </template>
+
                         <template #node-osd.json="{ data }">
                             <OSDNode :data="data" />
+                        </template>
+
+                        <template #node-ocr.json="{ data }">
+                            <OCRNode :data="data" />
                         </template>
 
                         <template #node-empty="{ data }">
@@ -212,7 +240,7 @@
 
 <script setup>
 
-    import { onMounted, watch, reactive, ref, computed } from "vue";
+    import { onMounted, watch, reactive, ref, computed, onUnmounted } from "vue";
     import web from "../web.js";
 
     import {store} from "./Store.js";
@@ -242,6 +270,8 @@
     import HumanNode from './nodes/HumanNode.vue'
     import NERNode from './nodes/NERNode.vue'
     import SourceNode from './nodes/SourceNode.vue'
+    import ZIPNode from './nodes/ZIPNode.vue'
+    import OCRNode from './nodes/OCRNode.vue'
     import EmptyNode from './nodes/EmptyNode.vue'
 
     import SetViewNode from './nodes/SetViewNode.vue'
@@ -251,8 +281,8 @@
     import Icon from './Icon.vue'
 
     const apiUrl = import.meta.env.VITE_API_PATH
-    const wsURL = import.meta.env.MODE === 'production' ? `wss://${window.location.host}/${apiUrl}/ws` : 'ws://localhost:8200/ws'
-
+    // Remove WebSocket URL
+    // const wsURL = import.meta.env.MODE === 'production' ? `wss://${window.location.host}/${apiUrl}/ws` : 'ws://localhost:8200/ws'
 
     const { graph_dagre, layout, previousDirection } = useLayout()
 
@@ -269,7 +299,16 @@
 
 	const offCanvasSet = ref(null)
     var settable = ref(null)
-    var state = reactive({setdata:[], setPanel: false, rootNodes:[], node_added: 0, node_updated: 0})
+    var state = reactive({
+        setdata:[], 
+        setPanel: false, 
+        rootNodes:[], 
+        node_added: 0, 
+        node_updated: 0,
+        process_update: false,
+        message: '',
+        action: ''
+    })
 
     var current_node = reactive({})
     var current_graph_node = reactive({position: {}})
@@ -285,68 +324,126 @@
     //     return Math.ceil(state.setdata.file_count / filesPerPage);
     // });
 
-    // Websocket for UI updates
-    let connection = new WebSocket(wsURL);
-    connection.onmessage = (event) => {
-        // console.log('tuli message')
-        // console.log(event)
-        try {
-            var wsdata = JSON.parse(event.data)
-            if(wsdata.target) {
-                console.log('got message:', wsdata.command)
-                if(wsdata.command == 'add') {
-                    addNode(wsdata) 
-                    // check if we another node (set processing produces Process and Set)
-                    if(wsdata.set_node) {
-                        wsdata.target = wsdata.node['@rid']
-                        wsdata.node = wsdata.set_node
-                        wsdata.type = 'set'
-                        addNode(wsdata)
-                    }
-                } else if (wsdata.command == 'update') {
-                    if(state.setPanel) loadSet()  // update set panel if open
+    // Replace WebSocket connection with SSE
+    let eventSource = null;
 
-                    console.log('updating ', wsdata.target)
-                    var target_node = elements.nodes.find(x => x.id == wsdata.target)
-                    if(target_node) {
-                       
-                        target_node.data.error = ''
-                        if(wsdata.image) target_node.data.image = wsdata.image
-                        if("description" in wsdata) target_node.data.description = wsdata.description
-                        if(wsdata.count) target_node.data.count = wsdata.count
-                     
-                        if(wsdata.roi_count || wsdata.roi_count == 0) target_node.data.roi_count = wsdata.roi_count
-                        if(wsdata.error) {
-                            target_node.data.error = wsdata.error
-                            target_node.data.image = ''
+
+
+    function connectSSE() {
+        if (eventSource) {
+            eventSource.close();
+        }
+
+        const url = `${apiUrl}/events`;
+        console.log('Connecting to SSE at:', url);
+        
+        // Create EventSource with the last event ID if available
+        eventSource = new EventSource(url);
+
+        eventSource.onopen = () => {
+            console.log('SSE Connection opened');
+            console.log('Last event ID:', eventSource.lastEventId);
+        };
+
+        eventSource.onmessage = (event) => {
+            // Log the event ID for debugging
+            //console.log('Event ID:', event.lastEventId);
+          
+            try {
+                //console.log('Received SSE message:', event.data);
+                var wsdata = JSON.parse(event.data);
+                if(wsdata.target) {
+                    console.log('wsdata', wsdata)
+                    if(wsdata.command == 'process_update') {
+                        state.process_update = true
+                        state.message = 'Working... ' + wsdata.current_file + '/' + wsdata.total_files
+                        state.action = 'Close'
+                        updateNodeKey(wsdata.target, 'count', wsdata.current_file)
+                        
+                    } else if(wsdata.command == 'process_finished') {
+                        state.process_update = false
+                        state.message = 'Finished'
+                        state.action = 'Close'
+                        updateNodeKey(wsdata.target, 'count', wsdata.current_file)
+                        updateNodeKey(wsdata.target, 'paths', wsdata.paths)
+
+                    } else if(wsdata.command == 'add') {
+                        addNode(wsdata) 
+                        // check if we another node (set processing produces Process and Set)
+                        if(wsdata.set_node) {
+                            wsdata.target = wsdata.node['@rid']
+                            wsdata.node = wsdata.set_node
+                            wsdata.type = 'set'
+                            addNode(wsdata)
+                        }
+
+                    } else if (wsdata.command == 'update') {
+                        if(state.setPanel) loadSet()  // update set panel if open
+
+                        console.log('updating ', wsdata.target)
+                        var target_node = elements.nodes.find(x => x.id == wsdata.target)
+                        if(target_node) {
+                           
+                            target_node.data.error = ''
+                            if(wsdata.image) target_node.data.image = wsdata.image
+                            if("description" in wsdata) target_node.data.description = wsdata.description
+                            if(wsdata.count) target_node.data.count = wsdata.count
+                            if(wsdata.metadata) target_node.data.metadata = wsdata.metadata
+                         
+                            if(wsdata.roi_count || wsdata.roi_count == 0) target_node.data.roi_count = wsdata.roi_count
+                            if(wsdata.error) {
+                                target_node.data.error = wsdata.error
+                                target_node.data.image = ''
+                            }
+                        }
+                        // stop processing animation from process node
+                        if(wsdata.process) {
+                            console.log('----------------------- wsdata.process', wsdata.process)
+                            var process_node = elements.nodes.find(x => x.id == wsdata.process)
+                            if(process_node) {
+                                process_node.data.image = ''
+                            } 
                         }
                     }
-                    // stop processing animation from process node
-                    if(wsdata.process) {
-                        console.log('----------------------- wsdata.process', wsdata.process)
-                        var process_node = elements.nodes.find(x => x.id == wsdata.process)
-                        if(process_node) {
-                            process_node.data.image = ''
-                        } 
+                } else {
+                    if(wsdata.command == 'add') {
+                        addNode(wsdata)
                     }
-
                 }
-            } else {
-                if(wsdata.command == 'add') {
-                    addNode(wsdata)
-                }
+            } catch(e) {
+                console.error('SSE message parsing error:', e);
+                console.error('Raw message:', event.data);
             }
-        } catch(e) {
-            console.log('WS error', e)
-            console.log(event.data)
         }
+
+        eventSource.onerror = (error) => {
+            console.error('SSE Error:', error);
+            console.error('EventSource readyState:', eventSource.readyState);
+            console.error('Last event ID before error:', eventSource.lastEventId);
+            
+            // Close the current connection
+            if (eventSource) {
+                eventSource.close();
+            }
+            
+            // Attempt to reconnect after a delay
+            setTimeout(connectSSE, 5000);
+        };
     }
-    // Websocket for UI updates ends
 
+    // Connect when component is mounted
+    onMounted(() => {
+        console.log('Component mounted, connecting to SSE...');
+        connectSSE();
+    });
 
-    connection.onerror = (error) => {
-        console.error('WebSocket Error:', error);
-    };
+    // Clean up when component is unmounted
+    onUnmounted(() => {
+        console.log('Component unmounting, closing SSE connection...');
+        if (eventSource) {
+            eventSource.close();
+        }
+    });
 
     const props = defineProps({
         mode: '',
@@ -356,9 +453,14 @@
 
     flow.onNodeDragStop((event) => {
         store.current_node = event.node
-        console.log(event.node.position)
         event.node.position = {x:Math.round(event.node.position.x/100, 10)*100, y:Math.round(event.node.position.y/100, 10)*100}
-        connection.send(JSON.stringify({id:event.node.id, position:event.node.position}))
+        fetch(`${apiUrl}/api/projects/${event.node.id.replace('#', '')}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({key: 'position', value: event.node.position})
+        });
     })
 
 
@@ -398,15 +500,15 @@
                 
             //     if(props.mode == "graph") getRootNodes()
             if(!state.node_added) {
-                console.log('no reorder target')
+               
                 flow.fitView()
                 if(props.mode == "projects" && store.view) {
-                    console.log('restoring view')
+                   
                     flow.setViewport(store.view)
                 }
             // // node is added
              } else {
-                console.log('reorder target', store.reorder_target)
+                
                 if(state.node_added) fitToNode(state.node_added)
                 else fitToNode(store.reorder_target)
 
@@ -437,7 +539,7 @@
         } else if(event.node.type == "set") {
             //state.setPanel = true
             toggleSetPanel()
-        } else if(event.node.data.type == "file") {
+        } else if(event.node.data.type == "file" && event.node.data._type != "zip") {
             // find source file and cruncher of this file
             let cruncher, source 
             const parent = flow.getIncomers(event.node)
@@ -462,10 +564,8 @@
     	async (newValue, oldValue) => {
 
 			if(newValue.node || newValue.type || newValue.tag || newValue.query || newValue.map) {
-                console.log('GraphDisplay: route.path: ' + route.path)
-    			console.log('GraphDisplay: on route.query: newValue')
+
     			if(newValue) console.log(Object.keys(newValue))
-    			console.log('GraphDisplay: on route.query: oldValue')
     			if (oldValue) console.log(oldValue)
 
                 if(newValue.map && oldValue.map && newValue.map == oldValue.map) {
@@ -525,6 +625,13 @@
         // })
     }
 
+    
+    function updateNodeKey(node, key, value) {
+        console.log('updating node key', node, key, value)
+        var target_node = elements.nodes.find(x => x.id == node)
+        if(target_node) target_node.data[key] = value
+    }
+
     async function fitToNode(id, padding) {
         console.log('done fitToNode', id)
         var node = elements.nodes.find(x => x.id == id)
@@ -565,9 +672,7 @@
     }
 
     function addNode(wsdata) {
-        console.log('adding node')
-        console.log(wsdata.target)
-        console.log(wsdata.node)
+
         // remove "empty table, empty mind" node
         if(elements.nodes.length == 1) {
             elements.nodes = elements.nodes.filter((node) => node.id !== "1")
@@ -587,11 +692,9 @@
                 type: wsdata.type,
                 position: { x: Math.random() * flow.dimensions.value.width, y: Math.random() * flow.dimensions.value.height },
         }
-        
-        console.log('adding node', newNode)
-        console.log('to node ', wsdata.target)
+
         elements.nodes.push(newNode)
-        console.log(`source: ${wsdata.target}, target: ${id}`)
+
         state.node_added = id
         if(wsdata.target)
             elements.edges.push({id:Math.random() + 'edge', source: wsdata.target, target: id})
@@ -636,10 +739,6 @@
 
     async function drawGraph() {
 
-
-        var positions = await getNodePositions()
-        console.log(positions)
-
         elements.nodes = []
         elements.edges = []
 
@@ -658,6 +757,8 @@
                     roi_count: node.data.roi_count
                 }
             }
+            if(node.position)
+                flownode.position = node.position
 
             if(node.data.paths) {
                 flownode.data.paths = []
@@ -669,12 +770,6 @@
             if(node.data._type) {
                 flownode.data._type = node.data._type.toLowerCase(),
                 flownode.type = node.data._type.toLowerCase()
-            }
-
-            if(positions && positions[node.data.id]) {
-                flownode.position = positions[node.data.id]
-            } else {
-                flownode.position = getDefaultPosition()
             }
 
             if(node.data.image) 
@@ -751,7 +846,6 @@
             node = props.mode
 
         if(node) {
-            console.log(node)
             var node_layout = await web.getLayoutByTarget(node)
             return node_layout
 
@@ -759,20 +853,7 @@
         return 0
     }
 
-	async function setGraphOptions(layout_name) {
 
-        console.log(layout_name)
-		const settings = getLayoutSettings(layout_name)
-		const layout = cy.layout(settings.layout);
-
-        if(layout_name === 'preset' ) {
-            var node_layout = await getNodePositions()
-            setNodePositions(node_layout, layout)
-        } else {
-            layout.run()
-        }
-
-	}
 
 	async function saveLayout() {
         console.log(elements.value)
@@ -802,8 +883,11 @@
             node.data.paths = node.paths
             node.data.info = node.info
             node.data.description = node.description
-        }
-        
+            if(node?.position?.x && node?.position?.y)
+                node.position = node.position
+            else
+                node.position = { x: 0, y: 0}
+        }     
     }
 
 
@@ -811,7 +895,7 @@
 
         store.root_nodes = []
         if(!store.user) store.user = await web.getMe()
-        if(store.graph_style.length == 0) store.graph_style = await web.getStyle()
+  
 
 		if(!props.mode && route.path == '/' ) {
 			router.push({ name: 'graph', query: {}})

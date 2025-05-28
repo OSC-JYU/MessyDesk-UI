@@ -35,25 +35,30 @@ export default ({ mode }) => {
     server: {
         port: 3000,
         proxy: {
-            '/ws': {
-                target: 'http://localhost:8200',
-                changeOrigin: true,
-                ws: true,
+            '/events': {
+              target: 'http://localhost:8200',
+              changeOrigin: true,
+              ws: false,
+              onProxyReq: (proxyReq, req, res) => {
+                proxyReq.setHeader('Connection', 'keep-alive');
+                proxyReq.setHeader('Accept', 'text/event-stream');
+                proxyReq.setHeader('Accept-Encoding', 'identity');
+              },
             },
               '/api': {
                    target: 'http://localhost:8200',
-                   changeOrigin: true,
-                   ws: true,
+                   changeOrigin: true
+                  
                },
                '/images': {
                     target: 'http://localhost:8200',
-                    changeOrigin: true,
-                    ws: true,
+                    changeOrigin: true
+                    
                 },
                 '/icons': {
                      target: 'http://localhost:8200',
-                     changeOrigin: true,
-                     ws: true,
+                     changeOrigin: true
+                     
                  }
           }
       }

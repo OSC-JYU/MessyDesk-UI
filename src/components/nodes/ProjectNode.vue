@@ -9,12 +9,21 @@ img {
   width:160px;
 
 }
-.header {
+._header {
   background-color: #9d4f4f;
   color: white; 
   padding:3px
 }
 
+h3 {
+  background-color: #9d4f4f;
+  color: white; /* optional, improves readability */
+  padding: 10px 20px;
+  border-radius: 12px;
+  display: inline-block; /* keeps the background tight around the text */
+  font-weight: normal; /* optional, adjust as needed */
+
+}
 
 </style>
 

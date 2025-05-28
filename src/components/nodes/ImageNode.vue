@@ -27,6 +27,7 @@ img {
 }
 .roi_add {
   position: relative;
+  padding-left: 5px;
   color: white;
   top: 0px;
   right: 0px;
@@ -100,9 +101,12 @@ function openCrunchers(filter) {
     </v-container>
 
 
-    <div v-if="data.roi_count" title="double click to add/edit regions" class="roi_add"  >
-      <v-icon size="35" >mdi-selection</v-icon> {{ data.roi_count? data.roi_count : 0 }} Regions of Interest 
-      <v-icon v-if="data.roi_count" title="Add region cruncher" @click="openCrunchers('ROI')" class="roi_crunch" size="35" >mdi-cookie</v-icon>
+    <div v-if="data?.metadata"  class="roi_add"  >
+      {{ data.metadata.width }}x{{ data.metadata.height }} ({{ data.metadata.size }} MB)
+      <template v-if="data.roi_count">
+        <v-icon size="35" >mdi-selection</v-icon> {{ data.roi_count? data.roi_count : 0 }}
+        <v-icon title="Add region cruncher" @click="openCrunchers('ROI')" class="roi_crunch" size="35" >mdi-cookie</v-icon>
+      </template>
     </div>
 
 

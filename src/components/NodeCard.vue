@@ -11,7 +11,7 @@
 
     <v-sheet v-if="store.current_node && store.current().id" class="pa-6 text-black ">
 
-
+        <span class="text-caption">{{ store.current_node.id }}</span>
         <!-- LABEL-->
         <div v-if="empty(store.current_node.data.label)" @click="editLabel()" class="text-medium-emphasis">add label</div>
         <h4 v-if="state.edit_label_open == false" @click="editLabel()" class="font-weight-bold mb-4">{{ store.current_node.data.label }}</h4>
@@ -76,12 +76,19 @@
                  <img  class="nodecard-image" :src="store.current().data.image" />
             </div>
             <p v-if="store.current().data.info"><i><v-icon class="mr-2">mdi-information</v-icon>{{ store.current().data.info }}</i></p>
+            {{ store.current().data.metadata }}
             
             <template v-if="!['set', 'process', 'source','project', 'setprocess'].includes(store.current().type)">
                 <a title="opens file in new tab" class="text-medium-emphasis" target="_blank" :href="apiUrl + '/api/files/' + store.current().id.replace('#','')">
                     <v-btn  color="secondary" class="mt-3">open full file</v-btn>
                 </a> 
 
+            </template>
+
+            <template v-if="store.current().type == 'set'">
+                <a title="opens file in new tab" class="text-medium-emphasis" target="_blank" :href="apiUrl + '/api/sets/' + store.current().id.replace('#','') + '/files/zip'">
+                    <v-btn  color="secondary" class="mt-3">download set</v-btn>
+                </a> 
             </template>
 
         </v-card-text>
@@ -234,7 +241,7 @@
 
     function saveDescription() {
         web.setNodeAttribute(store.current_node.id, {key:'description', value: state.edit_description})
-        //store.current_node.data.description = state.edit_description
+        store.current_node.data.description = state.edit_description
         state.edit_description = ''
         state.edit_description_open = false
     }
