@@ -22,11 +22,11 @@ async function login() {
   } catch (e) {
     console.log(e)
     // valid session but not user permissions
-    if (e.request.status == 401 && !window.location.pathname.includes('login')) {
+    if (e.status == 401 && !window.location.pathname.includes('login')) {
       window.location.href = 'login'
 
     // expired session
-    } else if (e.request.status == 302) {
+    } else if (e.status == 302) {
       store.logged_out = true
     } else {
       store.logged_out = false

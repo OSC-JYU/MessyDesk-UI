@@ -1,3 +1,9 @@
+<style>
+    .chip-flat {
+        size: 10px;
+    }
+</style>
+
 <template>
     <v-container>
         <template v-if="store.current_node" class="overflow-y-auto graph-display mt-4">
@@ -11,14 +17,29 @@
                                 <div class="d-flex flex-column">
                                     <div class="d-flex align-center">
                                         <h4 class="text-h5 font-weight-bold">{{ service.name }}</h4>
-                                        <v-chip label :color="service.access === 'commercial' ? 'danger' : 'success'" variant="tonal" class="ml-2">
-                                            {{ service.access === 'commercial' ? 'commercial' : 'free' }}
+                                        <v-chip :color="service.access === 'proprietary' ? 'danger' : 'success'" size="small" variant="tonal" class="ml-2 chip-flat">
+                                            {{ service.access === 'proprietary' ? 'proprietary' : 'open source' }}
                                         </v-chip>
+                                        <v-chip :color="service.location === 'external' ? 'danger' : 'success'" :prepend-icon="service.location === 'external' ? 'mdi-alert-circle' : 'mdi-check-circle'" size="small" variant="flat" class="ml-2">
+                                            {{ service.location === 'external' ? 'external' : 'on-premise' }}
+                                        </v-chip>
+                                        <v-chip  :color="service.status === 'experimental' ? 'danger' : 'success'" :prepend-icon="service.status === 'experimental' ? 'mdi-alert-circle' : 'mdi-check-circle'" size="small" variant="outlined" class="ml-2">
+                                            {{ service.status === 'experimental' ? 'experimental' : 'stable' }}
+                                        </v-chip>
+                                        <a v-if="service.source_url" :href="service.source_url" target="_blank" title="more info" class="text-decoration-none ml-2">
+                                            <v-icon start icon="mdi-open-in-new" class="mr-2"></v-icon>
+                                        </a>
                                     </div>
                                     <span class="text-caption text-medium-emphasis">{{ service.description }}</span>
                                 </div>
                             </v-expansion-panel-title>
                             <v-expansion-panel-text>
+                                <div v-if="service.location === 'external'">
+                                    <v-alert type="danger" variant="tonal">
+                                        <v-icon start icon="mdi-alert-circle" class="mr-2"></v-icon>
+                                        This cruncher is external and requires an API key. <br><b>Your data WILL BE SENT to the external service!</b> 
+                                    </v-alert>
+                                </div>
                                 <v-expansion-panels>
                                     <v-expansion-panel v-for="(task, task_key) of service.tasks" :key="task_key">
                                         <v-expansion-panel-title>
@@ -30,7 +51,7 @@
                                                 <!-- task specific settings -->
                                                 <div v-if="task.content" class="mt-4 mb-4">
                                                     <v-alert type="info" variant="tonal">
-                                                        <v-icon start icon="mdi-message-text" class="mr-2"></v-icon>
+                                                       
                                                         {{ task.content }}
                                                     </v-alert>
                                                 </div>
@@ -62,7 +83,7 @@
                                                         <input v-model="task.values[key]" type="text" class="form-control" placeholder="" aria-label="Username" aria-describedby="basic-addon1">
                                                     </div>
                                                 </div>
-                                                <div v-else>This cruncher has no settings, just click "Crunch!".</div>
+                                                <div v-else></div>
                                             </div>
 
                                             <div class="d-flex flex-row-reverse mb-6">
