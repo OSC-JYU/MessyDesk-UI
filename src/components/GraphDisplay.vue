@@ -215,6 +215,10 @@
                         <template #node-empty="{ data }">
                             <EmptyNode :data="data" />
                         </template>
+
+                        <template #node-error.json="{ data }">
+                            <ErrorNode :data="data" />
+                        </template>
                         
                         <Background />
 
@@ -273,6 +277,7 @@
     import ZIPNode from './nodes/ZIPNode.vue'
     import OCRNode from './nodes/OCRNode.vue'
     import EmptyNode from './nodes/EmptyNode.vue'
+    import ErrorNode from './nodes/ErrorNode.vue'
 
     import SetViewNode from './nodes/SetViewNode.vue'
 

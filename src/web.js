@@ -47,9 +47,7 @@ web.ready = async function() {
 
 web.getError = async function(rid) {
 	var result = await axios.get(`/api/errors/${rid}`)
-	if(result.data.response.docs.length == 0)
-		return 'could not find error'
-	return result.data.response.docs[0]
+	return result.data
 }
 
 web.search = async function(search) {

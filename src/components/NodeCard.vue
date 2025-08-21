@@ -64,7 +64,7 @@
     
         <!-- ERROR -->
         <v-card-text class="pa-0 overflow-scroll" v-if="store.current_node.data.error">
-            <v-alert type="error"  @click="editDescription()" class="text-medium-emphasis">Something went wrong processing this file</v-alert>
+            <v-alert type="error"  @click="editDescription()" class="text-medium-emphasis">Something went wrong processing this cruncher.</v-alert>
             <v-btn  @click="getError()">show error</v-btn>
             <pre>{{ state.full_error }}</pre>
         </v-card-text>
@@ -207,9 +207,7 @@
     async function getError() {
         var rid = store.current().id.replace('#','')
         var response = await web.getError(rid)
-        var error = JSON.parse(response.error)
-        var message = JSON.parse(response.message)
-        state.full_error = 'ERROR:\n\n' + JSON.stringify(error) + '\n\nMESSAGE:\n\n' + JSON.stringify(message) + '\n\n'
+        state.full_error = 'ERROR:\n' + JSON.stringify(response.code) + '\n\nMESSAGE:\n\n' + JSON.stringify(response.message) + '\n\n'
     }
 
     function editLabel() {

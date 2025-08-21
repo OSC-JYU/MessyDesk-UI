@@ -22,6 +22,8 @@
 
     const emit = defineEmits(['fit-to-node', 'create-project', 'change-tab'])
 
+    const pdfAlertVisible = ref(true);
+
     function fitToNode(id) {
         console.log(id)
         state.node = id
@@ -161,6 +163,16 @@
           </v-menu>
           
     </v-app-bar>
+
+    <v-alert
+      v-model="pdfAlertVisible"
+      type="warning"
+      dismissible
+      class="pdf-alert"
+      style="position: absolute; left: 50%; top: 10px; transform: translateX(-50%); z-index: 9999; min-width: 320px; max-width: 90vw;"
+    >
+      PDF processing is down currently.
+    </v-alert>
 
     <!-- Sidebar -->
     <v-navigation-drawer
