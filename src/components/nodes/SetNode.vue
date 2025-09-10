@@ -60,8 +60,12 @@ function openCrunchers(filter) {
 
 <template>
   <div class="node-body nodrag">
-    <div class="header"><v-icon size="35" color="green">mdi-folder-outline</v-icon> SET <span v-if="data.count">  ({{ data.count }} files)</span><span v-else>(empty)</span> </div>
-    <v-icon @click="openCrunchers('')" title="Add cruncher" class ="crunch_add" size="65" >mdi-cookie-plus</v-icon>
+    <div class="header">
+      <v-icon v-if ="data.status == 'running'" size="35" color="orange">mdi-run</v-icon>
+      <v-icon v-else size="35" color="green">mdi-folder-outline</v-icon>
+       SET 
+       <span v-if="data.count">  ({{ data.count }} files)</span><span v-else>(empty)</span> </div>
+    <v-icon v-if="data?.count > 0 && data.status != 'running'" @click="openCrunchers('')" title="Add cruncher" class ="crunch_add" size="65" >mdi-cookie-plus</v-icon>
     <v-container>
      
 

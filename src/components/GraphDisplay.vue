@@ -60,26 +60,41 @@
     left: 0;
     right: 0;
     z-index: 1000;
+    background-color: #005757 !important;
+    color: white !important;
 }
+
+
 
 
 </style>
 
 <template>
+
+<DebugFloatingWindow/>
+
 <v-banner v-if="state.process_update"
    
       lines="one"
     >
+
       <template v-slot:text>
+        <v-icon
+      color="white"
+      icon="mdi-run"
+      size="large"
+    ></v-icon>
         {{ state.message }}
       </template>
 
       <template v-slot:actions>
-        <v-btn color="deep-purple-accent-4">
+        <v-btn color="white">
           {{ state.action }}
         </v-btn>
       </template>
     </v-banner>
+
+
 
  <div id="container" class="w-100">
 		<div class="row h-100" >
@@ -188,6 +203,14 @@
                             <SetNode :data="data" />
                         </template>
 
+                        <template #node-dspace7="{ data }">
+                            <SourceNode :data="data" />
+                        </template>
+
+                        <template #node-dspace7.json="{ data }">
+                            <JSONNode :data="data" />
+                        </template>
+
                         <template #node-nextcloud="{ data }">
                             <SourceNode :data="data" />
                         </template>
@@ -280,6 +303,7 @@
     import ErrorNode from './nodes/ErrorNode.vue'
 
     import SetViewNode from './nodes/SetViewNode.vue'
+    import DebugFloatingWindow from './DebugFloatingWindow.vue'
 
     import { useShuffle } from './useShuffle'
     import { useLayout } from './useLayout'
@@ -355,66 +379,17 @@
             //console.log('Event ID:', event.lastEventId);
           
             try {
-                //console.log('Received SSE message:', event.data);
+                console.log('Received SSE message:', event.data);
                 var wsdata = JSON.parse(event.data);
-                if(wsdata.target) {
-                    console.log('wsdata', wsdata)
-                    if(wsdata.command == 'process_update') {
-                        state.process_update = true
-                        state.message = 'Working... ' + wsdata.current_file + '/' + wsdata.total_files
-                        state.action = 'Close'
-                        updateNodeKey(wsdata.target, 'count', wsdata.current_file)
-                        
-                    } else if(wsdata.command == 'process_finished') {
-                        state.process_update = false
-                        state.message = 'Finished'
-                        state.action = 'Close'
-                        updateNodeKey(wsdata.target, 'count', wsdata.current_file)
-                        updateNodeKey(wsdata.target, 'paths', wsdata.paths)
-
-                    } else if(wsdata.command == 'add') {
-                        addNode(wsdata) 
-                        // check if we another node (set processing produces Process and Set)
-                        if(wsdata.set_node) {
-                            wsdata.target = wsdata.node['@rid']
-                            wsdata.node = wsdata.set_node
-                            wsdata.type = 'set'
-                            addNode(wsdata)
-                        }
-
-                    } else if (wsdata.command == 'update') {
-                        if(state.setPanel) loadSet()  // update set panel if open
-
-                        console.log('updating ', wsdata.target)
-                        var target_node = elements.nodes.find(x => x.id == wsdata.target)
-                        if(target_node) {
-                           
-                            target_node.data.error = ''
-                            if(wsdata.image) target_node.data.image = wsdata.image
-                            if("description" in wsdata) target_node.data.description = wsdata.description
-                            if(wsdata.count) target_node.data.count = wsdata.count
-                            if(wsdata.metadata) target_node.data.metadata = wsdata.metadata
-                         
-                            if(wsdata.roi_count || wsdata.roi_count == 0) target_node.data.roi_count = wsdata.roi_count
-                            if(wsdata.error) {
-                                target_node.data.error = wsdata.error
-                                target_node.data.image = ''
-                            }
-                        }
-                        // stop processing animation from process node
-                        if(wsdata.process) {
-                            console.log('----------------------- wsdata.process', wsdata.process)
-                            var process_node = elements.nodes.find(x => x.id == wsdata.process)
-                            if(process_node) {
-                                process_node.data.image = ''
-                            } 
-                        }
-                    }
-                } else {
-                    if(wsdata.command == 'add') {
-                        addNode(wsdata)
-                    }
+                console.log('wsdata', wsdata)
+                if(wsdata.command == 'add') {
+                    addNode(wsdata)
+                } else if(wsdata.command == 'update') {
+                    updateNodeKey(wsdata.target, wsdata.node)
+                } else if(wsdata.command == 'process_update' || wsdata.command == 'process_finished') {
+                    updateProcess(wsdata)
                 }
+
             } catch(e) {
                 console.error('SSE message parsing error:', e);
                 console.error('Raw message:', event.data);
@@ -489,21 +464,7 @@
 
         // restore view to stored viewport
         } else {
-            // if(!state.node_added) {
-            //     console.log('no reorder target')
-            //     if(props.mode == "graph") {
-            //         // we coming back from double click and the graph was not in order
-            //         if(store.reorder_target) {
-            //             fitToNode(store.reorder_target,1)
-            //             store.reorder_target = null
-            //         // we are coming back from double click and the graph was in order
-            //         } else if(store.view) {
-            //             flow.setViewport(store.view)
 
-            //         } else flow.fitView()
-            //     }
-                
-            //     if(props.mode == "graph") getRootNodes()
             if(!state.node_added) {
                
                 flow.fitView()
@@ -545,6 +506,7 @@
             //state.setPanel = true
             toggleSetPanel()
         } else if(event.node.data.type == "file" && event.node.data._type != "zip") {
+            console.log('open f node', event.node)
             // find source file and cruncher of this file
             let cruncher, source 
             const parent = flow.getIncomers(event.node)
@@ -555,6 +517,7 @@
                     source = granparent[0].id.replace('#', '')
                 }
             }
+            console.log('open-node', event.node)
             emit('open-node', event.node.id, source)
 
         }
@@ -630,15 +593,103 @@
         // })
     }
 
+
+    function updateProcess(wsdata) {
+        updateNodeKey(wsdata.target, wsdata.node)
+        updateNodeKey(wsdata.set, wsdata.setnode)
+
+        var label = ''
+        var node = elements.nodes.find(x => x.id == wsdata.target)
+        if(node && node.data.label) {
+            label = node.data.label
+        }
+        if(wsdata.command == 'process_finished') {
+            state.message = 'Process finished with ' + label
+            state.process_update = false
+            return
+        } 
+        
+        if(wsdata.command == 'process_update') {
+            if(wsdata.total_files && wsdata.current_file) {
+                state.message = 'Working with file ' + wsdata.current_file + '/' + wsdata.total_files + ' with "' + label + '"'
+            } else {
+                state.message = 'Working with ' + label            
+            }
+            state.process_update = true
+        }
+
+    }
+
+    function addNode(wsdata) {
+
+        // remove "empty table, empty mind" node
+        if(elements.nodes.length == 1) {
+            elements.nodes = elements.nodes.filter((node) => node.id !== "1")
+        }
+        // file uploaded to set is not added to visual graph
+        if(wsdata.set) {
+        // expandSetNode(wsdata.node, wsdata.target)
+        } else {
+            const id = wsdata.node['@rid'] || wsdata.node.rid || wsdata.node.id
+            const nodetype = wsdata.type
+            wsdata.node.type = wsdata.node['@type'].toLowerCase() // "File" -> "file"
+            wsdata.node.image = wsdata.image
+            const newNode = {
+                id: id,
+                data: wsdata.node,
+                type: nodetype,
+                image: wsdata.image,
+                position: { x: Math.random() * flow.dimensions.value.width, y: Math.random() * flow.dimensions.value.height },
+            }
+
+            elements.nodes.push(newNode)
+            console.log('newNode', newNode)
+
+            state.node_added = id
+            if(wsdata.input)
+                elements.edges.push({id:Math.random() + 'edge', source: wsdata.input, target: id})
+
+            // if output i set, then we create Set node and link to it new node
+            if(wsdata.output) {
+                wsdata.output.status = 'running'  // we set status to running so that crunher icon is NOT shown
+                wsdata.output.type = wsdata.output['@type'].toLowerCase()
+                const setNode = {
+                    id: wsdata.output['@rid'],
+                    data: wsdata.output,
+                    type: 'set',                // output is always Set node
+                    image: wsdata.output.image,
+                    position: { x: Math.random() * flow.dimensions.value.width, y: Math.random() * flow.dimensions.value.height },
+                }
+                elements.nodes.push(setNode)
+                elements.edges.push({id:Math.random() + 'edge', source: id, target: wsdata.output['@rid']})
+            }
+
+            layoutGraph('LR')
+            if(nodetype == 'process') {
+                state.process_update = true
+                state.message = 'Process created'
+            }
+        }
+
+
+    }
     
-    function updateNodeKey(node, key, value) {
-        console.log('updating node key', node, key, value)
-        var target_node = elements.nodes.find(x => x.id == node)
-        if(target_node) target_node.data[key] = value
+    function updateNodeKey(target_rid, node) {
+        var target_node = elements.nodes.find(x => x.id == target_rid)
+        if(target_node) {
+            if(node.image)  target_node.data.image = node.image
+            if(node.status)  target_node.data.status = node.status
+            if(node.label)  target_node.data.label = node.label
+            if(node.description)  target_node.data.description = node.description
+            if(node.info)  target_node.data.info = node.info
+            if(node.file_count)  target_node.data.file_count = node.file_count
+            if(node.count)  target_node.data.count = node.count
+            if(node.roi_count)  target_node.data.roi_count = node.roi_count
+            if(node.duration)  target_node.data.duration = node.duration
+        }
     }
 
     async function fitToNode(id, padding) {
-        console.log('done fitToNode', id)
         var node = elements.nodes.find(x => x.id == id)
         store.current_node = node
         if(!padding) padding = 5
@@ -676,45 +727,7 @@
         state.setdata = await web.getSetFiles(store.current_node.id, (page.value - 1) * filesPerPage, filesPerPage)
     }
 
-    function addNode(wsdata) {
 
-        // remove "empty table, empty mind" node
-        if(elements.nodes.length == 1) {
-            elements.nodes = elements.nodes.filter((node) => node.id !== "1")
-        }
-        // file uploaded to set is not added to visual graph
-        if(wsdata.set) {
-           // expandSetNode(wsdata.node, wsdata.target)
-        } else {
-            const id = wsdata.node['@rid'] || wsdata.node.rid || wsdata.node.id
-            const nodetype = wsdata.node['@type'] || wsdata.node.type
-            wsdata.node.type = wsdata.node['@type'].toLowerCase() // "File" -> "file"
-            wsdata.node.image = wsdata.image
-            const newNode = {
-                id: id,
-                data: wsdata.node,
-                image: wsdata.image,
-                type: wsdata.type,
-                position: { x: Math.random() * flow.dimensions.value.width, y: Math.random() * flow.dimensions.value.height },
-        }
-
-        elements.nodes.push(newNode)
-
-        state.node_added = id
-        if(wsdata.target)
-            elements.edges.push({id:Math.random() + 'edge', source: wsdata.target, target: id})
-
-        layoutGraph('LR')
-        }
-
-        // stop processing animation from process node
-        if(wsdata.type != 'process') {
-            var target_node = elements.nodes.find(x => x.id == wsdata.target)
-            if(target_node) {
-                target_node.data.image = ''
-            }            
-        }
-    }
 
     async function expandSetNode(node) {
 
@@ -788,6 +801,9 @@
 
             if(node.data.error) 
                 flownode.data.error = node.data.error
+
+            if(node.data.error_count) 
+                flownode.data.error_count = node.data.error_count
 
             elements.nodes.push(flownode)
         }

@@ -7,6 +7,7 @@
     import TextDisplay from './displays/TextDisplay.vue'
     import PDFDisplay from './displays/PDFDisplay.vue'
     import HumanJSONDisplay from './displays/HumanJSONDisplay.vue'
+    import TextRawDisplay from './displays/TextRawDisplay.vue'
     import web from "../web.js";
     
     import { onMounted, watch, reactive, ref, computed } from "vue";
@@ -23,7 +24,7 @@
     })
 
     onMounted(async()=> {
-
+        console.log('FilesMain mounted')
         var response = await web.getDocInfo(route.params.rid)
         
         state.file = response
@@ -66,6 +67,7 @@
                 <ImageDisplay v-if="state.file  && state.file.type=='image'"/>
                 <TextDisplay v-if="state.file  && state.file.type=='text' && state.file.extension=='txt'"/> 
                 <OSDDisplay v-if="state.file  && state.file.type=='osd.json'"/> 
+                <OSDDisplay v-if="state.file && state.file.type=='dspace7.json'"/>
                 <HumanJSONDisplay v-if="state.file  && state.file.type=='human.json'"/>
                 <PDFDisplay v-if="state.file  && state.file.type=='pdf'"/>
                 <HOCRDisplay v-if="state.file && state.file.extension=='hocr'"/>

@@ -17,6 +17,7 @@ img {
 <script setup>
 import { Handle, Position } from '@vue-flow/core'
 import CookieIconWhite from '@/assets/images/cookie-bite-solid-white.svg';
+import WaitIcon from '@/assets/images/wait.gif';
 
 
 
@@ -41,7 +42,7 @@ const props = defineProps({
   </div>
   <pre class="p-2" v-if="data.description">{{ data.description }}</pre>
 
-  <v-alert icon="mdi-karate" type="error" v-if="data.error"> {{ data.error }}</v-alert>
+  <v-alert icon="mdi-karate" type="error" v-if="data.error">{{ data.error }}</v-alert>
   
   
   
@@ -49,15 +50,17 @@ const props = defineProps({
   <v-row align="center">
     <v-col cols="auto">
       <img v-if="data.image" :src="data.image" />  
-      <img v-else-if="!data.error" :src="CookieIconWhite"/>
-      <!-- <img src="icons/wait.gif" /> -->
+      <img v-else-if="!data.error && data.status != 'running'" :src="CookieIconWhite"/>
+      <img v-if="data.status == 'running'" :src="WaitIcon" /> 
     </v-col>
-    <v-col>
+    <v-col v-if="data.status != 'running'">
       <p  v-if="data.info && !data.error">
         <i>{{ data.info }}</i>
+        <i>{{ data.duration }}</i>
       </p>
+      <i>{{ data.duration }}</i>
       <v-chip class="mb-2" v-if="data.service" color="orange" variant="flat">
-      {{ data.service }}
+      {{ data.service }} 
     </v-chip>
     </v-col>
   </v-row>

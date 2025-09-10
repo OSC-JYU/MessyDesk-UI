@@ -10,7 +10,7 @@
             <div>
                 <div v-if="state.service_count === 0" class="alert alert-warning">No crunchers found</div>
 
-                <v-expansion-panels>
+                <v-expansion-panels v-model="openPanel" @update:model-value="onPanelChange">
                     <v-expansion-panel v-for="service in services.result.for_format" :key="service.id">
                         <template v-if="service.id !== 'thumbnailer' && Object.keys(service.tasks).length > 0">
                             <v-expansion-panel-title>
@@ -31,6 +31,11 @@
                                         </a>
                                     </div>
                                     <span class="text-caption text-medium-emphasis">{{ service.description }}</span>
+                                    <div v-if="state.current_queue">
+                                            queue: {{ state.current_queue[service.id].num_pending}}
+                                            batch: {{ state.current_queue[service.id + '_batch'].num_pending}}
+                                       
+                                    </div>
                                 </div>
                             </v-expansion-panel-title>
                             <v-expansion-panel-text>
@@ -40,6 +45,15 @@
                                         This cruncher is external and requires an API key. <br><b>Your data WILL BE SENT to the external service!</b> 
                                     </v-alert>
                                 </div>
+                                
+                                <!-- DSpace Query Form for DSpace services -->
+                                <!-- <div v-if="service.id === 'md-dspace7' ">
+                                    <DspaceQueryForm 
+                                        :dspace-url="service.dspace_url || ''"
+                                        :source-rid="store.current_node.id"
+                                        @query-executed="handleDspaceQuery"
+                                    />
+                                </div> -->
                                 <v-expansion-panels>
                                     <v-expansion-panel v-for="(task, task_key) of service.tasks" :key="task_key">
                                         <v-expansion-panel-title>
@@ -61,8 +75,10 @@
                                                             <b>{{ help.name }}</b>
                                                             <div><i>{{ help.help }}</i></div>
                                                         </v-container>
-                                                        
-                                                        <template v-if="help.display && help.display == 'checkbox'">
+                                                        <template v-if="help.component && help.component == 'dspace'">
+                                                            <DspaceQueryForm :dspace-url="service.dspace_url || ''" :source-rid="store.current_node.id" @query-executed="handleDspaceQuery" />
+                                                        </template>
+                                                        <template v-else-if="help.display && help.display == 'checkbox'">
                                                             <v-checkbox v-model="task.values[key]" v-for="value in help.values" :label="value.title" :value="value.value"></v-checkbox>
                                                         </template>
                                                         <template v-else-if="help.display && help.display == 'dropdown'">
@@ -100,7 +116,8 @@
                                             </div>
 
                                             <div v-if="task.supported_formats"><b>supported formats: {{ task.supported_formats.join(', ') }}</b></div>
-                                            <div v-else><b>supported formats: {{ service.supported_formats.join(', ') }}</b></div>
+                                            <div v-else-if="service.supported_formats"><b>supported formats: {{ service.supported_formats.join(', ') }}</b></div>
+                                            <div v-else><b>supported formats: all</b></div>
                                         </v-expansion-panel-text>
                                     </v-expansion-panel>
                                 </v-expansion-panels>
@@ -119,11 +136,14 @@
     import { useRouter, useRoute } from 'vue-router'
     import {store} from "./Store.js";
     import web from "../web.js";
+    import DspaceQueryForm from "./DspaceQueryForm.vue";
 
     const route  = useRoute();
     const router = useRouter();
 
     var services = reactive({result:{}})
+
+    var openPanel = ref(null)
  
     var state = reactive({
 		current_type: '',
@@ -131,7 +151,8 @@
 		out_params: {},
 		user_info: '',
 		error: '',
-        service_count: 0
+        service_count: 0,
+        current_queue: null
 	})
 
     async function loadData(rid) {
@@ -161,6 +182,25 @@
                 }
             }
         }
+    }
+
+    async function onPanelChange(value) {
+        state.current_queue = null
+        if (value !== null && value !== undefined) {
+            const openedService = services.result.for_format[value]
+            console.log('Panel opened:', openedService.name, openedService.id)
+
+            var queue = await web.getQueue(openedService.id)
+            state.current_queue = queue
+            
+            // Make your API call here
+            // For example:
+            // loadServiceDetails(openedService.id)
+        }
+    }
+
+    function getQueue(node) {
+        console.log(node)
     }
 
     function createUserInfo(info, params) {
@@ -217,6 +257,16 @@
 		// close(1)
 
 	}
+
+    // Handle DSpace query execution
+    async function handleDspaceQuery(query) {
+        console.log('DSpace query executed:', query)
+        const service = 'md-dspace7'
+        const task = 'make_query'
+        const params = {query: query.solrQuery}
+        const process = {id: service, task: task, params: params}
+        await web.createSourceProcess(process, store.current().id)
+    }
 
 
     onMounted(async()=> {

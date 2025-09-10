@@ -60,6 +60,11 @@ web.savePrompt = async function(prompt) {
 	return result.data
 }
 
+web.getQueue = async function(service_id) {
+	var result = await axios.get(`/api/queue/${service_id}/status`)
+	return result.data
+}
+
 web.rawQuery = async function(query) {
 	var result = await axios.post(`/api/query`, {query: query})
 	return result.data
@@ -161,6 +166,11 @@ web.getServicesForFile = async function(file_rid, filter) {
 	var filter_query = ''
 	if(filter) filter_query = '?filter='+filter
 	var result = await axios.get(`/api/services/files/${file_rid.replace('#','')}${filter_query}`)
+	return result.data
+}
+
+web.getInitData = async function(service_id) {
+	var result = await axios.get(`/api/services/${service_id}/init`)
 	return result.data
 }
 
@@ -378,23 +388,6 @@ web.deleteProject = async function(rid) {
 	return response
 }
 
-web.connect = async function(from, relation, to) {
-
-	var result = await axios.post(`/api/graph/edges`, {from:from, relation:relation, to:to})
-	return result
-}
-
-web.connectMe = async function(relation, to) {
-
-	var result = await axios.post(`/api/graph/edges/connect/me`, {rel_type:relation, to:to})
-	return result
-}
-
-web.unConnectMe = async function(relation, to) {
-
-	var result = await axios.post(`/api/graph/edges/unconnect/me`, {rel_type:relation, to:to})
-	return result
-}
 
 web.setRelationAttribute = async function(rid, data) {
 	var result = await axios.post(`/api/graph/edges/${rid.replace('#','')}`, data)
@@ -411,16 +404,11 @@ web.setProjectAttribute = async function(rid, data) {
 	return result
 }
 
-
-web.removeEdgeByRID = async function(rid) {
-	var result = await axios.delete(`/api/graph/edges/${rid.replace('#','')}`)
-	return result
+web.getSourceInit = async function(rid) {
+	var result = await axios.get(`/api/graph/vertices/${rid.replace('#','')}/init`)
+	return result.data
 }
 
-web.connectSchema = async function(from, relation, to) {
-	var result = await axios.post(`/api/graph/edges`, {from:from, relation:relation, to: to})
-	return result
-}
 
 web.createROIs = async function(rid, data, width, height) {
 	var postdata = {rois: data, width: width, height: height}

@@ -18,11 +18,21 @@
                 label="Source name*"
                 required
               ></v-text-field>
-          <v-text-field v-if="store.source_creator_type == 'nextcloud'" v-model="state.url"
+            <template v-if="store.source_creator_type == 'nextcloud'">
+              <v-text-field v-model="state.url"
                 label="Nextcloud URL* (full URL to your SHARED folder)"
                 required
               ></v-text-field>
               <v-alert v-if="store.source_creator_type == 'nextcloud'" type="info" >Here is a demo folder that you can use for testing:<br>https://nextcloud.jyu.fi/index.php/s/nGwmKcP3wy8pHJx</v-alert>
+            </template>
+            <template v-if="store.source_creator_type == 'dspace7'">
+              <v-text-field v-model="state.url"
+                label="Dspace7 REST api URL*"
+                required
+              ></v-text-field>
+              <v-alert v-if="store.source_creator_type == 'dspace7'" type="info" >Here is a demo folder that you can use for testing:<br>https://demo.dspace.org/server/api/discover/search</v-alert>
+            </template>
+
               
               
               <v-textarea v-model="state.description" label="Description of your data"></v-textarea>

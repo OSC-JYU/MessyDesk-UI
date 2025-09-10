@@ -65,8 +65,7 @@
         <!-- ERROR -->
         <v-card-text class="pa-0 overflow-scroll" v-if="store.current_node.data.error">
             <v-alert type="error"  @click="editDescription()" class="text-medium-emphasis">Something went wrong processing this cruncher.</v-alert>
-            <v-btn  @click="getError()">show error</v-btn>
-            <pre>{{ state.full_error }}</pre>
+
         </v-card-text>
 
         <!-- THUMBNAIL -->

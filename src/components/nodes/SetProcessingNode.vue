@@ -38,6 +38,8 @@ const props = defineProps({
     </div>
     
     <pre class="p-2" v-if="data.description">{{ data.description }}</pre>
+
+    <v-alert icon="mdi-karate" type="error" v-if="data.error">errors: {{ data.error_count }}</v-alert>
   
  
   
@@ -47,11 +49,12 @@ const props = defineProps({
     </v-col>
     <v-col>
       <p class="p-2" v-if="data.info">
-       
         <i>{{ data.info }}</i>
       </p>
+      
+      <i>{{ data.duration }}</i>
       <v-chip class="mb-2" v-if="data.service" color="orange" variant="flat">
-      {{ data.service }}
+      {{ data.service }} 
     </v-chip>
     </v-col>
   </v-row>

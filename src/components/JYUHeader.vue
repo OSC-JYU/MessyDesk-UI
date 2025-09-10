@@ -199,7 +199,7 @@
 
 
 
-        <!-- <v-list-group value="Actions" v-if="props.mode=='graph'">
+         <v-list-group value="Actions" v-if="props.mode=='graph'">
           <template v-slot:activator="{ props }">
             <v-list-item
               v-bind="props"
@@ -211,14 +211,19 @@
           </v-list-item>
           </template>
 
-          <v-list-item @click="createSource('nextcloud')">Nextcloud
-            <template v-slot:prepend>
-            <v-icon  icon="mdi-cloud-arrow-down"></v-icon>
-          </template>
+            <v-list-item @click="createSource('nextcloud')">Nextcloud
+              <template v-slot:prepend>
+              <v-icon  icon="mdi-cloud-arrow-down"></v-icon>
+            </template>
+            </v-list-item>
 
-          </v-list-item>
+            <v-list-item @click="createSource('dspace7')">Dspace7
+              <template v-slot:prepend>
+              <v-icon  icon="mdi-cloud-arrow-down"></v-icon>
+            </template>
+            </v-list-item>
           
-        </v-list-group> -->
+        </v-list-group> 
 
          <v-list-item v-if="props.mode=='graph' && store.user && store.user.access == 'admin'"
           @click="store.set_creator_open = true"
