@@ -56,7 +56,7 @@ const props = defineProps({
     <v-col v-if="data.status != 'running'">
       <p  v-if="data.info && !data.error">
         <i>{{ data.info }}</i>
-        <i>{{ data.duration }}</i>
+        
       </p>
       <i>{{ data.duration }}</i>
       <v-chip class="mb-2" v-if="data.service" color="orange" variant="flat">

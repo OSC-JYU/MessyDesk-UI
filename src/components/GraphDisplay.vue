@@ -386,6 +386,8 @@
                     addNode(wsdata)
                 } else if(wsdata.command == 'update') {
                     updateNodeKey(wsdata.target, wsdata.node)
+                } else if(wsdata.command == 'add_and_finish') {
+                    addNode(wsdata)
                 } else if(wsdata.command == 'process_update' || wsdata.command == 'process_finished') {
                     updateProcess(wsdata)
                 }
@@ -595,8 +597,8 @@
 
 
     function updateProcess(wsdata) {
-        updateNodeKey(wsdata.target, wsdata.node)
-        updateNodeKey(wsdata.set, wsdata.setnode)
+        if(wsdata.process) updateNodeKey(wsdata.process['@rid'], wsdata.process)
+        if(wsdata.set) updateNodeKey(wsdata.set['@rid'], wsdata.set)
 
         var label = ''
         var node = elements.nodes.find(x => x.id == wsdata.target)
@@ -632,6 +634,9 @@
         } else {
             const id = wsdata.node['@rid'] || wsdata.node.rid || wsdata.node.id
             const nodetype = wsdata.type
+            if(nodetype == 'process') {
+                wsdata.node.status = "running"  // Process node status is 'running' by default
+            }
             wsdata.node.type = wsdata.node['@type'].toLowerCase() // "File" -> "file"
             wsdata.node.image = wsdata.image
             const newNode = {
@@ -643,7 +648,7 @@
             }
 
             elements.nodes.push(newNode)
-            console.log('newNode', newNode)
+            //console.log('newNode', newNode)
 
             state.node_added = id
             if(wsdata.input)
@@ -669,6 +674,15 @@
                 state.process_update = true
                 state.message = 'Process created'
             }
+
+            if(wsdata.process) {
+                if(wsdata.process.status == 'finished') {
+                    state.process_update = false
+                    state.message = 'Process finished'
+                } 
+                updateNodeKey(wsdata.process['@rid'], wsdata.process)
+            }
+            
         }
 
 
@@ -676,7 +690,7 @@
     
     function updateNodeKey(target_rid, node) {
         var target_node = elements.nodes.find(x => x.id == target_rid)
-        if(target_node) {
+        if(target_node && node) {
             if(node.image)  target_node.data.image = node.image
             if(node.status)  target_node.data.status = node.status
             if(node.label)  target_node.data.label = node.label
@@ -686,6 +700,8 @@
             if(node.count)  target_node.data.count = node.count
             if(node.roi_count)  target_node.data.roi_count = node.roi_count
             if(node.duration)  target_node.data.duration = node.duration
+            if(node.metadata)  target_node.data.metadata = node.metadata
+            if(node.paths)  target_node.data.paths = node.paths
         }
     }
 

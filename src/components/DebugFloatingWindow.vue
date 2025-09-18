@@ -66,6 +66,19 @@
           </v-btn>
 
           <v-btn 
+            @click.stop="processAddFile"
+            color="success"
+            variant="flat"
+            size="small"
+            block
+            class="mb-2"
+            :disabled="!canCreateProcessFinished"
+          >
+            <v-icon start icon="mdi-cog-stop" size="small"></v-icon>
+            Process Add File
+          </v-btn>
+
+          <v-btn 
             @click.stop="processFinished"
             color="success"
             variant="flat"
@@ -168,6 +181,7 @@
               </div>
               <div class="mb-2">
                 <strong>Node Type:</strong> {{ currentNode?.data?.type || 'None' }}
+                <strong>Node Type:</strong> {{ currentNode?.type || 'None' }}
               </div>
               <div class="mb-2">
                 <strong>Node Label:</strong> {{ currentNode?.label || 'None' }}
@@ -275,7 +289,7 @@ const currentTimestamp = computed(() => {
   return new Date().toLocaleTimeString()
 })
 
-var current_file = 0
+var current_file = 1
 
 const windowStyle = computed(() => ({
   position: 'fixed',
@@ -309,6 +323,44 @@ const createProcess = async () => {
   console.log('Process created')
 }
 
+const processRunning = async () => {
+  await fetch(`/events/test/message`, {
+    method: 'POST',   
+    body: JSON.stringify({
+      command: 'process_update',
+      process: { "@rid": currentNode.value?.id, "@type": 'process', status: 'running' }
+    })
+  })
+  console.log('Process running')
+}
+
+
+const processFinished = async () => {
+  await fetch(`/events/test/message`, {
+    method: 'POST',   
+    body: JSON.stringify({
+      command: 'process_finished',
+      process: { '@rid': currentNode.value?.id, status: 'finished' }
+    })
+  })
+  console.log('Process finished')
+}
+
+const processAddFile = async () => {
+  await fetch(`/events/test/message`, {
+    method: 'POST',   
+    body: JSON.stringify({
+      command: 'add',
+      type: 'text',
+      input: currentNode.value?.id,
+      node: { "@rid": currentNode.value?.id + '_file', "@type": 'file', label: 'Test File', "description": `Test File ${currentNode.value?.id}`, status: 'running' },
+      process: { "@rid": currentNode.value?.id, "@type": 'process', status: 'finished' }
+    })
+  })
+  console.log('Process add file')
+}
+
+
 
 const createSetProcess = async () => {
   var rid = '#' + Math.floor(Math.random() * 1000).toString()
@@ -332,12 +384,9 @@ const addProcessedFileToSet = async () => {
     method: 'POST',   
     body: JSON.stringify({
       command: 'process_update',
-      target: currentNode.value?.id,
-      set: currentNode.value?.id + '_output',
-      current_file: current_file++,
       total_files: 10,
-      node: { "@rid": currentNode.value?.id, "@type": 'process', status: 'running' },
-      setnode: { status: 'running', count: current_file }
+      process: { "@rid": currentNode.value?.id, status: 'running' },
+      set: { "@rid": currentNode.value?.id + '_output', status: 'running', count: current_file++ }
     })
   })
 }
@@ -347,10 +396,8 @@ const setProcessFinished = async () => {
     method: 'POST',   
     body: JSON.stringify({
       command: 'process_finished',
-      target: currentNode.value?.id,
-      node: { status: 'finished', duration: '00:23:45' },
-      set: currentNode.value?.id + '_output',
-      setnode: { status: 'finished', label: 'Ready to crunch' }
+      process: {'@rid': currentNode.value?.id, '@type': 'process', status: 'finished', duration: '00:23:45' },
+      set: { "@rid": currentNode.value?.id + '_output', "@type": 'set', status: 'finished', label: 'Ready to crunch' }
     })
   })
   console.log('Process finished')
@@ -369,30 +416,6 @@ const createSet = async () => {
   console.log('Set created')
 }
 
-const processRunning = async () => {
-  await fetch(`/events/test/message`, {
-    method: 'POST',   
-    body: JSON.stringify({
-      command: 'process_update',
-      target: currentNode.value?.id,
-      process: currentNode.value?.id,
-      node: { "@rid": currentNode.value?.id, "@type": 'process', status: 'running' }
-    })
-  })
-  console.log('Process running')
-}
-
-const processFinished = async () => {
-  await fetch(`/events/test/message`, {
-    method: 'POST',   
-    body: JSON.stringify({
-      command: 'process_finished',
-      target: currentNode.value?.id,
-      node: { status: 'finished' }
-    })
-  })
-  console.log('Process finished')
-}
 
 
 

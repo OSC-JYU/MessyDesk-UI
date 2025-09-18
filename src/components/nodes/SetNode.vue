@@ -32,7 +32,26 @@ img {
 }
 .crunch_add:hover {
   color: #189743;
+}
 
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.image-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.image-item img {
+  max-width: 100%;
+  height: auto;
+  object-fit: cover;
 }
 </style>
 
@@ -63,7 +82,7 @@ function openCrunchers(filter) {
     <div class="header">
       <v-icon v-if ="data.status == 'running'" size="35" color="orange">mdi-run</v-icon>
       <v-icon v-else size="35" color="green">mdi-folder-outline</v-icon>
-       SET 
+       {{ data.label }}
        <span v-if="data.count">  ({{ data.count }} files)</span><span v-else>(empty)</span> </div>
     <v-icon v-if="data?.count > 0 && data.status != 'running'" @click="openCrunchers('')" title="Add cruncher" class ="crunch_add" size="65" >mdi-cookie-plus</v-icon>
     <v-container>
@@ -71,24 +90,24 @@ function openCrunchers(filter) {
 
       <v-row>
         <v-col>
-          <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">
-            <img v-for="f in data.paths" :src="f" class="w-200 shadow-1-strong rounded mb-4" draggable="false"/>
+          <div v-if="data.paths && data.paths.length > 0" class="image-grid">
+            <div v-for="(f, index) in data.paths" :key="index" class="image-item">
+              <img :src="f" class="w-200 shadow-1-strong rounded mb-2" draggable="false"/>
+            </div>
+          </div>
+
+          <div v-if="!data.paths && data.count > 0" class="pa-10">
+            <v-icon size="55" >mdi-text-box-multiple-outline</v-icon>
           </div>
         </v-col>
-
-        <div v-if="!data.paths && data.count > 0" class="pa-10">
-          <v-icon size="55" >mdi-text-box-multiple-outline</v-icon>
-        </div>
-
-        <v-col>
-          <h3>{{ data.label }}</h3>
+      </v-row>
+      <v-col>
+       
           <!-- <div style="white-space: pre;" v-if="data.description">{{ data.description }}</div> -->
           <pre v-if="data.description">{{ data.description }}</pre>
-          <div v-else>{{ data.count }}</div>
+        
           
         </v-col>
-      </v-row>
-
     </v-container>
 
 
