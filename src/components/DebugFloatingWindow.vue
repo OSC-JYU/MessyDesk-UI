@@ -240,7 +240,7 @@ const emit = defineEmits([
 // Reactive state
 const isVisible = ref(true)
 const showDebugInfo = ref(false)
-const windowPosition = ref({ x: 20, y: 20 })
+const windowPosition = ref({ x: 20, y: 70 })
 const isDragging = ref(false)
 const dragStart = ref({ x: 0, y: 0 })
 

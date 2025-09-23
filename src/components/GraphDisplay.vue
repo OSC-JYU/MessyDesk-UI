@@ -199,6 +199,10 @@
                             <JSONNode :data="data" />
                         </template>
 
+                        <template #node-json="{ data }">
+                            <JSONNode :data="data" />
+                        </template>
+
                         <template #node-set="{ data }">
                             <SetNode :data="data" />
                         </template>

@@ -228,12 +228,15 @@
 		process.params = task.values
 		process.params.task = task_id
 	    if(task.info) process.info = task.info
+
         if(service.external_tasks) {
             console.log('external tasks')
             process.name = task.name
             process.description = task.description
             process.system_params = task.system_params
         }
+        if(task.output_type) process.system_params.output_type = task.output_type
+        if(task.json_schema) process.system_params.json_schema = task.json_schema
 
 		if(task.info) {
 			console.log('INFO LÖYTYI')

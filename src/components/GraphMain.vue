@@ -48,6 +48,7 @@
     import PDFDisplay from './displays/PDFDisplay.vue'
     import HumanJSONDisplay from './displays/HumanJSONDisplay.vue'
     import TextRawDisplay from './displays/TextRawDisplay.vue'
+    import JSONDisplay from './displays/JSONDisplay.vue'
 
     import CookieIcon from '@/assets/images/cookie-bite-solid_blue.svg';
 
@@ -151,6 +152,7 @@
                     <HOCRDisplay v-if="store.file && store.file.extension=='hocr'" @change-tab="changeTab" :tab="state.tab"/>
                     <NER_Display v-if="store.file && store.file.type=='ner.json'" @change-tab="changeTab"  :tab="state.tab"/>
                     <TextRawDisplay v-if="store.file && store.file.type=='dspace7.json'" @change-tab="changeTab"  :tab="state.tab"/>
+                    <JSONDisplay v-if="store.file && store.file.type=='json'" @change-tab="changeTab"  :tab="state.tab"/>
                   </v-col>
 
                 </v-row>

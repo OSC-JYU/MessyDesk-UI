@@ -35,6 +35,7 @@ img {
 <script setup>
 import { Handle, Position, useNode } from '@vue-flow/core'
 import { useRouter, useRoute } from 'vue-router'
+import CookieIcon from '@/assets/images/cookie-bite-solid_blue.svg';
 import {store} from "../Store.js";
 
 const router = useRouter();
@@ -62,6 +63,7 @@ function openCrunchers(id) {
       <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" :src="CookieIcon"  />
     </div>
    
+    <div class="m-2"><pre>{{ data.info }} </pre></div>
     <div class="m-2"><pre>{{ data.description }} </pre></div>
     <Handle id="a" type="target" :position="Position.Left" />
     <Handle id="b" type="source" :position="Position.Right" /> 
