@@ -164,7 +164,7 @@
           
     </v-app-bar>
 
-    <v-alert
+    <!-- <v-alert
       v-model="pdfAlertVisible"
       type="warning"
       dismissible
@@ -172,7 +172,7 @@
       style="position: absolute; left: 50%; top: 10px; transform: translateX(-50%); z-index: 9999; min-width: 320px; max-width: 90vw;"
     >
       PDF processing is down currently.
-    </v-alert>
+    </v-alert> -->
 
     <!-- Sidebar -->
     <v-navigation-drawer

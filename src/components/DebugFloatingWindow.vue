@@ -196,7 +196,31 @@
                 <strong>Timestamp:</strong> {{ currentTimestamp }}
               </div>
             </div>
+            <v-btn
+              href="http://localhost:4646/ui/jobs"
+              target="_blank"
+              color="info"
+              variant="outlined"
+              size="small"
+              block
+              class="mb-2"
+            >
+              <v-icon start icon="mdi-open-in-new" size="small"></v-icon>
+              Nomad UI
+            </v-btn>
+            <v-btn
+              href="http://localhost:2480"
+              target="_blank" 
+              color="info"
+              variant="outlined"
+              size="small"
+              block
+            >
+              <v-icon start icon="mdi-open-in-new" size="small"></v-icon>
+              ArcadeDB
+            </v-btn>
           </div>
+
         </v-expand-transition>
       </div>
     </v-card-text>

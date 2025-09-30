@@ -8,7 +8,7 @@
     <v-container>
         <template v-if="store.current_node" class="overflow-y-auto graph-display mt-4">
             <div>
-                <div v-if="state.service_count === 0" class="alert alert-warning">No crunchers found</div>
+                <div v-if="state.service_count === 0" class="alert alert-warning">No crunchers found. </div>
 
                 <v-expansion-panels v-model="openPanel" @update:model-value="onPanelChange">
                     <v-expansion-panel v-for="service in services.result.for_format" :key="service.id">
@@ -157,6 +157,7 @@
 
     async function loadData(rid) {
         services.result = await web.getServicesForFile(store.current_node.id, store.cruncher_filter)
+
         for(var service of services.result.for_format) {
             if(service.id === 'thumbnailer') continue
             state.service_count += 1

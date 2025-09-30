@@ -239,6 +239,14 @@
                             <OCRNode :data="data" />
                         </template>
 
+                        <template #node-csv="{ data }">
+                            <TextNode :data="data" />
+                        </template>
+
+                        <template #node-html="{ data }">
+                            <HTMLNode :data="data" />
+                        </template>
+
                         <template #node-empty="{ data }">
                             <EmptyNode :data="data" />
                         </template>
@@ -250,14 +258,26 @@
                         <Background />
 
                         </VueFlow>  
-                        <!-- center view-->
-                        <v-icon  style="position: absolute; bottom: 10px; right: 30px;" @click="flow.fitView({duration: 1000, padding: padding})" title="reset view"  size="25" >mdi-fullscreen</v-icon>
 
-                        <template v-if="props && props.mode == 'graph'">
-                            <v-icon  style="position: absolute; bottom: 10px; right: 30px;" @click="flow.fitView({duration: 1000, padding: padding})" title="reset view"  size="25" >mdi-fullscreen</v-icon>
-                            <!-- <v-icon  style="position: absolute; bottom: 10px; right: 90px;" @click="layoutGraph('LR')" title="original files only"  size="25" >mdi-arrow-right-box</v-icon>
-                            <v-icon  style="position: absolute; bottom: 10px; right: 60px;" @click="layoutGraph('TB')" title="order to top down"  size="25" >mdi-arrow-down-box</v-icon> -->
-                        </template>
+                        <!-- View controls-->
+                         <v-sheet style="position: absolute; bottom: 0px; right: 10px;" > 
+                 
+                            <v-chip @click="isolateNode()" class="ml-2" size="x-small" :color="state.isolate_view ? 'red' : 'green'" variant="flat" ><v-icon :icon="state.isolate_view ? 'mdi-eye-off' : 'mdi-eye'"></v-icon>
+                                {{ state.isolate_view ? 'show all': 'isolate' }}
+                            </v-chip>
+
+                            <v-chip @click="toggleProcesses()" class="ml-2" size="x-small" :color="state.compact_view ? 'red' : 'green'"  variant="outlined"><v-icon :icon="state.compact_view ? 'mdi-eye-off' : 'mdi-eye'"></v-icon>
+                                {{ state.compact_view ? 'show processes' : 'hide processes'  }}
+                            </v-chip>
+
+
+
+                            <v-icon   @click="flow.fitView({duration: 1000, padding: padding})" class="mr-2 ml-4" title="reset view"  size="25" >mdi-fullscreen</v-icon>  
+
+                         </v-sheet>
+
+          
+    
                 </div>
 			</div>
 
@@ -280,7 +300,7 @@
 
     import { Position, VueFlow, defaultNodeTypes, useVueFlow } from '@vue-flow/core'
     import { Background } from '@vue-flow/background'
-    const { updateNode } = useVueFlow()
+    const { updateNode, updateNodeData, findNode } = useVueFlow()
 
     //const { getNode, onNodeClick, onNodeDoubleClick, onNodeDragStop} = useVueFlow()
     const flow = useVueFlow({
@@ -303,6 +323,7 @@
     import SourceNode from './nodes/SourceNode.vue'
     import ZIPNode from './nodes/ZIPNode.vue'
     import OCRNode from './nodes/OCRNode.vue'
+    import HTMLNode from './nodes/HTMLNode.vue'
     import EmptyNode from './nodes/EmptyNode.vue'
     import ErrorNode from './nodes/ErrorNode.vue'
 
@@ -340,7 +361,9 @@
         node_updated: 0,
         process_update: false,
         message: '',
-        action: ''
+        action: '',
+        compact_view: false,
+        isolate_view: false
     })
 
     var current_node = reactive({})
@@ -717,20 +740,110 @@
        
     }
 
-    async function getRootNodes() {
-        store.root_nodes = []
+
+    async function isolateNode() {
+        if(!store.current_node) return
+        state.isolate_view = !state.isolate_view
+        if(state.isolate_view) {
+            flow.fitView({nodes: [store.current_node.id], duration: 1000, padding: 5})
+            hideOthers(store.current_node.id)
+        } else {
+            showOthers()
+            flow.fitView({duration: 1000})
+        }
+    }
+
+    function getParents(node) {
+        let parents = flow.getIncomers(node)
+        let allParents = [...parents]
+        
+        for (let parent of parents) {
+            const grandparents = getParents(parent)
+            allParents = [...allParents, ...grandparents]
+        }
+        
+        return allParents
+    }
+
+    function getChildren(node) {
+        let children = flow.getOutgoers(node)
+        let allChildren = [...children]
+        for(let child of children) {
+            const grandchildren = getChildren(child)
+            allChildren = [...allChildren, ...grandchildren]
+        }
+        return allChildren
+    }
+
+    async function hideOthers(id) {
+        const current_node = findNode(id)
+        // we need to get parent recursively
+        var parents = getParents(current_node)
+        console.log('parents', parents)
+        //var children = getChildren(current_node)
+        for(var parent of parents) {
+            //parent.hidden = !parent.hidden
+            updateNodeData(parent.id, {label: 'Parent'})
+        }
+
+        var children = getChildren(current_node)
+        console.log('children', children)
+        for(var child of children) {
+            //child.hidden = !child.hidden
+            updateNodeData(child.id, {label: 'Child'})
+        }
+        var paths = [...parents, ...children]
+        var isolated = paths.map(path => path.id)
+        console.log('paths', paths)
+        for(var path of paths) {
+            updateNodeData(path.id, {isolated: true})
+        }
+
         for(var node of elements.nodes) {
-            const parent = flow.getIncomers(node)
-            if(parent.length == 1) {
-                
-            } else {
-                store.root_nodes.push(node)
-               // var outs = flow.getOutgoers(node)
-               // for(var out of outs) {
-                //    updateNode(out.id, {hidden: true})
-               // }
-                //node.data.hidden = true
-                //updateNode(node.id, {hidden: true})
+         
+            if(node.id != id && !isolated.includes(node.id)) {
+                updateNode(node.id, {hidden: true})
+            }
+        }  
+    }
+
+    async function showOthers() {
+        for(var node of elements.nodes) {
+            updateNode(node.id, {hidden: false})
+        }
+    }
+
+    async function toggleProcesses() {
+        if(state.compact_view) {
+            state.compact_view = false
+            showProcesses()
+            drawGraph()
+        } else {
+            hideProcesses()
+        }
+    }
+
+    async function hideProcesses() {
+        for(var node of elements.nodes) {
+            if(node.type == 'process') {
+                const parent = flow.getIncomers(node)
+                const children = flow.getOutgoers(node)
+                // we need to connect parent to all children with new edge
+                for(var child of children) {
+                    elements.edges.push({id:Math.random() + 'edge', source: parent[0].id, target: child.id})
+                }
+                //elements.edges.push({id:Math.random() + 'edge', source: parent[0].id, target: node.id})
+                updateNode(node.id, {hidden: true})
+            }
+        }
+        state.compact_view = true
+        layoutGraph('LR')
+    }
+
+    async function showProcesses() {
+        for(var node of elements.nodes) {
+            if(node.type == 'process') {
+                updateNode(node.id, {hidden: false})
             }
         }
     }

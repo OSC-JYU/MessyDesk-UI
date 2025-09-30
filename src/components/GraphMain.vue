@@ -153,6 +153,7 @@
                     <NER_Display v-if="store.file && store.file.type=='ner.json'" @change-tab="changeTab"  :tab="state.tab"/>
                     <TextRawDisplay v-if="store.file && store.file.type=='dspace7.json'" @change-tab="changeTab"  :tab="state.tab"/>
                     <JSONDisplay v-if="store.file && store.file.type=='json'" @change-tab="changeTab"  :tab="state.tab"/>
+                    <TextDisplay v-if="store.file && store.file.type=='csv'" @change-tab="changeTab"  :tab="state.tab"/>
                   </v-col>
 
                 </v-row>
