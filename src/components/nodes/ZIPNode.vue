@@ -68,18 +68,16 @@ function openCrunchers(filter) {
 
 <template>
   <div class="node-body nodrag">
-    <div class="header"><v-icon size="35" color="orange">mdi-folder-outline</v-icon> ZIP </div>
+    <div class="header"><v-icon size="35" color="orange">mdi-folder-zip-outline</v-icon> ZIP </div>
     <v-icon @click="openCrunchers('')" title="Add cruncher" class ="crunch_add" size="65" >mdi-cookie-plus</v-icon>
     <v-container style="min-height: 160px; padding: 10px; overflow: hidden; position: relative;">
 
 
       <v-row>
-        <v-col>
-          <v-icon size="65">mdi-folder-zip-outline</v-icon>
-        </v-col>
+
 
         <v-col>
-          <h3>{{ data.label }}</h3>
+          <h4>{{ data.label }}</h4>
           <!-- <div style="white-space: pre;" v-if="data.description">{{ data.description }}</div> -->
           <pre v-if="data.description">{{ data.description }}</pre>
           

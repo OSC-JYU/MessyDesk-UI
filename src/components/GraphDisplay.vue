@@ -693,6 +693,7 @@
                     position: { x: Math.random() * flow.dimensions.value.width, y: Math.random() * flow.dimensions.value.height },
                 }
                 elements.nodes.push(setNode)
+                console.log('setNode', setNode)
                 elements.edges.push({id:Math.random() + 'edge', source: id, target: wsdata.output['@rid']})
             }
 
@@ -720,6 +721,7 @@
         if(target_node && node) {
             if(node.image)  target_node.data.image = node.image
             if(node.status)  target_node.data.status = node.status
+            if(node.status)  console.log('status', node.status)
             if(node.label)  target_node.data.label = node.label
             if(node.description)  target_node.data.description = node.description
             if(node.info)  target_node.data.info = node.info
@@ -779,28 +781,15 @@
         const current_node = findNode(id)
         // we need to get parent recursively
         var parents = getParents(current_node)
-        console.log('parents', parents)
-        //var children = getChildren(current_node)
-        for(var parent of parents) {
-            //parent.hidden = !parent.hidden
-            updateNodeData(parent.id, {label: 'Parent'})
-        }
-
         var children = getChildren(current_node)
-        console.log('children', children)
-        for(var child of children) {
-            //child.hidden = !child.hidden
-            updateNodeData(child.id, {label: 'Child'})
-        }
+
         var paths = [...parents, ...children]
         var isolated = paths.map(path => path.id)
-        console.log('paths', paths)
         for(var path of paths) {
             updateNodeData(path.id, {isolated: true})
         }
 
         for(var node of elements.nodes) {
-         
             if(node.id != id && !isolated.includes(node.id)) {
                 updateNode(node.id, {hidden: true})
             }
@@ -928,6 +917,9 @@
             
             if(node.data.service) 
                 flownode.data.service = node.data.service
+
+            if(node.data.model) 
+                flownode.data.model = node.data.model
 
             if(node.data.metadata)
                 flownode.data.metadata = node.data.metadata

@@ -31,19 +31,95 @@
                                         </a>
                                     </div>
                                     <span class="text-caption text-medium-emphasis">{{ service.description }}</span>
-                                    <div v-if="state.current_queue">
+                                    <!-- <div v-if="state.current_queue">
                                             queue: {{ state.current_queue[service.id].num_pending}}
                                             batch: {{ state.current_queue[service.id + '_batch'].num_pending}}
                                        
-                                    </div>
+                                    </div> -->
                                 </div>
                             </v-expansion-panel-title>
                             <v-expansion-panel-text>
                                 <div v-if="service.location === 'external'">
-                                    <v-alert type="danger" variant="tonal">
-                                        <v-icon start icon="mdi-alert-circle" class="mr-2"></v-icon>
-                                        This cruncher is external and requires an API key. <br><b>Your data WILL BE SENT to the external service!</b> 
+                                    <v-alert type="error" variant="tonal">
+                                        
+                                        This cruncher is <b>external</b> and requires an API key. <br><b>Your data WILL BE SENT to the external service!</b> 
                                     </v-alert>
+                                </div>
+                                
+                                <!-- Model Selection for services with models -->
+                                <div v-if="service.models && Object.keys(service.models).length > 0" class="mb-4">
+                                    <div class="text-h6 mb-3 d-flex align-center">
+                                        <v-icon icon="mdi-brain" class="mr-2"></v-icon>
+                                        Model Selection
+                                    </div>
+                                    
+                                    <!-- Single model case -->
+                                    <div v-if="Object.keys(service.models).length === 1">
+                                        <v-card variant="outlined" class="pa-3">
+                                            <div class="d-flex align-center mb-2">
+                                                <strong>{{ Object.values(service.models)[0].name }}</strong>
+                                                <v-chip size="small" variant="tonal" class="ml-2">
+                                                    {{ Object.values(service.models)[0].output }}
+                                                </v-chip>
+                                            </div>
+                                            <div v-if="Object.values(service.models)[0].description" class="text-body-2 text-medium-emphasis mb-1">
+                                                {{ Object.values(service.models)[0].description }}
+                                            </div>
+                                            <div class="text-caption text-medium-emphasis">
+                                                Supported input types: {{ Object.values(service.models)[0].supported_types?.join(', ') || 'all' }}
+                                            </div>
+                                        </v-card>
+                                    </div>
+                                    
+                                    <!-- Multiple models case - show selection or selected model -->
+                                    <div v-else>
+                                        <!-- Show selected model as chip with option to change -->
+                                        <div v-if="state.selected_model" class="d-flex align-center">
+                                            <v-chip 
+                                                :color="service.models[state.selected_model]?.output === 'text' ? 'blue' : 'green'"
+                                                variant="tonal"
+                                                size="large"
+                                                class="mr-2">
+                                                <v-icon start icon="mdi-brain"></v-icon>
+                                                {{ service.models[state.selected_model].name }}
+                                            </v-chip>
+                                            <v-btn 
+                                                size="small" 
+                                                variant="text" 
+                                                @click="state.selected_model = null"
+                                                class="text-caption">
+                                                Change
+                                            </v-btn>
+                                        </div>
+                                        
+                                        <!-- Show model selection options -->
+                                        <div v-else>
+                                            <v-radio-group v-model="state.selected_model" @update:model-value="onModelSelect(service)">
+                                                <v-radio 
+                                                    v-for="(model, modelId) in service.models" 
+                                                    :key="modelId"
+                                                    :value="modelId"
+                                                    class="mb-3">
+                                                    <template v-slot:label>
+                                                        <div class="d-flex flex-column">
+                                                            <div class="d-flex align-center mb-1">
+                                                                <strong>{{ model.name }}</strong>
+                                                                <v-chip size="small" variant="tonal" class="ml-2">
+                                                                    {{ model.output }}
+                                                                </v-chip>
+                                                            </div>
+                                                            <div v-if="model.description" class="text-body-2 text-medium-emphasis mb-1">
+                                                                {{ model.description }}
+                                                            </div>
+                                                            <div class="text-caption text-medium-emphasis">
+                                                                Supported input types: {{ model.supported_types?.join(', ') || 'all' }}
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                </v-radio>
+                                            </v-radio-group>
+                                        </div>
+                                    </div>
                                 </div>
                                 
                                 <!-- DSpace Query Form for DSpace services -->
@@ -54,13 +130,27 @@
                                         @query-executed="handleDspaceQuery"
                                     />
                                 </div> -->
-                                <v-expansion-panels>
-                                    <v-expansion-panel v-for="(task, task_key) of service.tasks" :key="task_key">
+                                <!-- Show tasks only if no models or model is selected -->
+                                <div v-if="!service.models || Object.keys(service.models).length === 0 || state.selected_model || (service.models && Object.keys(service.models).length === 1)">
+                                    <v-expansion-panels>
+                                        <v-expansion-panel v-for="(task, task_key) of service.tasks" :key="task_key">
                                         <v-expansion-panel-title>
                                             <div class="font-weight-bold">{{ task.name }}</div>
                                             <span class="text-caption ml-2">{{ task.description }}</span>
                                         </v-expansion-panel-title>
                                         <v-expansion-panel-text>
+                                            <!-- Show selected model info -->
+                                            <div v-if="service.models && state.selected_model" class="mb-3">
+                                                <div class="text-body-2 d-flex align-center pa-2" style="background-color: rgba(var(--v-theme-primary), 0.1); border-radius: 4px;">
+                                                    <v-icon icon="mdi-brain" class="mr-2" size="small"></v-icon>
+                                                    <strong>Selected Model:</strong>
+                                                    <span class="ml-2">{{ service.models[state.selected_model].name }}</span>
+                                                    <v-chip size="small" variant="tonal" class="ml-2">
+                                                        {{ service.models[state.selected_model].output }}
+                                                    </v-chip>
+                                                </div>
+                                            </div>
+                                            
                                             <div>
                                                 <!-- task specific settings -->
                                                 <div v-if="task.content" class="mt-4 mb-4">
@@ -103,6 +193,7 @@
                                             </div>
 
                                             <div class="d-flex flex-row-reverse mb-6">
+                                                
                                                 <v-btn
                                                     class="text-none ms-4 text-white"
                                                     color="blue-darken-4"
@@ -121,6 +212,15 @@
                                         </v-expansion-panel-text>
                                     </v-expansion-panel>
                                 </v-expansion-panels>
+                                </div>
+                                
+                                <!-- Show message when model selection is required -->
+                                <div v-else-if="service.models && Object.keys(service.models).length > 1 && !state.selected_model" class="mt-4">
+                                    <div class="text-body-2 text-medium-emphasis d-flex align-center">
+                                        <v-icon icon="mdi-information" class="mr-2" size="small"></v-icon>
+                                        Please select a model above to see available tasks.
+                                    </div>
+                                </div>
                             </v-expansion-panel-text>
                         </template>
                     </v-expansion-panel>
@@ -152,7 +252,10 @@
 		user_info: '',
 		error: '',
         service_count: 0,
-        current_queue: null
+        current_queue: null,
+        selected_service: null,
+        selected_model: null,
+        show_model_selection: false
 	})
 
     async function loadData(rid) {
@@ -187,9 +290,26 @@
 
     async function onPanelChange(value) {
         state.current_queue = null
+        state.selected_service = null
+        state.selected_model = null
+        state.show_model_selection = false
+        
         if (value !== null && value !== undefined) {
             const openedService = services.result.for_format[value]
             console.log('Panel opened:', openedService.name, openedService.id)
+            
+            state.selected_service = openedService
+            
+            // If service has models, handle model selection
+            if (openedService.models && Object.keys(openedService.models).length > 0) {
+                if (Object.keys(openedService.models).length === 1) {
+                    // Single model - auto-select it
+                    state.selected_model = Object.keys(openedService.models)[0]
+                } else {
+                    // Multiple models - show selection
+                    state.show_model_selection = true
+                }
+            }
 
             var queue = await web.getQueue(openedService.id)
             state.current_queue = queue
@@ -198,6 +318,11 @@
             // For example:
             // loadServiceDetails(openedService.id)
         }
+    }
+    
+    function onModelSelect(service) {
+        console.log('Model selected:', state.selected_model, 'for service:', service.id)
+        // Model selection is handled, tasks can now be shown
     }
 
     function getQueue(node) {
@@ -225,34 +350,39 @@
 
 		state.error = ''
 
-		var process = {id: service.id, task: task_id}
-		process.params = task.values
-		process.params.task = task_id
-	    if(task.info) process.info = task.info
+		var task_object = {service: service.id, id: task_id}
+		task_object.params = task.values
+		//process.params.task = task_id
+	    if(task.info) task_object.info = task.info
+
+        // Add model information if service has models
+        if (service.models && state.selected_model) {
+            task_object.model = state.selected_model  // details of model are added in backend
+        }
 
         if(service.external_tasks) {
             console.log('external tasks')
-            process.name = task.name
-            process.description = task.description
-            process.system_params = task.system_params
+            task_object.name = task.name
+            task_object.description = task.description
+            task_object.system_params = task.system_params
         }
-        if(task.output_type) process.system_params.output_type = task.output_type
-        if(task.json_schema) process.system_params.json_schema = task.json_schema
+        if(task.output_type) task_object.system_params.output_type = task.output_type
+        if(task.json_schema) task_object.system_params.json_schema = task.json_schema
 
 		if(task.info) {
 			console.log('INFO LÖYTYI')
-			process.info = createUserInfo(task.info, task.values)
+			task_object.info = createUserInfo(task.info, task.values)
 		}
-		console.log(process)
+		console.log(task_object)
         
         if(store.current_node.data.type == 'source') {
-            var res = await web.createSourceProcess(process, store.current().id)
+            var res = await web.createSourceProcess(task_object, store.current().id)
         } else if(store.current_node.data.type == 'set') {
-            var res = await web.createSetProcess(process, store.current().id)
+            var res = await web.createSetProcess(task_object, store.current().id)
         } else  if (store.cruncher_filter == 'ROI') {
-            var res = await web.createROIProcess(process, store.current().id)
+            var res = await web.createROIProcess(task_object, store.current().id)
         } else {
-            var res = await web.createFileProcess(process, store.current().id)
+            var res = await web.createFileProcess(task_object, store.current().id)
         }
 		// //var node = res.data.result[0]
         store.crunchers_open = false
@@ -268,8 +398,8 @@
         const service = 'md-dspace7'
         const task = 'make_query'
         const params = {query: query.solrQuery}
-        const process = {id: service, task: task, params: params}
-        await web.createSourceProcess(process, store.current().id)
+        const task_object = {service: service, id: task, params: params}
+        await web.createSourceProcess(task_object, store.current().id)
     }
 
 

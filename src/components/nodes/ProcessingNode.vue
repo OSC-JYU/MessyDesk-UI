@@ -49,18 +49,24 @@ const props = defineProps({
   
   <v-row align="center">
     <v-col cols="auto">
+
       <img v-if="data.image" :src="data.image" />  
       <img v-else-if="!data.error && data.status != 'running'" :src="CookieIconWhite"/>
       <img v-if="data.status == 'running'" :src="WaitIcon" /> 
+ 
     </v-col>
     <v-col v-if="data.status != 'running'">
       <p  v-if="data.info && !data.error">
         <i>{{ data.info }}</i>
         
+        
       </p>
       <i>{{ data.duration }}</i>
-      <v-chip class="mb-2" v-if="data.service" color="orange" variant="flat">
+      <v-chip class="mb-2" v-if="data.service" color="blue" variant="flat">
       {{ data.service }} 
+    </v-chip>
+    <v-chip v-if="data.model" class="mb-2" color="orange" variant="flat">
+       {{ data.model }}
     </v-chip>
     </v-col>
   </v-row>

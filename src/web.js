@@ -342,7 +342,7 @@ web.getMyGraph = async function(rel_types=[], node_types=[],q_return='') {
 
 web.createFileProcess = async function(process, file_rid) {
 
-	const url = `/api/queue/${process.id}/files/${file_rid.replace('#', '')}`
+	const url = `/api/queue/${process.service}/files/${file_rid.replace('#', '')}`
 	console.log(url)
 	var result = await axios.post(url, process)
 	return result
@@ -350,7 +350,7 @@ web.createFileProcess = async function(process, file_rid) {
 
 web.createROIProcess = async function(process, file_rid) {
 
-	const url = `/api/queue/${process.id}/files/${file_rid.replace('#', '')}/roi`
+	const url = `/api/queue/${process.service}/files/${file_rid.replace('#', '')}/roi`
 	console.log(url)
 	var result = await axios.post(url, process)
 	return result
@@ -358,14 +358,14 @@ web.createROIProcess = async function(process, file_rid) {
 
 web.createSetProcess = async function(process, set_rid) {
 
-	const url = `/api/queue/${process.id}/sets/${set_rid.replace('#', '')}`
+	const url = `/api/queue/${process.service}/sets/${set_rid.replace('#', '')}`
 	var result = await axios.post(url, process)
 	return result
 }
 
 web.createSourceProcess = async function(process, set_rid) {
 
-	const url = `/api/queue/${process.id}/sources/${set_rid.replace('#', '')}`
+	const url = `/api/queue/${process.service}/sources/${set_rid.replace('#', '')}`
 	var result = await axios.post(url, process)
 	return result
 }

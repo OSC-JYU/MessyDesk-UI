@@ -198,11 +198,11 @@
         </div>
              
         <!-- DESCRIPTION -->
-        <div v-if="empty(store.current_node.data.description)" @click="editDescription()" class="nodecard-placeholder">add description</div>
+        <div v-if="empty(store.current_node.data.description)" @click="editDescription() " class="nodecard-placeholder">add description</div>
         
-        <div v-if="state.edit_description_open == false" @click="editDescription()" class="nodecard-description">{{ store.current_node.data.description}}</div>
+        <div v-else-if="state.edit_description_open == false" @click="editDescription()" class="nodecard-description">{{ store.current_node.data.description}}</div>
         
-        <v-card v-else class="pa-4" elevation="1"> 
+        <v-card v-if="state.edit_description_open == true" class="pa-4" elevation="1"> 
             <v-textarea 
                 label="Description"
                 v-model="state.edit_description"

@@ -53,8 +53,11 @@ const props = defineProps({
       </p>
       
       <i>{{ data.duration }}</i>
-      <v-chip class="mb-2" v-if="data.service" color="orange" variant="flat">
+      <v-chip class="mb-2" v-if="data.service" color="blue" variant="flat">
       {{ data.service }} 
+    </v-chip>
+    <v-chip v-if="data.model" class="mb-2" color="orange" variant="flat">
+       {{ data.model }}
     </v-chip>
     </v-col>
   </v-row>
