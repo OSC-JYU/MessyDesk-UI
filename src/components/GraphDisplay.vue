@@ -73,26 +73,23 @@
 
 <DebugFloatingWindow/>
 
-<v-banner v-if="state.process_update"
-   
-      lines="one"
+
+ 
+<template v-for="(process, key) in state.running_processes" :key="key" >
+    <v-banner v-if="process.status == 'running' || process.status == 'cancelling'"
+        lines="one"
+        color="green"
+        icon="mdi-run"
     >
-
-      <template v-slot:text>
-        <v-icon
-      color="white"
-      icon="mdi-run"
-      size="large"
-    ></v-icon>
-        {{ state.message }}
-      </template>
-
-      <template v-slot:actions>
-        <v-btn color="white">
-          {{ state.action }}
+        <template v-slot:text>
+            [{{ key }}] {{ process.message }}
+        </template>
+        <v-btn v-if="process.status == 'running'" color="white" @click="cancelProcess(key)">
+            Cancel 
         </v-btn>
-      </template>
+
     </v-banner>
+</template>
 
 
 
@@ -363,7 +360,8 @@
         message: '',
         action: '',
         compact_view: false,
-        isolate_view: false
+        isolate_view: false,
+        running_processes: {}
     })
 
     var current_node = reactive({})
@@ -406,7 +404,7 @@
             //console.log('Event ID:', event.lastEventId);
           
             try {
-                console.log('Received SSE message:', event.data);
+                
                 var wsdata = JSON.parse(event.data);
                 console.log('wsdata', wsdata)
                 if(wsdata.command == 'add') {
@@ -624,27 +622,42 @@
 
 
     function updateProcess(wsdata) {
-        if(wsdata.process) updateNodeKey(wsdata.process['@rid'], wsdata.process)
-        if(wsdata.set) updateNodeKey(wsdata.set['@rid'], wsdata.set)
+        if(!state.running_processes[wsdata.process['@rid']]) {
+            state.running_processes[wsdata.process['@rid']] = {message: label + ' Working...', status: 'running'}
+        }
+
+
 
         var label = ''
-        var node = elements.nodes.find(x => x.id == wsdata.target)
+        var node = elements.nodes.find(x => x.id == wsdata.process['@rid'])
         if(node && node.data.label) {
             label = node.data.label
         }
         if(wsdata.command == 'process_finished') {
-            state.message = 'Process finished with ' + label
-            state.process_update = false
+            //state.message = 'Process finished with ' + label
+            //state.process_update = false
+            if(state.running_processes[wsdata.process['@rid']]) {
+                state.running_processes[wsdata.process['@rid']].status = 'finished'
+            }
+            if(wsdata.process) updateNodeKey(wsdata.process['@rid'], wsdata.process)
+            if(wsdata.set) updateNodeKey(wsdata.set['@rid'], wsdata.set)
             return
         } 
         
         if(wsdata.command == 'process_update') {
-            if(wsdata.total_files && wsdata.current_file) {
-                state.message = 'Working with file ' + wsdata.current_file + '/' + wsdata.total_files + ' with "' + label + '"'
-            } else {
-                state.message = 'Working with ' + label            
+            if(!state.running_processes[wsdata.process['@rid']]) {
+                state.running_processes[wsdata.process['@rid']] = {message: label + ' Working...', status: 'running'}
             }
-            state.process_update = true
+            // we may receive update after process is cancelled and we do not want to update the message
+            if(state.running_processes[wsdata.process['@rid']].status != 'finished') {
+                if(wsdata.total_files && wsdata.current_file) {
+                    state.running_processes[wsdata.process['@rid']].message = 'Working with file ' + wsdata.current_file + '/' + wsdata.total_files + ' with "' + label + '"'
+                } else {
+                    state.running_processes[wsdata.process['@rid']].message = 'Working with ' + label            
+                }
+                if(wsdata.set) updateNodeKey(wsdata.set['@rid'], wsdata.set)
+            }
+            
         }
 
     }
@@ -662,7 +675,11 @@
             const id = wsdata.node['@rid'] || wsdata.node.rid || wsdata.node.id
             const nodetype = wsdata.type
             if(nodetype == 'process') {
-                wsdata.node.status = "running"  // Process node status is 'running' by default
+                if(wsdata.output) {
+                    wsdata.node.status = "waiting" // if output is set, then process is waiting for set to be finished
+                } else {
+                    wsdata.node.status = "running"
+                }
             }
             wsdata.node.type = wsdata.node['@type'].toLowerCase() // "File" -> "file"
             wsdata.node.image = wsdata.image
@@ -698,16 +715,13 @@
             }
 
             layoutGraph('LR')
-            if(nodetype == 'process') {
-                state.process_update = true
-                state.message = 'Process created'
+            // add banner if this is batch process (set process)
+            if(nodetype == 'process' && wsdata.output) {
+                // add process to running processes
+                state.running_processes[wsdata.node['@rid']] = {message: wsdata.node.label + ' Process created', status: 'running'}
             }
 
             if(wsdata.process) {
-                if(wsdata.process.status == 'finished') {
-                    state.process_update = false
-                    state.message = 'Process finished'
-                } 
                 updateNodeKey(wsdata.process['@rid'], wsdata.process)
             }
             
@@ -721,7 +735,6 @@
         if(target_node && node) {
             if(node.image)  target_node.data.image = node.image
             if(node.status)  target_node.data.status = node.status
-            if(node.status)  console.log('status', node.status)
             if(node.label)  target_node.data.label = node.label
             if(node.description)  target_node.data.description = node.description
             if(node.info)  target_node.data.info = node.info
@@ -744,9 +757,8 @@
 
 
     async function isolateNode() {
-        if(!store.current_node) return
         state.isolate_view = !state.isolate_view
-        if(state.isolate_view) {
+        if(state.isolate_view && store.current_node) {
             flow.fitView({nodes: [store.current_node.id], duration: 1000, padding: 5})
             hideOthers(store.current_node.id)
         } else {
@@ -857,6 +869,14 @@
         loadGraph()
 
     }
+
+
+    async function cancelProcess(process_rid) {
+        state.running_processes[process_rid].message = 'Cancelling...'
+        state.running_processes[process_rid].status = 'cancelling'
+        await web.cancelProcess(process_rid)
+    }
+
 
 	async function loadGraph() {
         console.log('loading graph')

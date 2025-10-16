@@ -370,6 +370,13 @@ web.createSourceProcess = async function(process, set_rid) {
 	return result
 }
 
+web.cancelProcess = async function(process_rid) {
+
+	const url = `/api/queue/${process_rid.service}/drain/${process_rid.replace('#', '')}`
+	var result = await axios.get(url)
+	return result
+}
+
 web.createNode = async function(data) {
 
 	var result = await axios.post(`/api/graph/vertices`, data)

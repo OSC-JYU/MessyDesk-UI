@@ -16,7 +16,7 @@
                             <v-expansion-panel-title>
                                 <div class="d-flex flex-column">
                                     <div class="d-flex align-center">
-                                        <h4 class="text-h5 font-weight-bold">{{ service.name }}</h4>
+                                        <h5 >{{ service.name }}</h5>
                                         <v-chip :color="service.access === 'proprietary' ? 'danger' : 'success'" size="small" variant="tonal" class="ml-2 chip-flat">
                                             {{ service.access === 'proprietary' ? 'proprietary' : 'open source' }}
                                         </v-chip>
@@ -137,6 +137,9 @@
                                         <v-expansion-panel-title>
                                             <div class="font-weight-bold">{{ task.name }}</div>
                                             <span class="text-caption ml-2">{{ task.description }}</span>
+                                            <v-chip size="small" variant="tonal" class="ml-2">
+                                                {{ task.output_type === 'json' ? 'JSON' : 'Text' }}
+                                            </v-chip>
                                         </v-expansion-panel-title>
                                         <v-expansion-panel-text>
                                             <!-- Show selected model info -->
@@ -208,7 +211,8 @@
 
                                             <div v-if="task.supported_formats"><b>supported formats: {{ task.supported_formats.join(', ') }}</b></div>
                                             <div v-else-if="service.supported_formats"><b>supported formats: {{ service.supported_formats.join(', ') }}</b></div>
-                                            <div v-else><b>supported formats: all</b></div>
+                                            <div v-else>supported formats: all</div>
+                                            <div v-if="task.output_type">output type: {{ task.output_type }}</div>
                                         </v-expansion-panel-text>
                                     </v-expansion-panel>
                                 </v-expansion-panels>

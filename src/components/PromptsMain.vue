@@ -570,7 +570,10 @@ em {
                  </div>
                  <div class="text-body-2">
                    When set to JSON output, the AI model will be instructed to return structured data in JSON format. 
-                   This is useful for extracting specific information or creating structured responses that can be easily parsed by other systems.
+                   This is useful for extracting specific information or creating structured responses that can be easily parsed by other systems.<br>format example:
+                   <pre class="prompt-content">{
+  "books":[{"title":"String","year":"Integer","authors":["String"]}]
+}</pre>
                    <br><b>NOTE: Not all models support JSON output.</b></br>
                  </div>
                </v-alert>
