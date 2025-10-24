@@ -189,7 +189,18 @@
                                                             <b>{{ help.name }}</b>
                                                             <div><i>{{ help.help }}</i></div>
                                                         </v-container>
-                                                        <input v-model="task.values[key]" type="text" class="form-control" placeholder="" aria-label="Username" aria-describedby="basic-addon1">
+                                                        <template v-if="help.component && help.component == 'dspace'">
+                                                            <DspaceQueryForm :dspace-url="service.dspace_url || ''" :source-rid="store.current_node.id" @query-executed="handleDspaceQuery" />
+                                                        </template>
+                                                        <template v-else-if="help.display && help.display == 'checkbox'">
+                                                            <v-checkbox v-model="task.values[key]" v-for="value in help.values" :label="value.title" :value="value.value"></v-checkbox>
+                                                        </template>
+                                                        <template v-else-if="help.display && help.display == 'dropdown'">
+                                                            <v-select v-model="task.values[key]" :items="help.values"></v-select>
+                                                        </template>
+                                                        <template v-else>   
+                                                            <input v-model="task.values[key]" type="text" class="form-control" placeholder="" aria-label="Username" aria-describedby="basic-addon1">
+                                                        </template>
                                                     </div>
                                                 </div>
                                                 <div v-else></div>
@@ -283,6 +294,16 @@
                 service.tasks[task].values = {}
                 if(service.tasks[task].params_help) {
                     for(var param in service.tasks[task].params_help) {
+                        console.log(param)
+                        // convert values object to array of object {value, title} (Vuetify dropdown format)
+                        if(service.tasks[task].params_help[param].values && typeof service.tasks[task].params_help[param].values === 'object' && !Array.isArray(service.tasks[task].params_help[param].values)) {
+                            console.log('OBJECT')
+                            const entries = Object.entries(service.tasks[task].params_help[param].values);
+                            service.tasks[task].params_help[param].values = entries.map(([key, value]) => ({value: key, title: value}));
+                            console.log(service.tasks[task].params_help[param].values)
+                        }
+                        console.log(service.tasks[task].params_help[param].values)
+                       
                         // sefault value for text input
                         service.tasks[task].values[param] = service.tasks[task].params_help[param].default
                         if(service.tasks[task].params_help[param].multi) service.tasks[task].values[param] = []

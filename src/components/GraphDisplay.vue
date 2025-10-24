@@ -200,6 +200,10 @@
                             <JSONNode :data="data" />
                         </template>
 
+                        <template #node-pos.json="{ data }">
+                            <JSONNode :data="data" />
+                        </template>
+
                         <template #node-set="{ data }">
                             <SetNode :data="data" />
                         </template>
