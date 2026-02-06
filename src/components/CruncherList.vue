@@ -8,6 +8,24 @@
     <v-container>
         <template v-if="store.current_node" class="overflow-y-auto graph-display mt-4">
             <div>
+                <v-tabs
+                    v-model="state.activeTab"
+                    color="primary"
+                    class="mb-4"
+                    align-tabs="start"
+                >
+                    <v-tab value="services">
+                        <v-icon start icon="mdi-view-module"></v-icon>
+                        By Service
+                    </v-tab>
+                    <v-tab value="tasks">
+                        <v-icon start icon="mdi-format-list-bulleted"></v-icon>
+                        By Task
+                    </v-tab>
+                </v-tabs>
+
+                <v-window v-model="state.activeTab" class="mt-2">
+                    <v-window-item value="services">
                 <div v-if="state.service_count === 0" class="alert alert-warning">No crunchers found. </div>
 
                 <v-expansion-panels v-model="openPanel" @update:model-value="onPanelChange">
@@ -122,14 +140,7 @@
                                     </div>
                                 </div>
                                 
-                                <!-- DSpace Query Form for DSpace services -->
-                                <!-- <div v-if="service.id === 'md-dspace7' ">
-                                    <DspaceQueryForm 
-                                        :dspace-url="service.dspace_url || ''"
-                                        :source-rid="store.current_node.id"
-                                        @query-executed="handleDspaceQuery"
-                                    />
-                                </div> -->
+
                                 <!-- Show tasks only if no models or model is selected -->
                                 <div v-if="!service.models || Object.keys(service.models).length === 0 || state.selected_model || (service.models && Object.keys(service.models).length === 1)">
                                     <v-expansion-panels>
@@ -240,6 +251,97 @@
                         </template>
                     </v-expansion-panel>
                 </v-expansion-panels>
+                    </v-window-item>
+
+                    <v-window-item value="tasks">
+                        <div v-if="allTasks.length === 0" class="alert alert-info">No tasks available.</div>
+                        <v-expansion-panels>
+                            <v-expansion-panel v-for="item in allTasks" :key="item.serviceId + '__' + item.taskKey">
+                                <v-expansion-panel-title>
+                                    <div class="font-weight-bold">{{ item.task.name }}</div>
+                                    <span class="text-caption ml-2">{{ item.task.description }}</span>
+                                    <v-chip size="small" variant="tonal" class="ml-2">
+                                        {{ item.task.output_type === 'json' ? 'JSON' : 'Text' }}
+                                    </v-chip>
+                                    <v-chip size="small" class="ml-2" color="primary" variant="flat">
+                                        <v-icon start icon="mdi-cog"></v-icon>
+                                        {{ item.serviceName }}
+                                    </v-chip>
+                                </v-expansion-panel-title>
+                                <v-expansion-panel-text>
+                                    <div>
+                                        <!-- task specific settings -->
+                                        <div v-if="item.task.content" class="mt-4 mb-4">
+                                            <v-alert type="info" variant="tonal">
+                                                {{ item.task.content }}
+                                            </v-alert>
+                                        </div>
+                                        <div v-if="item.task.params_help">
+                                            <div v-for="(help, key) in item.task.params_help" :key="key" class="input-group mb-3">
+                                                <v-container style="width: 100%">
+                                                    <b>{{ help.name }}</b>
+                                                    <div><i>{{ help.help }}</i></div>
+                                                </v-container>
+                                                <template v-if="help.component && help.component == 'dspace'">
+                                                    <DspaceQueryForm :dspace-url="item.service.dspace_url || ''" :source-rid="store.current_node.id" @query-executed="handleDspaceQuery" />
+                                                </template>
+                                                <template v-else-if="help.display && help.display == 'checkbox'">
+                                                    <v-checkbox v-model="item.task.values[key]" v-for="value in help.values" :label="value.title" :value="value.value"></v-checkbox>
+                                                </template>
+                                                <template v-else-if="help.display && help.display == 'dropdown'">
+                                                    <v-select v-model="item.task.values[key]" :items="help.values"></v-select>
+                                                </template>
+                                                <template v-else>
+                                                    <input v-model="item.task.values[key]" type="text" class="form-control" placeholder="" aria-label="Username" aria-describedby="basic-addon1">
+                                                </template>
+                                            </div>
+                                        </div>
+                                        <!-- common settings -->
+                                        <div v-else-if="item.service.params_help">
+                                            <div v-for="(help, key) in item.service.params_help" :key="key" class="input-group mb-3">
+                                                <v-container style="width: 100%">
+                                                    <b>{{ help.name }}</b>
+                                                    <div><i>{{ help.help }}</i></div>
+                                                </v-container>
+                                                <template v-if="help.component && help.component == 'dspace'">
+                                                    <DspaceQueryForm :dspace-url="item.service.dspace_url || ''" :source-rid="store.current_node.id" @query-executed="handleDspaceQuery" />
+                                                </template>
+                                                <template v-else-if="help.display && help.display == 'checkbox'">
+                                                    <v-checkbox v-model="item.task.values[key]" v-for="value in help.values" :label="value.title" :value="value.value"></v-checkbox>
+                                                </template>
+                                                <template v-else-if="help.display && help.display == 'dropdown'">
+                                                    <v-select v-model="item.task.values[key]" :items="help.values"></v-select>
+                                                </template>
+                                                <template v-else>
+                                                    <input v-model="item.task.values[key]" type="text" class="form-control" placeholder="" aria-label="Username" aria-describedby="basic-addon1">
+                                                </template>
+                                            </div>
+                                        </div>
+                                        <div v-else></div>
+                                    </div>
+
+                                    <div class="d-flex flex-row-reverse mb-6">
+                                        <v-btn
+                                            class="text-none ms-4 text-white"
+                                            color="blue-darken-4"
+                                            rounded="1"
+                                            variant="flat"
+                                            title="Add cruncher"
+                                            @click="createProcess(item.service, item.task, item.taskKey)">
+                                            <template v-if="store.current().data.type == 'set'">Crunch files in Set</template>
+                                            <template v-else>Crunch file</template>
+                                        </v-btn>
+                                    </div>
+
+                                    <div v-if="item.task.supported_formats"><b>supported formats: {{ item.task.supported_formats.join(', ') }}</b></div>
+                                    <div v-else-if="item.service.supported_formats"><b>supported formats: {{ item.service.supported_formats.join(', ') }}</b></div>
+                                    <div v-else>supported formats: all</div>
+                                    <div v-if="item.task.output_type">output type: {{ item.task.output_type }}</div>
+                                </v-expansion-panel-text>
+                            </v-expansion-panel>
+                        </v-expansion-panels>
+                    </v-window-item>
+                </v-window>
             </div>
         </template>
         <div v-else class="mt-10">ERROR: No node selected</div>
@@ -270,7 +372,8 @@
         current_queue: null,
         selected_service: null,
         selected_model: null,
-        show_model_selection: false
+        show_model_selection: false,
+        activeTab: 'services'
 	})
 
     async function loadData(rid) {
@@ -422,7 +525,7 @@
         console.log('DSpace query executed:', query)
         const service = 'md-dspace7'
         const task = 'make_query'
-        const params = {query: query.solrQuery}
+        const params = {query: query.solrQuery, scope: query.params.scope, sort: query.params.sort, page: query.params.page, size: query.params.size}
         const task_object = {service: service, id: task, params: params}
         await web.createSourceProcess(task_object, store.current().id)
     }
@@ -433,6 +536,19 @@
            loadData(route.query.node)
           
         }
+    })
+
+    const allTasks = computed(() => {
+        if(!services.result || !services.result.for_format) return []
+        const items = []
+        for(const service of services.result.for_format) {
+            if(service.id === 'thumbnailer') continue
+            const taskEntries = Object.entries(service.tasks || {})
+            for(const [taskKey, task] of taskEntries) {
+                items.push({ service, serviceId: service.id, serviceName: service.name, taskKey, task })
+            }
+        }
+        return items.sort((a, b) => a.task.name.localeCompare(b.task.name))
     })
 
 </script>

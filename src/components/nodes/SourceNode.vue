@@ -5,8 +5,9 @@
 }
 
 .node-body {
-  min-height: 200px;
+  height: 100px;
   min-width: 300px;
+  background-color: #e8a913;
 }
 
 img {
@@ -14,7 +15,7 @@ img {
 
 }
 .header {
-  background-color: #561a80;
+  background-color: #926909;
   color: white; 
   padding:3px;
   text-align: left !important;
@@ -59,7 +60,7 @@ function openCrunchers(filter) {
 
 <template>
   <div class="node-body nodrag">
-    <div class="header"><v-icon size="35" color="green">mdi-star-circle</v-icon> SOURCE {{ data._type }} <span v-if="data.count">  ({{ data.count }} images)</span><span v-else>(empty)</span> </div>
+    <div class="header"><v-icon size="35" color="gwhite">mdi-database</v-icon> SOURCE: {{ data._type }}  </div>
     <v-icon @click="openCrunchers('')" title="Add cruncher" class ="crunch_add" size="65" >mdi-cookie-plus</v-icon>
     <v-container>
       <h3>{{ data.label }}</h3>

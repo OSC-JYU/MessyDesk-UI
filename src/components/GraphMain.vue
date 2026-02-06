@@ -49,6 +49,10 @@
     import HumanJSONDisplay from './displays/HumanJSONDisplay.vue'
     import TextRawDisplay from './displays/TextRawDisplay.vue'
     import JSONDisplay from './displays/JSONDisplay.vue'
+    import MultiDisplay from './displays/MultiDisplay.vue'
+    import SimilarityDisplay from './displays/SimilarityDisplay.vue'
+    import LineSegmentationDisplay from './displays/LineSegmentationDisplay.vue'
+    
 
     import CookieIcon from '@/assets/images/cookie-bite-solid_blue.svg';
 
@@ -143,17 +147,19 @@
                     color="light-blue lighten-3"
                   >
                     <!-- Second column content -->
-                    <ImageDisplay v-if="store.file  && store.file.type=='image'" @change-tab="changeTab" :tab="state.tab"/>
+                    <MultiDisplay v-if="store.file  && store.file.type=='image'" @change-tab="changeTab" :tab="state.tab"/>
                     <PDFDisplay v-if="store.file  && store.file.type=='pdf'" @change-tab="changeTab" :tab="state.tab"/>
                     <HOCRDisplay v-if="store.file && store.file.extension=='hocr'" @change-tab="changeTab" :tab="state.tab"/>
                     <TextDisplay v-if="store.file && store.file.type=='csv'" @change-tab="changeTab"  :tab="state.tab"/>
-                    <TextDisplay v-if="store.file  && store.file.type=='text' && store.file.extension=='txt'" @change-tab="changeTab" :tab="state.tab"/> 
+                    <MultiDisplay v-if="store.file  && store.file.type=='text' && store.file.extension=='txt'" @change-tab="changeTab" :tab="state.tab"/> 
                     <!-- Open default JSON display if there is no more specific display -->
                     <OCRDisplay v-if="store.file  && store.file.type=='ocr.json'" @change-tab="changeTab" :tab="state.tab"/> 
+                    <LineSegmentationDisplay v-else-if="store.file && store.file.type=='polygons.json'" @change-tab="changeTab" :tab="state.tab"/>
                     <OSDDisplay v-else-if="store.file  && store.file.type=='osd.json'" @change-tab="changeTab" :tab="state.tab"/> 
                     <HumanJSONDisplay v-else-if="store.file  && store.file.type=='human.json'" @change-tab="changeTab" :tab="state.tab"/>
                     <NER_Display v-else-if="store.file && store.file.type=='ner.json'" @change-tab="changeTab"  :tab="state.tab"/>
                     <TextRawDisplay v-else-if="store.file && store.file.type=='dspace7.json'" @change-tab="changeTab"  :tab="state.tab"/>
+                    <SimilarityDisplay v-else-if="store.file && (store.file.type=='similarity.json' || (store.file.extension=='json' && store.file.label && store.file.label.includes('similarity')))" @change-tab="changeTab"  :tab="state.tab"/>
                     <JSONDisplay v-else-if="store.file && store.file.extension=='json'" @change-tab="changeTab"  :tab="state.tab"/>
 
                   </v-col>

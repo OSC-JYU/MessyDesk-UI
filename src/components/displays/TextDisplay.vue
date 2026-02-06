@@ -15,19 +15,11 @@
             <!-- Navigation Path or Expanded Image -->
             <div class="pa-2">
               <template v-if="!state.expandedImage">
-                <template v-for="node of state.nodepath">
-                  <div v-if="node['@type'] !== 'User'" class="d-flex align-center">
-                    <v-icon size="15" color="green">mdi-arrow-up</v-icon>
-                    <div :class="'node-base ' + node['@type']+' '+node.type" class="ml-1">
-                      <p>{{ node.label }}</p>
-                      <img v-if="node.type === 'image'" 
-                           :src="apiUrl + '/api/thumbnails/' + node.path" 
-                           class="node-image" 
-                           @click="toggleImageExpand(node.path)"
-                           alt="Node image" />
-                    </div>
-                  </div>
-                </template>
+                <NodePath 
+                  :nodepath="state.nodepath" 
+                  :apiUrl="apiUrl"
+                  @image-click="toggleImageExpand"
+                />
               </template>
               <template v-else>
                 <div class="expanded-image-container" 
@@ -189,6 +181,7 @@
   import web from "../../web.js";
   import {store} from "../../components/Store.js";
   import DescriptionEditor from './DescriptionEditor.vue'
+  import NodePath from '../NodePath.vue'
   const apiUrl = import.meta.env.VITE_API_PATH
 
   const textContainer = ref(null)
@@ -462,28 +455,6 @@
   object-fit: contain;
 }
 
-.node-base {
-  padding: 4px 8px;
-  margin: 2px 0;
-  border-radius: 4px;
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.node-image {
-  max-width: 100%;
-  max-height: 100px;
-  margin-top: 4px;
-  border-radius: 4px;
-  object-fit: contain;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.node-image.expanded {
-  max-height: calc(100vh - 200px);
-  width: 100%;
-  object-fit: contain;
-}
 
 .v-chip {
   margin: 2px;
@@ -514,7 +485,6 @@
   -khtml-user-drag: none;
   -moz-user-drag: none;
   -o-user-drag: none;
-  user-drag: none;
   -webkit-user-select: none;
   -khtml-user-select: none;
   -moz-user-select: none;

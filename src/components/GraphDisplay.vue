@@ -200,7 +200,15 @@
                             <JSONNode :data="data" />
                         </template>
 
+                        <template #node-similarity_results.json="{ data }">
+                            <JSONNode :data="data" />
+                        </template>
+
                         <template #node-pos.json="{ data }">
+                            <JSONNode :data="data" />
+                        </template>
+
+                        <template #node-bow.json="{ data }">
                             <JSONNode :data="data" />
                         </template>
 
@@ -213,6 +221,10 @@
                         </template>
 
                         <template #node-dspace7.json="{ data }">
+                            <JSONNode :data="data" />
+                        </template>
+
+                        <template #node-solr.json="{ data }">
                             <JSONNode :data="data" />
                         </template>
 
@@ -246,6 +258,14 @@
 
                         <template #node-html="{ data }">
                             <HTMLNode :data="data" />
+                        </template>
+
+                        <template #node-polygons.json="{ data }">
+                            <PolygonNode :data="data" />
+                        </template>
+
+                        <template #node-faiss.json="{ data }">
+                            <SearchNode :data="data" />
                         </template>
 
                         <template #node-empty="{ data }">
@@ -325,7 +345,9 @@
     import ZIPNode from './nodes/ZIPNode.vue'
     import OCRNode from './nodes/OCRNode.vue'
     import HTMLNode from './nodes/HTMLNode.vue'
+    import PolygonNode from './nodes/PolygonNode.vue'
     import EmptyNode from './nodes/EmptyNode.vue'
+    import SearchNode from './nodes/SearchNode.vue'
     import ErrorNode from './nodes/ErrorNode.vue'
 
     import SetViewNode from './nodes/SetViewNode.vue'
