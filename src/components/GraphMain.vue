@@ -40,6 +40,7 @@
     import EntitiesMain from './EntitiesMain.vue'
 
     import ImageDisplay from './displays/ImageDisplay.vue'
+    import ImageROIDisplay from './displays/ImageROIDisplay.vue'
     import OSDDisplay from './displays/OSDDisplay.vue'
     import HOCRDisplay from './displays/HOCRDisplay.vue'
     import NER_Display from './displays/NER_Display.vue'
@@ -80,6 +81,15 @@
       store.skip = skip
       state.tab = 3  // this tab is for file display
     }
+
+    watch(
+      () => store.filter_editor,
+      (newValue) => {
+        if (newValue) {
+          state.tab = 3
+        }
+      }
+    )
 
 
 </script>
@@ -147,13 +157,14 @@
                     color="light-blue lighten-3"
                   >
                     <!-- Second column content -->
-                    <MultiDisplay v-if="store.file  && store.file.type=='image'" @change-tab="changeTab" :tab="state.tab"/>
-                    <PDFDisplay v-if="store.file  && store.file.type=='pdf'" @change-tab="changeTab" :tab="state.tab"/>
+                    <ImageROIDisplay v-if="store.filter_editor" @change-tab="changeTab" :tab="state.tab"/>
+                    <MultiDisplay v-else-if="store.file  && store.file.type=='image'" @change-tab="changeTab" :tab="state.tab"/>
+                    <PDFDisplay v-else-if="store.file  && store.file.type=='pdf'" @change-tab="changeTab" :tab="state.tab"/>
                     <HOCRDisplay v-if="store.file && store.file.extension=='hocr'" @change-tab="changeTab" :tab="state.tab"/>
                     <TextDisplay v-if="store.file && store.file.type=='csv'" @change-tab="changeTab"  :tab="state.tab"/>
-                    <MultiDisplay v-if="store.file  && store.file.type=='text' && store.file.extension=='txt'" @change-tab="changeTab" :tab="state.tab"/> 
+                    <MultiDisplay v-else-if="store.file  && store.file.type=='text' && store.file.extension=='txt'" @change-tab="changeTab" :tab="state.tab"/> 
                     <!-- Open default JSON display if there is no more specific display -->
-                    <OCRDisplay v-if="store.file  && store.file.type=='ocr.json'" @change-tab="changeTab" :tab="state.tab"/> 
+                    <OCRDisplay v-else-if="store.file  && store.file.type=='ocr.json'" @change-tab="changeTab" :tab="state.tab"/> 
                     <LineSegmentationDisplay v-else-if="store.file && store.file.type=='polygons.json'" @change-tab="changeTab" :tab="state.tab"/>
                     <OSDDisplay v-else-if="store.file  && store.file.type=='osd.json'" @change-tab="changeTab" :tab="state.tab"/> 
                     <HumanJSONDisplay v-else-if="store.file  && store.file.type=='human.json'" @change-tab="changeTab" :tab="state.tab"/>

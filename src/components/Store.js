@@ -23,6 +23,7 @@ export const store = reactive({
   groups: [],
   cruncher_filter: '',
   graph_node_update: '',
+  filter_editor: null,
   process_creator_open: false,
   uploader_open: false,
   set_uploader_open: false,

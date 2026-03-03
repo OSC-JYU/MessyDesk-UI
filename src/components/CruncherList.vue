@@ -22,9 +22,13 @@
                         <v-icon start icon="mdi-format-list-bulleted"></v-icon>
                         By Task
                     </v-tab>
+                    <v-tab value="filters">
+                        <v-icon start icon="mdi-filter-variant"></v-icon>
+                        Filters
+                    </v-tab>
                 </v-tabs>
 
-                <v-window v-model="state.activeTab" class="mt-2">
+                <v-window v-model="state.activeTab" class="mt-2" :transition="false" :reverse-transition="false">
                     <v-window-item value="services">
                 <div v-if="state.service_count === 0" class="alert alert-warning">No crunchers found. </div>
 
@@ -341,6 +345,39 @@
                             </v-expansion-panel>
                         </v-expansion-panels>
                     </v-window-item>
+
+                    <v-window-item value="filters">
+                        <div v-if="filtersList.length === 0" class="alert alert-info">No filters available.</div>
+                        <v-expansion-panels v-else>
+                            <v-expansion-panel v-for="filter in filtersList" :key="filter.id">
+                                <v-expansion-panel-title>
+                                    <div class="font-weight-bold">{{ filter.name || filter.id }}</div>
+                                    <span class="text-caption ml-2">{{ filter.description }}</span>
+                                </v-expansion-panel-title>
+                                <v-expansion-panel-text>
+                                    <div class="d-flex flex-row-reverse mb-4">
+                                        <v-btn
+                                            class="text-none ms-4 text-white"
+                                            color="blue-darken-4"
+                                            rounded="1"
+                                            variant="flat"
+                                            title="Create filter"
+                                            @click="createFilter(filter)">
+                                            Create Filter
+                                        </v-btn>
+                                    </div>
+                                    <div v-if="filter.supported_types && filter.supported_types.length">
+                                        <b>supported types: {{ filter.supported_types.join(', ') }}</b>
+                                    </div>
+                                    <div v-else>supported types: all</div>
+                                    <div v-if="filter.supported_formats && filter.supported_formats.length">
+                                        <b>supported formats: {{ filter.supported_formats.join(', ') }}</b>
+                                    </div>
+                                    <div v-else>supported formats: all</div>
+                                </v-expansion-panel-text>
+                            </v-expansion-panel>
+                        </v-expansion-panels>
+                    </v-window-item>
                 </v-window>
             </div>
         </template>
@@ -520,6 +557,16 @@
 
 	}
 
+    async function createFilter(filter) {
+        state.error = ''
+        try {
+            await web.createFilter(filter.id, store.current_node.id)
+        } catch (error) {
+            state.error = error?.message || 'Failed to create filter'
+            console.error(error)
+        }
+    }
+
     // Handle DSpace query execution
     async function handleDspaceQuery(query) {
         console.log('DSpace query executed:', query)
@@ -549,6 +596,11 @@
             }
         }
         return items.sort((a, b) => a.task.name.localeCompare(b.task.name))
+    })
+
+    const filtersList = computed(() => {
+        if(!services.result || !Array.isArray(services.result.filters)) return []
+        return services.result.filters
     })
 
 </script>

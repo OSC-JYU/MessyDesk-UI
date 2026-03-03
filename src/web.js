@@ -169,6 +169,12 @@ web.getServicesForFile = async function(file_rid, filter) {
 	return result.data
 }
 
+web.createFilter = async function(filter_id, file_rid) {
+	const url = `/api/filters/${filter_id}/files/${file_rid.replace('#','')}`
+	var result = await axios.post(url)
+	return result.data
+}
+
 web.getInitData = async function(service_id) {
 	var result = await axios.get(`/api/services/${service_id}/init`)
 	return result.data
@@ -305,16 +311,6 @@ web.getDocInfo = async function(rid) {
 	var result = await axios.get(`/api/documents/${rid.replace('#','')}`)
 	console.log('docinfo')
 	console.log(result.data)
-	if(result.data && result.data.rois) {
-		var count = 0
-		for(var roi of result.data.rois) {
-			//roi.id = roi['@rid']
-			roi['index'] = count
-			roi['id'] = count
-			count++	
-		}
-		
-	}
 	return result.data
 }
 
@@ -420,6 +416,21 @@ web.getSourceInit = async function(rid) {
 web.createROIs = async function(rid, data, width, height) {
 	var postdata = {rois: data, width: width, height: height}
 	var result = await axios.post(`/api/graph/vertices/${rid.replace('#','')}/rois`, postdata)
+	return result
+}
+
+web.saveImageROIs = async function(rid, set_rid, rois) {
+	var result = await axios.post(`/api/images/${rid.replace('#','')}/sets/${set_rid.replace('#','')}/rois`, { rois })
+	return result
+}
+
+web.getImageROIs = async function(rid, set_rid) {
+	var result = await axios.get(`/api/images/${rid.replace('#','')}/sets/${set_rid.replace('#','')}/rois`)
+	return result.data
+}
+
+web.updateImageROI = async function(rid, set_rid, roi_rid, rois) {
+	var result = await axios.put(`/api/images/${rid.replace('#','')}/sets/${set_rid.replace('#','')}/rois/${roi_rid.replace('#','')}`, { rois })
 	return result
 }
 

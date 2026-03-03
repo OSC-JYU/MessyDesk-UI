@@ -212,8 +212,16 @@
                             <JSONNode :data="data" />
                         </template>
 
+                        <template #node-filter="{ data }">
+                            <FilterNode :data="data" />
+                        </template>
+
                         <template #node-set="{ data }">
                             <SetNode :data="data" />
+                        </template>
+
+                        <template #node-filter-set="{ data }">
+                            <SetFilterNode :data="data" />
                         </template>
 
                         <template #node-dspace7="{ data }">
@@ -337,6 +345,8 @@
     import PDFNode from './nodes/PDFNode.vue'
     import TextNode from './nodes/TextNode.vue'
     import SetNode from './nodes/SetNode.vue'
+    import SetFilterNode from "./nodes/SetFilterNode.vue";
+    import FilterNode from './nodes/FilterNode.vue'
     import JSONNode from './nodes/JSONNode.vue'
     import OSDNode from './nodes/OSDNode.vue'
     import HumanNode from './nodes/HumanNode.vue'
@@ -558,8 +568,23 @@
         } else if(event.node.type == "set") {
             //state.setPanel = true
             toggleSetPanel()
+        }else if(event.node.type == 'filter-set') {
+            console.log('open filter set node', event.node)
+            var parent = flow.getIncomers(event.node)
+            var source = null
+            if(parent.length == 1) {
+                
+                const granparent = flow.getIncomers(parent[0])
+                if(granparent.length == 1) {
+                    console.log('granparent', granparent)
+                   source = granparent[0].id.replace('#', '')
+                }
+            }
+            console.log('filterset source', source)
+            store.source = source
+            store.filter_editor = event.node
         } else if(event.node.data.type == "file" && event.node.data._type != "zip") {
-            console.log('open f node', event.node)
+            
             // find source file and cruncher of this file
             let cruncher, source 
             const parent = flow.getIncomers(event.node)
@@ -879,7 +904,6 @@
         page.value = 1
         state.setdata = await web.getSetFiles(store.current_node.id)
         totalPages.value =  Math.ceil(state.setdata.file_count / filesPerPage) ;
-        console.log(totalPages)
         state.setPanel = true
     }
 
