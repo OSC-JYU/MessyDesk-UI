@@ -4,7 +4,7 @@ import messages from '../lang/messages.json'
 import GraphMain from './components/GraphMain.vue'
 
 import FilesMain from './components/FilesMain.vue'
-import ProjectMain from './components/ProjectMain.vue'
+import Main from './components/Main.vue'
 import ServicesMain from './components/ServicesMain.vue'
 import PromptsMain from './components/PromptsMain.vue'
 import CrunchersMain from './components/CrunchersMain.vue'
@@ -60,7 +60,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'Home',
-      component: ProjectMain
+      component: Main
     },
 
     {
