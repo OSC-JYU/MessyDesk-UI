@@ -14,7 +14,15 @@
     <v-row no-gutters class="fill-height">
       <v-col cols="9" class="image-column">
         <v-sheet class="fill-height d-flex flex-column pa-4">
-          <div class="image-wrapper" ref="imageWrapper">
+          <div
+            class="image-wrapper"
+            ref="imageWrapper"
+            @pointerdown="onCanvasPointerDown"
+            @pointermove="onCanvasPointerMove"
+            @pointerup="onCanvasPointerUp"
+            @pointerleave="onCanvasPointerUp"
+            @dblclick.stop.prevent="onCanvasDoubleClick"
+          >
             <div v-if="loading" class="placeholder d-flex align-center justify-center">
               <v-progress-circular indeterminate color="primary"></v-progress-circular>
             </div>
@@ -34,11 +42,6 @@
                 class="roi-overlay"
                 :width="imageBounds.width"
                 :height="imageBounds.height"
-                @pointerdown="onCanvasPointerDown"
-                @pointermove="onCanvasPointerMove"
-                @pointerup="onCanvasPointerUp"
-                @pointerleave="onCanvasPointerUp"
-                @dblclick.stop.prevent="onCanvasDoubleClick"
               >
                 <!-- Template/individual shapes -->
                 <g
@@ -65,34 +68,16 @@
                     v-else-if="shape.type === 'polygon'"
                     :points="polygonToPoints(shape)"
                   />
-                  try {
-                    if(!store.source) return
-
-                    const filterRid = store.filter_editor.id || store.filter_editor['@rid'] || store.filter_editor
-                    console.log('Loading context for filter RID:', filterRid)
-                    const path = await web.getNodePath(filterRid)
-                    console.log('Node path for filter:', path)
-                    const parent = findParentNode(path)
-                    if (!parent) {
-                      loading.value = false
-                      return
-                    }
-                    console.log('Found parent node:', parent)
-                    state.parent = parent
-                    state.parent_type = parent['@type'] || parent.type
-                    if (state.parent_type === 'Set' || state.parent_type === 'set') {
-                      await loadSetFile(parent['@rid'], 0)
-                    } else {
-                      await loadSingleFile(parent['@rid'])
-                    }
-                    // Load ROIs for this file
-                    if (state.file && state.file['@rid']) {
-                      const rois = await web.getImageROIs(state.file['@rid'])
-                      if (Array.isArray(rois)) {
-                        state.shapes_by_file[state.file['@rid']] = rois.map(r => ({...r, id: r['@rid'] || makeShapeId()}))
-                      }
-                    }
-                  />
+                  <text
+                    v-if="showShapeLabels && shape.label"
+                    class="roi-label"
+                    text-anchor="middle"
+                    dominant-baseline="middle"
+                    :x="shapeLabelPosition(shape).x"
+                    :y="shapeLabelPosition(shape).y"
+                  >
+                    {{ shape.label }}
+                  </text>
                 </g>
                 <g v-if="selectedShape && selectedShape.type === 'rect'" class="roi-handles">
                   <circle
@@ -176,6 +161,12 @@
             <v-switch
               v-model="autoSave"
               label="Auto-save"
+              inset
+              density="compact"
+            ></v-switch>
+            <v-switch
+              v-model="showShapeLabels"
+              label="Show labels on shapes"
               inset
               density="compact"
             ></v-switch>
@@ -299,9 +290,7 @@
             </div>
           </div>
 
-          <div class="mt-4 text-caption text-medium-emphasis">
-            Changes are kept locally until backend support is added.
-          </div>
+
         </v-sheet>
       </v-col>
     </v-row>
@@ -312,6 +301,7 @@
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import web from '../../web.js'
 import { store } from '../Store.js'
+import { fi } from 'vuetify/locale'
 
 const apiUrl = import.meta.env.VITE_API_PATH
 
@@ -347,6 +337,7 @@ const draftShape = ref(null)
 const polygonDraftPoints = ref([])
 const polygonHoverPoint = ref(null)
 const selectedShapeId = ref(null)
+const showShapeLabels = ref(true)
 
 const dragState = reactive({
   type: null,
@@ -354,7 +345,8 @@ const dragState = reactive({
   handle: null,
   pointIndex: null,
   startPoint: null,
-  startShape: null
+  startShape: null,
+  didMove: false
 })
 
 const MIN_SIZE_PX = 12
@@ -482,6 +474,15 @@ function getRoiFileRid(rois) {
   return rois['@rid'] || rois.rid || rois.roi_rid || null
 }
 
+function getCurrentSetRid() {
+  const editorRid = store.filter_editor?.id || store.filter_editor?.['@rid'] || store.filter_editor
+  if (editorRid) return editorRid
+  if (state.parent && (state.parent_type === 'Set' || state.parent_type === 'set')) {
+    return state.parent['@rid'] || state.parent.id || null
+  }
+  return state.file?.set || null
+}
+
 function onImageLoad() {
   updateImageBounds()
 }
@@ -562,7 +563,9 @@ function onCanvasPointerMove(event) {
     const dy = point.y - dragState.startPoint.y
     const radiusPx = Math.sqrt(dx * dx + dy * dy)
     const minSide = Math.min(point.width, point.height)
-    draftShape.value.r = (radiusPx / minSide) * 100
+    const maxRadiusPx = getMaxCircleRadiusPx(dragState.startPoint)
+    const clampedRadius = Math.min(radiusPx, maxRadiusPx)
+    draftShape.value.r = (clampedRadius / minSide) * 100
   }
 }
 
@@ -581,7 +584,7 @@ function onCanvasPointerUp(event) {
     }
     draftShape.value = null
   }
-  if (dragState.type && dragState.type !== 'draw-rect' && dragState.type !== 'draw-circle') {
+  if (dragState.type && dragState.type !== 'draw-rect' && dragState.type !== 'draw-circle' && dragState.didMove) {
     persistActiveShapes()
   }
   dragState.type = null
@@ -632,7 +635,7 @@ async function persistActiveShapes(force = false) {
     return
   }
   if (!state.file || !state.file['@rid']) return
-  const setRid = store.filter_editor?.id || store.filter_editor?.['@rid'] || store.filter_editor
+  const setRid = getCurrentSetRid()
   if (!setRid) return
   const fileRid = state.file['@rid']
   const shapes = getActiveShapes()
@@ -668,6 +671,7 @@ function startShapeDrag(shape, event) {
   dragState.shapeId = shape.id
   dragState.startPoint = getPointFromEvent(event)
   dragState.startShape = JSON.parse(JSON.stringify(shape))
+  dragState.didMove = false
 }
 
 function startRectResize(handleKey, event) {
@@ -676,6 +680,7 @@ function startRectResize(handleKey, event) {
   dragState.handle = handleKey
   dragState.startPoint = getPointFromEvent(event)
   dragState.startShape = JSON.parse(JSON.stringify(selectedShape.value))
+  dragState.didMove = false
 }
 
 function startCircleResize(event) {
@@ -683,6 +688,7 @@ function startCircleResize(event) {
   dragState.shapeId = selectedShapeId.value
   dragState.startPoint = getPointFromEvent(event)
   dragState.startShape = JSON.parse(JSON.stringify(selectedShape.value))
+  dragState.didMove = false
 }
 
 function startPolygonPointDrag(index, event) {
@@ -691,6 +697,7 @@ function startPolygonPointDrag(index, event) {
   dragState.pointIndex = index
   dragState.startPoint = getPointFromEvent(event)
   dragState.startShape = JSON.parse(JSON.stringify(selectedShape.value))
+  dragState.didMove = false
 }
 
 function onWindowPointerMove(event) {
@@ -702,6 +709,11 @@ function onWindowPointerMove(event) {
   const currentPoint = getPointFromEvent(event)
   const dxPct = currentPoint.xPct - dragState.startPoint.xPct
   const dyPct = currentPoint.yPct - dragState.startPoint.yPct
+  const dxPx = currentPoint.x - dragState.startPoint.x
+  const dyPx = currentPoint.y - dragState.startPoint.y
+  if (!dragState.didMove && Math.hypot(dxPx, dyPx) >= 2) {
+    dragState.didMove = true
+  }
   const shape = shapes[shapeIndex]
   const base = dragState.startShape
 
@@ -710,8 +722,12 @@ function onWindowPointerMove(event) {
       shape.left = clamp(base.left + dxPct, 0, 100 - base.width)
       shape.top = clamp(base.top + dyPct, 0, 100 - base.height)
     } else if (shape.type === 'circle') {
-      shape.cx = clamp(base.cx + dxPct, 0, 100)
-      shape.cy = clamp(base.cy + dyPct, 0, 100)
+      const minSide = Math.min(imageBounds.width, imageBounds.height)
+      const radiusPx = (base.r / 100) * minSide
+      const nextCxPx = clamp(((base.cx + dxPct) / 100) * imageBounds.width, radiusPx, imageBounds.width - radiusPx)
+      const nextCyPx = clamp(((base.cy + dyPct) / 100) * imageBounds.height, radiusPx, imageBounds.height - radiusPx)
+      shape.cx = (nextCxPx / imageBounds.width) * 100
+      shape.cy = (nextCyPx / imageBounds.height) * 100
     } else if (shape.type === 'polygon') {
       shape.points = base.points.map(point => ({
         xPct: clamp(point.xPct + dxPct, 0, 100),
@@ -754,8 +770,10 @@ function onWindowPointerMove(event) {
     const dx = currentPoint.x - centerPx.x
     const dy = currentPoint.y - centerPx.y
     const radiusPx = Math.max(MIN_SIZE_PX / 2, Math.sqrt(dx * dx + dy * dy))
+    const maxRadiusPx = getMaxCircleRadiusPx(centerPx)
+    const clampedRadius = Math.min(radiusPx, maxRadiusPx)
     const minSide = Math.min(imageBounds.width, imageBounds.height)
-    shape.r = clamp((radiusPx / minSide) * 100, 0, 100)
+    shape.r = clamp((clampedRadius / minSide) * 100, 0, 100)
   }
 
   if (dragState.type === 'move-point') {
@@ -772,7 +790,7 @@ function onWindowPointerMove(event) {
 }
 
 async function onWindowPointerUp() {
-  if (dragState.type) {
+  if (dragState.type && dragState.didMove) {
     await persistActiveShapes()
   }
   dragState.type = null
@@ -781,10 +799,23 @@ async function onWindowPointerUp() {
   dragState.pointIndex = null
   dragState.startPoint = null
   dragState.startShape = null
+  dragState.didMove = false
 }
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max)
+}
+
+function getMaxCircleRadiusPx(centerPoint) {
+  if (!imageElement.value) return 0
+  const rect = imageElement.value.getBoundingClientRect()
+  const center = centerPoint || { x: rect.width / 2, y: rect.height / 2 }
+  return Math.min(
+    center.x,
+    rect.width - center.x,
+    center.y,
+    rect.height - center.y
+  )
 }
 
 function rectToPixels(shape) {
@@ -823,7 +854,43 @@ function polygonToPoints(shape) {
   }).join(' ')
 }
 
+function shapeLabelPosition(shape) {
+  if (!shape) return { x: 0, y: 0 }
+  if (shape.type === 'rect') {
+    const rect = rectToPixels(shape)
+    return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 }
+  }
+  if (shape.type === 'circle') {
+    const circle = circleToPixels(shape)
+    return { x: circle.cx, y: circle.cy }
+  }
+  if (shape.type === 'polygon' && Array.isArray(shape.points) && shape.points.length) {
+    const pts = shape.points.map(point => pointToPixels(point))
+    if (pts.length < 3) return { x: pts[0].x, y: pts[0].y }
+    let area = 0
+    let cx = 0
+    let cy = 0
+    for (let i = 0; i < pts.length; i++) {
+      const p1 = pts[i]
+      const p2 = pts[(i + 1) % pts.length]
+      const cross = (p1.x * p2.y) - (p2.x * p1.y)
+      area += cross
+      cx += (p1.x + p2.x) * cross
+      cy += (p1.y + p2.y) * cross
+    }
+    area *= 0.5
+    if (area === 0) {
+      return { x: pts[0].x, y: pts[0].y }
+    }
+    cx /= (6 * area)
+    cy /= (6 * area)
+    return { x: cx, y: cy }
+  }
+  return { x: 0, y: 0 }
+}
+
 async function loadContext() {
+  console.log('Loading filter context, filter_editor:', store.filter_editor)
   if (!store.filter_editor) return
   loading.value = true
   state.file = null
@@ -850,19 +917,18 @@ async function loadContext() {
     //   await loadSetFile(DEV_SET_RID, 0)
     //   return
     // }
-    if(!store.source) return
-    console.log(store.filter_editor.id)
-
-    const filterRid = store.filter_editor.id
+    const filterRid = store.filter_editor?.id || store.filter_editor?.['@rid'] || store.filter_editor
+    if (!filterRid) return
     console.log('Loading context for filter RID:', filterRid)
     const path = await web.getNodePath(filterRid)
     console.log('Node path for filter:', path)
-    const parent = findParentNode(path)
+    const parent = findParentNode(path, filterRid)
     if (!parent) {
       loading.value = false
       return
     }
     console.log('Found parent node:', parent)
+    console.log(store.source)
     state.parent = parent
     state.parent_type = parent['@type'] || parent.type
     if (state.parent_type === 'Set' || state.parent_type === 'set') {
@@ -877,15 +943,22 @@ async function loadContext() {
   }
 }
 
-function findParentNode(nodes) {
+function findParentNode(nodes, filterRid) {
   console.log('Finding parent node in path:', nodes)
+  console.log('Filter RID to exclude:', filterRid)
   if (!Array.isArray(nodes)) return null
-  const fileNode = nodes.slice(1).find(node => isFileOrSetNode(node))
-  if (fileNode) return fileNode
-
+  const candidates = nodes.filter(node => isFileOrSetNode(node, filterRid))
+  const setNode = candidates.find(node => node?.['@type'] === 'Set')
+  if (setNode) return setNode
+  const imageFile = candidates.find(node => node?.['@type'] === 'File' && node?.type === 'image')
+  if (imageFile) return imageFile
+  if (candidates.length) return candidates[0]
+  return null
 }
 
-function isFileOrSetNode(node) {
+function isFileOrSetNode(node, filterRid) {
+  if (!node) return false
+  if (node['@rid'] === filterRid) return false
   return node?.['@type'] === 'File' || node?.['@type'] === 'Set'
 }
 
@@ -897,7 +970,7 @@ async function loadSingleFile(rid) {
   state.file.thumbnail = buildThumbnailPath(response.path)
   // Load ROIs for this file
   if (state.file && state.file['@rid']) {
-    const setRid = store.filter_editor?.id || store.filter_editor?.['@rid'] || store.filter_editor
+    const setRid = getCurrentSetRid()
     if (!setRid) return
     const shapes = await web.getImageROIs(state.file['@rid'], setRid)
     console.log('Loaded ROIs for file', state.file['@rid'], shapes)
@@ -913,6 +986,7 @@ async function loadSingleFile(rid) {
 }
 
 async function loadSetFile(setRid, skip) {
+  console.log('Loading set file for set RID:', setRid, 'skip:', skip)
   const response = await web.getSetFiles(setRid, skip, 1)
   const file = response.files[0]
   if (!file) return
@@ -923,9 +997,9 @@ async function loadSetFile(setRid, skip) {
   state.file = fileInfo
   // Load ROIs for this file
   if (state.file && state.file['@rid']) {
-    const filterRid = store.filter_editor?.id || store.filter_editor?.['@rid'] || store.filter_editor
-    if (!filterRid) return
-    const rois = await web.getImageROIs(state.file['@rid'], filterRid)
+    const currentSetRid = getCurrentSetRid() || setRid
+    if (!currentSetRid) return
+    const rois = await web.getImageROIs(state.file['@rid'], currentSetRid)
     console.log('Loaded ROIs for file', state.file['@rid'], rois)
     const normalized = normalizeROIs(rois)
     if (normalized.length) {
@@ -1010,6 +1084,12 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
 }
 
 .image-stage {
@@ -1021,6 +1101,8 @@ onUnmounted(() => {
   display: block;
   max-width: 100%;
   height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .roi-overlay {
@@ -1053,6 +1135,16 @@ onUnmounted(() => {
   stroke: #ff9800;
   stroke-width: 2;
   cursor: pointer;
+}
+
+.roi-label {
+  fill: #ffffff;
+  stroke: rgba(0, 0, 0, 0.75);
+  stroke-width: 3px;
+  paint-order: stroke;
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
 }
 
 .placeholder {

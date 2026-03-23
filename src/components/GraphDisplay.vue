@@ -220,7 +220,7 @@
                             <SetNode :data="data" />
                         </template>
 
-                        <template #node-filter-set="{ data }">
+                        <template #node-roi-set="{ data }">
                             <SetFilterNode :data="data" />
                         </template>
 
@@ -568,20 +568,7 @@
         } else if(event.node.type == "set") {
             //state.setPanel = true
             toggleSetPanel()
-        }else if(event.node.type == 'filter-set') {
-            console.log('open filter set node', event.node)
-            var parent = flow.getIncomers(event.node)
-            var source = null
-            if(parent.length == 1) {
-                
-                const granparent = flow.getIncomers(parent[0])
-                if(granparent.length == 1) {
-                    console.log('granparent', granparent)
-                   source = granparent[0].id.replace('#', '')
-                }
-            }
-            console.log('filterset source', source)
-            store.source = source
+        }else if(event.node.type == 'roi-set') {
             store.filter_editor = event.node
         } else if(event.node.data.type == "file" && event.node.data._type != "zip") {
             
@@ -993,6 +980,9 @@
 
             if(node.data.metadata)
                 flownode.data.metadata = node.data.metadata
+
+            if(node.data.process_rid)
+                flownode.data.process_rid = node.data.process_rid
 
             if(node.data.error) 
                 flownode.data.error = node.data.error

@@ -8,6 +8,7 @@
   min-height: 100px;
   min-width: 200px;
   cursor: pointer;
+  background-color: #484f68;
 }
 
 img {
@@ -35,12 +36,6 @@ img {
   color: #189743;
 }
 
-.node-body {
- 
-  background-color: #529295;
-
-
-}
 
 
 </style>
@@ -73,21 +68,22 @@ function openCrunchers(filter) {
 
        {{ data.label }}
         </div>
-    <v-icon v-if="data?.count > 0 && data.status != 'running'" @click="openCrunchers('')" title="Add cruncher" class ="crunch_add" size="65" >mdi-cookie-plus</v-icon>
+    <v-icon  @click="openCrunchers('')" title="Add cruncher" class ="crunch_add" size="65" >mdi-cookie-plus</v-icon>
     <v-container class="filter-body">
      
 
       <v-row>
         <v-col class="d-flex justify-center align-center">
         
-            <v-icon size="85" color="white">mdi-shape-rectangle-plus</v-icon>
+          <v-icon size="85" color="white">mdi-hand-wave</v-icon>
+          <v-icon size="85" color="white">mdi-shape-rectangle-plus</v-icon>
           
         </v-col>
       </v-row>
       <v-col>
        
           <!-- <div style="white-space: pre;" v-if="data.description">{{ data.description }}</div> -->
-          <pre v-if="data.description">{{ data.description }}</pre>
+          <pre class="text-white" v-if="data.description">{{ data.description }}</pre>
         
           
         </v-col>

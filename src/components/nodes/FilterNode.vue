@@ -39,7 +39,7 @@ function openFilters() {
   <div class="nodrag text-white">
     
     <div class="d-flex align-center justify-center">
-      <h4 class="p-2">Regions</h4>
+      <h4 class="p-2">{{ data.label }}</h4>
     </div>
     <pre class="p-2" v-if="data.description">{{ data.description }}</pre>
   

@@ -320,7 +320,7 @@ web.getNodeFile = async function(rid) {
 }
 
 web.getNodePath = async function(rid) {
-	var result = await axios.get(`/api/graph/traverse/${rid.replace('#','')}/in`)
+	var result = await axios.get(`/api/graph/traverse/${rid.replace('#','')}/out`)
 	return result.data
 }
 
