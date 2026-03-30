@@ -31,8 +31,8 @@
                    @mouseleave="stopPanning">
                 <div class="content-wrapper">
                   <!-- Expanded Image -->
-                  <img v-if="state.expandedContentType === 'image'" 
-                       :src="apiUrl + '/api/thumbnails/' + state.expandedContent" 
+                     <img v-if="state.expandedContentType === 'image'" 
+                       :src="thumbnailUrl(state.expandedContent)" 
                        class="expanded-image" 
                        :style="{ 
                          transform: `scale(${state.contentScale}) translate(${state.panX}px, ${state.panY}px) rotate(${state.imageRotation}deg)`,
@@ -63,7 +63,7 @@
           <v-sheet v-if="state.file && (state.file.type === 'pdf' || state.file.type === 'image')" 
                   class="flex-grow-1 d-flex align-center justify-center pa-2">
             <div class="content-wrapper">
-              <img :src="apiUrl + '/api/thumbnails/' + state.file.path" 
+                  <img :src="thumbnailUrl(state.file.path)" 
                    class="responsive-image" 
                     :style="{ maxHeight: 'calc(100vh - 200px)', transform: `rotate(${state.imageRotation}deg)` }" />
             </div>
@@ -99,8 +99,8 @@
           
           <!-- Image Content -->
           <div v-else-if="state.contentType === 'image'" class="image-content">
-            <img v-if="state.file && state.file.path" 
-                 :src="apiUrl + '/api/thumbnails/' + state.file.path" 
+              <img v-if="state.file && state.file.path" 
+                :src="thumbnailUrl(state.file.path)" 
                  class="main-image" 
                 :style="{ transform: `rotate(${state.imageRotation}deg)` }"
                  alt="Main content image" />
@@ -231,36 +231,21 @@
             </v-btn>
 
             <template v-if="state.file && state.contentType === 'image'">
+              <div class="d-flex align-center justify-space-between mt-2">
+                <span class="text-caption d-flex align-center">
+                  <v-icon size="14" class="mr-1">mdi-rotate-orbit</v-icon>
+                  Rotate
+                </span>
+                <div>
+                  <v-btn icon size="x-small" class="mr-1" @click="rotateLeft" title="Rotate left">
+                    <v-icon size="16">mdi-rotate-left</v-icon>
+                  </v-btn>
+                  <v-btn icon size="x-small" @click="rotateRight" title="Rotate right">
+                    <v-icon size="16">mdi-rotate-right</v-icon>
+                  </v-btn>
+                </div>
+              </div>
               <v-btn
-                v-if="!state.imageEditMode"
-                color="secondary"
-                block
-                size="x-small"
-                class="mt-2"
-                @click="startImageEdit"
-              >
-                Create edited version
-              </v-btn>
-              <v-btn
-                v-if="state.imageEditMode"
-                block
-                size="x-small"
-                class="mt-2"
-                @click="rotateLeft"
-              >
-                Rotate -90
-              </v-btn>
-              <v-btn
-                v-if="state.imageEditMode"
-                block
-                size="x-small"
-                class="mt-2"
-                @click="rotateRight"
-              >
-                Rotate +90
-              </v-btn>
-              <v-btn
-                v-if="state.imageEditMode"
                 color="primary"
                 block
                 size="x-small"
@@ -268,15 +253,6 @@
                 @click="saveImageEdit"
               >
                 Save edited version
-              </v-btn>
-              <v-btn
-                v-if="state.imageEditMode"
-                block
-                size="x-small"
-                class="mt-2"
-                @click="cancelImageEdit"
-              >
-                Cancel edit
               </v-btn>
               <v-btn
                 v-if="state.file.edited"
@@ -288,6 +264,15 @@
               >
                 Revert to original
               </v-btn>
+              <v-alert
+                v-if="state.toast.show"
+                :type="state.toast.color == 'error' ? 'error' : 'success'"
+                variant="tonal"
+                density="compact"
+                class="mt-2"
+              >
+                {{ state.toast.text }}
+              </v-alert>
             </template>
           </div>
         </v-sheet>
@@ -295,14 +280,6 @@
     </v-row>
   </v-container>
 
-  <v-snackbar
-    v-model="state.toast.show"
-    :color="state.toast.color"
-    timeout="2500"
-    location="top right"
-  >
-    {{ state.toast.text }}
-  </v-snackbar>
 </template>
 
 <script setup>
@@ -350,8 +327,8 @@ var state = reactive({
   source_label: null,
   grouped_boundary_enabled: true,
   group_boundary: 'pdf',
-  imageEditMode: false,
   imageRotation: 0,
+  thumbnailVersion: Date.now(),
   toast: {
     show: false,
     text: '',
@@ -363,6 +340,14 @@ function showToast(text, color = 'success') {
   state.toast.text = text
   state.toast.color = color
   state.toast.show = true
+  setTimeout(() => {
+    state.toast.show = false
+  }, 2600)
+}
+
+function thumbnailUrl(filePath) {
+  if(!filePath) return ''
+  return `${apiUrl}/api/thumbnails/${filePath}?v=${state.thumbnailVersion}`
 }
 
 function useGroupedBrowse() {
@@ -457,7 +442,6 @@ async function openFile(file) {
   const previousRid = state.file?.['@rid']
   if(previousRid && previousRid != fileRid) {
     // Rotation state is local to currently opened file.
-    state.imageEditMode = false
     state.imageRotation = 0
   }
   const fileContent = await web.getNodeFile(fileRid)
@@ -677,7 +661,6 @@ function handleKeyUp(event) {
 async function load() {
   state.file = null
   state.expandedContent = null
-  state.imageEditMode = false
   state.imageRotation = 0
   state.set_rid = store.source || store.current_node?.id || null
   state.source_rid = store.set_browse_context?.sourceRid || null
@@ -694,6 +677,7 @@ async function load() {
     
     var nodepath = await web.getNodePath(store.file['@rid'])
     state.nodepath = nodepath
+    state.thumbnailVersion = Date.now()
 
     if(useGroupedBrowse()) {
       await refreshGroupedPosition()
@@ -710,16 +694,6 @@ async function load() {
 function normalizeRotation(value) {
   const mod = value % 360
   return mod < 0 ? mod + 360 : mod
-}
-
-function startImageEdit() {
-  state.imageEditMode = true
-  state.imageRotation = 0
-}
-
-function cancelImageEdit() {
-  state.imageEditMode = false
-  state.imageRotation = 0
 }
 
 function rotateLeft() {
@@ -781,9 +755,9 @@ async function saveImageEdit() {
       params: { degrees: normalizeRotation(state.imageRotation) },
     })
 
-    // Keep local rotated preview immediately after save.
-    state.imageEditMode = false
-    if(state.file) state.file.edited = true
+    // Recreate thumbnail and reload from backend so preview matches persisted file.
+    await web.createFileThumbnail(state.file['@rid'])
+    await load()
     showToast('Edited version saved', 'success')
   } catch (error) {
     console.error('Error saving image edit:', error)
@@ -795,6 +769,7 @@ async function revertImageEdit() {
   if (!state.file || !state.file['@rid']) return
   try {
     await web.revertFileVersion(state.file['@rid'])
+    await web.createFileThumbnail(state.file['@rid'])
     await load()
     showToast('Reverted to original', 'success')
   } catch (error) {
@@ -805,6 +780,14 @@ async function revertImageEdit() {
 
 // Refresh function
 async function refreshContent() {
+  if(state.file?.['@rid']) {
+    try {
+      await web.createFileThumbnail(state.file['@rid'])
+    } catch (error) {
+      console.error('Thumbnail refresh failed:', error)
+      showToast('Thumbnail refresh failed', 'error')
+    }
+  }
   await load()
 }
 

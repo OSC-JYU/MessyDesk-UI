@@ -91,12 +91,12 @@ function thumbnailSrc(fileData) {
       <v-row>
         <v-col class="d-flex align-center justify-center">
           <div v-if="data.is_group" class="pdf-icon-wrap">
-            <img v-if="data.thumb" :src="thumbnailSrc(data)" draggable="false" style="width: 100%; height: auto;" />
+            <img v-if="data.thumb" :key="`group-${thumbnailSrc(data)}`" :src="thumbnailSrc(data)" draggable="false" style="width: 100%; height: auto;" />
             <v-icon v-else size="90" color="blue-grey-darken-1">mdi-folder-multiple-image</v-icon>
             <div class="pdf-label">Open source group</div>
           </div>
-          <img v-else-if="data.type == 'image'" :src="thumbnailSrc(data)" draggable="false" style="width: 100%; height: auto;" />
-          <img v-else-if="data.type == 'pdf' && data.thumb" :src="thumbnailSrc(data)" draggable="false" style="width: 100%; height: auto;" />
+          <img v-else-if="data.type == 'image'" :key="`image-${thumbnailSrc(data)}`" :src="thumbnailSrc(data)" draggable="false" style="width: 100%; height: auto;" />
+          <img v-else-if="data.type == 'pdf' && data.thumb" :key="`pdf-${thumbnailSrc(data)}`" :src="thumbnailSrc(data)" draggable="false" style="width: 100%; height: auto;" />
           <div v-else-if="data.type == 'pdf'" class="pdf-icon-wrap">
             <v-icon size="90" color="red-darken-2">mdi-file-pdf-box</v-icon>
             <div class="pdf-label">PDF blob</div>

@@ -352,6 +352,11 @@ web.revertFileVersion = async function(rid) {
 	return result.data
 }
 
+web.createFileThumbnail = async function(rid) {
+	const result = await axios.post(`/api/files/${rid.replace('#','')}/thumbnail`)
+	return result.data
+}
+
 web.getNodePath = async function(rid) {
 	var result = await axios.get(`/api/graph/traverse/${rid.replace('#','')}/out`)
 	return result.data

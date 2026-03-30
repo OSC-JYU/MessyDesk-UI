@@ -972,6 +972,25 @@
         setPanelRefreshTimer = setTimeout(async () => {
             setPanelRefreshTimer = null
             await loadSet()
+            const refreshVersion = Date.now()
+            if(Array.isArray(state.setItems)) {
+                state.setItems = state.setItems.map((item) => ({
+                    ...item,
+                    thumbnail_version: refreshVersion,
+                }))
+            }
+            if(Array.isArray(state.setdata?.files)) {
+                state.setdata.files = state.setdata.files.map((item) => ({
+                    ...item,
+                    thumbnail_version: refreshVersion,
+                }))
+            }
+            if(Array.isArray(state.setdata?.groups)) {
+                state.setdata.groups = state.setdata.groups.map((item) => ({
+                    ...item,
+                    thumbnail_version: refreshVersion,
+                }))
+            }
         }, 350)
     }
 

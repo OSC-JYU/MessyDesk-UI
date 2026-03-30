@@ -106,7 +106,7 @@ function openCrunchers(filter) {
       <v-row>
         <v-col>
           <div v-if="data.paths && data.paths.length > 0" class="image-grid">
-            <div v-for="(f, index) in data.paths" :key="index" class="image-item">
+            <div v-for="(f, index) in data.paths" :key="`${index}-${f}`" class="image-item">
               <div v-if="f === '__pdf_icon__'" class="pdf-preview-chip">
                 <v-icon class="pdf-preview-icon" size="46" color="red-darken-2">mdi-file-pdf-box</v-icon>
               </div>
