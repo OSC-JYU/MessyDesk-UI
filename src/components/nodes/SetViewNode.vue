@@ -74,13 +74,19 @@ const emit = defineEmits(['expand-node'])
 
 
 
-      <v-switch class="mt-2" v-model="data.expand" @change="emit('expand-node', data)" label="Show in Desk" color="primary">expand</v-switch>
+      <v-switch v-if="!data.is_group" class="mt-2" v-model="data.expand" @change="emit('expand-node', data)" label="Show in Desk" color="primary">expand</v-switch>
       <v-row >
-        <v-chip v-if="store.settings_show_entities" v-for="entity of data.entities" :key="entity.id"  :color="entity.color" ><v-icon v-if="entity.icon" :icon="'mdi-' + entity.icon.toLowerCase()" start></v-icon> {{ entity.label }}</v-chip>
+        <v-chip v-if="!data.is_group && store.settings_show_entities" v-for="entity of data.entities" :key="entity.id"  :color="entity.color" ><v-icon v-if="entity.icon" :icon="'mdi-' + entity.icon.toLowerCase()" start></v-icon> {{ entity.label }}</v-chip>
+        <v-chip v-if="data.is_group" color="teal-darken-2" variant="flat">{{ data.file_count || 0 }} files</v-chip>
       </v-row>
       <v-row>
         <v-col class="d-flex align-center justify-center">
-          <img v-if="data.type == 'image'" :src="data.thumb + '/thumbnail.jpg'" draggable="false" style="width: 100%; height: auto;" />
+          <div v-if="data.is_group" class="pdf-icon-wrap">
+            <img v-if="data.thumb" :src="data.thumb + '/thumbnail.jpg'" draggable="false" style="width: 100%; height: auto;" />
+            <v-icon v-else size="90" color="blue-grey-darken-1">mdi-folder-multiple-image</v-icon>
+            <div class="pdf-label">Open source group</div>
+          </div>
+          <img v-else-if="data.type == 'image'" :src="data.thumb + '/thumbnail.jpg'" draggable="false" style="width: 100%; height: auto;" />
           <img v-else-if="data.type == 'pdf' && data.thumb" :src="data.thumb + '/thumbnail.jpg'" draggable="false" style="width: 100%; height: auto;" />
           <div v-else-if="data.type == 'pdf'" class="pdf-icon-wrap">
             <v-icon size="90" color="red-darken-2">mdi-file-pdf-box</v-icon>

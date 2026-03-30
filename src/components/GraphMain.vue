@@ -73,12 +73,13 @@
       store.tab = tab
     }
 
-    async function openNode(node_rid, source_rid, total_count, skip) {
+    async function openNode(node_rid, source_rid, total_count, skip, browseContext) {
       var response = await web.getDocInfo(node_rid)
       store.file = response
       store.source = source_rid
       store.file_count = total_count
       store.skip = skip
+      store.set_browse_context = browseContext || null
       state.tab = 3  // this tab is for file display
     }
 

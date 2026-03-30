@@ -171,8 +171,17 @@
                         </template>
 
                         <v-toolbar-title>
+                            <v-btn
+                                v-if="state.setdata.mode == 'children'"
+                                density="compact"
+                                icon="mdi-arrow-left"
+                                class="mr-2"
+                                @click="goBackToGroupList()"
+                            ></v-btn>
                             <v-icon size="35" color="green">mdi-folder-outline</v-icon>
                             {{ store.current_node.data.label }} <span v-if="state.setdata.file_count">({{ state.setdata.file_count }} files )</span>
+                            <span v-if="state.setdata.mode == 'groups'" class="ml-2 text-body-2">({{ state.setdata.group_count || 0 }} sources)</span>
+                            <span v-if="state.setdata.mode == 'children' && state.selected_source_label" class="ml-2 text-body-2">- {{ state.selected_source_label }}</span>
                             
                         </v-toolbar-title>
                         
@@ -189,8 +198,8 @@
                         
                         <v-row class="set-panel mt-8">
                             <v-col
-                            v-for="(file, index) in state.setdata.files"
-                            :key="file.id"
+                            v-for="(file, index) in state.setItems"
+                            :key="file['@rid'] || file.source_rid || index"
                             class="d-flex child-flex flow"
                             cols="2"
                             >
@@ -427,7 +436,10 @@
 	const offCanvasSet = ref(null)
     var settable = ref(null)
     var state = reactive({
-        setdata:[], 
+        setdata: {files: [], groups: [], mode: 'groups', file_count: 0, group_count: 0}, 
+        setItems: [],
+        selected_source_rid: null,
+        selected_source_label: '',
         setPanel: false, 
         rootNodes:[], 
         node_added: 0, 
@@ -692,7 +704,18 @@
     })
 
     function openSetFile(file, index) {
-        emit('open-node', file['@rid'], store.current_node.id, state.setdata.file_count, index )
+        if(file?.is_group && file?.source_rid) {
+            openSetGroup(file)
+            return
+        }
+        const absoluteIndex = ((page.value - 1) * filesPerPage) + index
+        const browseContext = {
+            mode: state.setdata.mode || 'flat',
+            sourceRid: state.selected_source_rid || null,
+            sourceLabel: state.selected_source_label || null,
+            groupBoundary: state.setdata.group_boundary || null,
+        }
+        emit('open-node', file['@rid'], store.current_node.id, state.setdata.file_count, absoluteIndex, browseContext)
     } 
 
     async function layoutGraph(direction) {
@@ -1011,18 +1034,75 @@
 
     async function toggleSetPanel(node) {
         page.value = 1
-        state.setdata = await web.getSetFiles(store.current_node.id)
-        totalPages.value =  Math.ceil(state.setdata.file_count / filesPerPage) ;
+        state.selected_source_rid = null
+        state.selected_source_label = ''
+        await loadSetGroups()
         state.setPanel = true
     }
 
     async function loadSet() {
-        state.setdata = await web.getSetFiles(store.current_node.id, (page.value - 1) * filesPerPage, filesPerPage)
+        if(state.selected_source_rid) {
+            await loadSetChildren()
+            return
+        }
+        await loadSetGroups()
+    }
+
+    function syncSetItemsAndPagination() {
+        if(state.setdata.mode == 'children') {
+            state.setItems = state.setdata.files || []
+            totalPages.value = Math.max(1, Math.ceil((state.setdata.file_count || 0) / filesPerPage))
+            return
+        }
+        if(state.setdata.mode == 'flat') {
+            state.setItems = state.setdata.files || []
+            totalPages.value = Math.max(1, Math.ceil((state.setdata.file_count || 0) / filesPerPage))
+            return
+        }
+        state.setItems = state.setdata.groups || []
+        totalPages.value = Math.max(1, Math.ceil((state.setdata.group_count || 0) / filesPerPage))
+    }
+
+    async function loadSetGroups() {
+        state.setdata = await web.getSetFiles(
+            store.current_node.id,
+            (page.value - 1) * filesPerPage,
+            filesPerPage,
+            {groupByOrigin: true, groupBoundary: 'pdf'}
+        )
+        state.setdata.mode = state.setdata.mode || 'groups'
+        syncSetItemsAndPagination()
+    }
+
+    async function loadSetChildren() {
+        state.setdata = await web.getSetFiles(
+            store.current_node.id,
+            (page.value - 1) * filesPerPage,
+            filesPerPage,
+            {groupByOrigin: true, sourceRid: state.selected_source_rid, groupBoundary: 'pdf'}
+        )
+        state.setdata.mode = state.setdata.mode || 'children'
+        syncSetItemsAndPagination()
+    }
+
+    async function openSetGroup(group) {
+        state.selected_source_rid = group.source_rid
+        state.selected_source_label = group.label || ''
+        page.value = 1
+        await loadSetChildren()
+    }
+
+    async function goBackToGroupList() {
+        state.selected_source_rid = null
+        state.selected_source_label = ''
+        page.value = 1
+        await loadSetGroups()
     }
 
 
 
     async function expandSetNode(node) {
+        if(node?.is_group) return
 
         await web.setNodeAttribute(node['@rid'], {key: 'expand', value: node.expand })
         loadGraph()

@@ -225,11 +225,15 @@ web.getProject = async function(rid) {
 	return result.data
 }
 
-web.getSetFiles = async function(rid, skip, limit) {
-	var query = ''
-	if(skip && limit) query = '?skip=' + skip + '&limit=' + limit
-	else if(skip) query += '?skip=' + skip
-	else if(limit) query += '?limit=' + limit
+web.getSetFiles = async function(rid, skip, limit, options = {}) {
+	const params = new URLSearchParams()
+	if(skip !== undefined && skip !== null) params.set('skip', String(skip))
+	if(limit !== undefined && limit !== null) params.set('limit', String(limit))
+	if(options.groupByOrigin) params.set('group_by_origin', 'true')
+	if(options.groupBoundary) params.set('group_boundary', String(options.groupBoundary))
+	if(options.sourceRid) params.set('source_rid', String(options.sourceRid).replace('#', ''))
+
+	const query = params.toString() ? `?${params.toString()}` : ''
 	var result = await axios.get(`/api/sets/${rid.replace('#', '')}/files${query}`)
 	return result.data
 }

@@ -40,6 +40,7 @@ export const store = reactive({
   root_nodes: [],
   projects: [],
   setdata: {},
+  set_browse_context: null,
   current_project: {},
   reorder_target: '',
   settings_show_descriptions: true,

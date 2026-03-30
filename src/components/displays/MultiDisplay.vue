@@ -132,6 +132,21 @@
             </div>
           </template>
 
+          <div v-if="state.source_label" class="mb-2">
+            <v-chip color="teal-darken-2" variant="flat" size="small">Original: {{ state.source_label }}</v-chip>
+          </div>
+
+          <v-switch
+            v-if="state.source_rid"
+            v-model="state.grouped_boundary_enabled"
+            density="compact"
+            hide-details
+            color="primary"
+            label="Grouped boundary nav"
+            class="mb-2"
+            @update:model-value="onToggleGroupedBoundary"
+          ></v-switch>
+
           <!-- File Info -->
           <div v-if="state.file" class="mb-3">
             <h4 class="text-subtitle-2 mb-2">{{ state.file.label}}</h4>
@@ -258,40 +273,144 @@ var state = reactive({
   file_count: 0,
   skip: 1,
   isCtrlPressed: false,
-  leftColumnCollapsed: false
+  leftColumnCollapsed: false,
+  set_rid: null,
+  source_rid: null,
+  source_label: null,
+  grouped_boundary_enabled: true,
+  group_boundary: 'pdf',
 })
+
+function useGroupedBrowse() {
+  return Boolean(
+    state.grouped_boundary_enabled &&
+    store.set_browse_context &&
+    store.set_browse_context.mode == 'children' &&
+    state.source_rid
+  )
+}
+
+function groupedBaseOptions() {
+  return {
+    groupByOrigin: true,
+    groupBoundary: state.group_boundary || 'pdf',
+  }
+}
 
 // Navigation functions
 async function prev() {
+  if(useGroupedBrowse()) {
+    const current = await web.getSetFiles(state.set_rid, 0, 10000, {...groupedBaseOptions(), sourceRid: state.source_rid})
+    const currentFiles = current?.files || []
+    const currentIndex = currentFiles.findIndex((f) => f['@rid'] == state.file?.['@rid'])
+
+    if(currentIndex > 0) {
+      await openFile(currentFiles[currentIndex - 1])
+      await refreshGroupedPosition()
+      return
+    }
+
+    const groupsResponse = await web.getSetFiles(state.set_rid, 0, 10000, groupedBaseOptions())
+    const groups = groupsResponse?.groups || []
+    const groupIndex = groups.findIndex((g) => g.source_rid == state.source_rid)
+    if(groupIndex <= 0) return
+
+    const prevGroup = groups[groupIndex - 1]
+    const prevChildrenResponse = await web.getSetFiles(state.set_rid, 0, 10000, {...groupedBaseOptions(), sourceRid: prevGroup.source_rid})
+    const prevChildren = prevChildrenResponse?.files || []
+    if(!prevChildren.length) return
+
+    state.source_rid = prevGroup.source_rid
+    state.source_label = prevGroup.label || state.source_label
+    await openFile(prevChildren[prevChildren.length - 1])
+    await refreshGroupedPosition()
+    return
+  }
+
   if((state.skip - 1) < 1) return
   state.skip = state.skip - 1
   await loadFile(state.skip - 1)
 }
 
 async function next() {
-  if(state.skip > state.file_count) return
+  if(useGroupedBrowse()) {
+    const current = await web.getSetFiles(state.set_rid, 0, 10000, {...groupedBaseOptions(), sourceRid: state.source_rid})
+    const currentFiles = current?.files || []
+    const currentIndex = currentFiles.findIndex((f) => f['@rid'] == state.file?.['@rid'])
+
+    if(currentIndex >= 0 && currentIndex < (currentFiles.length - 1)) {
+      await openFile(currentFiles[currentIndex + 1])
+      await refreshGroupedPosition()
+      return
+    }
+
+    const groupsResponse = await web.getSetFiles(state.set_rid, 0, 10000, groupedBaseOptions())
+    const groups = groupsResponse?.groups || []
+    const groupIndex = groups.findIndex((g) => g.source_rid == state.source_rid)
+    if(groupIndex < 0 || groupIndex >= groups.length - 1) return
+
+    const nextGroup = groups[groupIndex + 1]
+    const nextChildrenResponse = await web.getSetFiles(state.set_rid, 0, 10000, {...groupedBaseOptions(), sourceRid: nextGroup.source_rid})
+    const nextChildren = nextChildrenResponse?.files || []
+    if(!nextChildren.length) return
+
+    state.source_rid = nextGroup.source_rid
+    state.source_label = nextGroup.label || state.source_label
+    await openFile(nextChildren[0])
+    await refreshGroupedPosition()
+    return
+  }
+
+  if(state.skip >= state.file_count) return
   state.skip = state.skip + 1
   await loadFile(state.skip - 1)
 }
 
 // Content loading functions
+async function openFile(file) {
+  if(!file || !file['@rid']) return
+  const fileRid = file['@rid']
+  const fileContent = await web.getNodeFile(fileRid)
+  state.file = await web.getDocInfo(fileRid)
+  determineContentType(fileContent)
+  state.nodepath = await web.getNodePath(fileRid)
+  store.file = state.file
+}
+
 async function loadFile(skip = 0) {
   try {
-    var response = await web.getSetFiles(store.current_node.id, skip, 1)
+    var response = await web.getSetFiles(state.set_rid || store.current_node.id, skip, 1)
     if (response.files && response.files.length > 0) {
-      state.file = response.files[0]
-      var fileContent = await web.getNodeFile(response.files[0]['@rid'])
-      state.file = await web.getDocInfo(response.files[0]['@rid'])
-      
-      // Determine content type and format content
-      determineContentType(fileContent)
-      
-      // Load node path
-      var nodepath = await web.getNodePath(response.files[0]['@rid'])
-      state.nodepath = nodepath
+      await openFile(response.files[0])
     }
   } catch (error) {
     console.error('Error loading file:', error)
+  }
+}
+
+async function refreshGroupedPosition() {
+  if(!useGroupedBrowse()) return
+  const response = await web.getSetFiles(state.set_rid, 0, 10000, {...groupedBaseOptions(), sourceRid: state.source_rid})
+  const files = response?.files || []
+  const currentIndex = files.findIndex((f) => f['@rid'] == state.file?.['@rid'])
+  state.file_count = files.length
+  state.skip = currentIndex >= 0 ? currentIndex + 1 : 1
+}
+
+async function refreshFlatPosition() {
+  if(!state.set_rid || !state.file?.['@rid']) return
+  const response = await web.getSetFiles(state.set_rid, 0, 10000)
+  const files = response?.files || []
+  const index = files.findIndex((f) => f['@rid'] == state.file['@rid'])
+  state.file_count = response?.file_count || files.length
+  state.skip = index >= 0 ? index + 1 : 1
+}
+
+async function onToggleGroupedBoundary() {
+  if(useGroupedBrowse()) {
+    await refreshGroupedPosition()
+  } else {
+    await refreshFlatPosition()
   }
 }
 
@@ -468,9 +587,11 @@ function handleKeyUp(event) {
 async function load() {
   state.file = null
   state.expandedContent = null
-  state.file_count = store.file_count || 0
-  if(store.skip >= 0) state.skip = store.skip + 1
-  else state.skip = 1
+  state.set_rid = store.source || store.current_node?.id || null
+  state.source_rid = store.set_browse_context?.sourceRid || null
+  state.source_label = store.set_browse_context?.sourceLabel || null
+  state.group_boundary = store.set_browse_context?.groupBoundary || 'pdf'
+  state.grouped_boundary_enabled = Boolean(state.source_rid)
 
   try {
     var f = await web.getNodeFile(store.file['@rid'])
@@ -481,6 +602,14 @@ async function load() {
     
     var nodepath = await web.getNodePath(store.file['@rid'])
     state.nodepath = nodepath
+
+    if(useGroupedBrowse()) {
+      await refreshGroupedPosition()
+    } else {
+      state.file_count = store.file_count || 0
+      if(store.skip >= 0) state.skip = store.skip + 1
+      else state.skip = 1
+    }
   } catch (error) {
     console.error('Error loading content:', error)
   }
