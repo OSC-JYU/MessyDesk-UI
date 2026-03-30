@@ -22,6 +22,30 @@ img {
   margin-top: 6px;
   margin-left:10px;
 }
+
+.pdf-icon-wrap {
+  width: 100%;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top, #fff8f8 0%, #f2ecec 65%, #e7e1e1 100%);
+  border-radius: 8px;
+  border: 1px solid #dbc9c9;
+}
+
+.pdf-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #7a2020;
+  background: #ffffffcc;
+  border: 1px solid #e5caca;
+  border-radius: 999px;
+  padding: 2px 10px;
+}
 </style>
 
 
@@ -56,7 +80,12 @@ const emit = defineEmits(['expand-node'])
       </v-row>
       <v-row>
         <v-col class="d-flex align-center justify-center">
-          <img v-if="data.type == 'image' || data.type == 'pdf'" :src="data.thumb + '/thumbnail.jpg'" draggable="false" style="width: 100%; height: auto;" />
+          <img v-if="data.type == 'image'" :src="data.thumb + '/thumbnail.jpg'" draggable="false" style="width: 100%; height: auto;" />
+          <img v-else-if="data.type == 'pdf' && data.thumb" :src="data.thumb + '/thumbnail.jpg'" draggable="false" style="width: 100%; height: auto;" />
+          <div v-else-if="data.type == 'pdf'" class="pdf-icon-wrap">
+            <v-icon size="90" color="red-darken-2">mdi-file-pdf-box</v-icon>
+            <div class="pdf-label">PDF blob</div>
+          </div>
           <div v-else>{{ data.info }}</div>
         </v-col>
       </v-row>

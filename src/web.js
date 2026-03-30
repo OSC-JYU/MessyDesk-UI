@@ -215,6 +215,11 @@ web.getProjects = async function() {
 	return result.data
 }
 
+web.updateProjectSizes = async function() {
+	var result = await axios.post(`/api/projects/update-size`)
+	return result.data
+}
+
 web.getProject = async function(rid) {
 	var result = await axios.get(`/api/projects/${rid.replace('#', '')}`)
 	return result.data
@@ -359,6 +364,22 @@ web.createSetProcess = async function(process, set_rid) {
 	return result
 }
 
+web.createSetZipJob = async function(set_rid) {
+	const url = `/api/sets/${set_rid.replace('#', '')}/files/zip/jobs`
+	const result = await axios.post(url)
+	return result.data
+}
+
+web.getSetZipJobStatus = async function(set_rid, job_id) {
+	const url = `/api/sets/${set_rid.replace('#', '')}/files/zip/jobs/${job_id}`
+	const result = await axios.get(url)
+	return result.data
+}
+
+web.getSetZipDownloadUrl = function(set_rid, job_id) {
+	return `/api/sets/${set_rid.replace('#', '')}/files/zip/jobs/${job_id}/download`
+}
+
 web.createSourceProcess = async function(process, set_rid) {
 
 	const url = `/api/queue/${process.service}/sources/${set_rid.replace('#', '')}`
@@ -368,9 +389,33 @@ web.createSourceProcess = async function(process, set_rid) {
 
 web.cancelProcess = async function(process_rid) {
 
-	const url = `/api/queue/${process_rid.service}/drain/${process_rid.replace('#', '')}`
+	const url = `/api/queue/drain/${process_rid.replace('#', '')}`
 	var result = await axios.get(url)
 	return result
+}
+
+web.getBatch = async function(process_rid) {
+	const url = `/api/batches/${process_rid.replace('#', '')}`
+	const result = await axios.get(url)
+	return result.data
+}
+
+web.pauseBatch = async function(process_rid) {
+	const url = `/api/batches/${process_rid.replace('#', '')}/pause`
+	const result = await axios.post(url)
+	return result.data
+}
+
+web.resumeBatch = async function(process_rid) {
+	const url = `/api/batches/${process_rid.replace('#', '')}/resume`
+	const result = await axios.post(url)
+	return result.data
+}
+
+web.cancelBatch = async function(process_rid) {
+	const url = `/api/batches/${process_rid.replace('#', '')}/cancel`
+	const result = await axios.post(url)
+	return result.data
 }
 
 web.createNode = async function(data) {

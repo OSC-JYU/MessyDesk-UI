@@ -1,11 +1,13 @@
 <script setup>
-import { computed, nextTick, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import web from '../web.js'
 import { store } from './Store.js'
 import JYUHeader_main from './JYUHeader_main.vue'
 
 const router = useRouter()
+const organizationLogoModules = import.meta.glob('../assets/images/organisation.{svg,png}', { eager: true, import: 'default' })
+const organizationLogoSrc = Object.values(organizationLogoModules)[0] || ''
 const createSection = ref(null)
 const projectInput = ref(null)
 
@@ -24,7 +26,10 @@ const state = reactive({
   renameProjectName: '',
   renamePending: false,
   renameError: '',
+  sortKey: 'name',
+  sortDirection: 'asc',
   loadError: '',
+  eventSource: null,
   examples: [
     {
       title: 'Old Letters To Searchable Text',
@@ -64,6 +69,86 @@ const state = reactive({
   ]
 })
 
+const runningJobs = computed(() => {
+  return Object.entries(store.running_processes || {})
+    .map(([rid, data]) => ({ rid, ...data }))
+    .filter(job => ['running', 'paused', 'cancelling'].includes(job.status))
+})
+
+function formatEta(etaSec) {
+  if (etaSec === null || etaSec === undefined || etaSec === '') return 'n/a'
+  const sec = Number(etaSec)
+  if (!Number.isFinite(sec)) return 'n/a'
+  if (sec < 60) return `${Math.max(sec, 0)}s`
+  const minutes = Math.floor(sec / 60)
+  const seconds = sec % 60
+  if (minutes < 60) return `${minutes}m ${seconds}s`
+  const hours = Math.floor(minutes / 60)
+  const remMin = minutes % 60
+  return `${hours}h ${remMin}m`
+}
+
+async function hydrateBatch(processRid) {
+  try {
+    const batch = await web.getBatch(processRid)
+    if (!batch) return
+    if (!store.running_processes[processRid]) {
+      store.running_processes[processRid] = { status: batch.state || 'running', message: 'Working...', batch: null }
+    }
+    const processed = batch.processed_files ?? 0
+    const total = batch.total_files ?? '?'
+    const failed = batch.failed_files ?? 0
+    store.running_processes[processRid].status = batch.state || store.running_processes[processRid].status
+    store.running_processes[processRid].batch = batch
+    store.running_processes[processRid].message = `${processed}/${total} files, failed ${failed}, ETA ${formatEta(batch.eta_sec)}`
+  } catch (error) {
+    console.log('batch hydrate failed', processRid, error?.message)
+  }
+}
+
+function connectSSE() {
+  if (state.eventSource) {
+    state.eventSource.close()
+  }
+
+  state.eventSource = new EventSource(`${import.meta.env.VITE_API_PATH}/events`)
+
+  state.eventSource.onmessage = async (event) => {
+    try {
+      const wsdata = JSON.parse(event.data)
+      if (!wsdata?.process?.['@rid']) return
+      const processRid = wsdata.process['@rid']
+
+      if (!store.running_processes[processRid]) {
+        store.running_processes[processRid] = { status: 'running', message: 'Working...', batch: null }
+      }
+
+      if (wsdata.command === 'process_update') {
+        store.running_processes[processRid].status = wsdata?.batch?.state || wsdata?.process?.status || 'running'
+        if (wsdata.batch) {
+          const processed = wsdata.batch.processed_files ?? wsdata.current_file ?? 0
+          const total = wsdata.batch.total_files ?? wsdata.total_files ?? '?'
+          const failed = wsdata.batch.failed_files ?? 0
+          store.running_processes[processRid].batch = wsdata.batch
+          store.running_processes[processRid].message = `${processed}/${total} files, failed ${failed}, ETA ${formatEta(wsdata.batch.eta_sec)}`
+        } else {
+          await hydrateBatch(processRid)
+        }
+      }
+
+      if (wsdata.command === 'process_finished') {
+        store.running_processes[processRid].status = wsdata?.batch?.state || wsdata?.process?.status || 'finished'
+        if (wsdata.batch) {
+          store.running_processes[processRid].batch = wsdata.batch
+          store.running_processes[processRid].message = `Done ${wsdata.batch.processed_files ?? 0}/${wsdata.batch.total_files ?? '?'}, ETA ${formatEta(wsdata.batch.eta_sec)}`
+        }
+      }
+    } catch (error) {
+      console.log('main SSE parse failed', error?.message)
+    }
+  }
+}
+
 const activeCrunchers = computed(() => {
   return state.services
     .filter(service => {
@@ -84,12 +169,99 @@ const projectsWithMeta = computed(() => {
     return {
       ...project,
       displayName: project.label || project.name || 'Untitled desk',
+      nameValue: (project.label || project.name || 'Untitled desk').toLowerCase(),
+      sizeValue: getSizeValue(project),
+      nodeCountValue: getNodeCountValue(project),
+      expirationValue: getExpirationValue(project),
       sizeText: formatSize(project),
       nodeCountText: formatNodeCount(project),
       expirationText: formatExpiration(project)
     }
   })
 })
+
+const sortedProjects = computed(() => {
+  const projects = [...projectsWithMeta.value]
+  const direction = state.sortDirection === 'asc' ? 1 : -1
+
+  projects.sort((a, b) => {
+    let left = ''
+    let right = ''
+
+    if (state.sortKey === 'size') {
+      left = a.sizeValue
+      right = b.sizeValue
+    } else if (state.sortKey === 'nodes') {
+      left = a.nodeCountValue
+      right = b.nodeCountValue
+    } else if (state.sortKey === 'expires') {
+      left = a.expirationValue
+      right = b.expirationValue
+    } else {
+      left = a.nameValue
+      right = b.nameValue
+    }
+
+    if (left < right) return -1 * direction
+    if (left > right) return 1 * direction
+    return 0
+  })
+
+  return projects
+})
+
+function getSizeValue(project) {
+  const raw =
+    readNumber(project.size_mb) ??
+    readNumber(project.sizeMB) ??
+    readNumber(project.sizeMb) ??
+    readNumber(project.total_size_mb) ??
+    readNumber(project.total_mb) ??
+    readNumber(project.size)
+
+  if (raw == null) return -1
+  return raw > 1024 * 1024 ? raw / (1024 * 1024) : raw
+}
+
+function getNodeCountValue(project) {
+  return (
+    readNumber(project.node_count) ??
+    readNumber(project.nodes_count) ??
+    readNumber(project.item_count) ??
+    readNumber(project.file_count) ??
+    readNumber(project.count) ??
+    -1
+  )
+}
+
+function getExpirationValue(project) {
+  const raw =
+    project.expiration_date ||
+    project.expiry_date ||
+    project.expires_at ||
+    project.expires ||
+    project.expire_at ||
+    project.valid_until
+
+  if (!raw) return Number.POSITIVE_INFINITY
+  const date = new Date(raw)
+  return Number.isNaN(date.getTime()) ? Number.POSITIVE_INFINITY : date.getTime()
+}
+
+function sortBy(key) {
+  if (state.sortKey === key) {
+    state.sortDirection = state.sortDirection === 'asc' ? 'desc' : 'asc'
+    return
+  }
+
+  state.sortKey = key
+  state.sortDirection = 'asc'
+}
+
+function sortIcon(key) {
+  if (state.sortKey !== key) return 'mdi-swap-vertical'
+  return state.sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'
+}
 
 function formatSize(project) {
   const raw =
@@ -205,6 +377,20 @@ async function loadProjects() {
   }
 }
 
+async function refreshProjects() {
+  state.loadingProjects = true
+  state.loadError = ''
+  try {
+    await web.updateProjectSizes()
+    state.projects = await web.getProjects()
+    store.projects = state.projects
+  } catch (error) {
+    state.loadError = error.message || 'Could not refresh desk sizes.'
+  } finally {
+    state.loadingProjects = false
+  }
+}
+
 async function loadCrunchers() {
   state.loadingCrunchers = true
   try {
@@ -282,6 +468,17 @@ async function renameProject() {
 
 onMounted(async () => {
   await Promise.all([loadProjects(), loadCrunchers()])
+  connectSSE()
+  for (const rid of Object.keys(store.running_processes || {})) {
+    await hydrateBatch(rid)
+  }
+})
+
+onUnmounted(() => {
+  if (state.eventSource) {
+    state.eventSource.close()
+    state.eventSource = null
+  }
 })
 </script>
 
@@ -296,14 +493,25 @@ onMounted(async () => {
 
       <v-main class="fill-height main-scroll">
         <v-container fluid class="main-shell pa-4 pa-md-8">
-    <section class="hero mb-6 mb-md-8 reveal-1">
-      <p class="hero-kicker mb-2">Welcome</p>
-      <h1 class="hero-title mb-3">Your research desk, ready for today.</h1>
-      <p class="hero-text mb-0">
-        Keep your material in one calm place. Open an existing desk, create a new one,
-        and follow what is currently running.
-      </p>
-    </section>
+    <v-row class="hero-row mb-6 mb-md-8">
+      <v-col cols="12" lg="8">
+        <section class="hero reveal-1">
+          <h1 class="hero-title mb-3">Digital tools for digital humanists.</h1>
+          <p class="hero-text mb-0">
+            Keep your material in one calm place. Open an existing desk, create a new one,
+            and follow what is currently running.
+          </p>
+        </section>
+      </v-col>
+
+      <v-col v-if="organizationLogoSrc" cols="12" lg="4" class="hero-logo-slot reveal-1">
+        <v-card class="panel org-logo-card" rounded="xl" elevation="2">
+          <v-card-text class="d-flex justify-center py-4">
+            <img :src="organizationLogoSrc" alt="Organization logo" class="org-logo" />
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
 
     <v-alert v-if="state.loadError" type="error" class="mb-6" variant="tonal">
       {{ state.loadError }}
@@ -317,7 +525,7 @@ onMounted(async () => {
               <div class="text-overline">Your Desks</div>
               <div class="text-h5 font-weight-bold">Project Listing</div>
             </div>
-            <v-btn size="small" variant="outlined" @click="loadProjects" :loading="state.loadingProjects">
+            <v-btn size="small" variant="outlined" @click="refreshProjects" :loading="state.loadingProjects">
               Refresh
             </v-btn>
           </v-card-title>
@@ -333,15 +541,31 @@ onMounted(async () => {
               <v-table density="comfortable" class="project-table">
                 <thead>
                   <tr>
-                    <th>Desk Name</th>
-                    <th>Size</th>
-                    <th>Items (nodes)</th>
-                    <th>Expires</th>
+                    <th>
+                      <button type="button" class="sort-button" @click="sortBy('name')">
+                        Desk Name <v-icon size="small" :icon="sortIcon('name')" />
+                      </button>
+                    </th>
+                    <th>
+                      <button type="button" class="sort-button" @click="sortBy('size')">
+                        Size <v-icon size="small" :icon="sortIcon('size')" />
+                      </button>
+                    </th>
+                    <th>
+                      <button type="button" class="sort-button" @click="sortBy('nodes')">
+                        Items (nodes) <v-icon size="small" :icon="sortIcon('nodes')" />
+                      </button>
+                    </th>
+                    <th>
+                      <button type="button" class="sort-button" @click="sortBy('expires')">
+                        Expires <v-icon size="small" :icon="sortIcon('expires')" />
+                      </button>
+                    </th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="project in projectsWithMeta" :key="project['@rid']">
+                  <tr v-for="project in sortedProjects" :key="project['@rid']">
                     <td
                       class="font-weight-medium project-name-click"
                       role="button"
@@ -422,6 +646,31 @@ onMounted(async () => {
       </v-col>
 
       <v-col cols="12" lg="4" class="reveal-3 right-column">
+        <v-card class="panel mb-6" rounded="xl" elevation="2">
+          <v-card-title>
+            <div class="text-overline">Live Jobs</div>
+            <div class="text-h6 font-weight-bold">Running Processing Jobs</div>
+          </v-card-title>
+
+          <v-card-text>
+            <v-list v-if="runningJobs.length > 0" class="bg-transparent" lines="two">
+              <v-list-item v-for="job in runningJobs" :key="job.rid" class="px-0">
+                <v-list-item-title>{{ job.rid }}</v-list-item-title>
+                <v-list-item-subtitle>{{ job.message }}</v-list-item-subtitle>
+                <template #append>
+                  <v-chip size="small" :color="job.status === 'paused' ? 'warning' : (job.status === 'cancelling' ? 'error' : 'success')" variant="tonal">
+                    {{ job.status }}
+                  </v-chip>
+                </template>
+              </v-list-item>
+            </v-list>
+
+            <div v-else class="empty-state">
+              No running jobs right now.
+            </div>
+          </v-card-text>
+        </v-card>
+
         <v-card class="panel mb-6" rounded="xl" elevation="2">
           <v-card-title>
             <div class="text-overline">Live Now</div>
@@ -518,6 +767,18 @@ onMounted(async () => {
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <footer class="main-footer mt-8">
+      <div class="footer-text">Created by Open Science Centre/University of Jyvaskyla</div>
+      <a
+        href="https://github.com/OSC-JYU/MessyDesk"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="footer-link"
+      >
+        github: https://github.com/OSC-JYU/MessyDesk
+      </a>
+    </footer>
         </v-container>
       </v-main>
     </v-layout>
@@ -580,6 +841,11 @@ onMounted(async () => {
   z-index: 1;
 }
 
+.hero-logo-slot {
+  display: flex;
+  align-items: center;
+}
+
 .hero-kicker {
   font-size: 0.9rem;
   letter-spacing: 0.12em;
@@ -618,6 +884,22 @@ onMounted(async () => {
   font-weight: 700;
 }
 
+.sort-button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-weight: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0;
+  cursor: pointer;
+}
+
+.sort-button:hover {
+  color: #1565c0;
+}
+
 .project-table :deep(td) {
   border-bottom-color: rgba(25, 84, 124, 0.12);
 }
@@ -631,6 +913,16 @@ onMounted(async () => {
   text-decoration: underline;
 }
 
+.org-logo-card {
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.org-logo {
+  max-width: 100%;
+  max-height: 78px;
+  object-fit: contain;
+}
+
 .empty-state {
   margin-top: 1rem;
   border: 1px dashed rgba(25, 84, 124, 0.26);
@@ -638,6 +930,31 @@ onMounted(async () => {
   padding: 1rem;
   color: var(--md-muted);
   background: rgba(255, 255, 255, 0.52);
+}
+
+.main-footer {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid rgba(25, 84, 124, 0.2);
+  padding-top: 1rem;
+  padding-bottom: 0.5rem;
+  color: var(--md-muted);
+}
+
+.footer-text {
+  font-size: 0.92rem;
+}
+
+.footer-link {
+  display: inline-block;
+  margin-top: 0.3rem;
+  color: #1565c0;
+  text-decoration: none;
+  font-size: 0.92rem;
+}
+
+.footer-link:hover {
+  text-decoration: underline;
 }
 
 .reveal-1,

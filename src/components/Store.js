@@ -44,6 +44,7 @@ export const store = reactive({
   reorder_target: '',
   settings_show_descriptions: true,
   settings_show_entities: true,
+  running_processes: {},
 
 
   reload(update) {

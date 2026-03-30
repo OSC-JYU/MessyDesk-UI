@@ -64,6 +64,26 @@
     color: white !important;
 }
 
+.process-banner {
+    backdrop-filter: blur(2px);
+    border-bottom: 1px solid rgba(255,255,255,0.25);
+}
+
+.process-banner-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.process-banner-main {
+    font-weight: 600;
+}
+
+.process-banner-sub {
+    font-size: 12px;
+    opacity: 0.92;
+}
+
 
 
 
@@ -76,15 +96,35 @@
 
  
 <template v-for="(process, key) in state.running_processes" :key="key" >
-    <v-banner v-if="process.status == 'running' || process.status == 'cancelling'"
-        lines="one"
-        color="green"
-        icon="mdi-run"
+    <v-banner v-if="process.status == 'running' || process.status == 'paused' || process.status == 'cancelling'"
+        class="process-banner"
+        lines="two"
+        :color="process.status == 'paused' ? 'amber-darken-2' : (process.status == 'cancelling' ? 'red-darken-1' : 'teal-darken-2')"
+        :icon="process.status == 'paused' ? 'mdi-pause-circle' : (process.status == 'cancelling' ? 'mdi-close-circle' : 'mdi-run')"
     >
         <template v-slot:text>
-            [{{ key }}] {{ process.message }}
+            <div class="process-banner-text">
+                <div class="process-banner-main">[{{ key }}] {{ process.message }}</div>
+                <div v-if="process.batch" class="process-banner-sub">
+                    State: {{ process.batch.state || process.status }} | Processed: {{ process.batch.processed_files ?? 0 }}/{{ process.batch.total_files ?? '?' }} | Failed: {{ process.batch.failed_files ?? 0 }} | ETA: {{ formatEta(process.batch.eta_sec) }}
+                </div>
+            </div>
         </template>
-        <v-btn v-if="process.status == 'running'" color="white" @click="cancelProcess(key)">
+        <v-progress-linear
+            v-if="process.batch && process.batch.total_files > 0"
+            :model-value="Math.min(100, ((process.batch.processed_files || 0) / process.batch.total_files) * 100)"
+            height="4"
+            class="mb-2"
+            color="white"
+            bg-color="rgba(255,255,255,0.35)"
+        ></v-progress-linear>
+        <v-btn v-if="process.status == 'running'" color="white" class="mr-2" @click="pauseProcess(key)">
+            Pause
+        </v-btn>
+        <v-btn v-if="process.status == 'paused'" color="white" class="mr-2" @click="resumeProcess(key)">
+            Resume
+        </v-btn>
+        <v-btn v-if="process.status == 'running' || process.status == 'paused'" color="white" @click="cancelProcess(key)">
             Cancel 
         </v-btn>
 
@@ -397,8 +437,10 @@
         action: '',
         compact_view: false,
         isolate_view: false,
-        running_processes: {}
+        running_processes: store.running_processes
     })
+
+    let batchRefreshTimer = null
 
     var current_node = reactive({})
     var current_graph_node = reactive({position: {}})
@@ -478,6 +520,7 @@
     onMounted(() => {
         console.log('Component mounted, connecting to SSE...');
         connectSSE();
+        batchRefreshTimer = setInterval(refreshRunningBatches, 3000)
     });
 
     // Clean up when component is unmounted
@@ -485,6 +528,10 @@
         console.log('Component unmounting, closing SSE connection...');
         if (eventSource) {
             eventSource.close();
+        }
+        if(batchRefreshTimer) {
+            clearInterval(batchRefreshTimer)
+            batchRefreshTimer = null
         }
     });
 
@@ -659,23 +706,85 @@
     }
 
 
-    function updateProcess(wsdata) {
-        if(!state.running_processes[wsdata.process['@rid']]) {
-            state.running_processes[wsdata.process['@rid']] = {message: label + ' Working...', status: 'running'}
+    function formatEta(etaSec) {
+        if(etaSec === null || etaSec === undefined || etaSec === '') return 'n/a'
+        const sec = Number(etaSec)
+        if(!Number.isFinite(sec)) return 'n/a'
+        if(sec < 60) return `${Math.max(sec, 0)}s`
+        const minutes = Math.floor(sec / 60)
+        const seconds = sec % 60
+        if(minutes < 60) return `${minutes}m ${seconds}s`
+        const hours = Math.floor(minutes / 60)
+        const remMin = minutes % 60
+        return `${hours}h ${remMin}m`
+    }
+
+    function upsertRunningProcess(processRid, attrs = {}) {
+        if(!state.running_processes[processRid]) {
+            state.running_processes[processRid] = {
+                message: 'Working...',
+                status: 'running',
+                batch: null,
+            }
         }
+        Object.assign(state.running_processes[processRid], attrs)
+        store.running_processes = state.running_processes
+    }
 
+    async function refreshRunningBatches() {
+        const ids = Object.keys(state.running_processes)
+        for(const processRid of ids) {
+            const process = state.running_processes[processRid]
+            if(process?.status == 'running' || process?.status == 'paused' || process?.status == 'cancelling') {
+                await hydrateBatchInfo(processRid)
+            }
+        }
+    }
 
+    async function hydrateBatchInfo(processRid) {
+        try {
+            const batch = await web.getBatch(processRid)
+            if(!batch) return
+            const stateName = batch.state || 'running'
+            const eta = formatEta(batch.eta_sec)
+            const processed = batch.processed_files ?? 0
+            const total = batch.total_files ?? '?'
+            const avg = batch.avg_sec_per_file ?? 0
+            upsertRunningProcess(processRid, {
+                status: stateName,
+                batch: batch,
+                message: `${processed}/${total} files, ETA ${eta}, avg ${avg}s/file`,
+            })
+        } catch(e) {
+            console.log('batch hydrate failed', processRid, e?.message)
+        }
+    }
 
+    function updateProcess(wsdata) {
         var label = ''
         var node = elements.nodes.find(x => x.id == wsdata.process['@rid'])
         if(node && node.data.label) {
             label = node.data.label
         }
+
+        upsertRunningProcess(wsdata.process['@rid'], {
+            status: wsdata?.process?.status || 'running',
+        })
+
         if(wsdata.command == 'process_finished') {
             //state.message = 'Process finished with ' + label
             //state.process_update = false
             if(state.running_processes[wsdata.process['@rid']]) {
-                state.running_processes[wsdata.process['@rid']].status = 'finished'
+                state.running_processes[wsdata.process['@rid']].status = wsdata?.batch?.state || wsdata?.process?.status || 'finished'
+                if(wsdata?.batch) {
+                    const eta = formatEta(wsdata.batch.eta_sec)
+                    const processed = wsdata.batch.processed_files ?? wsdata.current_file ?? 0
+                    const total = wsdata.batch.total_files ?? wsdata.total_files ?? '?'
+                    const failed = wsdata.batch.failed_files ?? 0
+                    state.running_processes[wsdata.process['@rid']].batch = wsdata.batch
+                    state.running_processes[wsdata.process['@rid']].message = `Done ${processed}/${total}, failed ${failed}, ETA ${eta}`
+                }
+                store.running_processes = state.running_processes
             }
             if(wsdata.process) updateNodeKey(wsdata.process['@rid'], wsdata.process)
             if(wsdata.set) updateNodeKey(wsdata.set['@rid'], wsdata.set)
@@ -684,14 +793,25 @@
         
         if(wsdata.command == 'process_update') {
             if(!state.running_processes[wsdata.process['@rid']]) {
-                state.running_processes[wsdata.process['@rid']] = {message: label + ' Working...', status: 'running'}
+                upsertRunningProcess(wsdata.process['@rid'], {message: label + ' Working...', status: 'running'})
             }
             // we may receive update after process is cancelled and we do not want to update the message
             if(state.running_processes[wsdata.process['@rid']].status != 'finished') {
-                if(wsdata.total_files && wsdata.current_file) {
+                if(wsdata?.batch) {
+                    const eta = formatEta(wsdata.batch.eta_sec)
+                    const processed = wsdata.batch.processed_files ?? wsdata.current_file ?? 0
+                    const total = wsdata.batch.total_files ?? wsdata.total_files ?? '?'
+                    const failed = wsdata.batch.failed_files ?? 0
+                    state.running_processes[wsdata.process['@rid']].batch = wsdata.batch
+                    state.running_processes[wsdata.process['@rid']].status = wsdata.batch.state || state.running_processes[wsdata.process['@rid']].status
+                    state.running_processes[wsdata.process['@rid']].message = `${label}: ${processed}/${total}, failed ${failed}, ETA ${eta}`
+                    store.running_processes = state.running_processes
+                } else if(wsdata.total_files && wsdata.current_file) {
                     state.running_processes[wsdata.process['@rid']].message = 'Working with file ' + wsdata.current_file + '/' + wsdata.total_files + ' with "' + label + '"'
+                    store.running_processes = state.running_processes
                 } else {
                     state.running_processes[wsdata.process['@rid']].message = 'Working with ' + label            
+                    store.running_processes = state.running_processes
                 }
                 if(wsdata.set) updateNodeKey(wsdata.set['@rid'], wsdata.set)
             }
@@ -756,7 +876,9 @@
             // add banner if this is batch process (set process)
             if(nodetype == 'process' && wsdata.output) {
                 // add process to running processes
-                state.running_processes[wsdata.node['@rid']] = {message: wsdata.node.label + ' Process created', status: 'running'}
+                state.running_processes[wsdata.node['@rid']] = {message: wsdata.node.label + ' Process created', status: 'running', batch: null}
+                store.running_processes = state.running_processes
+                hydrateBatchInfo(wsdata.node['@rid'])
             }
 
             if(wsdata.process) {
@@ -909,9 +1031,26 @@
 
 
     async function cancelProcess(process_rid) {
-        state.running_processes[process_rid].message = 'Cancelling...'
-        state.running_processes[process_rid].status = 'cancelling'
-        await web.cancelProcess(process_rid)
+        upsertRunningProcess(process_rid, {status: 'cancelling', message: 'Cancelling...'})
+        try {
+            await web.cancelBatch(process_rid)
+        } catch(e) {
+            // fallback to old endpoint for legacy paths
+            await web.cancelProcess(process_rid)
+        }
+        await hydrateBatchInfo(process_rid)
+    }
+
+    async function pauseProcess(process_rid) {
+        upsertRunningProcess(process_rid, {status: 'paused', message: 'Pausing...'})
+        await web.pauseBatch(process_rid)
+        await hydrateBatchInfo(process_rid)
+    }
+
+    async function resumeProcess(process_rid) {
+        upsertRunningProcess(process_rid, {status: 'running', message: 'Resuming...'})
+        await web.resumeBatch(process_rid)
+        await hydrateBatchInfo(process_rid)
     }
 
 
@@ -929,6 +1068,10 @@
         }
 
         drawGraph()
+        const runningRids = Object.keys(state.running_processes)
+        for(const rid of runningRids) {
+            await hydrateBatchInfo(rid)
+        }
         
 
 	}
@@ -980,6 +1123,9 @@
 
             if(node.data.metadata)
                 flownode.data.metadata = node.data.metadata
+
+            if(node.data.forward)
+                flownode.data.forward = node.data.forward
 
             if(node.data.process_rid)
                 flownode.data.process_rid = node.data.process_rid

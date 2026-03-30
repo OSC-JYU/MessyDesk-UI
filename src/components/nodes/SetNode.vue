@@ -53,6 +53,21 @@ img {
   height: auto;
   object-fit: cover;
 }
+
+.pdf-preview-icon {
+  opacity: 0.9;
+}
+
+.pdf-preview-chip {
+  width: 100%;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: radial-gradient(circle at top, #fff8f8 0%, #f2ecec 65%, #e7e1e1 100%);
+  border: 1px solid #dbc9c9;
+}
 </style>
 
 
@@ -92,11 +107,14 @@ function openCrunchers(filter) {
         <v-col>
           <div v-if="data.paths && data.paths.length > 0" class="image-grid">
             <div v-for="(f, index) in data.paths" :key="index" class="image-item">
-              <img :src="f" class="w-200 shadow-1-strong rounded mb-2" draggable="false"/>
+              <div v-if="f === '__pdf_icon__'" class="pdf-preview-chip">
+                <v-icon class="pdf-preview-icon" size="46" color="red-darken-2">mdi-file-pdf-box</v-icon>
+              </div>
+              <img v-else :src="f" class="w-200 shadow-1-strong rounded mb-2" draggable="false"/>
             </div>
           </div>
 
-          <div v-if="!data.paths && data.count > 0" class="pa-10">
+          <div v-if="(!data.paths || data.paths.length === 0) && data.count > 0" class="pa-10">
             <v-icon size="55" >mdi-text-box-multiple-outline</v-icon>
           </div>
         </v-col>

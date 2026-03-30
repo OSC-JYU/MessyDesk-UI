@@ -1,6 +1,7 @@
 <script setup>
     import { onMounted, reactive, ref, watch } from "vue";
     import { useRoute } from 'vue-router'
+    import mdLogo from '../assets/images/md-logo.svg'
 
     import RootNodes from './RootNodes.vue'
     import ProjectNodes from './ProjectNodes.vue'
@@ -49,62 +50,26 @@
               gradient="to top right, rgba(19,84,122,.8), rgba(128,208,199,.8)"
             ></v-img>
           </template>
-  
-          <template v-slot:prepend>
-            <v-app-bar-nav-icon @click.stop="state.drawer = !state.drawer"></v-app-bar-nav-icon>
-          </template>
-  
+
+          <img :src="mdLogo" alt="MessyDesk logo" class="md-logo" />  
+
           <v-app-bar-title title="projects">
             <span @click="changeTab(0)">MessyDesk</span>
           </v-app-bar-title> 
 
-          <template v-if="store.current_project && store.current_project.data">
-            {{ store.current_project.data.label }}
-          </template>
-          <template v-else>
-            All Your Wonderful Stuff  
-          </template>
+
   
           <v-spacer></v-spacer>
 
           <v-tabs v-model="state.tab" >
 
-            <v-tab >Desks</v-tab>
+            <v-tab >Main</v-tab>
             <v-tab>Search</v-tab>
             <v-tab>Tags</v-tab>
 
           </v-tabs>
 
-          
-          <!-- <v-btn icon v-if="store.current_project">
-          <router-link :to="'/'"><v-icon>mdi-graph</v-icon>
-            <v-tooltip activator="parent" location="top">graph</v-tooltip>
-          </router-link>
-        </v-btn> -->
-          
-        <!-- <v-btn icon>
-          <router-link :to="'/search'"><v-icon>mdi-magnify</v-icon>
-            <v-tooltip activator="parent" location="top">search</v-tooltip>
-          </router-link>
-        </v-btn>
 
-
-        <v-btn icon>
-          <router-link :to="'/tags'"><v-icon>mdi-tag</v-icon>
-            <v-tooltip activator="parent" location="top">tags</v-tooltip>
-          </router-link>
-        </v-btn> -->
-  
-          <!-- <v-btn icon>
-            <v-icon @click="store.search_open= !store.search_open">mdi-magnify</v-icon>
-          </v-btn>
-           -->
-
-          <!-- <v-btn icon>
-            <router-link :to="'/entities'" ><v-icon>mdi-account-group-outline</v-icon>
-              <v-tooltip activator="parent" location="top">entity management</v-tooltip>
-            </router-link>
-          </v-btn> -->
 
           <v-menu location="bottom">
             <template v-slot:activator="{ props }">
@@ -145,55 +110,7 @@
           
     </v-app-bar>
 
-    <!-- Sidebar -->
-    <v-navigation-drawer
-        v-model="state.drawer"
-        width="375"
-        :location="$vuetify.display.mobile ? 'bottom' : undefined"
-        temporary
-      >
-   
-      <v-list lines="two">
-        <v-list-subheader><router-link :to="'/'" >Back to Main</router-link></v-list-subheader>
 
-        <v-list-item v-if="props.mode=='graph'"
-          @click="store.uploader_open = true"
-        >
-          <template v-slot:prepend>
-            <v-icon  icon="mdi-file-plus"></v-icon>
-          </template>
-      
-            <v-list-item-title >Add file</v-list-item-title>
-        </v-list-item>
-
-        <!-- <v-list-item v-if="props.mode=='graph'"
-          @click="store.set_creator_open = true"
-        >
-          <template v-slot:prepend>
-            <v-icon  icon="mdi-folder-plus"></v-icon>
-          </template>
-      
-            <v-list-item-title >Create set</v-list-item-title>
-        </v-list-item> -->
-
-        <v-list-item v-if="props.mode=='projects'"
-          @click="$emit('create-project')"
-        >
-          <template v-slot:prepend>
-            <v-icon  icon="mdi-file"></v-icon>
-          </template>
-      
-            <v-list-item-title >Create desk</v-list-item-title>
-        </v-list-item>
-
-        <v-divider inset></v-divider>
-
-      </v-list>
-
-        <RootNodes v-if="props.mode=='graph'" @fit-to-node="fitToNode" />
-        <ProjectNodes v-if="props.mode=='projects'" @fit-to-node="fitToNode" />
-
-    </v-navigation-drawer>
 
 
 
@@ -233,10 +150,10 @@ header a {
 
 }
 
-img {
+.md-logo {
   height: 50px;
   width: auto;
-  margin: 1em 1em 1em 2em;
+  margin: 0.4em 1em 0.4em 0.6em;
 }
 
 </style>

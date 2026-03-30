@@ -1,6 +1,7 @@
 <script setup>
     import { onMounted, reactive, ref, watch } from "vue";
     import { useRoute } from 'vue-router'
+    import mdLogo from '../assets/images/md-logo.svg'
 
  
     import RootNodes from './RootNodes.vue'
@@ -67,6 +68,8 @@
           <v-app-bar-title title="projects">
             <RouterLink to="/">MessyDesk</RouterLink>
           </v-app-bar-title> 
+
+          <img :src="mdLogo" alt="MessyDesk logo" class="md-logo" />
 
           <template v-if="store.current_project && store.current_project.data">
             {{ store.current_project.data.label }}
@@ -284,10 +287,10 @@ header a {
 
 }
 
-img {
+.md-logo {
   height: 50px;
   width: auto;
-  margin: 1em 1em 1em 2em;
+  margin: 0.4em 1em 0.4em 0.6em;
 }
 
 </style>

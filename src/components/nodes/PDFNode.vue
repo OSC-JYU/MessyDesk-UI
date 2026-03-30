@@ -4,6 +4,35 @@
   cursor: pointer;
 }
 
+.pdf-icon-wrap {
+  min-height: 190px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top, #fff7f7 0%, #f2ecec 65%, #e8e2e2 100%);
+  border: 1px solid #d6c7c7;
+  border-radius: 10px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.85), 0 2px 8px rgba(92, 41, 41, 0.1);
+}
+
+.pdf-icon {
+  opacity: 0.94;
+  filter: drop-shadow(0 2px 3px rgba(90, 0, 0, 0.2));
+}
+
+.pdf-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #7a2020;
+  background: #ffffffcc;
+  border: 1px solid #e5caca;
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
 img {
   max-width:190px;
   margin: 0px
@@ -42,6 +71,7 @@ img {
 
 
 <script setup>
+import { computed } from 'vue'
 import { Handle, Position, useNode } from '@vue-flow/core'
 import { useRouter, useRoute } from 'vue-router'
 import {store} from "../Store.js";
@@ -61,6 +91,11 @@ const props = defineProps({
 
 const { node } = useNode()
 
+const showPdfIcon = computed(() => {
+  const isPdf = props.data?._type === 'pdf' || props.data?.type === 'pdf'
+  return isPdf && (!props.data?.forward || !props.data?.image)
+})
+
 
 function openCrunchers() {
   store.current_node = node
@@ -75,7 +110,11 @@ function openCrunchers() {
     <div class="header">{{ data.label }}</div>
     <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" :src="CookieIcon" />
     <div class="m-2">
-      <img :src="data.image" draggable="false"/>
+      <div v-if="showPdfIcon" class="pdf-icon-wrap">
+        <v-icon class="pdf-icon" size="120" color="red-darken-2">mdi-file-pdf-box</v-icon>
+        <div class="pdf-label">PDF blob</div>
+      </div>
+      <img v-else :src="data.image" draggable="false"/>
       <pre>{{ data.description }}</pre>
       <v-chip v-if="data.model" color="green" variant="outlined">
         {{ data.model }}

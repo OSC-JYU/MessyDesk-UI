@@ -166,6 +166,32 @@
     text-align: center;
     color: #e65100;
 }
+
+.nodecard-status {
+    margin-top: 10px;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+.nodecard-status--info {
+    background: #e3f2fd;
+    border: 1px solid #bbdefb;
+    color: #0d47a1;
+}
+
+.nodecard-status--success {
+    background: #e8f5e9;
+    border: 1px solid #c8e6c9;
+    color: #1b5e20;
+}
+
+.nodecard-status--error {
+    background: #ffebee;
+    border: 1px solid #ffcdd2;
+    color: #b71c1c;
+}
 </style>
 
 
@@ -257,9 +283,22 @@
                 </template>
 
                 <template v-if="store.current().type == 'set'">
-                    <a title="opens file in new tab" target="_blank" :href="apiUrl + '/api/sets/' + store.current().id.replace('#','') + '/files/zip'">
-                        <v-btn class="nodecard-button nodecard-button--secondary" size="small">Download set</v-btn>
-                    </a> 
+                    <v-btn
+                        class="nodecard-button nodecard-button--secondary"
+                        size="small"
+                        :loading="state.set_zip_loading"
+                        :disabled="state.set_zip_loading"
+                        @click="downloadSet"
+                    >
+                        {{ state.set_zip_loading ? 'Preparing set zip...' : 'Download set' }}
+                    </v-btn>
+                    <div
+                        v-if="state.set_zip_message"
+                        class="nodecard-status"
+                        :class="`nodecard-status--${state.set_zip_message_type}`"
+                    >
+                        {{ state.set_zip_message }}
+                    </div>
                 </template>
             </div>
         </div>
@@ -335,6 +374,9 @@
         admin_edit: false,
         image_edit: false,
         show_loader: false,
+        set_zip_loading: false,
+        set_zip_message: '',
+        set_zip_message_type: 'info',
         _group: null,
         _access: null,
         error: null,
@@ -356,6 +398,10 @@
             } catch(e) {
                 state.prompt = ''
             }
+
+            state.set_zip_loading = false
+        state.set_zip_message = ''
+        state.set_zip_message_type = 'info'
     })
 
     const current_query = computed(() => {
@@ -423,6 +469,50 @@
         console.log('Show detail for node:', store.current_node.id)
         // You can implement the detail view logic here or emit an event
         // emit('showDetail', store.current_node)
+    }
+
+    async function downloadSet() {
+        if (state.set_zip_loading || store.current().type !== 'set') return
+
+        const setRid = store.current().id
+        const maxPollMs = Number(import.meta.env.VITE_SET_ZIP_WAIT_MS || 20 * 60 * 1000)
+        const pollMs = Number(import.meta.env.VITE_SET_ZIP_POLL_MS || 2000)
+
+        state.set_zip_loading = true
+        state.set_zip_message = 'Zip request sent. Preparing archive in background...'
+        state.set_zip_message_type = 'info'
+
+        try {
+            const job = await web.createSetZipJob(setRid)
+            const startedAt = Date.now()
+            state.set_zip_message = `Zip job queued (${job.job_id.slice(0, 8)}). Waiting for completion...`
+
+            while (Date.now() - startedAt < maxPollMs) {
+                await new Promise((resolve) => setTimeout(resolve, pollMs))
+
+                const status = await web.getSetZipJobStatus(setRid, job.job_id)
+                if (status.status === 'ready') {
+                    const downloadPath = status.download_url || web.getSetZipDownloadUrl(setRid, job.job_id)
+                    state.set_zip_message = 'Zip is ready. Starting download...'
+                    state.set_zip_message_type = 'success'
+                    window.location.assign(apiUrl + downloadPath)
+                    return
+                }
+                if (status.status === 'failed') {
+                    throw new Error(status.message || 'Set zip generation failed')
+                }
+
+                state.set_zip_message = `Preparing zip... (${Math.max(0, Math.floor((maxPollMs - (Date.now() - startedAt)) / 1000))}s timeout window left)`
+            }
+
+            throw new Error('Set zip generation is taking too long. Please try again shortly.')
+        } catch (error) {
+            console.error('Set zip download failed:', error)
+            state.set_zip_message = error.message || 'Could not prepare set zip download'
+            state.set_zip_message_type = 'error'
+        } finally {
+            state.set_zip_loading = false
+        }
     }
 
 
