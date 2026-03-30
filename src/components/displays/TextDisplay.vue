@@ -80,7 +80,17 @@
 
         <!-- MIDDLE COLUMN - Text Content -->
         <v-col :cols="state.expandedImage ? 4 : 6" class="text-column">
-          <v-sheet class="text-content pa-4" ref="textContainer" v-html="state.text"></v-sheet>
+          <v-sheet class="text-content pa-4" ref="textContainer">
+            <v-textarea
+              v-if="state.editMode"
+              v-model="state.editText"
+              auto-grow
+              rows="20"
+              variant="outlined"
+              label="Edit text"
+            ></v-textarea>
+            <div v-else v-html="state.text"></div>
+          </v-sheet>
         </v-col>
 
         <!-- RIGHT COLUMN - Controls and Metadata -->
@@ -102,6 +112,7 @@
             <!-- File Info -->
             <div v-if="state.file" class="mb-4">
               <h4>{{ state.file.label}}</h4>
+              <v-chip v-if="state.file.edited" color="orange-darken-2" size="small" class="my-2">Edited version</v-chip>
               <DescriptionEditor :description="state.file.description" :rid="state.file['@rid']"/>
               
               <!-- Entities -->
@@ -168,6 +179,42 @@
             >
               Open full file
             </v-btn>
+
+            <v-btn
+              v-if="state.file && !state.editMode"
+              color="secondary"
+              class="mt-2"
+              block
+              @click="startTextEdit"
+            >
+              Create edited version
+            </v-btn>
+            <v-btn
+              v-if="state.file && state.editMode"
+              color="primary"
+              class="mt-2"
+              block
+              @click="saveTextEdit"
+            >
+              Save edited version
+            </v-btn>
+            <v-btn
+              v-if="state.editMode"
+              class="mt-2"
+              block
+              @click="cancelTextEdit"
+            >
+              Cancel edit
+            </v-btn>
+            <v-btn
+              v-if="state.file && state.file.edited"
+              color="warning"
+              class="mt-2"
+              block
+              @click="revertTextEdit"
+            >
+              Revert to original
+            </v-btn>
           </v-sheet>
         </v-col>
       </v-row>
@@ -212,7 +259,10 @@
       isPanning: false,
       lastPanX: 0,
       lastPanY: 0,
-      showGuide: true
+        showGuide: true,
+        textRaw: '',
+        editMode: false,
+        editText: ''
   })
 
   async function prev() {
@@ -222,6 +272,7 @@
     var response = await web.getSetFiles(store.current_node.id, state.skip - 1, 1)
     state.file = response.files[0]
     var f = await web.getNodeFile(response.files[0]['@rid'])
+    state.textRaw = typeof f === 'string' ? f : JSON.stringify(f, null, 2)
     state.text = replaceWithBr(f)
     var nodepath = await web.getNodePath(response.files[0]['@rid'])
     state.nodepath = nodepath
@@ -234,6 +285,7 @@
     var response = await web.getSetFiles(store.current_node.id, state.skip -1 , 1)
     state.file = response.files[0]
     var f = await web.getNodeFile(response.files[0]['@rid'])
+    state.textRaw = typeof f === 'string' ? f : JSON.stringify(f, null, 2)
     state.text = replaceWithBr(f)
     var nodepath = await web.getNodePath(response.files[0]['@rid'])
     state.nodepath = nodepath
@@ -325,16 +377,41 @@
   async function load() {
     state.file = null
     state.expandedImage = null
+    state.editMode = false
+    state.editText = ''
     state.file_count = store.file_count || null
     if(store.skip >= 0) state.skip = store.skip + 1
     else state.skip = null
 
     var f = await web.getNodeFile(store.file['@rid'])
+    state.textRaw = typeof f === 'string' ? f : JSON.stringify(f, null, 2)
     state.file = await web.getDocInfo(store.file['@rid'])
     state.entities = await web.getEntities()
     state.text = replaceWithBr(f)
     var nodepath = await web.getNodePath(store.file['@rid'])
     state.nodepath = nodepath
+  }
+
+  function startTextEdit() {
+    state.editMode = true
+    state.editText = state.textRaw
+  }
+
+  function cancelTextEdit() {
+    state.editMode = false
+    state.editText = state.textRaw
+  }
+
+  async function saveTextEdit() {
+    if(!state.file || !state.file['@rid']) return
+    await web.createFileVersion(state.file['@rid'], { content: state.editText })
+    await load()
+  }
+
+  async function revertTextEdit() {
+    if(!state.file || !state.file['@rid']) return
+    await web.revertFileVersion(state.file['@rid'])
+    await load()
   }
 
 

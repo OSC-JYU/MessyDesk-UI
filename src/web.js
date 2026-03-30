@@ -328,6 +328,30 @@ web.getNodeFile = async function(rid) {
 	return result.data
 }
 
+web.getNodeFileBlob = async function(rid) {
+	var result = await axios.get(`/api/files/${rid.replace('#','')}`, { responseType: 'blob' })
+	return result.data
+}
+
+web.createFileVersion = async function(rid, payload = {}) {
+	const cleanRid = rid.replace('#','')
+	if (payload?.file instanceof Blob) {
+		const formData = new FormData()
+		formData.append('file', payload.file, payload.filename || 'edited.bin')
+		if (payload.operation) formData.append('operation', payload.operation)
+		if (payload.params) formData.append('params', JSON.stringify(payload.params))
+		const result = await axios.post(`/api/files/${cleanRid}/version`, formData)
+		return result.data
+	}
+	const result = await axios.post(`/api/files/${cleanRid}/version`, payload)
+	return result.data
+}
+
+web.revertFileVersion = async function(rid) {
+	const result = await axios.post(`/api/files/${rid.replace('#','')}/revert`)
+	return result.data
+}
+
 web.getNodePath = async function(rid) {
 	var result = await axios.get(`/api/graph/traverse/${rid.replace('#','')}/out`)
 	return result.data

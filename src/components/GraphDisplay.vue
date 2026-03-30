@@ -199,7 +199,7 @@
                         <v-row class="set-panel mt-8">
                             <v-col
                             v-for="(file, index) in state.setItems"
-                            :key="file['@rid'] || file.source_rid || index"
+                            :key="(file['@rid'] || file.source_rid || index) + '-' + (file.thumbnail_version || '')"
                             class="d-flex child-flex flow"
                             cols="2"
                             >
@@ -453,6 +453,7 @@
     })
 
     let batchRefreshTimer = null
+    let setPanelRefreshTimer = null
 
     var current_node = reactive({})
     var current_graph_node = reactive({position: {}})
@@ -540,6 +541,10 @@
         console.log('Component unmounting, closing SSE connection...');
         if (eventSource) {
             eventSource.close();
+        }
+        if(setPanelRefreshTimer) {
+            clearTimeout(setPanelRefreshTimer)
+            setPanelRefreshTimer = null
         }
         if(batchRefreshTimer) {
             clearInterval(batchRefreshTimer)
@@ -913,20 +918,91 @@
 
     }
     
+    function mergeNodeFields(target, source) {
+        if(!target || !source) return false
+        const keys = [
+            'image',
+            'thumb',
+            'thumbnail_version',
+            'status',
+            'label',
+            'description',
+            'info',
+            'file_count',
+            'count',
+            'roi_count',
+            'duration',
+            'metadata',
+            'paths',
+            'edited',
+        ]
+        let changed = false
+        for(const key of keys) {
+            if(source[key] !== undefined) {
+                target[key] = source[key]
+                changed = true
+            }
+        }
+        return changed
+    }
+
+    function mergeIntoSetCollection(collection, target_rid, node) {
+        if(!Array.isArray(collection) || !node) return false
+        let changed = false
+        for(const entry of collection) {
+            if(entry && entry['@rid'] == target_rid) {
+                changed = mergeNodeFields(entry, node) || changed
+            }
+        }
+        return changed
+    }
+
+    function isThumbnailUpdate(node) {
+        if(!node) return false
+        return node.thumbnail_version !== undefined
+            || node.thumb !== undefined
+            || node.image !== undefined
+            || node.paths !== undefined
+    }
+
+    function scheduleSetPanelRefresh() {
+        if(!state.setPanel || !store.current_node || store.current_node.type != 'set') return
+        if(setPanelRefreshTimer) clearTimeout(setPanelRefreshTimer)
+        // Debounce high-frequency thumbnail updates during batch processing.
+        setPanelRefreshTimer = setTimeout(async () => {
+            setPanelRefreshTimer = null
+            await loadSet()
+        }, 350)
+    }
+
     function updateNodeKey(target_rid, node) {
+        const localNode = node ? {...node} : node
+        if(localNode) {
+            const hasThumbData = localNode.image !== undefined || localNode.thumb !== undefined || localNode.paths !== undefined
+            if(hasThumbData && localNode.thumbnail_version === undefined) {
+                localNode.thumbnail_version = Date.now()
+            }
+        }
+
         var target_node = elements.nodes.find(x => x.id == target_rid)
-        if(target_node && node) {
-            if(node.image)  target_node.data.image = node.image
-            if(node.status)  target_node.data.status = node.status
-            if(node.label)  target_node.data.label = node.label
-            if(node.description)  target_node.data.description = node.description
-            if(node.info)  target_node.data.info = node.info
-            if(node.file_count)  target_node.data.file_count = node.file_count
-            if(node.count)  target_node.data.count = node.count
-            if(node.roi_count)  target_node.data.roi_count = node.roi_count
-            if(node.duration)  target_node.data.duration = node.duration
-            if(node.metadata)  target_node.data.metadata = node.metadata
-            if(node.paths)  target_node.data.paths = node.paths
+        if(target_node && localNode && target_node.data) {
+            if(mergeNodeFields(target_node.data, localNode)) {
+                // Force reactive consumers to pick up nested updates.
+                target_node.data = {...target_node.data}
+                // Vue Flow node components update reliably via updateNodeData.
+                updateNodeData(target_rid, {...target_node.data})
+            }
+        }
+
+        const setItemsChanged = mergeIntoSetCollection(state.setItems, target_rid, localNode)
+        const setDataFilesChanged = mergeIntoSetCollection(state.setdata.files, target_rid, localNode)
+        if(setItemsChanged) state.setItems = [...state.setItems]
+        if(setDataFilesChanged && Array.isArray(state.setdata.files)) {
+            state.setdata.files = [...state.setdata.files]
+        }
+
+        if(isThumbnailUpdate(localNode)) {
+            scheduleSetPanelRefresh()
         }
     }
 

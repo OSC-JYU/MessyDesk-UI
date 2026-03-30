@@ -35,7 +35,7 @@
                        :src="apiUrl + '/api/thumbnails/' + state.expandedContent" 
                        class="expanded-image" 
                        :style="{ 
-                         transform: `scale(${state.contentScale}) translate(${state.panX}px, ${state.panY}px)`,
+                         transform: `scale(${state.contentScale}) translate(${state.panX}px, ${state.panY}px) rotate(${state.imageRotation}deg)`,
                          cursor: state.contentScale > 1 ? (state.isPanning ? 'grabbing' : 'grab') : 'pointer'
                        }"
                        @click="handleContentClick" />
@@ -65,7 +65,7 @@
             <div class="content-wrapper">
               <img :src="apiUrl + '/api/thumbnails/' + state.file.path" 
                    class="responsive-image" 
-                   :style="{ maxHeight: 'calc(100vh - 200px)' }" />
+                    :style="{ maxHeight: 'calc(100vh - 200px)', transform: `rotate(${state.imageRotation}deg)` }" />
             </div>
           </v-sheet>
         </v-sheet>
@@ -102,6 +102,7 @@
             <img v-if="state.file && state.file.path" 
                  :src="apiUrl + '/api/thumbnails/' + state.file.path" 
                  class="main-image" 
+                :style="{ transform: `rotate(${state.imageRotation}deg)` }"
                  alt="Main content image" />
             <div v-else class="image-placeholder">
               <v-icon size="64" color="grey">mdi-image</v-icon>
@@ -150,6 +151,7 @@
           <!-- File Info -->
           <div v-if="state.file" class="mb-3">
             <h4 class="text-subtitle-2 mb-2">{{ state.file.label}}</h4>
+            <v-chip v-if="state.file.edited" color="orange-darken-2" size="x-small" class="mb-2">Edited version</v-chip>
             <DescriptionEditor :description="state.file.description" :rid="state.file['@rid']"/>
             
             <!-- Entities/Tags -->
@@ -227,11 +229,80 @@
               <v-icon start size="small">mdi-refresh</v-icon>
               Refresh
             </v-btn>
+
+            <template v-if="state.file && state.contentType === 'image'">
+              <v-btn
+                v-if="!state.imageEditMode"
+                color="secondary"
+                block
+                size="x-small"
+                class="mt-2"
+                @click="startImageEdit"
+              >
+                Create edited version
+              </v-btn>
+              <v-btn
+                v-if="state.imageEditMode"
+                block
+                size="x-small"
+                class="mt-2"
+                @click="rotateLeft"
+              >
+                Rotate -90
+              </v-btn>
+              <v-btn
+                v-if="state.imageEditMode"
+                block
+                size="x-small"
+                class="mt-2"
+                @click="rotateRight"
+              >
+                Rotate +90
+              </v-btn>
+              <v-btn
+                v-if="state.imageEditMode"
+                color="primary"
+                block
+                size="x-small"
+                class="mt-2"
+                @click="saveImageEdit"
+              >
+                Save edited version
+              </v-btn>
+              <v-btn
+                v-if="state.imageEditMode"
+                block
+                size="x-small"
+                class="mt-2"
+                @click="cancelImageEdit"
+              >
+                Cancel edit
+              </v-btn>
+              <v-btn
+                v-if="state.file.edited"
+                color="warning"
+                block
+                size="x-small"
+                class="mt-2"
+                @click="revertImageEdit"
+              >
+                Revert to original
+              </v-btn>
+            </template>
           </div>
         </v-sheet>
       </v-col>
     </v-row>
   </v-container>
+
+  <v-snackbar
+    v-model="state.toast.show"
+    :color="state.toast.color"
+    timeout="2500"
+    location="top right"
+  >
+    {{ state.toast.text }}
+  </v-snackbar>
 </template>
 
 <script setup>
@@ -279,7 +350,20 @@ var state = reactive({
   source_label: null,
   grouped_boundary_enabled: true,
   group_boundary: 'pdf',
+  imageEditMode: false,
+  imageRotation: 0,
+  toast: {
+    show: false,
+    text: '',
+    color: 'success',
+  },
 })
+
+function showToast(text, color = 'success') {
+  state.toast.text = text
+  state.toast.color = color
+  state.toast.show = true
+}
 
 function useGroupedBrowse() {
   return Boolean(
@@ -370,6 +454,12 @@ async function next() {
 async function openFile(file) {
   if(!file || !file['@rid']) return
   const fileRid = file['@rid']
+  const previousRid = state.file?.['@rid']
+  if(previousRid && previousRid != fileRid) {
+    // Rotation state is local to currently opened file.
+    state.imageEditMode = false
+    state.imageRotation = 0
+  }
   const fileContent = await web.getNodeFile(fileRid)
   state.file = await web.getDocInfo(fileRid)
   determineContentType(fileContent)
@@ -587,6 +677,8 @@ function handleKeyUp(event) {
 async function load() {
   state.file = null
   state.expandedContent = null
+  state.imageEditMode = false
+  state.imageRotation = 0
   state.set_rid = store.source || store.current_node?.id || null
   state.source_rid = store.set_browse_context?.sourceRid || null
   state.source_label = store.set_browse_context?.sourceLabel || null
@@ -612,6 +704,102 @@ async function load() {
     }
   } catch (error) {
     console.error('Error loading content:', error)
+  }
+}
+
+function normalizeRotation(value) {
+  const mod = value % 360
+  return mod < 0 ? mod + 360 : mod
+}
+
+function startImageEdit() {
+  state.imageEditMode = true
+  state.imageRotation = 0
+}
+
+function cancelImageEdit() {
+  state.imageEditMode = false
+  state.imageRotation = 0
+}
+
+function rotateLeft() {
+  state.imageRotation = normalizeRotation(state.imageRotation - 90)
+}
+
+function rotateRight() {
+  state.imageRotation = normalizeRotation(state.imageRotation + 90)
+}
+
+async function rotateImageBlob(blob, degrees) {
+  const normalized = normalizeRotation(degrees)
+  if (normalized === 0) return blob
+
+  const url = URL.createObjectURL(blob)
+  try {
+    const image = await new Promise((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => resolve(img)
+      img.onerror = reject
+      img.src = url
+    })
+
+    const canvas = document.createElement('canvas')
+    const swapSides = normalized === 90 || normalized === 270
+    canvas.width = swapSides ? image.height : image.width
+    canvas.height = swapSides ? image.width : image.height
+
+    const context = canvas.getContext('2d')
+    if (!context) return blob
+    context.translate(canvas.width / 2, canvas.height / 2)
+    context.rotate((normalized * Math.PI) / 180)
+    context.drawImage(image, -image.width / 2, -image.height / 2)
+
+    const output = await new Promise((resolve) => {
+      canvas.toBlob(
+        (b) => resolve(b || blob),
+        blob.type || 'image/png',
+        0.95,
+      )
+    })
+    return output
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
+async function saveImageEdit() {
+  if (!state.file || !state.file['@rid']) return
+
+  try {
+    const originalBlob = await web.getNodeFileBlob(state.file['@rid'])
+    const rotatedBlob = await rotateImageBlob(originalBlob, state.imageRotation)
+
+    await web.createFileVersion(state.file['@rid'], {
+      file: rotatedBlob,
+      filename: state.file.label || 'edited-image.png',
+      operation: 'rotate',
+      params: { degrees: normalizeRotation(state.imageRotation) },
+    })
+
+    // Keep local rotated preview immediately after save.
+    state.imageEditMode = false
+    if(state.file) state.file.edited = true
+    showToast('Edited version saved', 'success')
+  } catch (error) {
+    console.error('Error saving image edit:', error)
+    showToast('Saving edited version failed', 'error')
+  }
+}
+
+async function revertImageEdit() {
+  if (!state.file || !state.file['@rid']) return
+  try {
+    await web.revertFileVersion(state.file['@rid'])
+    await load()
+    showToast('Reverted to original', 'success')
+  } catch (error) {
+    console.error('Error reverting image edit:', error)
+    showToast('Revert failed', 'error')
   }
 }
 

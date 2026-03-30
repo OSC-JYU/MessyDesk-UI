@@ -96,6 +96,14 @@ const showPdfIcon = computed(() => {
   return isPdf && (!props.data?.forward || !props.data?.image)
 })
 
+const thumbnailSrc = computed(() => {
+  const base = props?.data?.image
+  if(!base) return ''
+  const version = props?.data?.thumbnail_version
+  if(version === undefined || version === null || version === '') return base
+  return String(base).includes('?') ? `${base}&v=${version}` : `${base}?v=${version}`
+})
+
 
 function openCrunchers() {
   store.current_node = node
@@ -114,7 +122,7 @@ function openCrunchers() {
         <v-icon class="pdf-icon" size="120" color="red-darken-2">mdi-file-pdf-box</v-icon>
         <div class="pdf-label">PDF blob</div>
       </div>
-      <img v-else :src="data.image" draggable="false"/>
+      <img v-else :key="thumbnailSrc" :src="thumbnailSrc" draggable="false"/>
       <pre>{{ data.description }}</pre>
       <v-chip v-if="data.model" color="green" variant="outlined">
         {{ data.model }}

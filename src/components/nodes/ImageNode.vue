@@ -48,6 +48,7 @@ img {
 
 
 <script setup>
+import { computed } from 'vue'
 import { Handle, Position, useNode } from '@vue-flow/core'
 import { useRouter, useRoute } from 'vue-router'
 import {store} from "../Store.js";
@@ -74,6 +75,14 @@ function openCrunchers(filter) {
   store.cruncher_filter = filter
 }
 
+const thumbnailSrc = computed(() => {
+  const base = props?.data?.image
+  if(!base) return ''
+  const version = props?.data?.thumbnail_version
+  if(version === undefined || version === null || version === '') return base
+  return String(base).includes('?') ? `${base}&v=${version}` : `${base}?v=${version}`
+})
+
 
 </script>
 
@@ -87,7 +96,7 @@ function openCrunchers(filter) {
     <v-container style="max-height: 360px; padding: 0px; overflow: hidden; position: relative;">
       <v-row>
         <v-col class="d-flex align-center justify-center">
-          <img :src="data.image" draggable="false" style="width: 100%; height: auto;" />
+          <img :key="thumbnailSrc" :src="thumbnailSrc" draggable="false" style="width: 100%; height: auto;" />
         </v-col>
       </v-row>
       

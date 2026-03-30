@@ -61,6 +61,15 @@ const props = defineProps({
 
 const emit = defineEmits(['expand-node'])
 
+function thumbnailSrc(fileData) {
+  if(!fileData?.thumb) return ''
+  const base = String(fileData.thumb)
+  const fullPath = base.endsWith('/thumbnail.jpg') ? base : `${base}/thumbnail.jpg`
+  const version = fileData.thumbnail_version
+  if(version === undefined || version === null || version === '') return fullPath
+  return fullPath.includes('?') ? `${fullPath}&v=${version}` : `${fullPath}?v=${version}`
+}
+
 </script>
 
 
@@ -82,12 +91,12 @@ const emit = defineEmits(['expand-node'])
       <v-row>
         <v-col class="d-flex align-center justify-center">
           <div v-if="data.is_group" class="pdf-icon-wrap">
-            <img v-if="data.thumb" :src="data.thumb + '/thumbnail.jpg'" draggable="false" style="width: 100%; height: auto;" />
+            <img v-if="data.thumb" :src="thumbnailSrc(data)" draggable="false" style="width: 100%; height: auto;" />
             <v-icon v-else size="90" color="blue-grey-darken-1">mdi-folder-multiple-image</v-icon>
             <div class="pdf-label">Open source group</div>
           </div>
-          <img v-else-if="data.type == 'image'" :src="data.thumb + '/thumbnail.jpg'" draggable="false" style="width: 100%; height: auto;" />
-          <img v-else-if="data.type == 'pdf' && data.thumb" :src="data.thumb + '/thumbnail.jpg'" draggable="false" style="width: 100%; height: auto;" />
+          <img v-else-if="data.type == 'image'" :src="thumbnailSrc(data)" draggable="false" style="width: 100%; height: auto;" />
+          <img v-else-if="data.type == 'pdf' && data.thumb" :src="thumbnailSrc(data)" draggable="false" style="width: 100%; height: auto;" />
           <div v-else-if="data.type == 'pdf'" class="pdf-icon-wrap">
             <v-icon size="90" color="red-darken-2">mdi-file-pdf-box</v-icon>
             <div class="pdf-label">PDF blob</div>
