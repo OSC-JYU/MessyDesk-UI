@@ -1,13 +1,5 @@
 <template>
-  <v-container fluid class="pa-0 line-segmentation-display">
-    <v-btn
-      class="ma-2"
-      color="primary"
-      icon="mdi-close"
-      style="position: absolute; top: 0; left: -60px; z-index: 1000"
-      @click="$emit('change-tab', store.tab)"
-    ></v-btn>
-
+  <div class="line-segmentation-display pa-0">
     <v-row no-gutters class="fill-height">
       <!-- Image and overlay -->
       <v-col cols="8" class="image-column">
@@ -162,7 +154,7 @@
         </v-sheet>
       </v-col>
     </v-row>
-  </v-container>
+  </div>
 </template>
 
 <script setup>
@@ -402,7 +394,6 @@ onUnmounted(() => {
 <style scoped>
 .line-segmentation-display {
   height: 100%;
-  margin-left: 60px !important;
 }
 
 .image-column {

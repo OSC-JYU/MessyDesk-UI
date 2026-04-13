@@ -63,16 +63,7 @@ onUnmounted(() => {
       </template>
       <template v-else>
 
-          <!-- <router-view class="view" ></router-view> -->
-          <router-view v-slot="{ Component, route }">
-          <!-- keep search alive -->
-          <keep-alive>
-            <component :is="Component" v-if="route.name === 'search'" />
-          </keep-alive>
-        
-          <component :is="Component" v-if="route.name !== 'search'"  />
-        
-      </router-view>
+          <router-view />
     </template>
 	</div>
 

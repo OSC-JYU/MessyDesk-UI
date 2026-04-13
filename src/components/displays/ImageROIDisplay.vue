@@ -3,13 +3,6 @@
     <v-snackbar v-model="saveNotice" color="success" timeout="2000">
       {{ saveNoticeText }}
     </v-snackbar>
-    <v-btn
-      class="ma-2"
-      color="primary"
-      icon="mdi-close"
-      style="position: absolute; top: 0; left: -60px; z-index: 1000"
-      @click="closeEditor"
-    ></v-btn>
 
     <v-row no-gutters class="fill-height">
       <v-col cols="9" class="image-column">
@@ -140,40 +133,36 @@
       </v-col>
 
       <v-col cols="3" class="tools-column">
-        <v-sheet class="pa-4 fill-height d-flex flex-column">
-          <div class="d-flex justify-start mb-3">
-            <v-btn
-              color="primary"
-              variant="outlined"
-              prepend-icon="mdi-exit-to-app"
-              @click="closeEditor"
-            >
-              Exit
-            </v-btn>
+        <v-sheet class="fill-height d-flex flex-column" style="background: #fafbfc; border-left: 1px solid rgba(0,0,0,0.06);">
+          <!-- Header -->
+          <div class="pa-3" style="border-bottom: 1px solid rgba(0,0,0,0.06);">
+            <span class="text-overline text-medium-emphasis">ROI Tools</span>
           </div>
-          <div class="mb-4">
-            <h3 class="text-h6 mb-1">Image ROI Editor</h3>
-            <p class="text-caption text-medium-emphasis mb-0">
-              {{ state.file?.label || 'Filter Regions' }}
-            </p>
-          </div>
-          <div class="mb-4">
+
+          <div class="pa-3 flex-grow-1 overflow-y-auto">
+            <!-- Settings -->
             <v-switch
               v-model="autoSave"
               label="Auto-save"
               inset
               density="compact"
+              hide-details
+              class="mb-2"
             ></v-switch>
             <v-switch
               v-model="showShapeLabels"
-              label="Show labels on shapes"
+              label="Show labels"
               inset
               density="compact"
+              hide-details
+              class="mb-3"
             ></v-switch>
             <v-btn
               v-if="!autoSave"
               color="primary"
               variant="flat"
+              size="small"
+              block
               :disabled="!hasUnsavedChanges"
               @click="persistActiveShapes(true)"
             >
@@ -186,40 +175,10 @@
               density="compact"
               class="mt-2"
             >
-              You have unsaved changes.
+              Unsaved changes
             </v-alert>
-          </div>
 
-          <template v-if="state.file_count > 1">
-            <div class="d-flex align-center mb-4">
-              <v-btn @click="prev" :disabled="state.skip === 1" color="secondary" size="small">
-                <v-icon>mdi-chevron-left</v-icon>
-              </v-btn>
-              <span class="mx-3 text-caption">{{ state.skip }} / {{ state.file_count }}</span>
-              <v-btn @click="next" :disabled="state.skip === state.file_count" color="secondary" size="small">
-                <v-icon>mdi-chevron-right</v-icon>
-              </v-btn>
-            </div>
-          </template>
-
-          <div class="mb-4">
-            <div class="text-caption text-medium-emphasis mb-2">Mode</div>
-            <v-btn-toggle v-model="state.mode" density="comfortable" divided>
-              <v-btn value="individual">Individual</v-btn>
-              <v-btn value="template">Template</v-btn>
-            </v-btn-toggle>
-            <div v-if="state.mode === 'template'" class="mt-2">
-              <v-btn
-                size="small"
-                variant="outlined"
-                @click="toggleTemplateOverride"
-              >
-                {{ templateOverrideActive ? 'Use template for this image' : 'Override for this image' }}
-              </v-btn>
-            </div>
-          </div>
-
-          <div class="mb-4">
+            <v-divider class="my-3"></v-divider>
             <div class="text-caption text-medium-emphasis mb-2">Tool</div>
             <v-btn-toggle v-model="activeTool" density="comfortable" divided>
               <v-btn value="rect">
@@ -247,11 +206,10 @@
             >
               Finish polygon
             </v-btn>
-          </div>
 
-          <v-divider class="my-4"></v-divider>
+            <v-divider class="my-3"></v-divider>
 
-          <div class="flex-grow-1 overflow-y-auto">
+            <!-- Regions list -->
             <div class="text-caption text-medium-emphasis mb-2">Regions</div>
             <v-list density="compact">
               <v-list-item
@@ -289,8 +247,6 @@
               No regions yet. Pick a tool and draw on the image.
             </div>
           </div>
-
-
         </v-sheet>
       </v-col>
     </v-row>
@@ -301,14 +257,8 @@
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import web from '../../web.js'
 import { store } from '../Store.js'
-import { fi } from 'vuetify/locale'
 
 const apiUrl = import.meta.env.VITE_API_PATH
-
-const DEV_SET_RID = '#142:92'
-
-const emit = defineEmits(['change-tab'])
-const props = defineProps(['tab'])
 
 const loading = ref(false)
 const imageWrapper = ref(null)
@@ -324,9 +274,6 @@ const state = reactive({
   skip: 1,
   parent: null,
   parent_type: null,
-  mode: 'individual',
-  template_overrides: {},
-  template_shapes: [],
   shapes_by_file: {},
   roi_files_by_file: {}
 })
@@ -350,11 +297,7 @@ const dragState = reactive({
 })
 
 const MIN_SIZE_PX = 12
-
-const templateOverrideActive = computed(() => {
-  if (!state.file) return false
-  return Boolean(state.template_overrides[state.file['@rid']])
-})
+let roiLoadToken = 0
 
 const activeShapes = computed(() => getActiveShapes())
 
@@ -399,11 +342,6 @@ const polygonDraftLine = computed(() => {
   return points.join(' ')
 })
 
-function closeEditor() {
-  store.filter_editor = null
-  emit('change-tab', store.tab)
-}
-
 function shapeIcon(type) {
   if (type === 'circle') return 'mdi-circle-outline'
   if (type === 'polygon') return 'mdi-shape-polygon-plus'
@@ -412,9 +350,6 @@ function shapeIcon(type) {
 
 function getActiveShapes() {
   if (!state.file) return []
-  if (state.mode === 'template' && !templateOverrideActive.value) {
-    return state.template_shapes
-  }
   const fileId = state.file['@rid']
   if (!state.shapes_by_file[fileId]) {
     state.shapes_by_file[fileId] = []
@@ -424,33 +359,31 @@ function getActiveShapes() {
 
 function setActiveShapes(shapes) {
   if (!state.file) return
-  if (state.mode === 'template' && !templateOverrideActive.value) {
-    state.template_shapes = shapes
-    return
-  }
   const fileId = state.file['@rid']
   state.shapes_by_file[fileId] = shapes
 }
 
-function toggleTemplateOverride() {
-  if (!state.file) return
-  const fileId = state.file['@rid']
-  if (state.template_overrides[fileId]) {
-    delete state.template_overrides[fileId]
-    return
-  }
-  state.template_overrides[fileId] = true
-  if (!state.shapes_by_file[fileId] || state.shapes_by_file[fileId].length === 0) {
-    state.shapes_by_file[fileId] = cloneShapes(state.template_shapes)
-  }
-}
-
-function cloneShapes(shapes) {
-  return shapes.map(shape => JSON.parse(JSON.stringify(shape)))
-}
-
 function makeShapeId() {
   return `roi_${Date.now()}_${Math.floor(Math.random() * 10000)}`
+}
+
+async function loadROIsForCurrentFile(setRidOverride = null) {
+  if (!state.file || !state.file['@rid']) return
+  const fileRid = state.file['@rid']
+  const setRid = setRidOverride || getCurrentSetRid()
+  if (!setRid) return
+
+  const token = ++roiLoadToken
+  const rois = await web.getImageROIs(fileRid, setRid)
+  if (token !== roiLoadToken) return
+
+  const normalized = normalizeROIs(rois)
+  state.shapes_by_file[fileRid] = normalized
+
+  const roiFileRid = getRoiFileRid(rois)
+  if (roiFileRid) {
+    state.roi_files_by_file[fileRid] = roiFileRid
+  }
 }
 
 function normalizeROIs(rois) {
@@ -932,7 +865,21 @@ async function loadContext() {
     state.parent = parent
     state.parent_type = parent['@type'] || parent.type
     if (state.parent_type === 'Set' || state.parent_type === 'set') {
-      await loadSetFile(parent['@rid'], 0)
+      // If file view already selected a file (SetTools next/prev), use it instead of resetting to first file.
+      if (store.file && store.file['@rid']) {
+        state.file = { ...store.file }
+        if (!state.file.thumbnail) {
+          state.file.thumbnail = buildThumbnailPath(state.file.path)
+        }
+        const ctx = store.file_browse_context
+        if (ctx && ctx.mode === 'set') {
+          state.file_count = ctx.file_count || store.file_count || 1
+          state.skip = (typeof ctx.skip === 'number' ? ctx.skip + 1 : state.skip)
+        }
+        await loadROIsForCurrentFile(parent['@rid'])
+      } else {
+        await loadSetFile(parent['@rid'], 0)
+      }
     } else {
       await loadSingleFile(parent['@rid'])
     }
@@ -968,21 +915,7 @@ async function loadSingleFile(rid) {
   state.file_count = 1
   state.skip = 1
   state.file.thumbnail = buildThumbnailPath(response.path)
-  // Load ROIs for this file
-  if (state.file && state.file['@rid']) {
-    const setRid = getCurrentSetRid()
-    if (!setRid) return
-    const shapes = await web.getImageROIs(state.file['@rid'], setRid)
-    console.log('Loaded ROIs for file', state.file['@rid'], shapes)
-    const normalized = normalizeROIs(shapes)
-    if (normalized.length) {
-      state.shapes_by_file[state.file['@rid']] = normalized
-    }
-    const roiFileRid = getRoiFileRid(shapes)
-    if (roiFileRid) {
-      state.roi_files_by_file[state.file['@rid']] = roiFileRid
-    }
-  }
+  await loadROIsForCurrentFile()
 }
 
 async function loadSetFile(setRid, skip) {
@@ -995,31 +928,7 @@ async function loadSetFile(setRid, skip) {
   const fileInfo = await web.getDocInfo(file['@rid'])
   fileInfo.thumbnail = buildThumbnailPath(fileInfo.path)
   state.file = fileInfo
-  // Load ROIs for this file
-  if (state.file && state.file['@rid']) {
-    const currentSetRid = getCurrentSetRid() || setRid
-    if (!currentSetRid) return
-    const rois = await web.getImageROIs(state.file['@rid'], currentSetRid)
-    console.log('Loaded ROIs for file', state.file['@rid'], rois)
-    const normalized = normalizeROIs(rois)
-    if (normalized.length) {
-      state.shapes_by_file[state.file['@rid']] = normalized
-    }
-    const roiFileRid = getRoiFileRid(rois)
-    if (roiFileRid) {
-      state.roi_files_by_file[state.file['@rid']] = roiFileRid
-    }
-  }
-}
-
-async function next() {
-  if (state.skip >= state.file_count) return
-  await loadSetFile(state.parent['@rid'], state.skip)
-}
-
-async function prev() {
-  if (state.skip <= 1) return
-  await loadSetFile(state.parent['@rid'], state.skip - 2)
+  await loadROIsForCurrentFile(setRid)
 }
 
 function buildThumbnailPath(filePath) {
@@ -1034,8 +943,23 @@ watch(() => store.filter_editor, () => {
   loadContext()
 })
 
-watch(() => state.mode, () => {
+watch(() => store.file?.['@rid'], async (newRid) => {
+  // Keep ROI editor in sync with external file navigation (SetTools/SearchTools in FileDisplayWrapper).
+  if (!newRid || !store.filter_editor) return
+  if (state.file && state.file['@rid'] === newRid) return
+
+  state.file = { ...store.file }
+  if (!state.file.thumbnail) {
+    state.file.thumbnail = buildThumbnailPath(state.file.path)
+  }
   selectedShapeId.value = null
+  polygonDraftPoints.value = []
+  polygonHoverPoint.value = null
+
+  const setRid = getCurrentSetRid()
+  if (setRid) {
+    await loadROIsForCurrentFile(setRid)
+  }
 })
 
 watch(() => autoSave.value, (newValue) => {

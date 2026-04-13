@@ -106,7 +106,7 @@
             <div class="process-banner-text">
                 <div class="process-banner-main">[{{ key }}] {{ process.message }}</div>
                 <div v-if="process.batch" class="process-banner-sub">
-                    State: {{ process.batch.state || process.status }} | Processed: {{ process.batch.processed_files ?? 0 }}/{{ process.batch.total_files ?? '?' }} | Failed: {{ process.batch.failed_files ?? 0 }} | ETA: {{ formatEta(process.batch.eta_sec) }}
+                    State: {{ getBatchStatus(process.batch, process.status) }} | Processed: {{ process.batch.processed_files ?? 0 }}/{{ process.batch.total_files ?? '?' }} | Failed: {{ process.batch.failed_files ?? 0 }}<span v-if="shouldShowEta(process.batch)"> | ETA: {{ formatEta(process.batch.eta_sec) }}</span>
                 </div>
             </div>
         </template>
@@ -142,80 +142,34 @@
                 <div class="graph-display">
                   
                    
-                    <!-- set panel -->
-                    <v-navigation-drawer  v-if="store.current_node" v-model="state.setPanel" temporary location="bottom" >
+                                        <SetPanel
+                                            v-if="state.setPanel"
+                                            inline
+                                            :model-value="state.setPanel"
+                                            @update:model-value="state.setPanel = $event"
+                                            :panel-node="state.setPanelNode"
+                                            :setdata="state.setdata"
+                                            :set-items="state.setItems"
+                                            :page="page"
+                                            :total-pages="totalPages"
+                                            :selected-source-label="state.selected_source_label"
+                                            @update:page="page = $event"
+                                            @open-file="openSetFile"
+                                            @expand-node="expandSetNode"
+                                            @open-group="openSetGroup"
+                                            @back-to-groups="goBackToGroupList"
+                                            @add-file="store.set_uploader_open = true"
+                                        />
 
-                        <v-toolbar color="#005757" density="compact" style="position: fixed; z-index: 1000;">
-                        <template v-slot:prepend>
-                            
-                            <v-menu>
-                                <template v-slot:activator="{ props }">
-                                <v-app-bar-nav-icon v-bind="props"></v-app-bar-nav-icon>
-                                </template>
-
-                                <v-list>
-                                    <v-list-item>
-                                        <v-list-item-title>                        
-                                            <v-btn 
-                                                @click="store.set_uploader_open = true"
-                                                >
-                                                <template v-slot:prepend>
-                                                    <v-icon  icon="mdi-file"></v-icon>
-                                                </template>
-                                                    Add file to set 
-                                            </v-btn>
-                                        </v-list-item-title>
-                                    </v-list-item>
-                                </v-list>
-                            </v-menu>
-                        </template>
-
-                        <v-toolbar-title>
-                            <v-btn
-                                v-if="state.setdata.mode == 'children'"
-                                density="compact"
-                                icon="mdi-arrow-left"
-                                class="mr-2"
-                                @click="goBackToGroupList()"
-                            ></v-btn>
-                            <v-icon size="35" color="green">mdi-folder-outline</v-icon>
-                            {{ store.current_node.data.label }} <span v-if="state.setdata.file_count">({{ state.setdata.file_count }} files )</span>
-                            <span v-if="state.setdata.mode == 'groups'" class="ml-2 text-body-2">({{ state.setdata.group_count || 0 }} sources)</span>
-                            <span v-if="state.setdata.mode == 'children' && state.selected_source_label" class="ml-2 text-body-2">- {{ state.selected_source_label }}</span>
-                            
-                        </v-toolbar-title>
-                        
-                        <v-pagination
-                            v-model="page"
-                            :length="totalPages"
-                            :total-visible="16"
-                            class="mt-4"
-                            ></v-pagination>
-                            
-                        </v-toolbar>
-
-                        <v-divider></v-divider>
-                        
-                        <v-row class="set-panel mt-8">
-                            <v-col
-                            v-for="(file, index) in state.setItems"
-                            :key="(file['@rid'] || file.source_rid || index) + '-' + (file.thumbnail_version || '')"
-                            class="d-flex child-flex flow"
-                            cols="2"
-                            >
-
-                            <!-- SET VIEW NODE-->
-                             
-                            <SetViewNode @dblclick="openSetFile(file, index)" :data="file" @expand-node="expandSetNode(file)"></SetViewNode>
-
-                            </v-col>
-                        </v-row>
-
-
-                    </v-navigation-drawer>
-
-                    <!-- <VueFlow :nodes="elements.nodes" :edges="elements.edges" fit-view-on-init > -->
-                    <VueFlow :nodes="elements.nodes" :edges="elements.edges" >
+                                                                                <!-- <VueFlow :nodes="elements.nodes" :edges="elements.edges" fit-view-on-init > -->
+                                                                                <VueFlow
+                                                                                        v-else
+                                            :nodes="elements.nodes"
+                                            :edges="elements.edges"
+                                            :default-zoom="0.5"
+                                            :max-zoom="4"
+                                            :min-zoom="0.1"
+                                        >
                         <Background />
                         <template #node-project="{ data }">
                             <ProjectNode :data="data" />
@@ -338,7 +292,7 @@
                         </VueFlow>  
 
                         <!-- View controls-->
-                         <v-sheet style="position: absolute; bottom: 0px; right: 10px;" > 
+                         <v-sheet v-if="!state.setPanel" style="position: absolute; bottom: 0px; right: 10px;" > 
                  
                             <v-chip @click="isolateNode()" class="ml-2" size="x-small" :color="state.isolate_view ? 'red' : 'green'" variant="flat" ><v-icon :icon="state.isolate_view ? 'mdi-eye-off' : 'mdi-eye'"></v-icon>
                                 {{ state.isolate_view ? 'show all': 'isolate' }}
@@ -381,11 +335,7 @@
     const { updateNode, updateNodeData, findNode } = useVueFlow()
 
     //const { getNode, onNodeClick, onNodeDoubleClick, onNodeDragStop} = useVueFlow()
-    const flow = useVueFlow({
-        defaultZoom: 0.5,
-        maxZoom: 4,
-        minZoom: 0.1,
-    })
+    const flow = useVueFlow()
 
     import ImageNode from './nodes/ImageNode.vue'
     import ProjectNode from './nodes/ProjectNode.vue'
@@ -409,7 +359,7 @@
     import SearchNode from './nodes/SearchNode.vue'
     import ErrorNode from './nodes/ErrorNode.vue'
 
-    import SetViewNode from './nodes/SetViewNode.vue'
+    import SetPanel from './displays/SetPanel.vue'
     import DebugFloatingWindow from './DebugFloatingWindow.vue'
 
     import { useShuffle } from './useShuffle'
@@ -438,6 +388,8 @@
     var state = reactive({
         setdata: {files: [], groups: [], mode: 'groups', file_count: 0, group_count: 0}, 
         setItems: [],
+        setPanelNode: null,
+        panel_roi_set: null,
         selected_source_rid: null,
         selected_source_label: '',
         setPanel: false, 
@@ -552,6 +504,8 @@
         }
     });
 
+    defineOptions({ name: 'GraphDisplay' })
+
     const props = defineProps({
         mode: '',
         fit: {type: String, default: false}
@@ -628,12 +582,15 @@
         if(event.node.type == "project" ) {
             //store.view = null
             if(store.current_node) store.current_project = store.current_node
-            router.push({ name: 'graph', query: { node: event.node.id.replace('#', '')} })
+            router.push({ name: 'project-graph', params: { rid: event.node.id.replace('#', '')} })
         } else if(event.node.type == "set") {
-            //state.setPanel = true
-            toggleSetPanel()
+            toggleSetPanel(event.node, null)
         }else if(event.node.type == 'roi-set') {
-            store.filter_editor = event.node
+            const parents = flow.getIncomers(event.node) || []
+            const parentSet = parents.find((n) => n?.type === 'set') || parents[0]
+            if (parentSet) {
+                toggleSetPanel(parentSet, event.node)
+            }
         } else if(event.node.data.type == "file" && event.node.data._type != "zip") {
             
             // find source file and cruncher of this file
@@ -657,25 +614,13 @@
 
     //
 	watch(
-    	() => route.query,
+    	() => route.params.rid,
     	async (newValue, oldValue) => {
-
-			if(newValue.node || newValue.type || newValue.tag || newValue.query || newValue.map) {
-
-    			if(newValue) console.log(Object.keys(newValue))
-    			if (oldValue) console.log(oldValue)
-
-                if(newValue.map && oldValue.map && newValue.map == oldValue.map) {
-
-                } else {
-                    loadGraph(route, oldValue)
-                }
-
+			if(newValue) {
+				loadGraph(route, oldValue)
 			} else {
                 console.log('Wait for route change...')
-                //initView()
             }
-
 	})
 
     // watch /list changes
@@ -684,12 +629,6 @@
     	() => props.fit,
       	async (newValue, oldValue) => {
             if(newValue) fitToNode(newValue.split('-')[0])
-    })
-
-    watch(
-    	() => route.params,
-      	async (newValue, oldValue) => {
-        	loadGraph(route, oldValue)
     })
 
     watch(
@@ -708,7 +647,20 @@
     
     })
 
-    function openSetFile(file, index) {
+        watch(
+            () => state.setPanel,
+            (open) => {
+                if (!open) {
+                    state.panel_roi_set = null
+                    state.selected_source_rid = null
+                    state.selected_source_label = ''
+                }
+            }
+        )
+
+    function openSetFile(payload) {
+        const file = payload?.file || payload
+        const index = payload?.index ?? 0
         if(file?.is_group && file?.source_rid) {
             openSetGroup(file)
             return
@@ -720,7 +672,12 @@
             sourceLabel: state.selected_source_label || null,
             groupBoundary: state.setdata.group_boundary || null,
         }
-        emit('open-node', file['@rid'], store.current_node.id, state.setdata.file_count, absoluteIndex, browseContext)
+        if (state.panel_roi_set) {
+            store.filter_editor = state.panel_roi_set
+        } else {
+            store.filter_editor = null
+        }
+        emit('open-node', file['@rid'], state.setPanelNode?.id || store.current_node.id, state.setdata.file_count, absoluteIndex, browseContext)
     } 
 
     async function layoutGraph(direction) {
@@ -745,6 +702,20 @@
         const hours = Math.floor(minutes / 60)
         const remMin = minutes % 60
         return `${hours}h ${remMin}m`
+    }
+
+    function getBatchStatus(batch, fallback = 'running') {
+        if(!batch) return fallback
+        return batch.status || batch.state || fallback
+    }
+
+    function shouldShowEta(batch) {
+        return batch && batch.eta_sec !== null && batch.eta_sec !== undefined
+    }
+
+    function renderEta(batch) {
+        if(!shouldShowEta(batch)) return ''
+        return `, ETA ${formatEta(batch.eta_sec)}`
     }
 
     function upsertRunningProcess(processRid, attrs = {}) {
@@ -773,15 +744,14 @@
         try {
             const batch = await web.getBatch(processRid)
             if(!batch) return
-            const stateName = batch.state || 'running'
-            const eta = formatEta(batch.eta_sec)
+            const stateName = getBatchStatus(batch, 'running')
             const processed = batch.processed_files ?? 0
             const total = batch.total_files ?? '?'
             const avg = batch.avg_sec_per_file ?? 0
             upsertRunningProcess(processRid, {
                 status: stateName,
                 batch: batch,
-                message: `${processed}/${total} files, ETA ${eta}, avg ${avg}s/file`,
+                message: `${processed}/${total} files${renderEta(batch)}, avg ${avg}s/file`,
             })
         } catch(e) {
             console.log('batch hydrate failed', processRid, e?.message)
@@ -803,14 +773,13 @@
             //state.message = 'Process finished with ' + label
             //state.process_update = false
             if(state.running_processes[wsdata.process['@rid']]) {
-                state.running_processes[wsdata.process['@rid']].status = wsdata?.batch?.state || wsdata?.process?.status || 'finished'
+                state.running_processes[wsdata.process['@rid']].status = getBatchStatus(wsdata?.batch, wsdata?.process?.status || 'done')
                 if(wsdata?.batch) {
-                    const eta = formatEta(wsdata.batch.eta_sec)
                     const processed = wsdata.batch.processed_files ?? wsdata.current_file ?? 0
                     const total = wsdata.batch.total_files ?? wsdata.total_files ?? '?'
                     const failed = wsdata.batch.failed_files ?? 0
                     state.running_processes[wsdata.process['@rid']].batch = wsdata.batch
-                    state.running_processes[wsdata.process['@rid']].message = `Done ${processed}/${total}, failed ${failed}, ETA ${eta}`
+                    state.running_processes[wsdata.process['@rid']].message = `Done ${processed}/${total}, failed ${failed}${renderEta(wsdata.batch)}`
                 }
                 store.running_processes = state.running_processes
             }
@@ -826,13 +795,12 @@
             // we may receive update after process is cancelled and we do not want to update the message
             if(state.running_processes[wsdata.process['@rid']].status != 'finished') {
                 if(wsdata?.batch) {
-                    const eta = formatEta(wsdata.batch.eta_sec)
                     const processed = wsdata.batch.processed_files ?? wsdata.current_file ?? 0
                     const total = wsdata.batch.total_files ?? wsdata.total_files ?? '?'
                     const failed = wsdata.batch.failed_files ?? 0
                     state.running_processes[wsdata.process['@rid']].batch = wsdata.batch
-                    state.running_processes[wsdata.process['@rid']].status = wsdata.batch.state || state.running_processes[wsdata.process['@rid']].status
-                    state.running_processes[wsdata.process['@rid']].message = `${label}: ${processed}/${total}, failed ${failed}, ETA ${eta}`
+                    state.running_processes[wsdata.process['@rid']].status = getBatchStatus(wsdata.batch, state.running_processes[wsdata.process['@rid']].status)
+                    state.running_processes[wsdata.process['@rid']].message = `${label}: ${processed}/${total}, failed ${failed}${renderEta(wsdata.batch)}`
                     store.running_processes = state.running_processes
                 } else if(wsdata.total_files && wsdata.current_file) {
                     state.running_processes[wsdata.process['@rid']].message = 'Working with file ' + wsdata.current_file + '/' + wsdata.total_files + ' with "' + label + '"'
@@ -966,7 +934,7 @@
     }
 
     function scheduleSetPanelRefresh() {
-        if(!state.setPanel || !store.current_node || store.current_node.type != 'set') return
+        if(!state.setPanel || !state.setPanelNode || state.setPanelNode.type != 'set') return
         if(setPanelRefreshTimer) clearTimeout(setPanelRefreshTimer)
         // Debounce high-frequency thumbnail updates during batch processing.
         setPanelRefreshTimer = setTimeout(async () => {
@@ -1127,8 +1095,10 @@
         }
     }
 
-    async function toggleSetPanel(node) {
+    async function toggleSetPanel(node, roiSetNode = null) {
         page.value = 1
+        state.setPanelNode = node || state.setPanelNode
+        state.panel_roi_set = roiSetNode || null
         state.selected_source_rid = null
         state.selected_source_label = ''
         await loadSetGroups()
@@ -1159,8 +1129,9 @@
     }
 
     async function loadSetGroups() {
+        if(!state.setPanelNode || !state.setPanelNode.id) return
         state.setdata = await web.getSetFiles(
-            store.current_node.id,
+            state.setPanelNode.id,
             (page.value - 1) * filesPerPage,
             filesPerPage,
             {groupByOrigin: true, groupBoundary: 'pdf'}
@@ -1170,8 +1141,9 @@
     }
 
     async function loadSetChildren() {
+        if(!state.setPanelNode || !state.setPanelNode.id) return
         state.setdata = await web.getSetFiles(
-            store.current_node.id,
+            state.setPanelNode.id,
             (page.value - 1) * filesPerPage,
             filesPerPage,
             {groupByOrigin: true, sourceRid: state.selected_source_rid, groupBoundary: 'pdf'}
@@ -1234,9 +1206,9 @@
 		var layout = ''
         graph.result.data = {}
 
-         if(route.query.node) {
+         if(route.params.rid) {
 
-            graph.result.data = await web.getProject(route.query.node)
+            graph.result.data = await web.getProject(route.params.rid)
       
         } else {
             await loadProjects()
@@ -1366,7 +1338,7 @@
     }
 
     async function getNodePositions() {
-        var node = route.query.node
+        var node = route.params.rid
         if(route.query.query)
             node = route.query.query
         else if(props.mode == 'projects')
@@ -1389,8 +1361,8 @@
 			positions[ele.id] = ele.position
             console.log(ele)
 		})
-		if(route.query.node)
-			web.saveLayout(positions, route.query.node)
+		if(route.params.rid)
+			web.saveLayout(positions, route.params.rid)
         else if(props.mode == 'projects')
             web.saveLayout(positions, props.mode)
 	}
@@ -1424,12 +1396,9 @@
         if(!store.user) store.user = await web.getMe()
   
 
-		if(!props.mode && route.path == '/' ) {
-			router.push({ name: 'graph', query: {}})
+		if(props.mode == 'graph') {
 
-		} else if(props.mode == 'graph') {
-
-			if(route.query.node || route.query.type || route.query.query) {
+			if(route.params.rid) {
 				loadGraph(route)
 			} 
 

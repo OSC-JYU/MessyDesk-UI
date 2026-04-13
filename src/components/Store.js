@@ -41,6 +41,15 @@ export const store = reactive({
   projects: [],
   setdata: {},
   set_browse_context: null,
+  file: null,
+  file_count: null,
+  skip: null,
+  source: null,
+  file_browse_context: null,
+  // file_browse_context shapes:
+  //   null: file opened directly (no top bar)
+  //   { mode: 'set', set_rid, set_label, file_count, skip, group_boundary, source_rid, source_label }
+  //   { mode: 'search', query, results: [{rid, label, score, highlight}], index }
   current_project: {},
   reorder_target: '',
   settings_show_descriptions: true,

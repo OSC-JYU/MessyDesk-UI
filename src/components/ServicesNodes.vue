@@ -31,11 +31,7 @@
     import web from "../web.js";
 
         //const { getNode, onNodeClick, onNodeDoubleClick, onNodeDragStop} = useVueFlow()
-    const flow = useVueFlow({
-        defaultZoom: 0.2,
-        maxZoom: 3,
-        minZoom: 0.1,
-    })
+    const flow = useVueFlow()
 
 //     const nodeTypes = {
 //   custom: markRaw(ProcessingNode),
@@ -163,7 +159,7 @@
                         
                     </div>
 
-                    <VueFlow :nodes="state.nodes" :edges="state.edges" fit-view-on-init>
+                    <VueFlow :nodes="state.nodes" :edges="state.edges" :default-zoom="0.2" :max-zoom="3" :min-zoom="0.1" fit-view-on-init>
                         <Background />
                         <template #node-processing="{ data }">
                             <ProcessingNode :data="data" />

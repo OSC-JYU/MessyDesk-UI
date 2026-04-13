@@ -1,252 +1,346 @@
-<style scoped>
-em {
-  font-style: normal;
-  font-weight: bold;
-  color: red important;  }
-
-  .column_text2 {
-  height: 100%;
-  overflow-y: scroll;
-}
-.v-container {
-  max-width:2000px
-}
-
-.column_text {
-    height: 100%;
-    
-}
-
-.paper {
-  background-color: white;
-}
-
-.node-base {
-  padding: 4px;
-  margin-top:5px;
-  border-radius: 0px;
-  color:white;
-  font-size: small;
-}
-
-.File {
-  background-color: red;
-}
-
-.Process {
-  background-color: #5b9b9a;
-  border-radius: 5px;
-  text-align: center;
-  
-}
-
-.Project {
-  background-color: white;
-  color: black;
-  border: solid #16147f;
-  border-width: 10px 0 0 0;
-  text-align: center;
-}
-
-
-.Set {
-  background-color: #005757;
-}
-
-.User {
-  background-color: #005757;
-}
-
-.text {
-  background-color: white;
-  color: black;
-}
-
-.image {
-  background-color: #54546f;
-}
-
-.pdf {
-  background-color: #9b4949;
-  color: white;
-}
-
-.tiny {
-  width: 100px;
-}
-</style>
-
 <script setup>
-    import web from "../web.js";
-    
-    import { onMounted, reactive} from "vue";
+import { computed, reactive, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import web from '../web.js'
+import { store } from './Store.js'
+import SetPanel from './displays/SetPanel.vue'
 
-    document.title = "MessyDesk - search"
+document.title = 'MessyDesk - search'
 
+const route = useRoute()
+const router = useRouter()
 
+const props = defineProps({
+  projectRid: { type: String, default: null }
+})
 
-    var state = reactive({
-        search: "",
-        result: [],
-        text: "",
-        desks:[],
-        projects: [],
-        types: [],
-        nodepath: []
-    })
+const stateKey = computed(() => {
+  const current = props.projectRid || route.params.rid || 'global'
+  return String(current).replace('#', '')
+})
 
-    async function search() {
-        state.result = await web.search(state.search)
-    }
+const filesPerPage = 24
 
-    async function go(rid) {
-      var response = await web.getDocInfo(rid)
-      var f = await web.getNodeFile(rid)
-        
-      state.file = response
-      state.text = replaceWithBr(f)
-      var nodepath = await web.getNodePath(rid)
-      state.nodepath = nodepath
-    }
+const state = reactive({
+  search: '',
+  result: null,
+  projects: [],
+  selected_projects: [],
+  project_input: '',
+  panelOpen: false,
+  page: 1,
+  projectFilterIgnored: false,
+})
 
-    function replaceWithBr(text) {
-      return text.replace(/\n/g, "<br />")
-    }
+function applySavedState(savedState) {
+  state.search = savedState?.search || ''
+  state.result = savedState?.result || null
+  state.panelOpen = Boolean(savedState?.panelOpen)
+  state.page = savedState?.page || 1
+  state.projectFilterIgnored = Boolean(savedState?.projectFilterIgnored)
+}
 
-    onMounted(async()=> {
-      var projects = await web.getProjects()
-      state.projects = [{title: 'All', value: ''}]
+function getSavedProjectRids(savedState) {
+  if (!savedState || !Array.isArray(savedState.selectedProjectRids)) return null
+  return savedState.selectedProjectRids
+}
 
-      for(var project of projects) {
-        state.projects.push({value: project['@rid'], title: project.label})       
-      }
+function saveState() {
+  const key = stateKey.value
+  store.search_page_states[key] = {
+    search: state.search,
+    result: state.result,
+    panelOpen: state.panelOpen,
+    page: state.page,
+    projectFilterIgnored: state.projectFilterIgnored,
+    selectedProjectRids: state.selected_projects.map((p) => p.value)
+  }
+}
 
-    })
+const selectedProjectRids = computed(() => {
+  if (state.selected_projects.length > 0) {
+    return state.selected_projects.map((p) => p.value)
+  }
 
+  // Default to current project only when coming from project route.
+  const current = props.projectRid || route.params.rid || ''
+  return current ? ['#' + String(current).replace('#', '')] : []
+})
 
+const navigationProjectRid = computed(() => {
+  const current = props.projectRid || route.params.rid || ''
+  if (current) return '#' + String(current).replace('#', '')
+  if (selectedProjectRids.value.length === 1) return selectedProjectRids.value[0]
+  return ''
+})
 
+const allDocs = computed(() => state.result?.response?.docs || [])
+const totalPages = computed(() => Math.max(1, Math.ceil(allDocs.value.length / filesPerPage)))
+const visibleDocs = computed(() => {
+  const start = (state.page - 1) * filesPerPage
+  return allDocs.value.slice(start, start + filesPerPage)
+})
+
+const panelSetData = computed(() => ({
+  mode: 'flat',
+  file_count: allDocs.value.length,
+  group_count: 0,
+}))
+
+const panelNode = computed(() => ({
+  label: state.search ? `Search: ${state.search}` : 'Search results'
+}))
+
+const panelItems = computed(() => {
+  return visibleDocs.value.map((doc, index) => normalizeSearchDoc(doc, index))
+})
+
+function normalizeSearchDoc(doc, localIndex) {
+  const rid = String(doc.id || '').startsWith('#') ? String(doc.id) : '#' + String(doc.id)
+  return {
+    '@rid': rid,
+    label: doc.label || doc.id,
+    type: doc.type || 'text',
+    entities: doc.entities || [],
+    description: state.result?.highlighting?.[doc.id]?.fulltext?.join(' ') || '',
+    info: doc.description || '',
+    thumb: buildThumbBase(doc.path),
+    thumbnail_version: Date.now() + localIndex,
+    expand: false,
+  }
+}
+
+function buildThumbBase(filePath) {
+  if (!filePath || typeof filePath !== 'string') return ''
+  const lastIndex = filePath.lastIndexOf('/')
+  if (lastIndex === -1) return ''
+  const base = `/api/thumbnails/${filePath.substring(0, lastIndex)}`
+  return import.meta.env.VITE_API_PATH ? `${import.meta.env.VITE_API_PATH}${base}` : base
+}
+
+async function search() {
+  if (!state.search) {
+    state.result = null
+    state.panelOpen = false
+    return
+  }
+
+  state.result = await web.search(state.search, { projectRids: selectedProjectRids.value })
+  state.projectFilterIgnored = Boolean(state.result?._project_filter_ignored)
+  state.page = 1
+  state.panelOpen = allDocs.value.length > 0
+}
+
+async function openFromPanel(payload) {
+  const file = payload?.file
+  const localIndex = payload?.index ?? 0
+  if (!file || !file['@rid']) return
+
+  const rid = file['@rid']
+  const absoluteIndex = ((state.page - 1) * filesPerPage) + localIndex
+  await go(rid, absoluteIndex)
+}
+
+async function go(rid, index) {
+  const normalizedRid = String(rid).startsWith('#') ? String(rid) : '#' + String(rid)
+  const response = await web.getDocInfo(normalizedRid)
+
+  const docs = allDocs.value
+  const searchResults = docs.map((doc) => ({
+    rid: String(doc.id).startsWith('#') ? String(doc.id) : '#' + String(doc.id),
+    label: doc.label,
+    score: doc.score,
+    highlight: state.result?.highlighting?.[doc.id]?.fulltext?.join(' ') || ''
+  }))
+
+  store.file = response
+  store.file_browse_context = {
+    mode: 'search',
+    query: state.search,
+    results: searchResults,
+    index: typeof index === 'number' ? index : docs.findIndex(d => d.id === rid || ('#' + d.id) === rid),
+  }
+
+  const fileRid = normalizedRid.replace('#', '')
+  const projectRid = navigationProjectRid.value
+
+  if (projectRid) {
+    router.push({ name: 'project-file', params: { rid: projectRid.replace('#', ''), fileRid } })
+  } else {
+    router.push({ name: 'files', params: { rid: fileRid } })
+  }
+}
+
+async function loadProjects(initialSelectionRids = null) {
+  const projects = await web.getProjects()
+  state.projects = []
+  for (const project of projects) {
+    state.projects.push({ value: project['@rid'], title: project.label })
+  }
+
+  if (Array.isArray(initialSelectionRids)) {
+    state.selected_projects = state.projects.filter((p) => initialSelectionRids.includes(p.value))
+    return
+  }
+
+  const initialProject = props.projectRid || route.params.rid || ''
+  if (!initialProject) {
+    state.selected_projects = []
+    return
+  }
+
+  const normalized = '#' + String(initialProject).replace('#', '')
+  const found = state.projects.find((p) => p.value === normalized)
+  state.selected_projects = found ? [found] : []
+}
+
+async function hydrateState() {
+  const key = stateKey.value
+  const saved = store.search_page_states[key]
+  const savedRids = getSavedProjectRids(saved)
+  await loadProjects(savedRids)
+
+  if (saved) {
+    applySavedState(saved)
+  } else {
+    state.search = ''
+    state.result = null
+    state.panelOpen = false
+    state.page = 1
+    state.projectFilterIgnored = false
+  }
+}
+
+async function onProjectSelectionChange() {
+  if (state.search) {
+    await search()
+  }
+}
+
+function addProjectByValue(value) {
+  if (!value) return
+  const project = state.projects.find((p) => p.value === value)
+  if (!project) return
+  if (state.selected_projects.find((p) => p.value === project.value)) return
+  state.selected_projects.push(project)
+  state.project_input = ''
+  onProjectSelectionChange()
+}
+
+function removeProject(project) {
+  state.selected_projects = state.selected_projects.filter((p) => p.value !== project.value)
+  onProjectSelectionChange()
+}
+
+watch(stateKey, async () => {
+  await hydrateState()
+}, { immediate: true })
+
+watch(
+  () => [
+    state.search,
+    state.result,
+    state.panelOpen,
+    state.page,
+    state.projectFilterIgnored,
+    state.selected_projects.map((p) => p.value).join(',')
+  ],
+  () => saveState(),
+  { deep: true }
+)
 </script>
 
-
 <template>
-  <v-card class="mx-auto fill-height" color="grey-lighten-3" flat>
-    <v-layout class="fill-height">
+  <v-row class="w-100 fill-height m-0 p-0">
+    <v-col cols="9" class="p-0 m-0 fill-height">
+      <SetPanel
+        inline
+        :show-close="false"
+        :model-value="true"
+        :panel-node="panelNode"
+        :setdata="panelSetData"
+        :set-items="panelItems"
+        :page="state.page"
+        :total-pages="totalPages"
+        :show-expand="false"
+        :allow-add-file="false"
+        @update:page="state.page = $event"
+        @open-file="openFromPanel"
+      />
+    </v-col>
 
+    <v-col cols="3" class="p-0 m-0 fill-height full-background">
+      <div class="search-sidebar pa-3">
+        <v-card variant="flat" class="search-sidebar-card pa-3">
+          <v-select
+            v-model="state.project_input"
+            :items="state.projects"
+            item-title="title"
+            item-value="value"
+            label="Project context"
+            density="comfortable"
+            variant="outlined"
+            @update:model-value="addProjectByValue"
+          ></v-select>
 
-      <v-main class="fill-height">
-        <v-container class="fill-height pa-0" fluid>
-          <v-row class="fill-height no-gutters" >
-
-            <v-col
-              class="d-flex fill-height overflow-auto"
-              cols="12"
-              color="light-blue lighten-3"
+          <div class="mb-2">
+            <v-chip
+              v-for="project in state.selected_projects"
+              :key="project.value"
+              class="mr-2 mb-2"
+              color="teal-darken-2"
+              @click="removeProject(project)"
             >
-            <v-container>
+              {{ project.title }}
+              <v-icon end>mdi-close</v-icon>
+            </v-chip>
+            <div v-if="state.selected_projects.length === 0" class="text-caption text-medium-emphasis">
+              No project selected: searching across all your projects.
+            </div>
+          </div>
 
-              <v-row class="column_text">
-                <!-- LEFT COLUMN -->
-                <v-col cols="1" align="center">
-                  <template v-for="node of state.nodepath">
-                    <div v-if="node['@type'] !== 'User'"><v-icon size="15" color="green">mdi-arrow-up</v-icon></div>
-                    <div v-if="node['@type'] !== 'User'" :class="'node-base ' + node['@type']+' '+node.type"  >{{ node.label }}
-                      <img class="tiny" v-if="node.type == 'pdf' || node.type == 'image'" :src="'api/thumbnails/' + node.path" />
-                    </div>
-                  </template>
-                </v-col>
+          <v-text-field
+            v-model="state.search"
+            label="Search text"
+            density="comfortable"
+            variant="outlined"
+            @keydown.enter="search"
+          ></v-text-field>
 
-                <!-- MIDDLE COLUMN -->
-                <v-col cols="7" :class="state.text ? 'column_text2 paper' : ''">
-                  
-                 
+          <v-btn color="primary" block class="mb-3" @click="search">Search</v-btn>
 
-                  <!-- <div v-if="state.file"><h5><router-link :to="'/files/' + state.file['@rid'].replace('#','')">{{ state.file.label }}</router-link></h5></div> -->
-                  
-                  <!-- ITEM DISPLAY -->
-                  <div >
-                    <div v-if="state.text" ref="textContainer" v-html="state.text"></div>
-                    <v-card v-else color="rgb(186, 219, 204)" class="p-2"> <h4>How search works?</h4><p>When your crunchers create texts (like OCR),the text get indexed and you can find it with search.</p>By default, the search is very aggressive, so it should work well with OCR texts also.<br> 
-                      <div class="alert alert-info m-2">The search is not fully functional yet.</div>
-                      </v-card>
-                  </div>
+          <v-alert
+            v-if="state.projectFilterIgnored && selectedProjectRids.length > 0"
+            type="info"
+            variant="tonal"
+            class="mb-3"
+          >
+            Project filtering is not yet available in backend. Showing global results for now.
+          </v-alert>
 
-                </v-col>
-
-                <!-- right COLUMN -->
-                <v-col cols="4" class="column_text2">
-                  
-                  <v-text-field v-model="state.search" @keydown.enter="search()" label="Search"></v-text-field>
-
-
-                  <v-chip v-for="type of state.types" color="blue" @click:close="state.types = state.types.filter(t => t != type)" closable>{{type}}</v-chip>
-                  <v-chip v-for="desk in state.desks" color="green" @click:close="state.desks = state.desks.filter(d => d != desk)" closable>{{state.projects.find(p => p.value == desk).title}}</v-chip>
-
-                  <!-- FILTERS-->
-                  <!-- <v-expansion-panels multiple>
-                      <v-expansion-panel title="Filters">
-                        <v-expansion-panel-text>
-  
-                          <v-expansion-panels>
-
-
-                            <v-expansion-panel
-                              title="Types"
-                            >
-                            <v-expansion-panel-text>
-                             
-                              <v-checkbox v-model="state.types" density="compact" value="text" label="Texts"></v-checkbox>
-
-                            </v-expansion-panel-text>
-                            </v-expansion-panel>
-
-                            <v-expansion-panel
-                              title="Desks"
-                            >
-                            <v-expansion-panel-text>
-                             
-                              <v-checkbox v-model="state.desks" density="compact" v-for="desk in state.projects" :label="desk.title" :value="desk.value"></v-checkbox>
-                            </v-expansion-panel-text>
-                            </v-expansion-panel>
-
-                          </v-expansion-panels>
-                          
-
-                          </v-expansion-panel-text>
-                      </v-expansion-panel>
-                    </v-expansion-panels> -->
-
-
-                    <!-- SEARCH RESULTS -->
-
-                    <v-container >
-                      <template v-if="state.result.response">
-                          <!-- {{ state.result.response.docs}} -->
-                        <v-card @click="go(item.id)" v-for="item in state.result.response.docs" :key="item" class="mt-2">
-                          <v-card-title >
-                            <div > {{item.label}} ({{item.type}}) {{item.id}} </div>
-                          </v-card-title>
-                          <v-card-subtitle v-if="item.description">{{ item.description.replace('\n', '') }}</v-card-subtitle> 
-                          <v-card-text v-if="state.result.highlighting[item.id]" v-html="state.result.highlighting[item.id].fulltext"></v-card-text>
-                        </v-card>
-
-                      </template>
-                    </v-container>
-                    <div v-if="state.result.response && state.result.response.numFound == 0">No matches</div>
-
-                </v-col>
-              </v-row>
-
-
-              
-
-            </v-container>
-            </v-col>
-
-          </v-row>
-        </v-container>
-      </v-main>
-    </v-layout>
-  </v-card>
+          <v-alert v-if="state.result && allDocs.length === 0" type="warning" variant="tonal">
+            No matches.
+          </v-alert>
+        </v-card>
+      </div>
+    </v-col>
+  </v-row>
 </template>
 
+<style scoped>
+.full-background {
+  background-image: linear-gradient(rgba(19, 84, 122, 0.8), rgba(128, 208, 199, 0.8)), url('../assets/images/right-column-bg2.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
 
+.search-sidebar {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.search-sidebar-card {
+  background: rgba(255, 255, 255, 0.9);
+}
+</style>

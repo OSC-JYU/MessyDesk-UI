@@ -39,7 +39,7 @@
 
     async function loadProject(project) {
         console.log(project)
-        router.push({ name: 'graph', query: { node: project['@rid'].replace('#', '')} })
+        router.push({ name: 'project-graph', params: { rid: project['@rid'].replace('#', '')} })
     }
 
     onMounted(async()=> {

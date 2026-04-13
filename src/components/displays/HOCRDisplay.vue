@@ -1,35 +1,21 @@
 <template>
-  <v-container>
-    <v-btn
-        class="ma-2"
-        color="primary"
-        icon="mdi-close"
-        style="position: absolute; top: 0; left: -60px; z-index:1000"
-        @click="$emit('change-tab',0)"
-      ></v-btn>
-      <v-row class="m-2">
-
-        <v-col cols="col-6">
-          <v-card class="overflow-auto" height="90dvh">
-            <v-card-text>
-              
-                <img ref="page_image" class="page_image" @load="onImgLoad" v-if="state.file" :src="state.file.original" alt="Image" />
-                {{ state.page_images }}
-
-              
-            </v-card-text>
-          </v-card>
-        </v-col>
-        <v-col cols="col-6">
-          <v-card class="overflow-auto" height="100dvh">
-            <v-card-text>
-              <div ref="editor" @click="onclick" v-html="state.hocr"></div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-
-      </v-row>
-  </v-container>
+  <v-row no-gutters class="fill-height">
+    <v-col cols="6">
+      <v-card class="overflow-auto" height="90dvh">
+        <v-card-text>
+          <img ref="page_image" class="page_image" @load="onImgLoad" v-if="state.file" :src="state.file.original" alt="Image" />
+          {{ state.page_images }}
+        </v-card-text>
+      </v-card>
+    </v-col>
+    <v-col cols="6">
+      <v-card class="overflow-auto" height="100dvh">
+        <v-card-text>
+          <div ref="editor" @click="onclick" v-html="state.hocr"></div>
+        </v-card-text>
+      </v-card>
+    </v-col>
+  </v-row>
 </template>
   
   <script setup>

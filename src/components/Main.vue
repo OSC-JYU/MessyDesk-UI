@@ -88,19 +88,29 @@ function formatEta(etaSec) {
   return `${hours}h ${remMin}m`
 }
 
+function getBatchStatus(batch, fallback = 'running') {
+  if (!batch) return fallback
+  return batch.status || batch.state || fallback
+}
+
+function renderEta(batch) {
+  if (!batch || batch.eta_sec === null || batch.eta_sec === undefined) return ''
+  return `, ETA ${formatEta(batch.eta_sec)}`
+}
+
 async function hydrateBatch(processRid) {
   try {
     const batch = await web.getBatch(processRid)
     if (!batch) return
     if (!store.running_processes[processRid]) {
-      store.running_processes[processRid] = { status: batch.state || 'running', message: 'Working...', batch: null }
+      store.running_processes[processRid] = { status: getBatchStatus(batch, 'running'), message: 'Working...', batch: null }
     }
     const processed = batch.processed_files ?? 0
     const total = batch.total_files ?? '?'
     const failed = batch.failed_files ?? 0
-    store.running_processes[processRid].status = batch.state || store.running_processes[processRid].status
+    store.running_processes[processRid].status = getBatchStatus(batch, store.running_processes[processRid].status)
     store.running_processes[processRid].batch = batch
-    store.running_processes[processRid].message = `${processed}/${total} files, failed ${failed}, ETA ${formatEta(batch.eta_sec)}`
+    store.running_processes[processRid].message = `${processed}/${total} files, failed ${failed}${renderEta(batch)}`
   } catch (error) {
     console.log('batch hydrate failed', processRid, error?.message)
   }
@@ -124,23 +134,23 @@ function connectSSE() {
       }
 
       if (wsdata.command === 'process_update') {
-        store.running_processes[processRid].status = wsdata?.batch?.state || wsdata?.process?.status || 'running'
+        store.running_processes[processRid].status = getBatchStatus(wsdata?.batch, wsdata?.process?.status || 'running')
         if (wsdata.batch) {
           const processed = wsdata.batch.processed_files ?? wsdata.current_file ?? 0
           const total = wsdata.batch.total_files ?? wsdata.total_files ?? '?'
           const failed = wsdata.batch.failed_files ?? 0
           store.running_processes[processRid].batch = wsdata.batch
-          store.running_processes[processRid].message = `${processed}/${total} files, failed ${failed}, ETA ${formatEta(wsdata.batch.eta_sec)}`
+          store.running_processes[processRid].message = `${processed}/${total} files, failed ${failed}${renderEta(wsdata.batch)}`
         } else {
           await hydrateBatch(processRid)
         }
       }
 
       if (wsdata.command === 'process_finished') {
-        store.running_processes[processRid].status = wsdata?.batch?.state || wsdata?.process?.status || 'finished'
+        store.running_processes[processRid].status = getBatchStatus(wsdata?.batch, wsdata?.process?.status || 'done')
         if (wsdata.batch) {
           store.running_processes[processRid].batch = wsdata.batch
-          store.running_processes[processRid].message = `Done ${wsdata.batch.processed_files ?? 0}/${wsdata.batch.total_files ?? '?'}, ETA ${formatEta(wsdata.batch.eta_sec)}`
+          store.running_processes[processRid].message = `Done ${wsdata.batch.processed_files ?? 0}/${wsdata.batch.total_files ?? '?'}${renderEta(wsdata.batch)}`
         }
       }
     } catch (error) {
@@ -331,8 +341,8 @@ function openProject(project) {
   }
 
   router.push({
-    name: 'graph',
-    query: { node: project['@rid'].replace('#', '') }
+    name: 'project-graph',
+    params: { rid: project['@rid'].replace('#', '') }
   })
 }
 

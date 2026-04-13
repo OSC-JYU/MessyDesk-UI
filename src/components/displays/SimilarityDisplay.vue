@@ -1,14 +1,5 @@
 <template>
-    <v-container fluid class="pa-0">
-      <v-btn
-        class="ma-2"
-        color="primary"
-        icon="mdi-close"
-        style="position: absolute; top: 0; left: -60px; z-index:1000"
-        @click="$emit('change-tab',store.tab)"
-      ></v-btn>
-
-      <v-row no-gutters class="fill-height">
+    <v-row no-gutters class="fill-height">
         <!-- LEFT COLUMN - Original Text -->
         <v-col cols="4" class="text-column original-column">
           <v-sheet class="text-content pa-4">
@@ -71,35 +62,9 @@
           </v-sheet>
         </v-col>
 
-        <!-- RIGHT COLUMN - Controls and Metadata -->
+        <!-- RIGHT COLUMN - Match Statistics (display-specific) -->
         <v-col cols="3" class="controls-column">
           <v-sheet class="pa-4">
-            <!-- File Info -->
-            <div v-if="state.file" class="mb-4">
-              <h4>{{ state.file.label}}</h4>
-              <DescriptionEditor :description="state.file.description" :rid="state.file['@rid']"/>
-              
-              <!-- Entities -->
-              <v-sheet class="mt-4">
-                <v-chip 
-                  v-for="entity of state.file.entities" 
-                  :key="entity.type" 
-                  :color="entity.color" 
-                  variant="outlined"
-                  class="ma-1"
-                  @click="deleteOrOpenEntity($event, entity.rid)"
-                >
-                  <v-icon :icon="'mdi-' + entity.icon.toLowerCase()" start></v-icon>
-                  {{ entity.label}}
-                  <v-icon v-if="state.isCtrlPressed" icon="mdi-close-circle" end></v-icon>
-                </v-chip>
-                <p v-if="state.file.entities && state.file.entities.length" class="text-caption mt-2">
-                  Ctrl + click to remove
-                </p>
-              </v-sheet>
-            </div>
-
-            <!-- Similarity Info -->
             <div v-if="state.similarityData" class="mb-4">
               <h4 class="mb-2">Match Statistics</h4>
               <v-divider class="mb-2"></v-divider>
@@ -129,92 +94,47 @@
                 </v-list-item>
               </v-list>
             </div>
-
-            <!-- Tags -->
-            <v-list v-model:opened="state.open">
-              <v-list-group value="Tags">
-                <template v-slot:activator="{ props }">
-                  <v-list-item v-bind="props" title="Tags"></v-list-item>
-                </template>
-
-                <v-list-group v-for="type in state.entities" :key="type.type">
-                  <template v-slot:activator="{ props }">
-                    <v-list-item v-bind="props" :title="type.type" :prepend-icon="'mdi-' + type.icon"></v-list-item>
-                  </template>
-                  <v-chip 
-                    v-for="item in type.items" 
-                    :key="item['@rid']" 
-                    :color="item.color"
-                    class="ma-1"
-                    @click="linkEntityToItem(item['@rid'])"
-                  >
-                    <v-icon :icon="'mdi-' + item.icon.toLowerCase()" start></v-icon>
-                    {{ item.label }}
-                  </v-chip>
-                </v-list-group>
-              </v-list-group>
-            </v-list>
-
-            <!-- Open Full File Button -->
-            <v-btn
-              v-if="state.file"
-              color="primary"
-              class="mt-4"
-              block
-              :href="apiUrl + '/api/files/' + state.file['@rid'].replace('#','')"
-              target="_blank"
-            >
-              Open full file
-            </v-btn>
           </v-sheet>
         </v-col>
       </v-row>
-    </v-container>
 </template>
 
 <script setup>
 
-  import { onMounted, onUnmounted, reactive, ref, watch, nextTick } from "vue";
+  import { onMounted, reactive, ref, watch, nextTick } from "vue";
 
   import web from "../../web.js";
   import {store} from "../../components/Store.js";
-  import DescriptionEditor from './DescriptionEditor.vue'
   const apiUrl = import.meta.env.VITE_API_PATH
 
   const originalTextContainer = ref(null)
   const queryTextContainer = ref(null)
 
-  // tab controls
   const emit = defineEmits(['change-tab'])
   const props = defineProps(['tab'])
 
-  // tab change launces content update
-  watch(() => props.tab, async (newValue, oldValue) => {
-    await load()
-  })
+  watch(() => props.tab, async () => { await load() })
+  watch(() => store.file, async (newFile) => { if (newFile) await load() })
 
   var state = reactive({
       file: null,
       similarityData: null,
-      docMap: [], // Array mapping doc_index to RID
-      docLabels: {}, // Cache of document labels by doc_index
-      originalTexts: {}, // Map of original texts by doc_index
-      originalTokensMap: {}, // Map of tokenized texts by doc_index
-      originalTokenCharPositionsMap: {}, // Map of token character positions by doc_index
-      tokenMaps: {}, // Maps doc_index to token maps (token index -> match indices)
+      docMap: [],
+      docLabels: {},
+      originalTexts: {},
+      originalTokensMap: {},
+      originalTokenCharPositionsMap: {},
+      tokenMaps: {},
       queryText: '',
       queryTokens: [],
-      queryTokenMap: new Map(), // Maps query token index to match indices
-      currentDocIndex: null, // Currently displayed document index
-      originalTokens: [], // Currently displayed original tokens
-      originalTokenCharPositions: [], // Character positions for currently displayed tokens
-      tokenMap: new Map(), // Currently displayed token map
+      queryTokenMap: new Map(),
+      currentDocIndex: null,
+      originalTokens: [],
+      originalTokenCharPositions: [],
+      tokenMap: new Map(),
       activeMatchIndex: -1,
       hoveredMatchIndex: -1,
-      loadingOriginalText: false,
-      entities: {},
-      open: [],
-      isCtrlPressed: false
+      loadingOriginalText: false
   })
 
   function tokenize(text) {
@@ -599,40 +519,6 @@
     }
   }
 
-  async function linkEntityToItem(entityID) {
-    console.log(entityID)
-    console.log(state.file['@rid'])
-    await web.linkEntityToItem(entityID, state.file['@rid'])
-    var response = await web.getDocInfo(state.file['@rid'])
-    state.file = response
-  }
-
-  async function unLinkEntity(entityID) {
-    console.log(entityID)
-    console.log(state.file['@rid'])
-    await web.unLinkEntity(entityID, state.file['@rid'])
-    var response = await web.getDocInfo(state.file['@rid'])
-    state.file = response
-  }
-
-  async function deleteOrOpenEntity(event, entityID) {
-    if (state.isCtrlPressed) {
-      await unLinkEntity(entityID)
-    } else {
-      console.log('show');
-    }
-  }
-
-  function handleKeyDown(event) {
-    if (event.ctrlKey) {
-      state.isCtrlPressed = true;
-    }
-  }
-
-  function handleKeyUp(event) {
-    state.isCtrlPressed = false;
-  }
-
   async function load() {
     state.file = null
     state.similarityData = null
@@ -652,12 +538,9 @@
     state.activeMatchIndex = -1
     state.loadingOriginalText = false
 
-    // Load similarity data from store.file
     var similarityDataFile = await web.getNodeFile(store.file['@rid'])
-    state.file = await web.getDocInfo(store.file['@rid'])
-    state.entities = await web.getEntities()
+    state.file = store.file
 
-    // Parse similarity data
     if (typeof similarityDataFile === 'string') {
       try {
         state.similarityData = JSON.parse(similarityDataFile)
@@ -668,47 +551,30 @@
       state.similarityData = similarityDataFile
     }
 
-    // Get doc_map (array mapping doc_index to RID)
     if (state.similarityData && state.similarityData.doc_map) {
       state.docMap = state.similarityData.doc_map
     } else if (state.similarityData && state.similarityData.text_file) {
-      // Backwards compatibility: if text_file exists, use it as doc_index 0
       state.docMap = [state.similarityData.text_file]
-      // Load it immediately for backwards compatibility
       await loadOriginalText(0)
     }
 
-    // Get query text
     if (state.similarityData && state.similarityData.query_text) {
       state.queryText = state.similarityData.query_text
       state.queryTokens = tokenize(state.queryText)
     }
 
-    // Build token maps (will be built per document when text is loaded)
     buildTokenMaps()
   }
 
-  onMounted(async()=> {
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
+  onMounted(async () => {
     await load()
-  })
-
-  onUnmounted(() => {
-    window.removeEventListener("keydown", handleKeyDown);
-    window.removeEventListener("keyup", handleKeyUp);
   })
 
 </script>
 
 <style scoped>
-.v-container {
-  max-width: 100% !important;
-  margin-left: 60px !important;
-}
-
 .text-column {
-  height: calc(100vh - 64px);
+  height: calc(100vh - 120px);
   overflow-y: auto;
   border-right: 1px solid rgba(0, 0, 0, 0.12);
 }
@@ -718,8 +584,7 @@
 }
 
 .controls-column {
-  border-left: 1px solid rgba(0, 0, 0, 0.12);
-  height: calc(100vh - 64px);
+  height: calc(100vh - 120px);
   overflow-y: auto;
 }
 
@@ -783,14 +648,6 @@
 @keyframes flash {
   0%, 100% { background-color: transparent; }
   50% { background-color: rgba(255, 235, 59, 0.5); }
-}
-
-.v-chip {
-  margin: 2px;
-}
-
-.v-list-group__items .v-list-item {
-  padding-left: 30px;
 }
 
 .match-list {

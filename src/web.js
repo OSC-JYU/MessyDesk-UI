@@ -50,9 +50,28 @@ web.getError = async function(rid) {
 	return result.data
 }
 
-web.search = async function(search) {
-	var result = await axios.post(`/api/search`, {query: search})
-	return result.data
+web.search = async function(search, options = {}) {
+	const payload = {query: search}
+	const projectRids = Array.isArray(options.projectRids)
+		? options.projectRids.filter(Boolean)
+		: (options.projectRid ? [options.projectRid] : [])
+	if(projectRids.length === 1)
+		payload.project_rid = String(projectRids[0]).replace('#', '')
+	if(projectRids.length > 1)
+		payload.project_rids = projectRids.map((r) => String(r).replace('#', ''))
+	try {
+		var result = await axios.post(`/api/search`, payload)
+		return result.data
+	} catch (error) {
+		// Backend project-filter endpoint may not be available yet; fall back to global search.
+		if(projectRids.length > 0) {
+			var fallback = await axios.post(`/api/search`, {query: search})
+			const data = fallback.data || {}
+			data._project_filter_ignored = true
+			return data
+		}
+		throw error
+	}
 }
 
 web.savePrompt = async function(prompt) {
@@ -254,10 +273,28 @@ web.getEntitySchema = async function(dir) {
 	return result.data
 }
 
-web.getEntityItems = async function(entities) {
+web.getEntityItems = async function(entities, options = {}) {
 	var entity_rids = entities.map(e => e['@rid'].replace('#', ''))
-	var result = await axios.get(`/api/entities/items?entities=${entity_rids.join(',')}`)
-	return result.data
+	const projectRids = Array.isArray(options.projectRids)
+		? options.projectRids.filter(Boolean)
+		: (options.projectRid ? [options.projectRid] : [])
+	const params = new URLSearchParams()
+	params.set('entities', entity_rids.join(','))
+	if(projectRids.length === 1) params.set('project_rid', String(projectRids[0]).replace('#', ''))
+	if(projectRids.length > 1) params.set('project_rids', projectRids.map((r) => String(r).replace('#', '')).join(','))
+	const query = params.toString()
+	try {
+		var result = await axios.get(`/api/entities/items?${query}`)
+		return result.data
+	} catch (error) {
+		if(projectRids.length > 0) {
+			var fallback = await axios.get(`/api/entities/items?entities=${entity_rids.join(',')}`)
+			const data = fallback.data || []
+			if(Array.isArray(data)) data._project_filter_ignored = true
+			return data
+		}
+		throw error
+	}
 }
 
 web.getEntitiesByType = async function(type) {
@@ -359,6 +396,11 @@ web.createFileThumbnail = async function(rid) {
 
 web.getNodePath = async function(rid) {
 	var result = await axios.get(`/api/graph/traverse/${rid.replace('#','')}/out`)
+	return result.data
+}
+
+web.getFileAncestors = async function(rid) {
+	var result = await axios.get(`/api/files/${rid.replace('#','')}/ancestors`)
 	return result.data
 }
 

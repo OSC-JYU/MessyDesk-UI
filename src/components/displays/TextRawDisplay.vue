@@ -1,69 +1,39 @@
 <template>
-    <v-container>
-      <v-btn
-        class="ma-2"
-        color="primary"
-        icon="mdi-close"
-        style="position: absolute; top: 0; left: -60px; z-index:1000"
-        @click="$emit('change-tab',0)"
-      ></v-btn>
-      <v-row class="mt-6">
-        <div v-if="state.file"><h2>{{ state.file.label }}</h2></div>
-      </v-row>
-      <v-row>
+  <v-sheet class="text-raw-content pa-4">
+    <div v-html="state.text"></div>
+  </v-sheet>
+</template>
 
-        <v-col cols="9" style="height: 80vh; overflow-y: auto;">
-          <div v-html="state.text"></div>
-        </v-col>
+<script setup>
+  import { onMounted, reactive, watch } from "vue";
+  import web from "../../web.js";
+  import { store } from "../../components/Store.js";
 
-        <v-col cols="3">
+  const emit = defineEmits(['change-tab'])
+  const props = defineProps(['tab'])
 
-        </v-col>  
+  watch(() => props.tab, async () => { await load() })
+  watch(() => store.file, async (newFile) => { if (newFile) await load() })
 
-      </v-row>
-    </v-container>
+  var state = reactive({ text: '' })
 
-    
-  </template>
-  
-  <script setup>
+  async function load() {
+    var text = await web.getNodeFile(store.file['@rid'])
+    state.text = replaceWithBr(JSON.stringify(text, null, 2))
+  }
 
-    import { onMounted, watch, reactive} from "vue";
-  
-    import web from "../../web.js";
-    import {store} from "../../components/Store.js";
+  onMounted(async () => { await load() })
 
-    const emit = defineEmits(['change-tab'])
-    const props = defineProps(['tab'])
-    // tab change launces content update. Could be done otherwise propably?
-    watch(() => props.tab, async (newValue, oldValue) => {
-      await load()
-    })
+  function replaceWithBr(text) {
+    return text.replace(/\n/g, "<br />")
+  }
+</script>
 
-    var state = reactive({
-        file: null,
-        cruncher: null
-    })
-
-    async function load() {
-      console.log('TextRawDisplay load')
-      var text =  await web.getNodeFile(store.file['@rid'])
-      state.text = replaceWithBr(JSON.stringify(text, null, 2))
-      state.file = await web.getDocInfo(store.file['@rid'])
-
-    }
-
-    onMounted(async()=> {
-      console.log('TextRawDisplay mounted')
-      await load()
-    })
-
-    function replaceWithBr(text) {
-      return text.replace(/\n/g, "<br />")
-    }
-
-  </script>
-  
-  <style scoped>
+<style scoped>
+.text-raw-content {
+  height: calc(100vh - 120px);
+  overflow-y: auto;
+  background-color: white;
+}
 
   </style>

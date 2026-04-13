@@ -4,52 +4,35 @@
 
 <template>
 
-  <v-container>
-      <v-row>
-        <v-btn @click="$router.go(-1)"><v-icon>mdi-arrow-left</v-icon></v-btn>
-      </v-row>
-      <v-row class="mt-6">
-        <div v-if="state.file"><h2>{{ state.file.label }}</h2></div>
-      </v-row>
-      <v-row>
+  <v-row no-gutters class="fill-height">
+    <v-col cols="8">
+      <canvas id="canvas" height="800" width="1000" ref="canvas"></canvas>
+    </v-col>
 
-        <v-col cols="9" >
-          <canvas id="canvas" height="800" width="1000" ref="canvas" >
-          </canvas>
-        </v-col>
+    <v-col cols="4" class="pa-4">
+      <template v-if="state.cruncher">
+        <v-card>
+          <v-card-title>{{ state.cruncher.label }}</v-card-title>
+          <v-card-text>{{ state.cruncher.info }}</v-card-text>
 
-        <v-col cols="3">
-          <template v-if="state.cruncher">
-            <v-card>
-                <v-card-title>{{ state.cruncher.label }}</v-card-title>
-                <v-card-text>{{ state.cruncher.info }}</v-card-text>
+          <div v-if="state.data">faces: {{ state.data.face.length }}</div>
 
-                <div v-if="state.data">faces: {{ state.data.face.length }}</div>
+          <v-card v-for="(value, key) of state.data.face">
+            <v-card-title>{{ key }}</v-card-title>
+            <v-card-text>
+              gender: {{ value.gender }}<br>
+              age: {{ value.age }}<br>
+              <div v-for="emotion in value.emotion">
+                {{ emotion.emotion }}: {{ emotion.score }}
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-card>
+      </template>
+    </v-col>  
+  </v-row>
 
-              
-                <v-card v-for="(value, key) of state.data.face">
-                  <v-card-title>{{ key }}</v-card-title>
-                  <v-card-text>
-                    
-                    gender: {{ value.gender }}<br>
-                    age: {{ value.age }}<br>
-                    <div v-for="emotion in value.emotion">
-                      {{ emotion.emotion }}: {{ emotion.score }}
-                    </div>
-                  </v-card-text>
-
-                
-                </v-card>
-
-            </v-card>
-          </template>
-        </v-col>  
-
-      </v-row>
-    </v-container>
-
-
-  </template>
+</template>
   
   <script setup>
 

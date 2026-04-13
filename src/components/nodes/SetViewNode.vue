@@ -57,6 +57,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  showExpand: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 const emit = defineEmits(['expand-node'])
@@ -83,7 +87,7 @@ function thumbnailSrc(fileData) {
 
 
 
-      <v-switch v-if="!data.is_group" class="mt-2" v-model="data.expand" @change="emit('expand-node', data)" label="Show in Desk" color="primary">expand</v-switch>
+      <v-switch v-if="showExpand && !data.is_group" class="mt-2" v-model="data.expand" @change="emit('expand-node', data)" label="Show in Desk" color="primary">expand</v-switch>
       <v-row >
         <v-chip v-if="!data.is_group && store.settings_show_entities" v-for="entity of data.entities" :key="entity.id"  :color="entity.color" ><v-icon v-if="entity.icon" :icon="'mdi-' + entity.icon.toLowerCase()" start></v-icon> {{ entity.label }}</v-chip>
         <v-chip v-if="data.is_group" color="teal-darken-2" variant="flat">{{ data.file_count || 0 }} files</v-chip>

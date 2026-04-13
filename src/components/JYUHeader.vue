@@ -1,6 +1,6 @@
 <script setup>
-    import { onMounted, reactive, ref, watch } from "vue";
-    import { useRoute } from 'vue-router'
+    import { onMounted, reactive, ref, computed, watch } from "vue";
+    import { useRoute, useRouter } from 'vue-router'
     import mdLogo from '../assets/images/md-logo.svg'
 
  
@@ -10,20 +10,29 @@
     import web from "../web.js";
 
     const route  = useRoute();
+    const router = useRouter();
     const props = defineProps({
-        mode: ''
+        mode: '',
+        activeView: { type: String, default: 'graph' },
+        projectRid: { type: String, default: null }
     })
 
     const state = reactive({
       drawer:false, 
       node: '',
-      tab: 0
     })
     const upload = ref(null);
 
-    const emit = defineEmits(['fit-to-node', 'create-project', 'change-tab'])
+    const emit = defineEmits(['fit-to-node', 'create-project', 'change-view'])
 
     const pdfAlertVisible = ref(true);
+
+    // Map active view to tab index for v-tabs highlight
+    const tabIndex = computed(() => {
+      if (props.activeView === 'search') return 1
+      if (props.activeView === 'entities') return 2
+      return 0
+    })
 
     function fitToNode(id) {
         console.log(id)
@@ -37,15 +46,17 @@
       state.drawer = false
     }
 
-    function changeTab(tab) {
-        emit('change-tab', tab)
+    function onTabChange(index) {
+      if (!props.projectRid) return
+      const rid = props.projectRid
+      if (index === 0) {
+        router.push({ name: 'project-graph', params: { rid } })
+      } else if (index === 1) {
+        router.push({ name: 'project-search', params: { rid } })
+      } else if (index === 2) {
+        router.push({ name: 'project-entities', params: { rid } })
+      }
     }
-
-    // watch state.tab
-    watch(() => state.tab, async (newValue, oldValue) => {
-        console.log(newValue)
-        emit('change-tab', newValue)
-    })
 
 </script>
 
@@ -82,9 +93,9 @@
           
           
           
-          <v-tabs v-model="state.tab" >
+          <v-tabs :model-value="tabIndex" @update:model-value="onTabChange" >
             
-            <v-tab >Crunch</v-tab>
+            <v-tab >Desk</v-tab>
             <v-tab>Search</v-tab>
             <v-tab>Tags</v-tab>
             

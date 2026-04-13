@@ -2,6 +2,7 @@ import { createI18n } from 'vue-i18n'
 import messages from '../lang/messages.json'
 
 import GraphMain from './components/GraphMain.vue'
+import GraphDisplay from './components/GraphDisplay.vue'
 
 import FilesMain from './components/FilesMain.vue'
 import Main from './components/Main.vue'
@@ -16,6 +17,8 @@ import Introduction from './components/Introduction.vue'
 
 import Login from './components/Login.vue'
 import About from './components/About.vue'
+
+import FileDisplayWrapper from './components/displays/FileDisplayWrapper.vue'
 
 
 import { createApp } from 'vue'
@@ -63,10 +66,43 @@ const router = createRouter({
       component: Main
     },
 
+    // Legacy redirect: /graph?node=xxx → /project/xxx
     {
-        path: '/graph',
-        name: 'graph',
-        component: GraphMain
+      path: '/graph',
+      redirect: to => {
+        if (to.query.node) {
+          return { name: 'project-graph', params: { rid: to.query.node } }
+        }
+        return { name: 'Home' }
+      }
+    },
+
+    // Project routes with nested children
+    {
+      path: '/project/:rid',
+      component: GraphMain,
+      children: [
+        {
+          path: '',
+          name: 'project-graph',
+          component: GraphDisplay
+        },
+        {
+          path: 'search',
+          name: 'project-search',
+          component: SearchMain
+        },
+        {
+          path: 'entities',
+          name: 'project-entities',
+          component: EntitiesMain
+        },
+        {
+          path: 'file/:fileRid',
+          name: 'project-file',
+          component: FileDisplayWrapper
+        }
+      ]
     },
 
     {
@@ -92,7 +128,6 @@ const router = createRouter({
       name: 'crunchers',
       component: CrunchersMain
     },
-
 
     {
       path: '/search',

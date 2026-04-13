@@ -232,7 +232,7 @@
     @click="toggleVisibility"
     class="debug-toggle-btn"
     color="primary"
-    variant="fab"
+    variant="elevated"
     size="small"
     icon="mdi-bug"
   ></v-btn>

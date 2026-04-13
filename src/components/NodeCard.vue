@@ -192,6 +192,19 @@
     border: 1px solid #ffcdd2;
     color: #b71c1c;
 }
+
+.process-details-json {
+    max-height: 55vh;
+    overflow: auto;
+    background: #111827;
+    color: #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 12px;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
 </style>
 
 
@@ -344,6 +357,41 @@
         </v-sheet>
     </div>
 
+    <v-dialog v-model="state.process_detail_open" max-width="920">
+        <v-card>
+            <v-card-title class="d-flex align-center justify-space-between">
+                <span>Process details</span>
+                <v-chip size="small" color="primary" variant="tonal">{{ processStatusLabel }}</v-chip>
+            </v-card-title>
+            <v-card-text>
+                <div v-if="state.process_detail_error" class="nodecard-status nodecard-status--error mb-3">
+                    {{ state.process_detail_error }}
+                </div>
+
+                <div class="d-flex align-center mb-3" style="gap: 8px; flex-wrap: wrap;">
+                    <v-btn size="small" variant="outlined" :loading="state.process_detail_loading" @click="refreshProcessDetails">
+                        Refresh
+                    </v-btn>
+                    <v-btn
+                        v-if="canResumeProcess"
+                        size="small"
+                        color="teal-darken-1"
+                        :loading="state.process_action_loading"
+                        @click="resumeProcessFromDetails"
+                    >
+                        Resume
+                    </v-btn>
+                </div>
+
+                <div class="process-details-json">{{ processDetailsPretty }}</div>
+            </v-card-text>
+            <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn variant="text" @click="state.process_detail_open = false">Close</v-btn>
+            </v-card-actions>
+        </v-card>
+    </v-dialog>
+
 
 
 </template>
@@ -377,6 +425,11 @@
         set_zip_loading: false,
         set_zip_message: '',
         set_zip_message_type: 'info',
+        process_detail_open: false,
+        process_detail_loading: false,
+        process_detail_error: '',
+        process_action_loading: false,
+        process_detail_data: null,
         _group: null,
         _access: null,
         error: null,
@@ -418,6 +471,21 @@
 
     const permissions = ['user', 'creator', 'admin']
     const emit = defineEmits(['updateGraph'])
+
+    const processStatusLabel = computed(() => {
+        const batch = state.process_detail_data?.batch || null
+        const nodeStatus = store.current_node?.data?.status
+        return batch?.status || batch?.state || nodeStatus || 'unknown'
+    })
+
+    const canResumeProcess = computed(() => {
+        return processStatusLabel.value === 'paused'
+    })
+
+    const processDetailsPretty = computed(() => {
+        const payload = state.process_detail_data || {}
+        return JSON.stringify(payload, null, 2)
+    })
 
 
     function empty(string) {
@@ -464,11 +532,52 @@
         state.edit_description_open = false
     }
 
-    function showDetail() {
-        // Toggle detail view or emit event to parent component
-        console.log('Show detail for node:', store.current_node.id)
-        // You can implement the detail view logic here or emit an event
-        // emit('showDetail', store.current_node)
+    async function refreshProcessDetails() {
+        if(!store.current_node?.id) return
+        state.process_detail_loading = true
+        state.process_detail_error = ''
+        try {
+            const batch = await web.getBatch(store.current_node.id)
+            state.process_detail_data = {
+                rid: store.current_node.id,
+                type: store.current_node.type,
+                node: JSON.parse(JSON.stringify(store.current_node.data || {})),
+                batch,
+            }
+        } catch (error) {
+            state.process_detail_error = error?.message || 'Could not load process details'
+            state.process_detail_data = {
+                rid: store.current_node.id,
+                type: store.current_node.type,
+                node: JSON.parse(JSON.stringify(store.current_node.data || {})),
+                batch: null,
+            }
+        } finally {
+            state.process_detail_loading = false
+        }
+    }
+
+    async function showDetail() {
+        state.process_detail_open = true
+        await refreshProcessDetails()
+    }
+
+    async function resumeProcessFromDetails() {
+        if(!store.current_node?.id || !canResumeProcess.value) return
+        state.process_action_loading = true
+        state.process_detail_error = ''
+        try {
+            await web.resumeBatch(store.current_node.id)
+            if(store.running_processes[store.current_node.id]) {
+                store.running_processes[store.current_node.id].status = 'running'
+            }
+            await refreshProcessDetails()
+            emit('updateGraph')
+        } catch (error) {
+            state.process_detail_error = error?.message || 'Could not resume process'
+        } finally {
+            state.process_action_loading = false
+        }
     }
 
     async function downloadSet() {

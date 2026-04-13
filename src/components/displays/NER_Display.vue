@@ -41,56 +41,41 @@
 
 <template>
 
-    <v-container>
-      <v-btn
-        class="ma-2"
-        color="primary"
-        icon="mdi-close"
-        style="position: absolute; top: 0; left: -60px; z-index:1000"
-        @click="$emit('change-tab',0)"
-      ></v-btn>
+    <v-row class="column_text" no-gutters>
 
-      <v-row class="column_text">
+      <v-col cols="8" class="column_text2 paper pa-4">
+        <div v-html="state.source_text"></div>
+      </v-col>
 
-        <v-col cols="9" class="column_text2 paper">
-          <div v-html="state.source_text"></div>
-        </v-col>
+      <v-col cols="4" class="column_text2 pa-4">
+        <div v-if="state.source">{{ state.source.label }}</div>
+        
+        <div v-for="e of entity_order">
+          <template v-if="state.entities[e] && state.entities[e].length">
+            <h5>{{ e }} <span> {{ state.entities[e].length }}</span></h5>
+            <div v-for="entity of state.entities[e]">
+              <a :href="'#highlight-'+entity.start" :class="entity.entity_group">{{ entity.word }}</a> 
+            </div>
+          </template>
+        </div>
+      </v-col>  
 
-        <v-col cols="3" class="column_text2">
-          <div v-if="state.file">{{ state.source.label }}</div>
-          
-          <div v-for="e of entity_order">
-            <template v-if="state.entities[e] && state.entities[e].length">
-              <h5>{{ e }} <span> {{ state.entities[e].length }}</span></h5>
-              <div v-for="entity of state.entities[e]">
-                <a :href="'#highlight-'+entity.start" :class="entity.entity_group">{{ entity.word }}</a> 
-              </div>
-            </template>
-          </div>
-        </v-col>  
-
-      </v-row>
-    </v-container>
-
-
+    </v-row>
 
   </template>
   
   <script setup>
 
-    import { onMounted, watch, reactive, ref, computed } from "vue";
-    import { useRouter, useRoute } from 'vue-router'
+    import { onMounted, watch, reactive } from "vue";
   
     import web from "../../web.js";
     import {store} from "../../components/Store.js";
 
-    // tab controls
     const emit = defineEmits(['change-tab'])
     const props = defineProps(['tab'])
-    // tab change launces content update. Could be done otherwise propably?
-    watch(() => props.tab, async (newValue, oldValue) => {
-      await load()
-    })
+
+    watch(() => props.tab, async () => { await load() })
+    watch(() => store.file, async (newFile) => { if (newFile) await load() })
 
     const entity_order = ['PERSON', 'GPE', 'DATE', 'ORG', 'LOC', 'EVENT', 'PRODUCT', 'NORP', 'FIBC', 'JON']
 

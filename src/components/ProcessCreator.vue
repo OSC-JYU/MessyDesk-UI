@@ -144,7 +144,7 @@
 		store.new_node_type = ''
 		store.new_node_relation = null
 		store.process_creator_open = false
-		if(tomain)router.push({ name: 'graph', query: { node: route.query.desk} })
+		if(tomain)router.push({ name: 'project-graph', params: { rid: route.params.rid || route.query.desk} })
 	}
 
 	function createUserInfo(info, params) {
