@@ -61,7 +61,7 @@ async function loadResult() {
 
 <style scoped>
 .search-tools {
-  background: rgba(63, 81, 181, 0.08);
+  background: rgb(93, 157, 156);;
   border-bottom: 1px solid rgba(0, 0, 0, 0.12);
   min-height: 48px;
 }

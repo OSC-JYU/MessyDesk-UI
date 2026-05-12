@@ -106,7 +106,7 @@
 
 
 <script setup>
-  import { watch, reactive, ref} from "vue";
+  import { reactive, ref } from "vue";
 	import { useRoute } from 'vue-router'
   import {store} from "./Store.js";
   import web from "../web.js";
@@ -120,36 +120,63 @@
 		loading: false,
     error: ''
 	})
-	var new_node = reactive({})
-  var created = reactive([])
 
 	const props = defineProps({
         mode: ''
     })
 
+    function getProjectRid() {
+      if (route.params?.rid) return String(route.params.rid)
+      if (route.query?.node) return String(route.query.node)
+      if (store.current_project?.id) return String(store.current_project.id).replace('#', '')
+      if (store.current_node?.project_rid) return String(store.current_node.project_rid).replace('#', '')
+      return null
+    }
+
+    function getSelectedFile() {
+      const input = upload.value
+      if (!input) return null
+
+      if (Array.isArray(input.files) && input.files.length) {
+        return input.files[0]
+      }
+
+      const model = input.modelValue
+      if (Array.isArray(model) && model.length) return model[0]
+      if (model && typeof model === 'object') return model
+      return null
+    }
+
 
     async function sendFile() {
-        if(upload.value.files.length && route.query.node) {
-          state.loading = true
-            try {
-                if(store.set_uploader_open && store.current_node && store.current_node.type == 'set') {
-                  await web.uploadFile(upload.value.files[0], route.query.node, store.current_node.id)
+      const file = getSelectedFile()
+      const projectRid = getProjectRid()
 
-                } else {
-                  await web.uploadFile(upload.value.files[0], route.query.node)
-                }
+      if (!file) {
+        alert('Please select a file first.')
+        return
+      }
 
-                state.loading = false
-                store.uploader_open = false
-                store.set_uploader_open = false
-                //store.reload()
-            } catch(e) {
-                if(e.response && e.response.data.error)
-                    alert(e.response.data.error)
-                else
-                    alert(e)
-            }
+      if (!projectRid) {
+        alert('Project context missing. Open a project and try again.')
+        return
+      }
+
+      state.loading = true
+      try {
+        if (store.set_uploader_open && store.current_node && store.current_node.type == 'set') {
+          await web.uploadFile(file, projectRid, store.current_node.id)
+        } else {
+          await web.uploadFile(file, projectRid)
         }
+
+        store.uploader_open = false
+        store.set_uploader_open = false
+      } catch (e) {
+        alert(e?.message || 'Upload failed')
+      } finally {
+        state.loading = false
+      }
     }
 
 	function close() {

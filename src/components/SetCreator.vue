@@ -64,10 +64,19 @@
 
   const emit = defineEmits(['updateGraph'])
 
+  function getProjectRid() {
+    if (route.params?.rid) return String(route.params.rid)
+    if (route.query?.node) return String(route.query.node)
+    if (store.current_project?.id) return String(store.current_project.id).replace('#', '')
+    if (store.current_node?.project_rid) return String(store.current_node.project_rid).replace('#', '')
+    return null
+  }
+
     async function createSet() {
-        if(state.set_name && route.query.node) {
+    const projectRid = getProjectRid()
+    if(state.set_name && projectRid) {
             try {
-                var response = await web.createSet(route.query.node, state.set_name, state.description)
+        var response = await web.createSet(projectRid, state.set_name, state.description)
                 console.log(response)
                 store.set_creator_open = false
                 //emit('updateGraph', response['@rid'])
@@ -78,6 +87,8 @@
                 else
                     alert(e)
             }
+            } else if (state.set_name && !projectRid) {
+              alert('Project context missing. Open a project and try again.')
         }
     }
 

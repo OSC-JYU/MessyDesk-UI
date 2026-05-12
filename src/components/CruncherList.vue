@@ -413,7 +413,14 @@
         activeTab: 'services'
 	})
 
-    async function loadData(rid) {
+    async function loadData() {
+        if (!store.current_node?.id) {
+            services.result = {}
+            state.service_count = 0
+            return
+        }
+
+        state.service_count = 0
         services.result = await web.getServicesForFile(store.current_node.id, store.cruncher_filter)
 
         for(var service of services.result.for_format) {
@@ -579,11 +586,28 @@
 
 
     onMounted(async()=> {
-        if(route.query.node) {
-           loadData(route.query.node)
-          
+        if (store.crunchers_open && store.current_node?.id) {
+            await loadData()
         }
     })
+
+    watch(
+        () => store.crunchers_open,
+        async (open) => {
+            if (open) {
+                await loadData()
+            }
+        }
+    )
+
+    watch(
+        () => [store.current_node?.id, store.cruncher_filter],
+        async () => {
+            if (store.crunchers_open) {
+                await loadData()
+            }
+        }
+    )
 
     const allTasks = computed(() => {
         if(!services.result || !services.result.for_format) return []

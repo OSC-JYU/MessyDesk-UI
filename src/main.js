@@ -11,7 +11,6 @@ import PromptsMain from './components/PromptsMain.vue'
 import CrunchersMain from './components/CrunchersMain.vue'
 import SearchMain from './components/SearchMain.vue'
 import EntitiesMain from './components/EntitiesMain.vue'
-import TagsMain from './components/TagsMain.vue'
 import AdminMain from './components/AdminMain.vue'
 import Introduction from './components/Introduction.vue'
 
@@ -144,7 +143,7 @@ const router = createRouter({
     {
       path: '/tags',
       name: 'tags',
-      component: TagsMain
+      redirect: { name: 'entities' }
     },
 
     {

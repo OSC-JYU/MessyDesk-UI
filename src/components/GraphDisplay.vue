@@ -84,6 +84,12 @@
     opacity: 0.92;
 }
 
+.set-restore-placeholder {
+    height: 100%;
+    width: 100%;
+    background: rgba(245, 250, 250, 0.75);
+}
+
 
 
 
@@ -150,6 +156,7 @@
                                             :panel-node="state.setPanelNode"
                                             :setdata="state.setdata"
                                             :set-items="state.setItems"
+                                            :loading="state.setPanelLoading"
                                             :page="page"
                                             :total-pages="totalPages"
                                             :selected-source-label="state.selected_source_label"
@@ -163,7 +170,7 @@
 
                                                                                 <!-- <VueFlow :nodes="elements.nodes" :edges="elements.edges" fit-view-on-init > -->
                                                                                 <VueFlow
-                                                                                        v-else
+                                                                                    v-else
                                             :nodes="elements.nodes"
                                             :edges="elements.edges"
                                             :default-zoom="0.5"
@@ -221,6 +228,10 @@
 
                         <template #node-set="{ data }">
                             <SetNode :data="data" />
+                        </template>
+
+                        <template #node-search-set="{ data }">
+                            <SearchSetNode :data="data" />
                         </template>
 
                         <template #node-roi-set="{ data }">
@@ -357,6 +368,7 @@
     import PolygonNode from './nodes/PolygonNode.vue'
     import EmptyNode from './nodes/EmptyNode.vue'
     import SearchNode from './nodes/SearchNode.vue'
+    import SearchSetNode from './nodes/SearchSetNode.vue'
     import ErrorNode from './nodes/ErrorNode.vue'
 
     import SetPanel from './displays/SetPanel.vue'
@@ -386,7 +398,7 @@
 	const offCanvasSet = ref(null)
     var settable = ref(null)
     var state = reactive({
-        setdata: {files: [], groups: [], mode: 'groups', file_count: 0, group_count: 0}, 
+        setdata: {files: [], groups: [], mode: 'flat', file_count: 0, group_count: 0}, 
         setItems: [],
         setPanelNode: null,
         panel_roi_set: null,
@@ -401,11 +413,14 @@
         action: '',
         compact_view: false,
         isolate_view: false,
+        setPanelLoading: false,
+        restoringSetPanel: false,
         running_processes: store.running_processes
     })
 
     let batchRefreshTimer = null
     let setPanelRefreshTimer = null
+    let suppressSetReload = false
 
     var current_node = reactive({})
     var current_graph_node = reactive({position: {}})
@@ -423,6 +438,16 @@
 
     // Replace WebSocket connection with SSE
     let eventSource = null;
+
+    function createEmptySetData() {
+        return {files: [], groups: [], mode: 'flat', file_count: 0, group_count: 0}
+    }
+
+    function clearSetPanelContents() {
+        state.setdata = createEmptySetData()
+        state.setItems = []
+        totalPages.value = 1
+    }
 
 
 
@@ -617,11 +642,19 @@
     	() => route.params.rid,
     	async (newValue, oldValue) => {
 			if(newValue) {
-				loadGraph(route, oldValue)
+				await loadGraph(route, oldValue)
+				await openSetPanelFromRouteQuery()
 			} else {
                 console.log('Wait for route change...')
             }
 	})
+
+    watch(
+        () => route.query.openSet,
+        async () => {
+            await openSetPanelFromRouteQuery()
+        }
+    )
 
     // watch /list changes
 
@@ -643,6 +676,7 @@
     watch(
     	() => page.value,
       	async (newValue, oldValue) => {
+            if(suppressSetReload) return
             loadSet()
     
     })
@@ -661,16 +695,12 @@
     function openSetFile(payload) {
         const file = payload?.file || payload
         const index = payload?.index ?? 0
-        if(file?.is_group && file?.source_rid) {
-            openSetGroup(file)
-            return
-        }
+        snapshotSetPanelState()
         const absoluteIndex = ((page.value - 1) * filesPerPage) + index
         const browseContext = {
             mode: state.setdata.mode || 'flat',
-            sourceRid: state.selected_source_rid || null,
-            sourceLabel: state.selected_source_label || null,
-            groupBoundary: state.setdata.group_boundary || null,
+            sourceRid: null,
+            sourceLabel: null,
         }
         if (state.panel_roi_set) {
             store.filter_editor = state.panel_roi_set
@@ -829,7 +859,8 @@
             const id = wsdata.node['@rid'] || wsdata.node.rid || wsdata.node.id
             const nodetype = wsdata.type
             if(nodetype == 'process') {
-                if(wsdata.output) {
+                const isBatchProcess = wsdata.node['@type'] === 'SetProcess'
+                if(wsdata.output && isBatchProcess) {
                     wsdata.node.status = "waiting" // if output is set, then process is waiting for set to be finished
                 } else {
                     wsdata.node.status = "running"
@@ -855,11 +886,13 @@
             // if output i set, then we create Set node and link to it new node
             if(wsdata.output) {
                 wsdata.output.status = 'running'  // we set status to running so that crunher icon is NOT shown
-                wsdata.output.type = wsdata.output['@type'].toLowerCase()
+                const outputType = String(wsdata.output.type || wsdata.output['@type'] || '').toLowerCase()
+                const outputNodeType = outputType === 'search' ? 'search-set' : 'set'
+                wsdata.output.type = outputType || wsdata.output['@type'].toLowerCase()
                 const setNode = {
                     id: wsdata.output['@rid'],
                     data: wsdata.output,
-                    type: 'set',                // output is always Set node
+                    type: outputNodeType,
                     image: wsdata.output.image,
                     position: { x: Math.random() * flow.dimensions.value.width, y: Math.random() * flow.dimensions.value.height },
                 }
@@ -869,8 +902,8 @@
             }
 
             layoutGraph('LR')
-            // add banner if this is batch process (set process)
-            if(nodetype == 'process' && wsdata.output) {
+            // add banner if this is a real batch process (SetProcess, not single-file)
+            if(nodetype == 'process' && wsdata.output && wsdata.node['@type'] === 'SetProcess') {
                 // add process to running processes
                 state.running_processes[wsdata.node['@rid']] = {message: wsdata.node.label + ' Process created', status: 'running', batch: null}
                 store.running_processes = state.running_processes
@@ -1096,20 +1129,22 @@
     }
 
     async function toggleSetPanel(node, roiSetNode = null) {
+        const nextSetNode = node || state.setPanelNode
+        if(!nextSetNode || !nextSetNode.id) return
+
         page.value = 1
-        state.setPanelNode = node || state.setPanelNode
+        state.setPanelNode = nextSetNode
         state.panel_roi_set = roiSetNode || null
         state.selected_source_rid = null
         state.selected_source_label = ''
-        await loadSetGroups()
+        clearSetPanelContents()
+        state.setPanelLoading = true
         state.setPanel = true
+        // Open the panel immediately and fetch set data in background for snappier UX.
+        await loadSetGroups()
     }
 
     async function loadSet() {
-        if(state.selected_source_rid) {
-            await loadSetChildren()
-            return
-        }
         await loadSetGroups()
     }
 
@@ -1129,34 +1164,32 @@
     }
 
     async function loadSetGroups() {
-        if(!state.setPanelNode || !state.setPanelNode.id) return
-        state.setdata = await web.getSetFiles(
-            state.setPanelNode.id,
-            (page.value - 1) * filesPerPage,
-            filesPerPage,
-            {groupByOrigin: true, groupBoundary: 'pdf'}
-        )
-        state.setdata.mode = state.setdata.mode || 'groups'
-        syncSetItemsAndPagination()
+        if(!state.setPanelNode || !state.setPanelNode.id) {
+            state.setPanelLoading = false
+            return
+        }
+        state.setPanelLoading = true
+        try {
+            state.setdata = await web.getSetFiles(
+                state.setPanelNode.id,
+                (page.value - 1) * filesPerPage,
+                filesPerPage
+            )
+            state.setdata.mode = 'flat'
+            syncSetItemsAndPagination()
+        } finally {
+            state.setPanelLoading = false
+        }
     }
 
     async function loadSetChildren() {
-        if(!state.setPanelNode || !state.setPanelNode.id) return
-        state.setdata = await web.getSetFiles(
-            state.setPanelNode.id,
-            (page.value - 1) * filesPerPage,
-            filesPerPage,
-            {groupByOrigin: true, sourceRid: state.selected_source_rid, groupBoundary: 'pdf'}
-        )
-        state.setdata.mode = state.setdata.mode || 'children'
-        syncSetItemsAndPagination()
+        // Grouped mode is disabled; keep loading flat set files.
+        await loadSetGroups()
     }
 
     async function openSetGroup(group) {
-        state.selected_source_rid = group.source_rid
-        state.selected_source_label = group.label || ''
         page.value = 1
-        await loadSetChildren()
+        await loadSetGroups()
     }
 
     async function goBackToGroupList() {
@@ -1164,6 +1197,103 @@
         state.selected_source_label = ''
         page.value = 1
         await loadSetGroups()
+    }
+
+    function findGraphNodeByRid(rid) {
+        if(!rid) return null
+        const normalized = String(rid).startsWith('#') ? String(rid) : ('#' + String(rid))
+        return elements.nodes.find((n) => n?.id === normalized || n?.id === String(rid)) || null
+    }
+
+    function clonePlain(data) {
+        if(data === undefined || data === null) return data
+        try {
+            return JSON.parse(JSON.stringify(data))
+        } catch(e) {
+            return data
+        }
+    }
+
+    function snapshotSetPanelState() {
+        if(!state.setPanelNode?.id) return
+        store.set_panel_cache = {
+            projectRid: String(route.params.rid || ''),
+            setRid: String(state.setPanelNode.id).replace('#', ''),
+            page: page.value,
+            setdata: clonePlain(state.setdata),
+            setItems: clonePlain(state.setItems),
+            selected_source_rid: state.selected_source_rid || null,
+            selected_source_label: state.selected_source_label || '',
+            panel_roi_set: state.panel_roi_set ? clonePlain(state.panel_roi_set) : null,
+            updatedAt: Date.now(),
+        }
+    }
+
+    function canRestoreSetPanelFromCache(setRidRaw) {
+        const cache = store.set_panel_cache
+        if(!cache) return false
+        const querySet = String(setRidRaw || '').replace('#', '')
+        if(!querySet) return false
+        if(String(cache.setRid || '') !== querySet) return false
+        if(String(cache.projectRid || '') !== String(route.params.rid || '')) return false
+        return true
+    }
+
+    async function restoreSetPanelFromCache(setNode) {
+        const cache = store.set_panel_cache
+        if(!cache || !setNode) return false
+
+        suppressSetReload = true
+        try {
+            state.setPanelNode = setNode
+            state.panel_roi_set = cache.panel_roi_set || null
+            state.selected_source_rid = null
+            state.selected_source_label = ''
+            state.setdata = clonePlain(cache.setdata) || {files: [], groups: [], mode: 'flat', file_count: 0, group_count: 0}
+            state.setdata.mode = 'flat'
+            page.value = cache.page || 1
+            syncSetItemsAndPagination()
+            if(Array.isArray(cache.setItems) && cache.setItems.length) {
+                state.setItems = clonePlain(cache.setItems)
+            }
+            state.setPanel = true
+        } finally {
+            suppressSetReload = false
+        }
+        return true
+    }
+
+    async function openSetPanelFromRouteQuery() {
+        if(!route.query?.openSet) {
+            state.restoringSetPanel = false
+            return
+        }
+
+        state.restoringSetPanel = true
+
+        try {
+            const setRidRaw = String(route.query.openSet)
+            const setNode = findGraphNodeByRid(setRidRaw)
+            if(!setNode || setNode.type !== 'set') return
+
+            // Show set panel shell immediately, then hydrate contents.
+            state.setPanelNode = setNode
+            state.setPanel = true
+
+            if(canRestoreSetPanelFromCache(setRidRaw)) {
+                await restoreSetPanelFromCache(setNode)
+            } else {
+                await toggleSetPanel(setNode, null)
+            }
+
+            // Clean up query once panel is restored to keep URL tidy.
+            await router.replace({
+                name: 'project-graph',
+                params: { rid: route.params.rid }
+            })
+        } finally {
+            state.restoringSetPanel = false
+        }
     }
 
 
@@ -1215,6 +1345,21 @@
         }
 
         drawGraph()
+
+        // Reconcile running_processes: remove entries for non-SetProcess nodes (single-file)
+        // and let hydrateBatchInfo re-validate the rest against the server.
+        const setProcessIds = new Set(
+            elements.nodes
+                .filter(n => n.data?._type === 'setprocess' || n.type === 'setprocess')
+                .map(n => n.id)
+        )
+        for(const rid of Object.keys(state.running_processes)) {
+            if(!setProcessIds.has(rid)) {
+                delete state.running_processes[rid]
+            }
+        }
+        store.running_processes = state.running_processes
+
         const runningRids = Object.keys(state.running_processes)
         for(const rid of runningRids) {
             await hydrateBatchInfo(rid)
@@ -1230,13 +1375,20 @@
         elements.edges = []
 
         for(var node of graph.result.data.nodes) {
+
+            const rawType = node.data.type ? node.data.type.toLowerCase() : ''
+            const isSearchSet = rawType === 'search' && (node.data._type ? node.data._type.toLowerCase() === 'set' : false)
+            const nodeType = isSearchSet ? 'search-set' : rawType
+            const nodeLabel = isSearchSet
+                ? (node.data.label || 'Search Index')
+                : (node.data.label || node.data.name)
   
             var flownode = {
                 id: node.data.id, 
-                type: node.data.type.toLowerCase(),
+                type: nodeType,
                 data: {
-                    type: node.data.type.toLowerCase(),
-                    label: node.data.name,
+                    type: nodeType,
+                    label: nodeLabel,
                     description: node.data.description,
                     info: node.data.info,
                     file_count: node.data.file_count,
@@ -1254,9 +1406,16 @@
                 }
             }
 
+            if(node.data.text_samples) {
+                flownode.data.text_samples = []
+                for(var sample of node.data.text_samples) {
+                    flownode.data.text_samples.push(sample)
+                }
+            }
+
             if(node.data._type) {
                 flownode.data._type = node.data._type.toLowerCase(),
-                flownode.type = node.data._type.toLowerCase()
+                flownode.type = flownode.type || node.data._type.toLowerCase()
             }
 
             if(node.data.image) 
@@ -1399,7 +1558,8 @@
 		if(props.mode == 'graph') {
 
 			if(route.params.rid) {
-				loadGraph(route)
+                await loadGraph(route)
+                await openSetPanelFromRouteQuery()
 			} 
 
 		} else if(props.mode == 'projects') {

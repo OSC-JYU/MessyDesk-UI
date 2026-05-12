@@ -1,24 +1,6 @@
 <template>
   <v-card v-if="inline" class="set-panel-inline" flat>
-    <v-toolbar color="#5c797b" density="compact" class="set-panel-toolbar">
-      <template #prepend v-if="allowAddFile">
-        <v-menu>
-          <template #activator="{ props }">
-            <v-app-bar-nav-icon v-bind="props"></v-app-bar-nav-icon>
-          </template>
-
-          <v-list>
-            <v-list-item>
-              <v-list-item-title>
-                <v-btn @click="$emit('add-file')" prepend-icon="mdi-file">
-                  Add file to set
-                </v-btn>
-              </v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-menu>
-      </template>
-
+    <v-toolbar  density="compact" class="set-panel-toolbar">
       <v-toolbar-title>
         <v-btn
           v-if="setdata.mode === 'children'"
@@ -28,7 +10,7 @@
           @click="$emit('back-to-groups')"
         ></v-btn>
         <v-icon size="26" color="green-lighten-2" class="mr-1">mdi-folder-outline</v-icon>
-        {{ panelNode?.data?.label || panelNode?.label || 'Set' }}
+        {{ panelNode?.data?.label || panelNode?.label || 'Unnamed set' }}
         <span v-if="setdata.file_count" class="ml-1">({{ setdata.file_count }} files)</span>
         <span v-if="setdata.mode === 'groups'" class="ml-2 text-body-2">({{ setdata.group_count || 0 }} sources)</span>
         <span v-if="setdata.mode === 'children' && selectedSourceLabel" class="ml-2 text-body-2">- {{ selectedSourceLabel }}</span>
@@ -38,7 +20,11 @@
     </v-toolbar>
 
     <div class="set-panel-body">
-      <div v-if="setItems.length > 0" class="set-grid">
+      <div v-if="loading" class="set-loading-state">
+        <v-progress-circular indeterminate size="34" color="teal-darken-1" class="mb-3"></v-progress-circular>
+        <div class="text-subtitle-2">Loading set contents...</div>
+      </div>
+      <div v-else-if="setItems.length > 0" class="set-grid">
         <v-card
           v-for="(file, index) in setItems"
           :key="(file['@rid'] || file.source_rid || index) + '-' + (file.thumbnail_version || '')"
@@ -82,25 +68,7 @@
     location="bottom"
     class="set-panel-drawer"
   >
-    <v-toolbar color="#005757" density="compact" class="set-panel-toolbar">
-      <template #prepend v-if="allowAddFile">
-        <v-menu>
-          <template #activator="{ props }">
-            <v-app-bar-nav-icon v-bind="props"></v-app-bar-nav-icon>
-          </template>
-
-          <v-list>
-            <v-list-item>
-              <v-list-item-title>
-                <v-btn @click="$emit('add-file')" prepend-icon="mdi-file">
-                  Add file to set
-                </v-btn>
-              </v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-menu>
-      </template>
-
+    <v-toolbar  density="compact" class="set-panel-toolbar">
       <v-toolbar-title>
         <v-btn
           v-if="setdata.mode === 'children'"
@@ -110,7 +78,7 @@
           @click="$emit('back-to-groups')"
         ></v-btn>
         <v-icon size="26" color="green-lighten-2" class="mr-1">mdi-folder-outline</v-icon>
-        {{ panelNode?.data?.label || panelNode?.label || 'Set' }}
+        {{ panelNode?.data?.label || panelNode?.label || 'Unnamed set' }}
         <span v-if="setdata.file_count" class="ml-1">({{ setdata.file_count }} files)</span>
         <span v-if="setdata.mode === 'groups'" class="ml-2 text-body-2">({{ setdata.group_count || 0 }} sources)</span>
         <span v-if="setdata.mode === 'children' && selectedSourceLabel" class="ml-2 text-body-2">- {{ selectedSourceLabel }}</span>
@@ -120,7 +88,11 @@
     </v-toolbar>
 
     <div class="set-panel-body">
-      <div v-if="setItems.length > 0" class="set-grid">
+      <div v-if="loading" class="set-loading-state">
+        <v-progress-circular indeterminate size="34" color="teal-darken-1" class="mb-3"></v-progress-circular>
+        <div class="text-subtitle-2">Loading set contents...</div>
+      </div>
+      <div v-else-if="setItems.length > 0" class="set-grid">
         <v-card
           v-for="(file, index) in setItems"
           :key="(file['@rid'] || file.source_rid || index) + '-' + (file.thumbnail_version || '')"
@@ -167,6 +139,7 @@ defineProps({
   panelNode: { type: Object, default: null },
   setdata: { type: Object, default: () => ({ mode: 'groups', file_count: 0, group_count: 0 }) },
   setItems: { type: Array, default: () => [] },
+  loading: { type: Boolean, default: false },
   page: { type: Number, default: 1 },
   totalPages: { type: Number, default: 1 },
   selectedSourceLabel: { type: String, default: '' },
@@ -191,6 +164,7 @@ defineEmits([
 }
 
 .set-panel-inline {
+  background-color: #2ba8a8;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -211,8 +185,17 @@ defineEmits([
 
 .set-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
   gap: 12px;
+}
+
+.set-loading-state {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: rgba(0, 0, 0, 0.62);
 }
 
 .set-grid-item {

@@ -39,6 +39,7 @@
           <v-expansion-panel-text class="tool-panel-body">
             <VersionTools 
               :file="file" 
+              :imageRotation="imageRotation"
               :toast="toast"
               @save-edit="$emit('save-edit')" 
               @revert-edit="$emit('revert-edit')"
@@ -60,6 +61,7 @@ import VersionTools from './VersionTools.vue'
 
 const props = defineProps({
   file: { type: Object, default: null },
+  imageRotation: { type: Number, default: 0 },
   entities: { type: [Array, Object], default: () => ({}) },
   collapsed: { type: Boolean, default: false },
   toast: { type: Object, default: () => ({ show: false, text: '', color: 'success' }) }

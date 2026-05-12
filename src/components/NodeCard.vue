@@ -141,6 +141,21 @@
     margin: 8px 0;
 }
 
+.nodecard-tools {
+    margin-top: 16px;
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    background: #f8f8f8;
+}
+
+.nodecard-tools-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 8px;
+}
+
 .nodecard-prompt {
     background: #e3f2fd;
     border: 1px solid #bbdefb;
@@ -287,6 +302,48 @@
             <div v-if="store.current().data.metadata" class="nodecard-metadata">
                 {{ store.current().data.metadata }}
             </div>
+
+            <div v-if="store.current().type == 'image' || store.current().type == 'pdf' || showSetThumbnailTools" class="nodecard-tools text-center">
+                <div class="nodecard-tools-title">Tools</div>
+
+                <template v-if="store.current().type == 'image' || store.current().type == 'pdf'">
+                    <v-btn
+                        class="nodecard-button nodecard-button--secondary"
+                        size="small"
+                        :loading="state.thumbnail_recreate_loading"
+                        :disabled="state.thumbnail_recreate_loading"
+                        @click="recreateThumbnail"
+                    >
+                        {{ state.thumbnail_recreate_loading ? 'Queueing thumbnail...' : 'Re-create thumbnail' }}
+                    </v-btn>
+                    <div
+                        v-if="state.thumbnail_recreate_message"
+                        class="nodecard-status"
+                        :class="`nodecard-status--${state.thumbnail_recreate_message_type}`"
+                    >
+                        {{ state.thumbnail_recreate_message }}
+                    </div>
+                </template>
+
+                <template v-if="showSetThumbnailTools">
+                    <v-btn
+                        class="nodecard-button nodecard-button--secondary"
+                        size="small"
+                        :loading="state.set_thumbnail_recreate_loading"
+                        :disabled="state.set_thumbnail_recreate_loading"
+                        @click="recreateSetThumbnails"
+                    >
+                        {{ state.set_thumbnail_recreate_loading ? 'Queueing set thumbnails...' : 'Re-create set thumbnails' }}
+                    </v-btn>
+                    <div
+                        v-if="state.set_thumbnail_recreate_message"
+                        class="nodecard-status"
+                        :class="`nodecard-status--${state.set_thumbnail_recreate_message_type}`"
+                    >
+                        {{ state.set_thumbnail_recreate_message }}
+                    </div>
+                </template>
+            </div>
             
             <div class="text-center mt-4">
                 <template v-if="!['set', 'process', 'source','project', 'setprocess'].includes(store.current().type)">
@@ -304,6 +361,13 @@
                         @click="downloadSet"
                     >
                         {{ state.set_zip_loading ? 'Preparing set zip...' : 'Download set' }}
+                    </v-btn>
+                    <v-btn
+                        class="nodecard-button nodecard-button--primary"
+                        size="small"
+                        @click="store.set_uploader_open = true"
+                    >
+                        Upload image to set
                     </v-btn>
                     <div
                         v-if="state.set_zip_message"
@@ -425,6 +489,12 @@
         set_zip_loading: false,
         set_zip_message: '',
         set_zip_message_type: 'info',
+        thumbnail_recreate_loading: false,
+        thumbnail_recreate_message: '',
+        thumbnail_recreate_message_type: 'info',
+        set_thumbnail_recreate_loading: false,
+        set_thumbnail_recreate_message: '',
+        set_thumbnail_recreate_message_type: 'info',
         process_detail_open: false,
         process_detail_loading: false,
         process_detail_error: '',
@@ -453,8 +523,14 @@
             }
 
             state.set_zip_loading = false
-        state.set_zip_message = ''
-        state.set_zip_message_type = 'info'
+            state.set_zip_message = ''
+            state.set_zip_message_type = 'info'
+            state.thumbnail_recreate_loading = false
+            state.thumbnail_recreate_message = ''
+            state.thumbnail_recreate_message_type = 'info'
+                state.set_thumbnail_recreate_loading = false
+                state.set_thumbnail_recreate_message = ''
+                state.set_thumbnail_recreate_message_type = 'info'
     })
 
     const current_query = computed(() => {
@@ -485,6 +561,26 @@
     const processDetailsPretty = computed(() => {
         const payload = state.process_detail_data || {}
         return JSON.stringify(payload, null, 2)
+    })
+
+    const showSetThumbnailTools = computed(() => {
+        const current = store.current()
+        if (!current || current.type !== 'set') return false
+
+        const types = Array.isArray(current.data?.types)
+            ? current.data.types.map((t) => String(t).toLowerCase())
+            : []
+
+        if (types.length > 0) {
+            return types.includes('image') && !types.some((t) => t !== 'image')
+        }
+
+        const paths = Array.isArray(current.data?.paths) ? current.data.paths : []
+        if (paths.length > 0) {
+            return !paths.includes('__pdf_icon__')
+        }
+
+        return false
     })
 
 
@@ -621,6 +717,53 @@
             state.set_zip_message_type = 'error'
         } finally {
             state.set_zip_loading = false
+        }
+    }
+
+    async function recreateThumbnail() {
+        const current = store.current()
+        if (!current?.id) return
+        if (!['image', 'pdf'].includes(current.type)) return
+        if (state.thumbnail_recreate_loading) return
+
+        state.thumbnail_recreate_loading = true
+        state.thumbnail_recreate_message = 'Queueing thumbnail re-creation...'
+        state.thumbnail_recreate_message_type = 'info'
+
+        try {
+            await web.createFileThumbnail(current.id)
+            state.thumbnail_recreate_message = 'Thumbnail re-creation queued.'
+            state.thumbnail_recreate_message_type = 'success'
+        } catch (error) {
+            console.error('Thumbnail re-creation failed:', error)
+            state.thumbnail_recreate_message = error?.message || 'Could not queue thumbnail re-creation'
+            state.thumbnail_recreate_message_type = 'error'
+        } finally {
+            state.thumbnail_recreate_loading = false
+        }
+    }
+
+    async function recreateSetThumbnails() {
+        const current = store.current()
+        if (!current?.id || current.type !== 'set') return
+        if (state.set_thumbnail_recreate_loading) return
+
+        state.set_thumbnail_recreate_loading = true
+        state.set_thumbnail_recreate_message = 'Queueing set thumbnail re-creation...'
+        state.set_thumbnail_recreate_message_type = 'info'
+
+        try {
+            const result = await web.createSetThumbnails(current.id)
+            const queued = Number(result?.queued || 0)
+            const total = Number(result?.total_files || 0)
+            state.set_thumbnail_recreate_message = `Queued ${queued} thumbnail jobs from ${total} set files.`
+            state.set_thumbnail_recreate_message_type = 'success'
+        } catch (error) {
+            console.error('Set thumbnail re-creation failed:', error)
+            state.set_thumbnail_recreate_message = error?.message || 'Could not queue set thumbnails'
+            state.set_thumbnail_recreate_message_type = 'error'
+        } finally {
+            state.set_thumbnail_recreate_loading = false
         }
     }
 

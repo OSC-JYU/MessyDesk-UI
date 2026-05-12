@@ -2,7 +2,10 @@
   <v-sheet class="path-panel" :class="{ 'collapsed': collapsed }">
     <!-- Header with collapse toggle -->
     <div class="path-header d-flex align-center" :class="{ 'justify-center': collapsed, 'justify-space-between': !collapsed }">
-      <span v-if="!collapsed" class="text-overline text-medium-emphasis">Lineage</span>
+      <div v-if="!collapsed" class="d-flex align-center ga-2">
+        <span class="text-overline text-medium-emphasis">Lineage</span>
+        <span class="level-badge">{{ levelLabel }}</span>
+      </div>
       <v-btn icon size="x-small" variant="text" @click="$emit('toggle-collapse')">
         <v-icon size="16">{{ collapsed ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
       </v-btn>
@@ -12,7 +15,7 @@
       <!-- Vertical ancestry tree -->
       <div v-if="nodepath.length" class="ancestors">
         <template v-for="(node, index) in visibleNodes" :key="node['@rid'] || index">
-          <div class="ancestor-item" :class="{ 'is-current': index === visibleNodes.length - 1 }">
+          <div class="ancestor-item" :class="{ 'is-current': isCurrentNode(node, index) }">
             <!-- Connector line -->
             <div class="connector-col">
               <div v-if="index > 0" class="connector-line"></div>
@@ -21,7 +24,7 @@
             </div>
 
             <!-- Node content -->
-            <div class="node-content" @click="$emit('ancestor-click', node)">
+            <div class="node-content" :class="{ 'is-openable': isOpenable(node), 'is-disabled': !isOpenable(node) }" @click="onNodeClick(node)">
               <div class="node-header">
                 <v-icon :icon="getIcon(node)" size="14" :color="getColor(node)" class="mr-1"></v-icon>
                 <span class="node-type-badge">{{ getTypeLabel(node) }}</span>
@@ -32,7 +35,7 @@
                 v-if="hasThumb(node)" 
                 :src="apiUrl + '/api/thumbnails/' + node.path" 
                 class="node-thumb" 
-                @click.stop="$emit('image-click', node.path)"
+                @click.stop="onNodeClick(node)"
                 alt="" 
               />
             </div>
@@ -54,16 +57,29 @@ const apiUrl = import.meta.env.VITE_API_PATH
 
 const props = defineProps({
   fileRid: { type: String, default: null },
+  selectedRid: { type: String, default: null },
+  lineageLevel: { type: Number, default: 0 },
   collapsed: { type: Boolean, default: false }
 })
 
-defineEmits(['toggle-collapse', 'image-click', 'ancestor-click'])
+const emit = defineEmits(['toggle-collapse', 'image-click', 'ancestor-click'])
 
 const nodepath = ref([])
 
 // Filter out User nodes
 const visibleNodes = computed(() => {
-  return nodepath.value.filter(n => n['@type'] !== 'User')
+  return nodepath.value.filter((n) => {
+    const type = String(n['@type'] || '')
+    return type !== 'User' && type !== 'Set'
+  })
+})
+
+const levelLabel = computed(() => {
+  const level = Number(props.lineageLevel || 0)
+  if (level <= 0) return 'current'
+  if (level === 1) return 'parent'
+  if (level === 2) return 'grandparent'
+  return `ancestor +${level}`
 })
 
 watch(() => props.fileRid, async (rid) => {
@@ -115,6 +131,39 @@ function getTypeLabel(node) {
 function hasThumb(node) {
   return node.type === 'image' && node.path
 }
+
+function isCurrentNode(node, index) {
+  if (props.selectedRid) {
+    return node['@rid'] === props.selectedRid
+  }
+  return index === visibleNodes.value.length - 1
+}
+
+function isOpenable(node) {
+  const nodeType = String(node?.['@type'] || '').toLowerCase()
+  const fileType = String(node?.type || '').toLowerCase()
+  if (nodeType !== 'file') return false
+  if (nodeType === 'zip' || nodeType === 'source' || nodeType === 'project') return false
+  if (fileType === 'zip') return false
+  return Boolean(node?.['@rid'])
+}
+
+function onNodeClick(node) {
+  if (!isOpenable(node)) return
+  emit('ancestor-click', {
+    node,
+    fileOffsetFromContext: getFileOffsetFromContext(node),
+    fileLevelFromCurrent: Math.abs(getFileOffsetFromContext(node))
+  })
+}
+
+function getFileOffsetFromContext(node) {
+  const fileNodes = visibleNodes.value.filter((entry) => String(entry?.['@type'] || '').toLowerCase() === 'file')
+  const nodeIndex = fileNodes.findIndex((entry) => entry?.['@rid'] === node?.['@rid'])
+  const contextIndex = fileNodes.findIndex((entry) => entry?.['@rid'] === props.fileRid)
+  if (nodeIndex < 0 || contextIndex < 0) return 0
+  return nodeIndex - contextIndex
+}
 </script>
 
 <style scoped>
@@ -136,6 +185,18 @@ function hasThumb(node) {
 .path-header {
   padding: 8px 12px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.level-badge {
+  font-size: 0.62rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #1a4d4f;
+  background: rgba(92, 121, 123, 0.16);
+  border: 1px solid rgba(92, 121, 123, 0.35);
+  border-radius: 10px;
+  padding: 1px 7px;
+  line-height: 1.4;
 }
 
 .path-body {
@@ -188,8 +249,17 @@ function hasThumb(node) {
   margin-bottom: 2px;
 }
 
+.node-content.is-disabled {
+  cursor: default;
+  opacity: 0.75;
+}
+
 .node-content:hover {
   background: rgba(0, 0, 0, 0.04);
+}
+
+.node-content.is-disabled:hover {
+  background: transparent;
 }
 
 .is-current .node-content {

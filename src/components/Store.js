@@ -48,9 +48,12 @@ export const store = reactive({
   file_browse_context: null,
   // file_browse_context shapes:
   //   null: file opened directly (no top bar)
-  //   { mode: 'set', set_rid, set_label, file_count, skip, group_boundary, source_rid, source_label }
+  //   { mode: 'set', set_rid, set_label, file_count, skip, source_rid, source_label }
   //   { mode: 'search', query, results: [{rid, label, score, highlight}], index }
   current_project: {},
+  search_page_states: {},
+  entities_page_states: {},
+  set_panel_cache: null,
   reorder_target: '',
   settings_show_descriptions: true,
   settings_show_entities: true,

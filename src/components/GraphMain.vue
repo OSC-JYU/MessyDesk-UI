@@ -65,25 +65,24 @@
     }
 
     async function openNode(node_rid, source_rid, total_count, skip, browseContext) {
+      const hasSetContext = Boolean(browseContext)
       var response = await web.getDocInfo(node_rid)
       store.file = response
-      store.source = source_rid
-      store.file_count = total_count
-      store.skip = skip
-      store.set_browse_context = browseContext || null
+      store.source = hasSetContext ? source_rid : null
+      store.file_count = hasSetContext ? total_count : null
+      store.skip = hasSetContext ? skip : null
+      store.set_browse_context = hasSetContext ? (browseContext || null) : null
 
       // Build unified file_browse_context for the new wrapper
-      if (browseContext || source_rid) {
+      if (hasSetContext) {
         store.file_browse_context = {
           mode: 'set',
           set_rid: source_rid || store.current_node?.id || null,
           set_label: browseContext?.setLabel || null,
           file_count: total_count || 0,
           skip: skip || 0,
-          group_boundary: browseContext?.groupBoundary || 'pdf',
           source_rid: browseContext?.sourceRid || null,
-          source_label: browseContext?.sourceLabel || null,
-          grouped_boundary_enabled: Boolean(browseContext?.sourceRid)
+          source_label: browseContext?.sourceLabel || null
         }
       } else {
         store.file_browse_context = null
@@ -91,7 +90,23 @@
 
       // Navigate to file route
       const fileRid = node_rid.replace('#', '')
-      router.push({ name: 'project-file', params: { rid: projectRid.value, fileRid } })
+      const setContextQuery = hasSetContext
+        ? {
+            browseMode: 'set',
+            setRid: String(source_rid || store.current_node?.id || '').replace('#', ''),
+            setLabel: browseContext?.setLabel || '',
+            fileCount: String(total_count || 0),
+            skip: String(skip || 0),
+            sourceRid: String(browseContext?.sourceRid || '').replace('#', ''),
+            sourceLabel: browseContext?.sourceLabel || ''
+          }
+        : undefined
+
+      router.push({
+        name: 'project-file',
+        params: { rid: projectRid.value, fileRid },
+        query: setContextQuery
+      })
     }
 
     function goBackToGraph() {

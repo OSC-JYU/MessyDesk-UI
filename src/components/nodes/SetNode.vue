@@ -68,6 +68,38 @@ img {
   background: radial-gradient(circle at top, #fff8f8 0%, #f2ecec 65%, #e7e1e1 100%);
   border: 1px solid #dbc9c9;
 }
+
+.text-sample-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.text-sample-item {
+  width: 100%;
+  border: 1px solid #d0d8dd;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: linear-gradient(180deg, #f7fafc 0%, #eef4f7 100%);
+}
+
+.text-sample-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #3b5f72;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.text-sample-text {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.25;
+  font-size: 13px;
+  color: #1f2a30;
+}
 </style>
 
 
@@ -114,7 +146,18 @@ function openCrunchers(filter) {
             </div>
           </div>
 
-          <div v-if="(!data.paths || data.paths.length === 0) && data.count > 0" class="pa-10">
+          <div v-else-if="data.text_samples && data.text_samples.length > 0" class="text-sample-list">
+            <div
+              v-for="(sample, index) in data.text_samples"
+              :key="`text-${index}-${sample.label || ''}`"
+              class="text-sample-item"
+            >
+              <div v-if="sample.label" class="text-sample-label">{{ sample.label }}</div>
+              <p class="text-sample-text">{{ sample.text }}</p>
+            </div>
+          </div>
+
+          <div v-if="(!data.paths || data.paths.length === 0) && (!data.text_samples || data.text_samples.length === 0) && data.count > 0" class="pa-10">
             <v-icon size="55" >mdi-text-box-multiple-outline</v-icon>
           </div>
         </v-col>

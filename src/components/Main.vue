@@ -15,8 +15,11 @@ document.title = 'MessyDesk - Home'
 
 const state = reactive({
   loadingProjects: false,
+  loadingSearchInfo: false,
+  searchInfoLoaded: false,
   loadingCrunchers: false,
   projects: [],
+  searchInfoByProject: {},
   services: [],
   projectName: '',
   createPending: false,
@@ -26,6 +29,12 @@ const state = reactive({
   renameProjectName: '',
   renamePending: false,
   renameError: '',
+  reindexDialog: false,
+  reindexProjectRid: '',
+  reindexProjectName: '',
+  reindexPending: false,
+  reindexError: '',
+  reindexResult: null,
   sortKey: 'name',
   sortDirection: 'asc',
   loadError: '',
@@ -182,9 +191,11 @@ const projectsWithMeta = computed(() => {
       nameValue: (project.label || project.name || 'Untitled desk').toLowerCase(),
       sizeValue: getSizeValue(project),
       nodeCountValue: getNodeCountValue(project),
+      indexedDocsValue: getIndexedDocsValue(project),
       expirationValue: getExpirationValue(project),
       sizeText: formatSize(project),
       nodeCountText: formatNodeCount(project),
+      indexedDocsText: formatIndexedDocs(project),
       expirationText: formatExpiration(project)
     }
   })
@@ -204,6 +215,9 @@ const sortedProjects = computed(() => {
     } else if (state.sortKey === 'nodes') {
       left = a.nodeCountValue
       right = b.nodeCountValue
+    } else if (state.sortKey === 'indexed') {
+      left = a.indexedDocsValue
+      right = b.indexedDocsValue
     } else if (state.sortKey === 'expires') {
       left = a.expirationValue
       right = b.expirationValue
@@ -309,6 +323,32 @@ function formatNodeCount(project) {
   return `${Math.floor(count)} items`
 }
 
+function normalizeRid(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  return raw.startsWith('#') ? raw : `#${raw}`
+}
+
+function getIndexedDocsValue(project) {
+  const rawProjectRid = String(project?.['@rid'] || '').trim()
+  const projectRid = normalizeRid(rawProjectRid)
+  if (!rawProjectRid && !projectRid) return -1
+  if (!state.searchInfoLoaded) return -1
+
+  const docs = Number(
+    state.searchInfoByProject[projectRid]
+    ?? state.searchInfoByProject[rawProjectRid]
+    ?? state.searchInfoByProject[rawProjectRid.replace(/^#/, '')]
+  )
+  return Number.isFinite(docs) ? docs : 0
+}
+
+function formatIndexedDocs(project) {
+  const docs = getIndexedDocsValue(project)
+  if (docs < 0) return 'n/a'
+  return `${docs} docs`
+}
+
 function formatExpiration(project) {
   const raw =
     project.expiration_date ||
@@ -356,16 +396,16 @@ function openRoute(path) {
 
 function changeTab(tab) {
   if (tab === 1) {
-    router.push('/search')
+    router.push({ name: 'search' })
     return
   }
 
   if (tab === 2) {
-    router.push('/tags')
+    router.push({ name: 'entities' })
     return
   }
 
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+  router.push({ name: 'Home' })
 }
 
 async function focusCreateProject() {
@@ -377,27 +417,55 @@ async function focusCreateProject() {
 
 async function loadProjects() {
   state.loadingProjects = true
+  state.loadingSearchInfo = true
   try {
-    state.projects = await web.getProjects()
+    const projectsPromise = web.getProjects()
+    const searchInfoPromise = web.getSearchInfo()
+
+    const [projectsResult, searchInfoResult] = await Promise.allSettled([projectsPromise, searchInfoPromise])
+
+    if (projectsResult.status === 'rejected') {
+      throw projectsResult.reason
+    }
+
+    state.projects = projectsResult.value
+    const byProject = {}
+    state.searchInfoLoaded = searchInfoResult.status === 'fulfilled'
+    if (searchInfoResult.status === 'fulfilled') {
+      const searchInfo = searchInfoResult.value
+      for (const item of searchInfo?.project_counts || []) {
+        const rid = normalizeRid(item?.project_rid)
+        const rawRid = String(item?.project_rid || '').trim()
+        const docs = Number(item?.docs)
+        if (!Number.isFinite(docs)) continue
+        if (rid) byProject[rid] = docs
+        if (rawRid) byProject[rawRid] = docs
+        if (rawRid.startsWith('#')) byProject[rawRid.replace(/^#/, '')] = docs
+      }
+    }
+
+    state.searchInfoByProject = byProject
     store.projects = state.projects
   } catch (error) {
     state.loadError = error.message || 'Could not load desks.'
   } finally {
     state.loadingProjects = false
+    state.loadingSearchInfo = false
   }
 }
 
 async function refreshProjects() {
   state.loadingProjects = true
+  state.loadingSearchInfo = true
   state.loadError = ''
   try {
     await web.updateProjectSizes()
-    state.projects = await web.getProjects()
-    store.projects = state.projects
+    await loadProjects()
   } catch (error) {
     state.loadError = error.message || 'Could not refresh desk sizes.'
   } finally {
     state.loadingProjects = false
+    state.loadingSearchInfo = false
   }
 }
 
@@ -473,6 +541,47 @@ async function renameProject() {
     state.renameError = error.message || 'Could not rename desk.'
   } finally {
     state.renamePending = false
+  }
+}
+
+function openReindexDialog(project) {
+  if (!project || !project['@rid']) {
+    return
+  }
+
+  state.reindexProjectRid = project['@rid']
+  state.reindexProjectName = project.displayName || project.label || ''
+  state.reindexError = ''
+  state.reindexResult = null
+  state.reindexDialog = true
+}
+
+function closeReindexDialog() {
+  state.reindexDialog = false
+  state.reindexProjectRid = ''
+  state.reindexProjectName = ''
+  state.reindexError = ''
+  state.reindexResult = null
+}
+
+async function reindexProjectSearch() {
+  if (!state.reindexProjectRid) {
+    state.reindexError = 'No project selected.'
+    return
+  }
+
+  state.reindexPending = true
+  state.reindexError = ''
+  state.reindexResult = null
+
+  try {
+    const result = await web.reindexProjectSearch(state.reindexProjectRid)
+    state.reindexResult = result
+    await loadProjects()
+  } catch (error) {
+    state.reindexError = error.message || 'Could not start project search re-indexing.'
+  } finally {
+    state.reindexPending = false
   }
 }
 
@@ -567,6 +676,11 @@ onUnmounted(() => {
                       </button>
                     </th>
                     <th>
+                      <button type="button" class="sort-button" @click="sortBy('indexed')">
+                        Indexed docs <v-icon size="small" :icon="sortIcon('indexed')" />
+                      </button>
+                    </th>
+                    <th>
                       <button type="button" class="sort-button" @click="sortBy('expires')">
                         Expires <v-icon size="small" :icon="sortIcon('expires')" />
                       </button>
@@ -588,17 +702,37 @@ onUnmounted(() => {
                     </td>
                     <td>{{ project.sizeText }}</td>
                     <td>{{ project.nodeCountText }}</td>
+                    <td>
+                      <v-chip size="small" variant="tonal" color="secondary">{{ project.indexedDocsText }}</v-chip>
+                    </td>
                     <td>{{ project.expirationText }}</td>
                     <td>
                       <div class="d-flex justify-end">
-                        <v-btn
-                          icon="mdi-pencil"
-                          size="small"
-                          variant="text"
-                          color="secondary"
-                          title="Rename desk"
-                          @click="openRenameDialog(project)"
-                        ></v-btn>
+                        <v-menu location="bottom end">
+                          <template #activator="{ props }">
+                            <v-btn
+                              v-bind="props"
+                              icon="mdi-dots-vertical"
+                              size="small"
+                              variant="text"
+                              color="secondary"
+                              title="Project actions"
+                            ></v-btn>
+                          </template>
+
+                          <v-list density="compact">
+                            <v-list-item
+                              prepend-icon="mdi-pencil"
+                              title="Rename desk"
+                              @click="openRenameDialog(project)"
+                            ></v-list-item>
+                            <v-list-item
+                              prepend-icon="mdi-refresh"
+                              title="Re-index search"
+                              @click="openReindexDialog(project)"
+                            ></v-list-item>
+                          </v-list>
+                        </v-menu>
                       </div>
                     </td>
                   </tr>
@@ -774,6 +908,35 @@ onUnmounted(() => {
           <v-spacer></v-spacer>
           <v-btn variant="text" @click="closeRenameDialog">Cancel</v-btn>
           <v-btn color="primary" :loading="state.renamePending" @click="renameProject">Save</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="state.reindexDialog" max-width="620">
+      <v-card>
+        <v-card-title>Re-index Search</v-card-title>
+        <v-card-text>
+          <p class="mb-2">
+            Re-indexing clears search data for this desk and rebuilds it from existing indexing sources.
+          </p>
+          <p class="mb-4 text-medium-emphasis">
+            Desk: {{ state.reindexProjectName || state.reindexProjectRid }}
+          </p>
+
+          <v-alert v-if="state.reindexError" type="error" variant="tonal" class="mb-3">
+            {{ state.reindexError }}
+          </v-alert>
+
+          <v-alert v-if="state.reindexResult" type="success" variant="tonal">
+            Re-index queued. Source sets: {{ state.reindexResult.source_sets_found || 0 }},
+            re-queued sets: {{ state.reindexResult.requeued_sets || 0 }},
+            files: {{ state.reindexResult.requeued_files || 0 }}.
+          </v-alert>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn variant="text" @click="closeReindexDialog" :disabled="state.reindexPending">Close</v-btn>
+          <v-btn color="warning" :loading="state.reindexPending" @click="reindexProjectSearch">Re-index</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import web from '../web.js'
 import { store } from './Store.js'
 import SetPanel from './displays/SetPanel.vue'
+import JYUHeader_main from './JYUHeader_main.vue'
 
 document.title = 'MessyDesk - tags'
 
@@ -13,6 +14,8 @@ const router = useRouter()
 const props = defineProps({
   projectRid: { type: String, default: null }
 })
+
+const isStandaloneRoute = computed(() => ['search', 'entities', 'tags'].includes(String(route.name || '')))
 
 const stateKey = computed(() => {
   const current = props.projectRid || route.params.rid || 'global'
@@ -54,9 +57,17 @@ function getSavedProjectRids(savedState) {
   return savedState.selectedProjectRids
 }
 
+function getEntitiesPageStates() {
+  if (!store.entities_page_states) {
+    store.entities_page_states = {}
+  }
+  return store.entities_page_states
+}
+
 function saveState() {
   const key = stateKey.value
-  store.entities_page_states[key] = {
+  const buckets = getEntitiesPageStates()
+  buckets[key] = {
     selected_entities: state.selected_entities,
     items: state.items,
     panelOpen: state.panelOpen,
@@ -248,9 +259,24 @@ function removeProject(project) {
   onProjectSelectionChange()
 }
 
+function changeTab(tab) {
+  if (tab === 1) {
+    router.push({ name: 'search' })
+    return
+  }
+
+  if (tab === 2) {
+    router.push({ name: 'entities' })
+    return
+  }
+
+  router.push({ name: 'Home' })
+}
+
 async function hydrateState() {
   const key = stateKey.value
-  const saved = store.entities_page_states[key]
+  const buckets = getEntitiesPageStates()
+  const saved = buckets[key]
   const savedRids = getSavedProjectRids(saved)
   await loadProjects(savedRids)
   state.types = await web.getEntities()
@@ -292,113 +318,119 @@ watch(
 </script>
 
 <template>
-  <v-row class="w-100 fill-height m-0 p-0">
-    <v-col cols="9" class="p-0 m-0 fill-height">
-      <SetPanel
-        inline
-        :show-close="false"
-        :model-value="true"
-        :panel-node="panelNode"
-        :setdata="panelSetData"
-        :set-items="panelItems"
-        :page="state.page"
-        :total-pages="totalPages"
-        :show-expand="false"
-        :allow-add-file="false"
-        @update:page="state.page = $event"
-        @open-file="openTaggedFile"
-      />
-    </v-col>
+  <v-layout class="fill-height">
+    <JYUHeader_main v-if="isStandaloneRoute" mode="projects" @change-tab="changeTab" />
 
-    <v-col cols="3" class="p-0 m-0 fill-height full-background">
-      <div class="entities-sidebar pa-3">
-        <v-card variant="flat" class="entities-sidebar-card pa-3">
-          <v-select
-            v-model="state.project_input"
-            :items="state.projects"
-            item-title="title"
-            item-value="value"
-            label="Tag context"
-            density="comfortable"
-            variant="outlined"
-            @update:model-value="addProjectByValue"
-          ></v-select>
+    <v-main class="fill-height">
+      <v-row class="w-100 fill-height m-0 p-0">
+        <v-col cols="9" class="p-0 m-0 fill-height">
+          <SetPanel
+            inline
+            :show-close="false"
+            :model-value="true"
+            :panel-node="panelNode"
+            :setdata="panelSetData"
+            :set-items="panelItems"
+            :page="state.page"
+            :total-pages="totalPages"
+            :show-expand="false"
+            :allow-add-file="false"
+            @update:page="state.page = $event"
+            @open-file="openTaggedFile"
+          />
+        </v-col>
 
-          <div class="mb-2">
-            <v-chip
-              v-for="project in state.selected_projects"
-              :key="project.value"
-              color="teal-darken-2"
-              class="mr-2 mb-2"
-              @click="removeProject(project)"
-            >
-              {{ project.title }}
-              <v-icon end>mdi-close</v-icon>
-            </v-chip>
+        <v-col cols="3" class="p-0 m-0 fill-height full-background">
+          <div class="entities-sidebar pa-3">
+            <v-card variant="flat" class="entities-sidebar-card pa-3">
+              <v-select
+                v-model="state.project_input"
+                :items="state.projects"
+                item-title="title"
+                item-value="value"
+                label="Tag context"
+                density="comfortable"
+                variant="outlined"
+                @update:model-value="addProjectByValue"
+              ></v-select>
 
-            <div v-if="state.selected_projects.length === 0" class="text-caption text-medium-emphasis mb-2">
-              No project selected: tag results are collected from all your projects.
-            </div>
-          </div>
-
-          <div class="mb-2">
-            <v-chip
-              v-for="entity in state.selected_entities"
-              :key="entity['@rid']"
-              :color="entity.color || 'primary'"
-              class="mr-2 mb-2"
-              @click="unselect(entity)"
-            >
-              {{ entity.label }}
-              <v-icon end>mdi-close</v-icon>
-            </v-chip>
-          </div>
-
-          <v-expansion-panels class="mb-3">
-            <v-expansion-panel v-for="type in state.types" :key="type.type">
-              <v-expansion-panel-title>{{ type.type }} ({{ type.count }})</v-expansion-panel-title>
-              <v-expansion-panel-text>
+              <div class="mb-2">
                 <v-chip
-                  v-for="item in type.items"
-                  :key="item['@rid']"
+                  v-for="project in state.selected_projects"
+                  :key="project.value"
+                  color="teal-darken-2"
                   class="mr-2 mb-2"
-                  @click="selectEntity(item)"
+                  @click="removeProject(project)"
                 >
-                  {{ item.label }}
+                  {{ project.title }}
+                  <v-icon end>mdi-close</v-icon>
                 </v-chip>
-              </v-expansion-panel-text>
-            </v-expansion-panel>
-          </v-expansion-panels>
 
-          <v-btn v-if="!state.add" color="primary" block class="mb-3" @click="state.add = true">Add new</v-btn>
+                <div v-if="state.selected_projects.length === 0" class="text-caption text-medium-emphasis mb-2">
+                  No project selected: tag results are collected from all your projects.
+                </div>
+              </div>
 
-          <v-card v-if="state.add" title="Add new Tag">
-            <v-card-text>
-              <v-select :items="state.entity_schema" v-model="state.current_type" label="Tag Type" :item-props="entityProps"></v-select>
-              <v-text-field v-model="state.new_label" label="Tag Label"></v-text-field>
-            </v-card-text>
-            <v-card-actions>
-              <v-btn @click="create" color="primary" v-if="state.current_type">Create</v-btn>
-              <v-btn @click="state.add = false">Cancel</v-btn>
-            </v-card-actions>
-          </v-card>
+              <div class="mb-2">
+                <v-chip
+                  v-for="entity in state.selected_entities"
+                  :key="entity['@rid']"
+                  :color="entity.color || 'primary'"
+                  class="mr-2 mb-2"
+                  @click="unselect(entity)"
+                >
+                  {{ entity.label }}
+                  <v-icon end>mdi-close</v-icon>
+                </v-chip>
+              </div>
 
-          <v-alert
-            v-if="state.projectFilterIgnored && selectedProjectRids.length > 0"
-            type="info"
-            variant="tonal"
-            class="mt-3"
-          >
-            Project filtering is not yet available in backend. Showing global tag results for now.
-          </v-alert>
+              <v-expansion-panels class="mb-3">
+                <v-expansion-panel v-for="type in state.types" :key="type.type">
+                  <v-expansion-panel-title>{{ type.type }} ({{ type.count }})</v-expansion-panel-title>
+                  <v-expansion-panel-text>
+                    <v-chip
+                      v-for="item in type.items"
+                      :key="item['@rid']"
+                      class="mr-2 mb-2"
+                      @click="selectEntity(item)"
+                    >
+                      {{ item.label }}
+                    </v-chip>
+                  </v-expansion-panel-text>
+                </v-expansion-panel>
+              </v-expansion-panels>
 
-          <v-alert v-if="state.items.length === 0" type="info" variant="tonal" class="mt-3">
-            Select one or more tags from the tag picker to see matching files.
-          </v-alert>
-        </v-card>
-      </div>
-    </v-col>
-  </v-row>
+              <v-btn v-if="!state.add" color="primary" block class="mb-3" @click="state.add = true">Add new</v-btn>
+
+              <v-card v-if="state.add" title="Add new Tag">
+                <v-card-text>
+                  <v-select :items="state.entity_schema" v-model="state.current_type" label="Tag Type" :item-props="entityProps"></v-select>
+                  <v-text-field v-model="state.new_label" label="Tag Label"></v-text-field>
+                </v-card-text>
+                <v-card-actions>
+                  <v-btn @click="create" color="primary" v-if="state.current_type">Create</v-btn>
+                  <v-btn @click="state.add = false">Cancel</v-btn>
+                </v-card-actions>
+              </v-card>
+
+              <v-alert
+                v-if="state.projectFilterIgnored && selectedProjectRids.length > 0"
+                type="info"
+                variant="tonal"
+                class="mt-3"
+              >
+                Project filtering is not yet available in backend. Showing global tag results for now.
+              </v-alert>
+
+              <v-alert v-if="state.items.length === 0" type="info" variant="tonal" class="mt-3">
+                Select one or more tags from the tag picker to see matching files.
+              </v-alert>
+            </v-card>
+          </div>
+        </v-col>
+      </v-row>
+    </v-main>
+  </v-layout>
 </template>
 
 <style scoped>

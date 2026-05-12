@@ -52,6 +52,9 @@ web.getError = async function(rid) {
 
 web.search = async function(search, options = {}) {
 	const payload = {query: search}
+	const requestedRows = Number(options.rows)
+	if(Number.isFinite(requestedRows) && requestedRows > 0)
+		payload.rows = Math.min(1000, Math.floor(requestedRows))
 	const projectRids = Array.isArray(options.projectRids)
 		? options.projectRids.filter(Boolean)
 		: (options.projectRid ? [options.projectRid] : [])
@@ -244,12 +247,21 @@ web.getProject = async function(rid) {
 	return result.data
 }
 
+web.reindexProjectSearch = async function(rid) {
+	var result = await axios.post(`/api/projects/${rid.replace('#', '')}/reindex-search`)
+	return result.data
+}
+
+web.getSearchInfo = async function() {
+	var result = await axios.get(`/api/search/info`)
+	return result.data
+}
+
 web.getSetFiles = async function(rid, skip, limit, options = {}) {
 	const params = new URLSearchParams()
 	if(skip !== undefined && skip !== null) params.set('skip', String(skip))
 	if(limit !== undefined && limit !== null) params.set('limit', String(limit))
 	if(options.groupByOrigin) params.set('group_by_origin', 'true')
-	if(options.groupBoundary) params.set('group_boundary', String(options.groupBoundary))
 	if(options.sourceRid) params.set('source_rid', String(options.sourceRid).replace('#', ''))
 
 	const query = params.toString() ? `?${params.toString()}` : ''
@@ -391,6 +403,14 @@ web.revertFileVersion = async function(rid) {
 
 web.createFileThumbnail = async function(rid) {
 	const result = await axios.post(`/api/files/${rid.replace('#','')}/thumbnail`)
+	return result.data
+}
+
+web.createSetThumbnails = async function(rid, options = {}) {
+	const params = new URLSearchParams()
+	if(options.limit !== undefined && options.limit !== null) params.set('limit', String(options.limit))
+	const query = params.toString() ? `?${params.toString()}` : ''
+	const result = await axios.post(`/api/sets/${rid.replace('#','')}/thumbnails${query}`)
 	return result.data
 }
 
@@ -566,13 +586,18 @@ web.getLayoutByTarget = async function(rid) {
 }
 
 
-web.uploadFile = async function(fileObject, project_rid, set_rid) {
+web.uploadFile = async function(fileObject, project_rid, set_rid, options = {}) {
 	var formData = new FormData()
 	formData.append("file", fileObject)
+	if(options.noThumbnails) {
+		formData.append('no_thumbnails', 'true')
+	}
+
+	const noThumbQuery = options.noThumbnails ? '?no-thumbnails=true' : ''
 	if(set_rid) 
-		await axios.post(`/api/projects/${project_rid.replace('#','')}/upload/${set_rid.replace('#','')}`, formData)
+		await axios.post(`/api/projects/${project_rid.replace('#','')}/upload/${set_rid.replace('#','')}${noThumbQuery}`, formData)
 	else
-		await axios.post(`/api/projects/${project_rid.replace('#','')}/upload`, formData)
+		await axios.post(`/api/projects/${project_rid.replace('#','')}/upload${noThumbQuery}`, formData)
 }
 
 

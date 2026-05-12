@@ -19,7 +19,7 @@
         <img v-if="state.file && state.file.path" 
           :src="thumbnailUrl(state.file.path)" 
           class="main-image" 
-          :style="{ transform: `rotate(${state.imageRotation}deg)` }"
+          :style="{ transform: `rotate(${previewRotation}deg)` }"
           alt="Main content image" />
         <div v-else class="image-placeholder">
           <v-icon size="64" color="grey">mdi-image</v-icon>
@@ -37,7 +37,7 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, reactive, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import web from "../../web.js";
 import {store} from "../../components/Store.js";
 
@@ -45,7 +45,14 @@ const apiUrl = import.meta.env.VITE_API_PATH
 const contentContainer = ref(null)
 
 const emit = defineEmits(['change-tab'])
-const props = defineProps(['tab'])
+const props = defineProps({
+  tab: { type: [String, Number, Boolean, Object], default: null },
+  imageRotation: { type: Number, default: 0 },
+})
+
+const previewRotation = computed(() => {
+  return Number.isFinite(Number(props.imageRotation)) ? Number(props.imageRotation) : 0
+})
 
 watch(() => props.tab, async () => {
   await load()
@@ -60,7 +67,6 @@ var state = reactive({
   file: null,
   content: '',
   contentType: 'text',
-  imageRotation: 0,
   thumbnailVersion: Date.now(),
 })
 
@@ -104,7 +110,6 @@ function replaceWithBr(text) {
 
 async function load() {
   state.file = null
-  state.imageRotation = 0
 
   try {
     var f = await web.getNodeFile(store.file['@rid'])

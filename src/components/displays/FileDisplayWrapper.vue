@@ -1,11 +1,11 @@
 <template>
   <v-container fluid class="pa-0 file-display-wrapper">
-    <!-- Close Button -->
     <v-btn
-      class="ma-2"
+      v-if="showStandaloneCloseButton"
+      class="standalone-close-btn"
       color="primary"
       icon="mdi-close"
-      style="position: absolute; top: 0; left: -60px; z-index:1000"
+      size="small"
       @click="closeFileView"
     ></v-btn>
 
@@ -13,12 +13,12 @@
     <SetTools
       v-if="store.file_browse_context && store.file_browse_context.mode === 'set'"
       :context="store.file_browse_context"
+      :file="store.file"
       :skip="state.skip"
       :fileCount="state.file_count"
       @prev="prev"
       @next="next"
-      @close="closeFileView"
-      @toggle-grouped-boundary="onToggleGroupedBoundary"
+      @back-to-set="backToSetView"
     />
     <SearchTools
       v-else-if="store.file_browse_context && store.file_browse_context.mode === 'search'"
@@ -32,7 +32,9 @@
       <!-- LEFT COLUMN: Path Panel -->
       <v-col :cols="state.pathCollapsed ? 'auto' : 2" class="flex-grow-0">
         <PathPanel
-          :fileRid="store.file ? store.file['@rid'] : null"
+          :fileRid="state.contextFileRid || (store.file ? store.file['@rid'] : null)"
+          :selectedRid="store.file ? store.file['@rid'] : null"
+          :lineage-level="state.lineageLevel"
           :collapsed="state.pathCollapsed"
           @toggle-collapse="state.pathCollapsed = !state.pathCollapsed"
           @image-click="handleImageClick"
@@ -48,6 +50,7 @@
         <template v-else-if="store.file">
           <component
             :is="displayComponent"
+            v-bind="displayProps"
           />
         </template>
       </v-col>
@@ -56,6 +59,7 @@
       <v-col v-if="!store.filter_editor" :cols="state.toolsCollapsed ? 'auto' : 2" class="flex-grow-0">
         <FileTools
           :file="store.file"
+          :imageRotation="state.imageRotation"
           :entities="state.entities"
           :collapsed="state.toolsCollapsed"
           :toast="state.toast"
@@ -148,6 +152,18 @@ const displayComponent = computed(() => {
   return JSONDisplay
 })
 
+const displayProps = computed(() => {
+  if (displayComponent.value === MultiDisplay) {
+    return { imageRotation: state.imageRotation }
+  }
+  return {}
+})
+
+const showStandaloneCloseButton = computed(() => {
+  const mode = store.file_browse_context?.mode
+  return mode !== 'set' && mode !== 'search'
+})
+
 var state = reactive({
   entities: {},
   pathCollapsed: false,
@@ -155,8 +171,82 @@ var state = reactive({
   skip: 1,
   file_count: 0,
   imageRotation: 0,
+  contextFileRid: null,
+  lineageLevel: 0,
+  lineageOffset: 0,
   toast: { show: false, text: '', color: 'success' },
 })
+
+let pendingContextRid = null
+
+function ridToQueryValue(rid) {
+  if (!rid) return ''
+  return String(rid).replace('#', '')
+}
+
+function queryToRid(value) {
+  if (value === undefined || value === null || value === '') return null
+  const normalized = String(value)
+  return normalized.startsWith('#') ? normalized : '#' + normalized
+}
+
+function toNonNegativeInt(value, fallback = 0) {
+  const parsed = Number.parseInt(value, 10)
+  if (!Number.isFinite(parsed) || parsed < 0) return fallback
+  return parsed
+}
+
+function toBoolean(value, fallback = false) {
+  if (value === undefined || value === null || value === '') return fallback
+  if (typeof value === 'boolean') return value
+  const normalized = String(value).toLowerCase()
+  return normalized === '1' || normalized === 'true' || normalized === 'yes'
+}
+
+function setModeQueryFromStoreContext() {
+  const ctx = store.file_browse_context
+  if (!ctx || ctx.mode !== 'set') return undefined
+
+  return {
+    browseMode: 'set',
+    setRid: ridToQueryValue(ctx.set_rid),
+    setLabel: ctx.set_label || '',
+    fileCount: String(toNonNegativeInt(ctx.file_count, 0)),
+    skip: String(toNonNegativeInt(ctx.skip, 0)),
+    sourceRid: ridToQueryValue(ctx.source_rid),
+    sourceLabel: ctx.source_label || ''
+  }
+}
+
+function hydrateBrowseContextFromRouteQuery() {
+  const query = route.query || {}
+  if (query.browseMode !== 'set') return false
+
+  const setRid = queryToRid(query.setRid)
+  if (!setRid) {
+    store.file_browse_context = null
+    return false
+  }
+
+  const sourceRid = queryToRid(query.sourceRid)
+  const fileCount = toNonNegativeInt(query.fileCount, 0)
+  const skip = toNonNegativeInt(query.skip, 0)
+
+  store.file_browse_context = {
+    mode: 'set',
+    set_rid: setRid,
+    set_label: query.setLabel ? String(query.setLabel) : null,
+    file_count: fileCount,
+    skip,
+    source_rid: sourceRid,
+    source_label: query.sourceLabel ? String(query.sourceLabel) : null,
+  }
+
+  store.source = setRid
+  store.file_count = fileCount
+  store.skip = skip
+  return true
+}
 
 function showToast(text, color = 'success') {
   state.toast.text = text
@@ -170,14 +260,8 @@ async function prev() {
   const ctx = store.file_browse_context
   if (!ctx || ctx.mode !== 'set') return
 
-  if (ctx.source_rid && ctx.grouped_boundary_enabled) {
-    // Grouped navigation (delegate to existing logic through set files)
-    if (state.skip <= 1) return
-    state.skip--
-  } else {
-    if (state.skip <= 1) return
-    state.skip--
-  }
+  if (state.skip <= 1) return
+  state.skip--
   await loadSetFile(state.skip - 1)
 }
 
@@ -199,22 +283,24 @@ async function loadSetFile(skipIndex) {
   const response = await web.getSetFiles(setRid, skipIndex, 1)
   if (response.files && response.files.length > 0) {
     const file = response.files[0]
-    store.file = await web.getDocInfo(file['@rid'])
-    // Update URL to reflect the new file
-    navigateToFile(file['@rid'])
-  }
-}
-
-function onToggleGroupedBoundary(enabled) {
-  if (store.file_browse_context) {
-    store.file_browse_context.grouped_boundary_enabled = enabled
+    // Keep shared browse context skip in 0-based indexing.
+    if (store.file_browse_context) {
+      store.file_browse_context.skip = skipIndex
+    }
+    store.skip = skipIndex
+    state.skip = skipIndex + 1
+    const contextRid = file['@rid']
+    const displayRid = await resolveDisplayedRidForContext(contextRid)
+    navigateToFile(displayRid, { preserveContext: true, contextRid })
   }
 }
 
 // --- Search tools ---
 async function onSearchFileChanged(file) {
   if (file && file['@rid']) {
-    navigateToFile(file['@rid'])
+    const contextRid = file['@rid']
+    const displayRid = await resolveDisplayedRidForContext(contextRid)
+    navigateToFile(displayRid, { preserveContext: true, contextRid })
   }
   state.entities = await web.getEntities()
 }
@@ -323,10 +409,28 @@ function handleImageClick(imagePath) {
 }
 
 function handleAncestorClick(node) {
-  if (node['@rid']) {
-    const rid = node['@rid'].replace('#', '')
-    router.push({ name: 'project-graph', params: { rid: effectiveProjectRid.value || rid } })
+  const clickedNode = node?.node || node
+  const fileOffsetFromContext = node?.fileOffsetFromContext
+  const fileLevelFromCurrent = node?.fileLevelFromCurrent
+
+  if (!clickedNode || !clickedNode['@rid']) return
+
+  const nodeType = String(clickedNode['@type'] || '').toLowerCase()
+  const fileType = String(clickedNode.type || '').toLowerCase()
+  const isFileNode = nodeType === 'file'
+  const isBlocked = nodeType === 'zip' || nodeType === 'source' || nodeType === 'project' || fileType === 'zip'
+  if (!isFileNode || isBlocked) return
+
+  if (typeof fileOffsetFromContext === 'number' && Number.isFinite(fileOffsetFromContext)) {
+    state.lineageOffset = fileOffsetFromContext
+    state.lineageLevel = Math.abs(fileOffsetFromContext)
+  } else if (typeof fileLevelFromCurrent === 'number' && fileLevelFromCurrent >= 0) {
+    state.lineageLevel = fileLevelFromCurrent
+    state.lineageOffset = -fileLevelFromCurrent
   }
+
+  const contextRid = state.contextFileRid || (store.file ? store.file['@rid'] : null)
+  navigateToFile(clickedNode['@rid'], { preserveContext: true, contextRid })
 }
 
 // --- Router navigation ---
@@ -338,6 +442,28 @@ function closeFileView() {
   }
 }
 
+function backToSetView() {
+  const ctx = store.file_browse_context
+  if (!effectiveProjectRid.value || !ctx || ctx.mode !== 'set' || !ctx.set_rid) {
+    closeFileView()
+    return
+  }
+
+  const query = {
+    openSet: String(ctx.set_rid).replace('#', '')
+  }
+
+  if (ctx.source_rid) {
+    query.sourceRid = String(ctx.source_rid).replace('#', '')
+  }
+
+  router.push({
+    name: 'project-graph',
+    params: { rid: effectiveProjectRid.value },
+    query
+  })
+}
+
 function goToSearch() {
   if (effectiveProjectRid.value) {
     router.push({ name: 'project-search', params: { rid: effectiveProjectRid.value } })
@@ -345,10 +471,74 @@ function goToSearch() {
 }
 
 // Navigate to a different file within the same project
-function navigateToFile(fileRid) {
+async function navigateToFile(fileRid, options = {}) {
   if (effectiveProjectRid.value && fileRid) {
-    const rid = fileRid.replace('#', '')
-    router.push({ name: 'project-file', params: { rid: effectiveProjectRid.value, fileRid: rid } })
+    const preserveContext = Boolean(options.preserveContext)
+    const query = preserveContext ? setModeQueryFromStoreContext() : undefined
+    const normalizedRid = String(fileRid).startsWith('#') ? String(fileRid) : '#' + String(fileRid)
+    const routeRid = route.params.fileRid ? ('#' + String(route.params.fileRid).replace('#', '')) : null
+
+    if (preserveContext) {
+      pendingContextRid = options.contextRid || state.contextFileRid || (store.file ? store.file['@rid'] : null)
+      // Keep lineage source in sync immediately, even if route does not change.
+      state.contextFileRid = pendingContextRid
+    } else {
+      pendingContextRid = null
+      state.contextFileRid = normalizedRid
+      state.lineageLevel = 0
+      state.lineageOffset = 0
+    }
+
+    // If target is already visible route, update file without relying on route watcher.
+    if (routeRid === normalizedRid) {
+      const currentSetMode = route.query?.browseMode === 'set'
+      const incomingSetMode = Boolean(query && query.browseMode === 'set')
+      if (currentSetMode !== incomingSetMode || (incomingSetMode && query.skip !== route.query?.skip)) {
+        router.replace({
+          name: 'project-file',
+          params: { rid: effectiveProjectRid.value, fileRid: normalizedRid.replace('#', '') },
+          query
+        })
+      }
+
+      if (!store.file || store.file['@rid'] !== normalizedRid) {
+        const loaded = await web.getDocInfo(normalizedRid)
+        store.file = loaded
+      }
+      pendingContextRid = null
+      return
+    }
+
+    const rid = normalizedRid.replace('#', '')
+    router.push({
+      name: 'project-file',
+      params: { rid: effectiveProjectRid.value, fileRid: rid },
+      query
+    })
+  }
+}
+
+async function resolveDisplayedRidForContext(contextRid) {
+  if (!contextRid) return contextRid
+  if (!state.lineageOffset) return contextRid
+
+  try {
+    const normalizedContextRid = String(contextRid).startsWith('#') ? String(contextRid) : '#' + String(contextRid)
+    const path = await web.getNodePath(normalizedContextRid)
+    const fileNodes = (path || []).filter((entry) => {
+      const type = String(entry?.['@type'] || '').toLowerCase()
+      const fileType = String(entry?.type || '').toLowerCase()
+      return type === 'file' && fileType !== 'zip'
+    })
+    if (!fileNodes.length) return normalizedContextRid
+
+    const contextIndex = fileNodes.findIndex((entry) => entry?.['@rid'] === normalizedContextRid)
+    if (contextIndex < 0) return normalizedContextRid
+
+    const targetIndex = Math.max(0, Math.min(fileNodes.length - 1, contextIndex + state.lineageOffset))
+    return fileNodes[targetIndex]?.['@rid'] || normalizedContextRid
+  } catch (e) {
+    return contextRid
   }
 }
 
@@ -360,6 +550,7 @@ function handleKeyUp(event) {
 
 // --- Load ---
 async function load() {
+  hydrateBrowseContextFromRouteQuery()
   state.entities = await web.getEntities()
 
   // Load file from route params if not already loaded
@@ -372,11 +563,20 @@ async function load() {
     store.file = loaded
   }
 
+  if (!state.contextFileRid && fileRid) {
+    state.contextFileRid = '#' + fileRid
+  }
+
   // Initialize navigation state from store
   const ctx = store.file_browse_context
   if (ctx && ctx.mode === 'set') {
     state.file_count = ctx.file_count || store.file_count || 0
-    state.skip = ctx.skip || (store.skip >= 0 ? store.skip + 1 : 1)
+    const ctxSkip = Number(ctx.skip)
+    const storeSkip = Number(store.skip)
+    const zeroBasedSkip = Number.isFinite(ctxSkip)
+      ? ctxSkip
+      : (Number.isFinite(storeSkip) && storeSkip >= 0 ? storeSkip : 0)
+    state.skip = zeroBasedSkip + 1
   } else {
     state.file_count = store.file_count || 0
     state.skip = store.skip >= 0 ? store.skip + 1 : 1
@@ -386,11 +586,20 @@ async function load() {
 // Watch route changes to load new file
 watch(() => route.params.fileRid, async (newRid) => {
   if (newRid) {
+    hydrateBrowseContextFromRouteQuery()
     const token = ++fileLoadToken
     const loaded = await web.getDocInfo('#' + newRid)
     if (token !== fileLoadToken) return
     if (route.params.fileRid !== newRid) return
     store.file = loaded
+    if (pendingContextRid) {
+      state.contextFileRid = pendingContextRid
+      pendingContextRid = null
+    } else {
+      state.contextFileRid = '#' + newRid
+      state.lineageLevel = 0
+      state.lineageOffset = 0
+    }
     state.entities = await web.getEntities()
   }
 })
@@ -408,12 +617,19 @@ onUnmounted(() => {
 <style scoped>
 .file-display-wrapper {
   max-width: 100% !important;
-  margin-left: 60px !important;
+  margin-left: 0 !important;
 }
 
 .center-column {
   height: calc(100vh - 64px);
   overflow-y: auto;
   background: white;
+}
+
+.standalone-close-btn {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1000;
 }
 </style>

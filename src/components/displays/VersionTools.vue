@@ -16,8 +16,8 @@
           </v-btn>
         </div>
       </div>
-      <v-btn color="primary" block size="x-small" class="mt-1" @click="$emit('save-edit')">
-        Save edited version
+      <v-btn v-if="hasPendingRotation" color="primary" block size="x-small" class="mt-1" @click="$emit('save-edit')">
+        Save rotated version
       </v-btn>
     </template>
 
@@ -49,6 +49,7 @@ import { computed } from 'vue'
 
 const props = defineProps({
   file: { type: Object, default: null },
+  imageRotation: { type: Number, default: 0 },
   toast: { type: Object, default: () => ({ show: false, text: '', color: 'success' }) }
 })
 
@@ -62,6 +63,11 @@ const isEditable = computed(() => {
   if (!props.file) return false
   const t = props.file.type
   return ['text', 'csv', 'html', 'json'].includes(t) || t?.endsWith('.json')
+})
+
+const hasPendingRotation = computed(() => {
+  const degrees = Number(props.imageRotation || 0)
+  return Number.isFinite(degrees) && (Math.abs(degrees) % 360) !== 0
 })
 
 const showVersion = computed(() => {

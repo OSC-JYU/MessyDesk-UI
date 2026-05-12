@@ -84,10 +84,19 @@
 
   const emit = defineEmits(['updateGraph'])
 
+  function getProjectRid() {
+    if (route.params?.rid) return String(route.params.rid)
+    if (route.query?.node) return String(route.query.node)
+    if (store.current_project?.id) return String(store.current_project.id).replace('#', '')
+    if (store.current_node?.project_rid) return String(store.current_node.project_rid).replace('#', '')
+    return null
+  }
+
     async function createSource() {
-        if(state.source_name && route.query.node) {
+    const projectRid = getProjectRid()
+    if(state.source_name && projectRid) {
             try {
-                var response = await web.createSource(route.query.node, state, store.source_creator_type)
+        var response = await web.createSource(projectRid, state, store.source_creator_type)
                 console.log(response)
                 store.source_creator_open = false
                 //emit('updateGraph', response['@rid'])
@@ -98,6 +107,8 @@
                 else
                     alert(e)
             }
+            } else if (state.source_name && !projectRid) {
+              alert('Project context missing. Open a project and try again.')
         }
     }
 

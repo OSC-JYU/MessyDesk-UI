@@ -1,5 +1,5 @@
 <script setup>
-    import { onMounted, reactive, ref, watch } from "vue";
+    import { reactive, ref, watch } from "vue";
     import { useRoute } from 'vue-router'
     import mdLogo from '../assets/images/md-logo.svg'
 
@@ -30,6 +30,23 @@
     function changeTab(tab) {
         emit('change-tab', tab)
     }
+
+    // Keep tabs in sync with current route so clicking Main/Search/Tags always triggers correctly.
+    watch(
+      () => route.name,
+      (name) => {
+        if (name === 'search') {
+          state.tab = 1
+          return
+        }
+        if (name === 'entities' || name === 'tags') {
+          state.tab = 2
+          return
+        }
+        state.tab = 0
+      },
+      { immediate: true }
+    )
 
     // watch state.tab
     watch(() => state.tab, async (newValue, oldValue) => {
