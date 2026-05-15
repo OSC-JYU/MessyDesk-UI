@@ -5,8 +5,9 @@
 }
 
 .node-body {
-  min-height: 200px;
+  min-height: 100px;
   max-width: 300px;
+  min-width: 250px;
   cursor: default;
 }
 
@@ -15,7 +16,7 @@ img {
 
 }
 .header {
-  background-color: #b16a31;
+  background-color: #54546f;
   color: white; 
   padding:3px;
   text-align: left !important;
@@ -41,6 +42,16 @@ img {
   top: 0px;
   right: 0px;
   background-color: #54546f;
+}
+
+.zip-content {
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 </style>
 
@@ -68,22 +79,14 @@ function openCrunchers(filter) {
 
 <template>
   <div class="node-body nodrag">
-    <div class="header"><v-icon size="35" color="orange">mdi-folder-zip-outline</v-icon> ZIP </div>
+    <div class="header">{{ data.label }}  </div>
     <v-icon @click="openCrunchers('')" title="Add cruncher" class ="crunch_add" size="65" >mdi-cookie-plus</v-icon>
-    <v-container style="min-height: 160px; padding: 10px; overflow: hidden; position: relative;">
+    <v-container style="min-height: 160px; padding: 10px; overflow: hidden; position: relative;" class="d-flex align-center justify-center">
 
-
-      <v-row>
-
-
-        <v-col>
-          <h4>{{ data.label }}</h4>
-          <!-- <div style="white-space: pre;" v-if="data.description">{{ data.description }}</div> -->
-          <pre v-if="data.description">{{ data.description }}</pre>
-          
-          
-        </v-col>
-      </v-row>
+      <div class="zip-content">
+        <v-icon size="100" color="#54546f">mdi-folder-zip-outline</v-icon> ZIP
+        <pre v-if="data.description">{{ data.description }}</pre>
+      </div>
 
     </v-container>
 

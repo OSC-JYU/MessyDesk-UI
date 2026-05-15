@@ -255,6 +255,11 @@ function showToast(text, color = 'success') {
   setTimeout(() => { state.toast.show = false }, 2600)
 }
 
+function isReferenceFile(file) {
+  if (!file) return false
+  return Boolean(file.ref || file.ref_rid)
+}
+
 // --- Set tools navigation ---
 async function prev() {
   const ctx = store.file_browse_context
@@ -371,6 +376,10 @@ async function rotateImageBlob(blob, degrees) {
 
 async function saveImageEdit() {
   if (!store.file?.['@rid']) return
+  if (isReferenceFile(store.file)) {
+    showToast('Reference files cannot be versioned', 'error')
+    return
+  }
   try {
     const originalBlob = await web.getNodeFileBlob(store.file['@rid'])
     const rotatedBlob = await rotateImageBlob(originalBlob, state.imageRotation)
@@ -392,6 +401,10 @@ async function saveImageEdit() {
 
 async function revertImageEdit() {
   if (!store.file?.['@rid']) return
+  if (isReferenceFile(store.file)) {
+    showToast('Reference files cannot be versioned', 'error')
+    return
+  }
   try {
     await web.revertFileVersion(store.file['@rid'])
     await web.createFileThumbnail(store.file['@rid'])

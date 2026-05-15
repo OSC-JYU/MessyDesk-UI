@@ -29,7 +29,7 @@ const props = defineProps({
 
 <template>
   <div class="node-body nodrag text-white">
-    <div class="header"><v-icon class="mr-2">mdi-folder</v-icon><v-icon class="mr-2">mdi-cookie</v-icon> {{ data.label }}</div>
+    
   
     <div class="d-flex align-center justify-center">
       

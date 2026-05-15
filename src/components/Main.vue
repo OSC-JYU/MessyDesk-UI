@@ -16,7 +16,9 @@ document.title = 'MessyDesk - Home'
 const state = reactive({
   loadingProjects: false,
   loadingSearchInfo: false,
+  loadingStorage: false,
   searchInfoLoaded: false,
+  storageSummary: null,
   loadingCrunchers: false,
   projects: [],
   searchInfoByProject: {},
@@ -422,7 +424,8 @@ async function loadProjects() {
     const projectsPromise = web.getProjects()
     const searchInfoPromise = web.getSearchInfo()
 
-    const [projectsResult, searchInfoResult] = await Promise.allSettled([projectsPromise, searchInfoPromise])
+    const storageSummaryPromise = web.getStorageSummary().catch(() => null)
+    const [projectsResult, searchInfoResult, storageSummaryResult] = await Promise.allSettled([projectsPromise, searchInfoPromise, storageSummaryPromise])
 
     if (projectsResult.status === 'rejected') {
       throw projectsResult.reason
@@ -446,6 +449,9 @@ async function loadProjects() {
 
     state.searchInfoByProject = byProject
     store.projects = state.projects
+    if (storageSummaryResult?.status === 'fulfilled' && storageSummaryResult.value) {
+      state.storageSummary = storageSummaryResult.value
+    }
   } catch (error) {
     state.loadError = error.message || 'Could not load desks.'
   } finally {
@@ -790,6 +796,31 @@ onUnmounted(() => {
       </v-col>
 
       <v-col cols="12" lg="4" class="reveal-3 right-column">
+        <v-card class="panel mb-6" rounded="xl" elevation="2">
+          <v-card-title>
+            <div class="text-overline">Your Storage</div>
+            <div class="text-h6 font-weight-bold">Disk Usage</div>
+          </v-card-title>
+          <v-card-text>
+            <template v-if="state.storageSummary">
+              <div class="d-flex justify-space-between mb-1">
+                <span class="text-body-2">{{ (state.storageSummary.used_mb / 1024).toFixed(2) }} GB used</span>
+                <span class="text-body-2 text-medium-emphasis">{{ state.storageSummary.quota_gb }} GB quota</span>
+              </div>
+              <v-progress-linear
+                :model-value="state.storageSummary.used_percent"
+                :color="state.storageSummary.used_percent > 90 ? 'error' : state.storageSummary.used_percent > 70 ? 'warning' : 'primary'"
+                bg-color="grey-lighten-2"
+                rounded
+                height="10"
+                class="mb-1"
+              />
+              <div class="text-caption text-medium-emphasis">{{ state.storageSummary.used_percent }}% used</div>
+            </template>
+            <div v-else class="empty-state">Size data not available. Use Refresh to update sizes.</div>
+          </v-card-text>
+        </v-card>
+
         <v-card class="panel mb-6" rounded="xl" elevation="2">
           <v-card-title>
             <div class="text-overline">Live Jobs</div>

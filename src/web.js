@@ -191,9 +191,9 @@ web.getServicesForFile = async function(file_rid, filter) {
 	return result.data
 }
 
-web.createFilter = async function(filter_id, file_rid) {
+web.createFilter = async function(filter_id, file_rid, payload = {}) {
 	const url = `/api/filters/${filter_id}/files/${file_rid.replace('#','')}`
-	var result = await axios.post(url)
+	var result = await axios.post(url, payload)
 	return result.data
 }
 
@@ -242,6 +242,11 @@ web.updateProjectSizes = async function() {
 	return result.data
 }
 
+web.getStorageSummary = async function() {
+	var result = await axios.get(`/api/projects/storage-summary`)
+	return result.data
+}
+
 web.getProject = async function(rid) {
 	var result = await axios.get(`/api/projects/${rid.replace('#', '')}`)
 	return result.data
@@ -282,6 +287,11 @@ web.getEntities = async function(dir) {
 
 web.getEntitySchema = async function(dir) {
 	var result = await axios.get(`/api/entities/types`)
+	return result.data
+}
+
+web.getSetEntities = async function(setRid) {
+	var result = await axios.get(`/api/entities/sets/${String(setRid).replace('#', '')}`)
 	return result.data
 }
 

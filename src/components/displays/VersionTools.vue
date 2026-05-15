@@ -1,7 +1,17 @@
 <template>
   <div v-if="showVersion" class="version-tools">
 
-    <template v-if="file && isImage">
+    <v-alert
+      v-if="isReference"
+      type="info"
+      variant="tonal"
+      density="compact"
+      class="mb-2"
+    >
+      This file is a reference node. Versioning is not available.
+    </v-alert>
+
+    <template v-if="file && isImage && !isReference">
       <div class="d-flex align-center justify-space-between mb-1">
         <span class="text-caption d-flex align-center">
           <v-icon size="14" class="mr-1">mdi-rotate-orbit</v-icon>
@@ -22,7 +32,7 @@
     </template>
 
     <v-btn
-      v-if="file && file.edited"
+      v-if="file && file.edited && !isReference"
       color="warning"
       block
       size="x-small"
@@ -63,6 +73,11 @@ const isEditable = computed(() => {
   if (!props.file) return false
   const t = props.file.type
   return ['text', 'csv', 'html', 'json'].includes(t) || t?.endsWith('.json')
+})
+
+const isReference = computed(() => {
+  if (!props.file) return false
+  return Boolean(props.file.ref || props.file.ref_rid)
 })
 
 const hasPendingRotation = computed(() => {

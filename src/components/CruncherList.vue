@@ -348,6 +348,9 @@
 
                     <v-window-item value="filters">
                         <div v-if="filtersList.length === 0" class="alert alert-info">No filters available.</div>
+                        <div v-if="state.filter_operation_message" class="alert alert-info">
+                            {{ state.filter_operation_message }}
+                        </div>
                         <v-expansion-panels v-else>
                             <v-expansion-panel v-for="filter in filtersList" :key="filter.id">
                                 <v-expansion-panel-title>
@@ -362,6 +365,8 @@
                                             rounded="1"
                                             variant="flat"
                                             title="Create filter"
+                                            :loading="state.filter_creating_id === filter.id"
+                                            :disabled="Boolean(state.filter_creating_id)"
                                             @click="createFilter(filter)">
                                             Create Filter
                                         </v-btn>
@@ -379,6 +384,72 @@
                         </v-expansion-panels>
                     </v-window-item>
                 </v-window>
+
+                <v-dialog v-model="state.tag_filter_open" max-width="720">
+                    <v-card>
+                        <v-card-title class="text-h6">Create Tag Filter Set</v-card-title>
+                        <v-card-text>
+                            <div class="text-body-2 mb-3">
+                                Select filter task. A new Set will be created with reference file nodes.
+                            </div>
+
+                            <v-select
+                                v-model="state.tag_filter_mode"
+                                :items="state.tag_filter_mode_options"
+                                item-title="title"
+                                item-value="value"
+                                label="Filter task"
+                                variant="outlined"
+                            />
+
+                            <v-select
+                                v-if="state.tag_filter_mode !== 'untagged'"
+                                v-model="state.tag_filter_selected_entities"
+                                :items="state.tag_filter_entities"
+                                item-title="title"
+                                item-value="value"
+                                label="Tags"
+                                multiple
+                                chips
+                                clearable
+                                variant="outlined"
+                            />
+
+                            <v-radio-group v-if="state.tag_filter_mode === 'include'" v-model="state.tag_filter_match" inline label="Match logic" class="mt-2">
+                                <v-radio label="OR (any selected tag)" value="or" />
+                                <v-radio label="AND (all selected tags)" value="and" />
+                            </v-radio-group>
+
+                            <v-text-field
+                                v-model="state.tag_filter_set_label"
+                                label="Output Set label (optional)"
+                                variant="outlined"
+                                density="comfortable"
+                                class="mt-2"
+                            />
+
+                            <div v-if="state.tag_filter_error" class="alert alert-danger mt-2 mb-0">
+                                {{ state.tag_filter_error }}
+                            </div>
+                            <div v-if="state.tag_filter_creating" class="alert alert-info mt-2 mb-0">
+                                Filtering is in progress. Please wait...
+                            </div>
+                        </v-card-text>
+                        <v-card-actions>
+                            <v-spacer />
+                            <v-btn variant="text" :disabled="state.tag_filter_creating" @click="closeTagFilterDialog">Cancel</v-btn>
+                            <v-btn
+                                color="blue-darken-4"
+                                class="text-white"
+                                :loading="state.tag_filter_creating"
+                                :disabled="state.tag_filter_creating"
+                                @click="submitTagFilter"
+                            >
+                                Create Filter
+                            </v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
             </div>
         </template>
         <div v-else class="mt-10">ERROR: No node selected</div>
@@ -410,8 +481,113 @@
         selected_service: null,
         selected_model: null,
         show_model_selection: false,
-        activeTab: 'services'
+		activeTab: 'services',
+		tag_filter_open: false,
+		tag_filter_entities: [],
+		tag_filter_selected_entities: [],
+		tag_filter_match: 'or',
+        tag_filter_mode: 'include',
+        tag_filter_mode_options: [
+            { value: 'include', title: 'Include tags (selected items)' },
+            { value: 'exclude', title: 'Exclude tags (negative tags)' },
+            { value: 'untagged', title: 'No tags (the rest)' },
+        ],
+		tag_filter_set_label: '',
+		tag_filter_error: '',
+		tag_filter_creating: false,
+		tag_filter_id: '',
+        filter_creating_id: '',
+        filter_operation_message: '',
 	})
+
+    async function loadTagEntities() {
+        const setRid = store.current_node?.id
+        if (!setRid) {
+            state.tag_filter_entities = []
+            return
+        }
+
+        const rows = await web.getSetEntities(setRid)
+        const flat = []
+        for (const item of rows || []) {
+            const rawRid = item?.['@rid'] || item?.rid
+            if (!rawRid) continue
+            const rid = String(rawRid).startsWith('#') ? String(rawRid) : `#${rawRid}`
+            const count = Number(item?.count || 0)
+            flat.push({
+                value: rid,
+                title: `${item.label || rid} (${item.type || 'entity'}, ${count})`,
+            })
+        }
+        flat.sort((a, b) => a.title.localeCompare(b.title))
+        state.tag_filter_entities = flat
+    }
+
+    async function openTagFilterDialog(filter) {
+        state.tag_filter_error = ''
+        state.tag_filter_id = filter.id
+        state.tag_filter_selected_entities = []
+        state.tag_filter_match = 'or'
+        state.tag_filter_mode = 'include'
+        state.tag_filter_set_label = ''
+        await loadTagEntities()
+        if (!state.tag_filter_entities.length) {
+            state.tag_filter_error = 'No tags found in current set.'
+        }
+        state.tag_filter_open = true
+    }
+
+    function closeTagFilterDialog() {
+        if (state.tag_filter_creating) return
+        state.tag_filter_open = false
+        state.tag_filter_error = ''
+    }
+
+    async function submitTagFilter() {
+        state.tag_filter_error = ''
+        state.filter_operation_message = ''
+        if (state.tag_filter_mode !== 'untagged' && !state.tag_filter_selected_entities.length) {
+            state.tag_filter_error = 'Please select at least one tag.'
+            return
+        }
+        if (!store.current_node?.id) {
+            state.tag_filter_error = 'No source Set selected.'
+            return
+        }
+
+        const payload = {
+            selection_mode: state.tag_filter_mode,
+            selected_entity_rids: state.tag_filter_selected_entities,
+            match: state.tag_filter_match,
+        }
+        if (state.tag_filter_mode === 'exclude') {
+            payload.match = 'or'
+        }
+        if (state.tag_filter_mode === 'untagged') {
+            payload.selected_entity_rids = []
+            payload.match = 'or'
+        }
+        const trimmedLabel = String(state.tag_filter_set_label || '').trim()
+        if (trimmedLabel) payload.set_label = trimmedLabel
+
+        state.tag_filter_creating = true
+        state.filter_operation_message = 'Filtering is in progress. Please wait...'
+        try {
+            await web.createFilter(state.tag_filter_id, store.current_node.id, payload)
+            state.tag_filter_open = false
+            store.crunchers_open = false
+            store.reload(null)
+        } catch (error) {
+            state.tag_filter_error = error?.message || 'Failed to create tag filter set'
+            state.filter_operation_message = ''
+            console.error(error)
+        } finally {
+            state.tag_filter_creating = false
+            if (!state.tag_filter_error) {
+                state.filter_operation_message = ''
+            }
+        }
+    }
 
     async function loadData() {
         if (!store.current_node?.id) {
@@ -566,11 +742,26 @@
 
     async function createFilter(filter) {
         state.error = ''
+        state.filter_operation_message = ''
         try {
+            if (filter.id === 'mdf-set-filter') {
+                await openTagFilterDialog(filter)
+                return
+            }
+            state.filter_creating_id = filter.id
+            state.filter_operation_message = 'Filtering is in progress. Please wait...'
             await web.createFilter(filter.id, store.current_node.id)
+            store.crunchers_open = false
+            store.reload(null)
         } catch (error) {
             state.error = error?.message || 'Failed to create filter'
+            state.filter_operation_message = ''
             console.error(error)
+        } finally {
+            state.filter_creating_id = ''
+            if (!state.error) {
+                state.filter_operation_message = ''
+            }
         }
     }
 
