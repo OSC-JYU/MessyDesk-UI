@@ -167,6 +167,12 @@
                 </router-link>
               </v-list-item>
 
+                <v-list-item>
+                  <router-link :to="'/help'" class="dropdown-item">
+                    <i class="fs-5 bi-question-circle"></i><span class="ms-1 d-none d-sm-inline">Help</span>
+                  </router-link>
+                </v-list-item>
+
               <v-list-item>
                 <a href="/Shibboleth.sso/Logout"  class="dropdown-item">
                       <i class="fs-5 bi-person"></i><span class="ms-1 d-none d-sm-inline">Logout</span>

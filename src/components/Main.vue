@@ -497,9 +497,20 @@ async function createProject() {
   state.createPending = true
   state.createError = ''
   try {
-    await web.createProject(name, '', Math.floor(Math.random() * 200), Math.floor(Math.random() * 200))
+    const createdProject = await web.createProject(name, '', Math.floor(Math.random() * 200), Math.floor(Math.random() * 200))
     state.projectName = ''
+
+    if (createdProject && createdProject['@rid']) {
+      openProject(createdProject)
+      return
+    }
+
     await loadProjects()
+
+    const fallbackProject = (state.projects || []).find((project) => String(project?.label || '').trim() === name)
+    if (fallbackProject && fallbackProject['@rid']) {
+      openProject(fallbackProject)
+    }
   } catch (error) {
     state.createError = error.message || 'Could not create desk.'
   } finally {

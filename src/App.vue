@@ -51,7 +51,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-	<div id="app">
+	<v-app id="app">
       <template v-if="store.logged_out">
         <div class="d-flex justify-content-center">
           <div class="alert alert-danger" role="alert">
@@ -65,7 +65,7 @@ onUnmounted(() => {
 
           <router-view />
     </template>
-	</div>
+    	</v-app>
 
 </template>
 

@@ -108,6 +108,7 @@ web.createProject = async function(name, description, x, y) {
 		"position": {x: x, y: y}
 	}
 	var response = await axios.post('/api/projects', data)
+	return response.data
 }
 
 web.createSet = async function(project_rid, name, description) {
@@ -140,6 +141,15 @@ web.getServices = async function(rid) {
 
 web.getPrompts = async function(rid) {
 	var result = await axios.get(`/api/prompts`)
+	return result.data
+}
+
+web.getHelp = async function(slug = 'index') {
+	const normalizedSlug = String(slug || 'index').trim().toLowerCase()
+	const url = normalizedSlug && normalizedSlug !== 'index'
+		? `/api/help/${encodeURIComponent(normalizedSlug)}`
+		: '/api/help'
+	const result = await axios.get(url, { responseType: 'text' })
 	return result.data
 }
 

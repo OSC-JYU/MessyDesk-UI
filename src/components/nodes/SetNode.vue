@@ -76,11 +76,13 @@ img {
 }
 
 .text-sample-item {
+  max-height: 150px;
   width: 100%;
   border: 1px solid #d0d8dd;
   border-radius: 8px;
   padding: 8px 10px;
   background: linear-gradient(180deg, #f7fafc 0%, #eef4f7 100%);
+  overflow: hidden;
 }
 
 .text-sample-label {

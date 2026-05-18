@@ -127,6 +127,12 @@
                   </router-link>
               </v-list-item>
 
+              <v-list-item>
+                <router-link :to="'/help'" class="dropdown-item">
+                      <i class="fs-5 bi-question-circle"></i><span class="ms-1 d-none d-sm-inline">Help</span>
+                  </router-link>
+              </v-list-item>
+
               <v-list-item v-if="store.user && store.user.access == 'admin'">
                 <router-link :to="'/admin'" class="dropdown-item">
                       <i class="fs-5 bi-person-fill"></i><span class="ms-1 d-none d-sm-inline">Admin</span>

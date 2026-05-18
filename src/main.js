@@ -13,6 +13,7 @@ import SearchMain from './components/SearchMain.vue'
 import EntitiesMain from './components/EntitiesMain.vue'
 import AdminMain from './components/AdminMain.vue'
 import Introduction from './components/Introduction.vue'
+import HelpMain from './components/HelpMain.vue'
 
 import Login from './components/Login.vue'
 import About from './components/About.vue'
@@ -138,6 +139,12 @@ const router = createRouter({
       path: '/prompts',
       name: 'prompts',
       component: PromptsMain
+    },
+
+    {
+      path: '/help/:slug?',
+      name: 'help',
+      component: HelpMain
     },
 
     {

@@ -83,7 +83,7 @@ function openCrunchers(filter) {
       <v-col>
        
           <!-- <div style="white-space: pre;" v-if="data.description">{{ data.description }}</div> -->
-          <pre class="text-white" v-if="data.description">{{ data.description }}</pre>
+          <!-- <pre class="text-white" v-if="data.description">{{ data.description }}</pre> -->
         
           
         </v-col>
