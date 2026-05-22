@@ -22,10 +22,17 @@ function withApiBase(pathname) {
 
 function resolveHelpAssetUrls(html) {
   if (!html) return html
-  return html.replace(/(["'])\/api\/help\/images\/([^"']+)\1/g, (match, quote, assetPath) => {
+  let normalized = html.replace(/(["'])\/api\/help\/images\/([^"']+)\1/g, (match, quote, assetPath) => {
     const decodedAssetPath = assetPath.replace(/^\/+/, '')
     return `${quote}${withApiBase(`/api/help/images/${decodedAssetPath}`)}${quote}`
   })
+
+  normalized = normalized.replace(/(["'])\/api\/services\/([^"']+)\1/g, (match, quote, serviceAssetPath) => {
+    const decodedServicePath = serviceAssetPath.replace(/^\/+/, '')
+    return `${quote}${withApiBase(`/api/services/${decodedServicePath}`)}${quote}`
+  })
+
+  return normalized
 }
 
 function normalizeSlug(rawSlug) {
@@ -35,10 +42,47 @@ function normalizeSlug(rawSlug) {
   if (!/^[a-z0-9-]+$/.test(slug)) return null
   return slug
 }
+function normalizeServiceId(rawServiceId) {
+  if (!rawServiceId) return null
+  const serviceId = String(rawServiceId).trim()
+  if (!serviceId) return null
+  if (!/^[a-z0-9][a-z0-9_-]*$/i.test(serviceId)) return null
+  return serviceId
+}
+
+function normalizeServiceAssetPath(rawAssetPath) {
+  if (!rawAssetPath) return null
+  const value = String(rawAssetPath).trim().replace(/^\/+/, '')
+  if (!value) return null
+  if (value.includes('..')) return null
+  if (!/^[a-zA-Z0-9._\/-]+$/.test(value)) return null
+  return value
+}
 
 async function loadHelp() {
   state.loading = true
   state.error = ''
+  
+  const serviceId = normalizeServiceId(route.params.service)
+  if (serviceId) {
+    try {
+      const requestedAsset = normalizeServiceAssetPath(route.params.assetPath)
+      const rawHtml = requestedAsset
+        ? await web.getServiceHelpAsset(serviceId, requestedAsset)
+        : await web.getServiceHelp(serviceId)
+      state.html = resolveHelpAssetUrls(rawHtml)
+    } catch (error) {
+      if (error?.status === 404) {
+        state.error = 'Service help page not found.'
+      } else {
+        state.error = error?.message || 'Failed to load service help page.'
+      }
+      state.html = ''
+    } finally {
+      state.loading = false
+    }
+    return
+  }
 
   const slug = normalizeSlug(route.params.slug)
   if (!slug) {
@@ -76,7 +120,7 @@ function onHelpContentClick(event) {
 }
 
 onMounted(loadHelp)
-watch(() => route.params.slug, loadHelp)
+watch(() => [route.params.slug, route.params.service, route.params.assetPath], loadHelp)
 </script>
 
 <template>

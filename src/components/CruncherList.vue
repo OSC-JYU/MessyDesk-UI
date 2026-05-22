@@ -39,6 +39,16 @@
                                 <div class="d-flex flex-column">
                                     <div class="d-flex align-center">
                                         <h5 >{{ service.name }}</h5>
+                                        <v-btn
+                                            size="small"
+                                            color="green-darken-2"
+                                            variant="flat"
+                                            class="ml-2 text-none text-white"
+                                            title="Open service help"
+                                            @click.stop="openServiceHelpInNewTab(service.id)">
+                                            <v-icon start icon="mdi-help-circle"></v-icon>
+                                            Help
+                                        </v-btn>
                                         <v-chip :color="service.access === 'proprietary' ? 'danger' : 'success'" size="small" variant="tonal" class="ml-2 chip-flat">
                                             {{ service.access === 'proprietary' ? 'proprietary' : 'open source' }}
                                         </v-chip>
@@ -271,6 +281,16 @@
                                         <v-icon start icon="mdi-cog"></v-icon>
                                         {{ item.serviceName }}
                                     </v-chip>
+                                    <v-btn
+                                        size="small"
+                                        color="green-darken-2"
+                                        variant="flat"
+                                        class="ml-2 text-none text-white"
+                                        title="Open service help"
+                                        @click.stop="openServiceHelpInNewTab(item.serviceId)">
+                                        <v-icon start icon="mdi-help-circle"></v-icon>
+                                        Help
+                                    </v-btn>
                                 </v-expansion-panel-title>
                                 <v-expansion-panel-text>
                                     <div>
@@ -675,6 +695,13 @@
 
     function getQueue(node) {
         console.log(node)
+    }
+
+    function openServiceHelpInNewTab(serviceId) {
+        const normalizedServiceId = String(serviceId || '').trim()
+        if(!normalizedServiceId) return
+        const routeData = router.resolve(`/help/services/${encodeURIComponent(normalizedServiceId)}/`)
+        window.open(routeData.href, '_blank', 'noopener,noreferrer')
     }
 
     function createUserInfo(info, params) {

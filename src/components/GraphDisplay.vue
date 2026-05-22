@@ -535,24 +535,37 @@
         mode: '',
         fit: {type: String, default: false}
     })
+
+    function resolveFlowNode(payload, maybeNode) {
+        if (maybeNode) return maybeNode
+        if (payload?.node) return payload.node
+        if (payload?.id && payload?.position) return payload
+        return null
+    }
     
 
-    flow.onNodeDragStop((event) => {
-        store.current_node = event.node
-        event.node.position = {x:Math.round(event.node.position.x/100, 10)*100, y:Math.round(event.node.position.y/100, 10)*100}
-        fetch(`${apiUrl}/api/projects/${event.node.id.replace('#', '')}`, {
+    flow.onNodeDragStop((payload, maybeNode) => {
+        const node = resolveFlowNode(payload, maybeNode)
+        if (!node) return
+
+        store.current_node = node
+        node.position = {x:Math.round(node.position.x/100, 10)*100, y:Math.round(node.position.y/100, 10)*100}
+        fetch(`${apiUrl}/api/projects/${node.id.replace('#', '')}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({key: 'position', value: event.node.position})
+            body: JSON.stringify({key: 'position', value: node.position})
         });
     })
 
 
-    flow.onNodeClick((event) => {
-        console.log(event.node)
-        store.current_node = event.node
+    flow.onNodeClick((payload, maybeNode) => {
+        const node = resolveFlowNode(payload, maybeNode)
+        if (!node) return
+
+        console.log(node)
+        store.current_node = node
         //store.view = flow.getViewport()
     })
 
@@ -601,35 +614,57 @@
     })
 
 
-    flow.onNodeDoubleClick((event) => {
-        store.current_node = event.node
+    flow.onNodeDoubleClick((payload, maybeNode) => {
+        const node = resolveFlowNode(payload, maybeNode)
+        if (!node) return
 
-        if(event.node.type == "project" ) {
+        store.current_node = node
+
+        const atType = String(node?.data?.['@type'] || '').toLowerCase()
+        const canonicalType = String(node?.data?._type || '').toLowerCase()
+        const dataType = String(node?.data?.type || '').toLowerCase()
+        const displayType = String(node?.type || '').toLowerCase()
+        const nonFileNodeTypes = new Set([
+            'project', 'set', 'search-set', 'search', 'roi-set',
+            'process', 'setprocess', 'filter', 'nextcloud', 'dspace7'
+        ])
+        const isFileNode = atType === 'file'
+            || canonicalType === 'file'
+            || dataType === 'file'
+            || (dataType && !nonFileNodeTypes.has(dataType))
+        const isZipNode = displayType === 'zip' || dataType === 'zip'
+
+        if(node.type == "project" ) {
             //store.view = null
             if(store.current_node) store.current_project = store.current_node
-            router.push({ name: 'project-graph', params: { rid: event.node.id.replace('#', '')} })
-        } else if(event.node.type == "set") {
-            toggleSetPanel(event.node, null)
-        }else if(event.node.type == 'roi-set') {
-            const parents = flow.getIncomers(event.node) || []
+            router.push({ name: 'project-graph', params: { rid: node.id.replace('#', '')} })
+        } else if(node.type == "set") {
+            toggleSetPanel(node, null)
+        }else if(node.type == 'roi-set') {
+            const parents = flow.getIncomers(node) || []
             const parentSet = parents.find((n) => n?.type === 'set') || parents[0]
             if (parentSet) {
-                toggleSetPanel(parentSet, event.node)
+                toggleSetPanel(parentSet, node)
             }
-        } else if(event.node.data.type == "file" && event.node.data._type != "zip") {
+        } else if(isFileNode && !isZipNode) {
             
             // find source file and cruncher of this file
             let cruncher, source 
-            const parent = flow.getIncomers(event.node)
+            const parent = flow.getIncomers(node)
             if(parent.length == 1) {
                 cruncher = parent[0].id.replace('#', '')
                 const granparent = flow.getIncomers(parent[0])
                 if(granparent.length == 1) {
-                    source = granparent[0].id.replace('#', '')
+                    const gp = granparent[0]
+                    const gpAtType = String(gp?.data?.['@type'] || '').toLowerCase()
+                    const gpType = String(gp?.data?.type || gp?.type || '').toLowerCase()
+                    if(gpAtType === 'file' || (gpType && !['set', 'project', 'process', 'setprocess', 'filter', 'search-set', 'search'].includes(gpType))) {
+                        source = gp.id.replace('#', '')
+                    }
                 }
             }
-            console.log('open-node', event.node)
-            emit('open-node', event.node.id, source)
+            console.log('open-node', node)
+            emit('open-node', node.id, source)
 
         }
            
@@ -1387,6 +1422,7 @@
                 id: node.data.id, 
                 type: nodeType,
                 data: {
+                    '@type': node.data['@type'],
                     type: nodeType,
                     label: nodeLabel,
                     description: node.data.description,

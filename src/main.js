@@ -142,6 +142,18 @@ const router = createRouter({
     },
 
     {
+      path: '/help/services/:service/',
+      name: 'service-help',
+      component: HelpMain
+    },
+
+    {
+      path: '/help/services/:service/:assetPath(.*)*',
+      name: 'service-help-asset',
+      component: HelpMain
+    },
+
+    {
       path: '/help/:slug?',
       name: 'help',
       component: HelpMain

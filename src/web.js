@@ -153,6 +153,24 @@ web.getHelp = async function(slug = 'index') {
 	return result.data
 }
 
+web.getServiceHelp = async function(serviceId) {
+	const normalizedServiceId = String(serviceId || '').trim()
+	if(!normalizedServiceId) throw({ status: 400, message: 'Missing service id' })
+	const url = `/api/services/${encodeURIComponent(normalizedServiceId)}/help`
+	const result = await axios.get(url, { responseType: 'text' })
+	return result.data
+}
+
+web.getServiceHelpAsset = async function(serviceId, assetPath) {
+	const normalizedServiceId = String(serviceId || '').trim()
+	const normalizedAssetPath = String(assetPath || '').trim().replace(/^\/+/, '')
+	if(!normalizedServiceId) throw({ status: 400, message: 'Missing service id' })
+	if(!normalizedAssetPath) throw({ status: 400, message: 'Missing service help asset path' })
+	const url = `/api/services/${encodeURIComponent(normalizedServiceId)}/help/assets/${normalizedAssetPath.split('/').map((segment) => encodeURIComponent(segment)).join('/')}`
+	const result = await axios.get(url, { responseType: 'text' })
+	return result.data
+}
+
 web.getUsers = async function(rid) {
 	var result = await axios.get(`/api/users`)
 	return result.data

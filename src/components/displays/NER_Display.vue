@@ -87,6 +87,38 @@
         source_text: ''
     })
 
+    async function resolveSourceRid(currentRid) {
+      if (store.source) {
+        try {
+          const sourceInfo = await web.getDocInfo(store.source)
+          if (String(sourceInfo?.['@type'] || '').toLowerCase() === 'file') {
+            return sourceInfo['@rid']
+          }
+        } catch (_error) {
+          // ignore invalid source and continue with ancestor lookup
+        }
+      }
+      if (!currentRid) return null
+
+      try {
+        const ancestors = await web.getFileAncestors(currentRid)
+        if (!Array.isArray(ancestors)) return null
+
+        const preferred = ancestors.find((item) => {
+          const atType = String(item?.['@type'] || '').toLowerCase()
+          const type = String(item?.type || '').toLowerCase()
+          return atType === 'file' && ['text', 'pdf', 'image', 'html', 'csv'].includes(type)
+        })
+        if (preferred?.['@rid']) return preferred['@rid']
+
+        const firstFile = ancestors.find((item) => String(item?.['@type'] || '').toLowerCase() === 'file')
+        return firstFile?.['@rid'] || null
+      } catch (error) {
+        console.log('Failed to resolve NER source from ancestors', error?.message)
+        return null
+      }
+    }
+
 
 
     function renderStringAsHtml(str, highlights) {
@@ -119,12 +151,18 @@
 
     async function load() { 
       state.entities = {}
+      if (!store.file?.['@rid']) return
+
       var response = await web.getDocInfo(store.file['@rid'])
-      state.source = await web.getDocInfo(store.source)
-      
       state.file = response
+
+      const sourceRid = await resolveSourceRid(state.file['@rid'])
+      state.source = sourceRid ? await web.getDocInfo(sourceRid) : null
+
       state.data = await web.getFiles(state.file['@rid'].replace('#', ''))
-      var source_text = await web.getFiles(state.source['@rid'].replace('#', ''))
+      var source_text = state.source
+        ? await web.getFiles(state.source['@rid'].replace('#', ''))
+        : ''
       state.json = state.data
       if(Array.isArray(state.json)) {
         

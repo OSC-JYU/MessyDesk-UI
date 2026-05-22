@@ -136,18 +136,17 @@ const extensionMap = {
 const displayComponent = computed(() => {
   if (!store.file) return null
   const file = store.file
+  const fileType = String(file.type || '').toLowerCase()
+  const fileExt = String(file.extension || '').toLowerCase()
 
   // Check type first
-  if (file.type && typeMap[file.type]) return typeMap[file.type]
+  if (fileType && typeMap[fileType]) return typeMap[fileType]
 
   // Special: text + txt → MultiDisplay
-  if (file.type === 'text' && file.extension === 'txt') return MultiDisplay
-
-  // Similarity label fallback
-  if (file.extension === 'json' && file.label && file.label.includes('similarity')) return SimilarityDisplay
+  if (fileType === 'text' && fileExt === 'txt') return MultiDisplay
 
   // Extension fallback
-  if (file.extension && extensionMap[file.extension]) return extensionMap[file.extension]
+  if (fileExt && extensionMap[fileExt]) return extensionMap[fileExt]
 
   return JSONDisplay
 })
