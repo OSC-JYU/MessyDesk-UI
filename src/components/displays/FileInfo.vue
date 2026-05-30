@@ -2,7 +2,7 @@
   <div class="file-info">
     <div v-if="file" class="mb-3">
       <h4 class="text-subtitle-2 mb-2">{{ file.label }}</h4>
-      <v-chip v-if="file.edited" color="orange-darken-2" size="x-small" class="mb-2">Edited version</v-chip>
+      <v-chip v-if="file.edited" color="orange-darken-2" size="x-small" class="mb-2">Quick edit</v-chip>
       <DescriptionEditor :description="file.description" :rid="file['@rid']"/>
 
       <div v-if="file.metadata" class="mt-2">

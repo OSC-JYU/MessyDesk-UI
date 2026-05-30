@@ -17,6 +17,8 @@ const state = reactive({
   loadingProjects: false,
   loadingSearchInfo: false,
   loadingStorage: false,
+  loadingSso: false,
+  ssoUser: null,
   searchInfoLoaded: false,
   storageSummary: null,
   loadingCrunchers: false,
@@ -63,19 +65,9 @@ const state = reactive({
   ],
   news: [
     {
-      title: 'Image Region Editor Is Available',
-      date: '2026-03-10',
-      text: 'You can now mark and reuse named image regions for repeated material processing.'
-    },
-    {
-      title: 'Service Detail View Improved',
-      date: '2026-02-21',
-      text: 'Service pages now show clearer capability notes and safer status controls.'
-    },
-    {
-      title: 'Search View Keeps Your Context',
-      date: '2026-01-29',
-      text: 'Returning from search now preserves your current working context more reliably.'
+      title: 'New version of MessyDesk released!',
+      date: '2026-05-29',
+      text: 'Same UI but lot of changes under the hood.'
     }
   ]
 })
@@ -84,6 +76,14 @@ const runningJobs = computed(() => {
   return Object.entries(store.running_processes || {})
     .map(([rid, data]) => ({ rid, ...data }))
     .filter(job => ['running', 'paused', 'cancelling'].includes(job.status))
+})
+
+const homeUserName = computed(() => {
+  const sso = state.ssoUser || {}
+  const mail = String(sso.mail || '').trim()
+  if (mail) return mail
+
+  return String(store.user?.id || '').trim()
 })
 
 function formatEta(etaSec) {
@@ -487,6 +487,18 @@ async function loadCrunchers() {
   }
 }
 
+async function loadSsoUser() {
+  state.loadingSso = true
+  try {
+    const response = await web.sso()
+    state.ssoUser = response?.data || null
+  } catch (error) {
+    state.ssoUser = null
+  } finally {
+    state.loadingSso = false
+  }
+}
+
 async function createProject() {
   const name = state.projectName.trim()
   if (!name) {
@@ -603,7 +615,7 @@ async function reindexProjectSearch() {
 }
 
 onMounted(async () => {
-  await Promise.all([loadProjects(), loadCrunchers()])
+  await Promise.all([loadProjects(), loadCrunchers(), loadSsoUser()])
   connectSSE()
   for (const rid of Object.keys(store.running_processes || {})) {
     await hydrateBatch(rid)
@@ -619,7 +631,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <v-card class="mx-auto fill-height" color="grey-lighten-3" flat>
+
     <v-layout class="fill-height">
       <JYUHeader_main
         mode="projects"
@@ -632,18 +644,20 @@ onUnmounted(() => {
     <v-row class="hero-row mb-6 mb-md-8">
       <v-col cols="12" lg="8">
         <section class="hero reveal-1">
-          <h1 class="hero-title mb-3">Digital tools for digital humanists.</h1>
+          <h1 class="hero-title mb-3">Digitally JYUrs</h1>
           <p class="hero-text mb-0">
-            Keep your material in one calm place. Open an existing desk, create a new one,
-            and follow what is currently running.
+            Welcome to next version of MessyDesk!
           </p>
         </section>
       </v-col>
 
       <v-col v-if="organizationLogoSrc" cols="12" lg="4" class="hero-logo-slot reveal-1">
         <v-card class="panel org-logo-card" rounded="xl" elevation="2">
-          <v-card-text class="d-flex justify-center py-4">
+          <v-card-text class="org-logo-wrap py-4">
             <img :src="organizationLogoSrc" alt="Organization logo" class="org-logo" />
+            <div v-if="homeUserName" class="hero-user">
+              Signed in as <strong>{{ homeUserName }}</strong>
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -885,7 +899,7 @@ onUnmounted(() => {
           </v-card-text>
         </v-card>
 
-        <v-card class="panel mb-6" rounded="xl" elevation="2">
+        <!-- <v-card class="panel mb-6" rounded="xl" elevation="2">
           <v-card-title>
             <div class="text-overline">Learn By Doing</div>
             <div class="text-h6 font-weight-bold">Example Cases</div>
@@ -906,7 +920,7 @@ onUnmounted(() => {
               </v-list-item>
             </v-list>
           </v-card-text>
-        </v-card>
+        </v-card> -->
 
         <v-card class="panel" rounded="xl" elevation="2">
           <v-card-title>
@@ -997,7 +1011,7 @@ onUnmounted(() => {
         </v-container>
       </v-main>
     </v-layout>
-  </v-card>
+
 </template>
 
 <style scoped>
@@ -1081,6 +1095,11 @@ onUnmounted(() => {
   max-width: 760px;
 }
 
+.hero-user {
+  color: #0f4066;
+  font-size: 0.98rem;
+}
+
 .panel {
   border: 1px solid rgba(18, 72, 112, 0.14);
   background: var(--md-panel);
@@ -1130,6 +1149,13 @@ onUnmounted(() => {
 
 .org-logo-card {
   background: rgba(255, 255, 255, 0.84);
+}
+
+.org-logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
 }
 
 .org-logo {
@@ -1198,6 +1224,11 @@ onUnmounted(() => {
 @media (max-width: 1279px) {
   .right-column::before {
     opacity: 0.14;
+  }
+
+  .org-logo-wrap {
+    flex-direction: column;
+    text-align: center;
   }
 
   .hero {

@@ -169,6 +169,7 @@ const props = defineProps(['tab'])
 const state = reactive({
   file: null,
   source: null,
+  sourceImagePath: null,
   polygons: [],
   confidences: [],
   boxes: [],
@@ -192,8 +193,8 @@ const lastPanX = ref(0)
 const lastPanY = ref(0)
 
 const sourceImageUrl = computed(() => {
-  if (!state.source?.path) return null
-  return `${apiUrl}/api/thumbnails/${state.source.path}`
+  if (!state.sourceImagePath) return null
+  return `${apiUrl}/api/thumbnails/${state.sourceImagePath}`
 })
 
 const lineItems = computed(() => {
@@ -238,22 +239,27 @@ watch(
 )
 
 async function loadData () {
+  if (!store.file?.['@rid']) return
+
   loading.value = true
   highlightedLine.value = null
   resetZoom()
 
   try {
-    const fileInfo = await web.getDocInfo(store.file['@rid'])
+    const currentRid = store.file['@rid']
+    const fileInfo = await web.getDocInfo(currentRid)
     state.file = fileInfo
-
-    if (store.source) {
-      state.source = await web.getDocInfo(store.source)
-    } else {
-      state.source = null
-    }
+    state.source = null
+    state.sourceImagePath = null
 
     let rawData = await web.getNodeFile(state.file['@rid'])
     rawData = typeof rawData === 'string' ? JSON.parse(rawData) : rawData
+
+    const sourceImagePath = await resolveSourceImagePath(rawData, currentRid)
+    state.sourceImagePath = sourceImagePath
+    if (sourceImagePath) {
+      state.source = { path: sourceImagePath }
+    }
 
     state.polygons = rawData.line_polygons || []
     state.confidences = rawData.line_confs || []
@@ -269,6 +275,48 @@ async function loadData () {
   } finally {
     loading.value = false
   }
+}
+
+async function resolveSourceImagePath (rawData, currentRid) {
+  const inlinePath = rawData?.source_path || rawData?.image_path || rawData?.source?.path
+  if (typeof inlinePath === 'string' && inlinePath) return inlinePath
+
+  const sourceRid = rawData?.source_rid || rawData?.source?.['@rid']
+  if (typeof sourceRid === 'string' && sourceRid) {
+    try {
+      const sourceNode = await web.getDocInfo(sourceRid)
+      if (sourceNode?.path) return sourceNode.path
+    } catch (_error) {
+      // Continue with other fallbacks.
+    }
+  }
+
+  if (store.source) {
+    try {
+      const sourceNode = await web.getDocInfo(store.source)
+      const sourceType = String(sourceNode?.type || '').toLowerCase()
+      if (sourceNode?.path && (sourceType === 'image' || sourceType === 'pdf')) {
+        return sourceNode.path
+      }
+    } catch (_error) {
+      // Continue with ancestor fallback.
+    }
+  }
+
+  try {
+    const ancestors = await web.getFileAncestors(currentRid)
+    if (Array.isArray(ancestors) && ancestors.length) {
+      const imageAncestor = ancestors.find((item) => String(item?.type || '').toLowerCase() === 'image')
+      if (imageAncestor?.path) return imageAncestor.path
+
+      const pdfAncestor = ancestors.find((item) => String(item?.type || '').toLowerCase() === 'pdf')
+      if (pdfAncestor?.path) return pdfAncestor.path
+    }
+  } catch (_error) {
+    // Keep null when no resolvable source exists.
+  }
+
+  return null
 }
 
 function handleImageLoad () {

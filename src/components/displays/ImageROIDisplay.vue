@@ -374,7 +374,17 @@ async function loadROIsForCurrentFile(setRidOverride = null) {
   if (!setRid) return
 
   const token = ++roiLoadToken
-  const rois = await web.getImageROIs(fileRid, setRid)
+  let rois = null
+  try {
+    rois = await web.getImageROIs(fileRid, setRid)
+  } catch (error) {
+    // Missing ROI file is a valid initial state for a new image in ROI editor.
+    state.shapes_by_file[fileRid] = []
+    if (token === roiLoadToken) {
+      selectedShapeId.value = null
+    }
+    return
+  }
   if (token !== roiLoadToken) return
 
   const normalized = normalizeROIs(rois)
@@ -414,6 +424,79 @@ function getCurrentSetRid() {
     return state.parent['@rid'] || state.parent.id || null
   }
   return state.file?.set || null
+}
+
+function getPreferredSourceSetRid() {
+  const browseCtx = store.file_browse_context
+  if (!browseCtx || browseCtx.mode !== 'set') return null
+
+  const candidates = []
+  if (browseCtx.source_rid) candidates.push(browseCtx.source_rid)
+  if (browseCtx.set_rid) candidates.push(browseCtx.set_rid)
+
+  if (candidates.length > 0) {
+    return candidates
+  }
+  return null
+}
+
+async function resolvePreferredSourceSetRid() {
+  const candidates = getPreferredSourceSetRid()
+  if (!candidates) return null
+
+  let fallbackSetRid = null
+  for (const candidateRid of candidates) {
+    const resolved = await resolveUsableSetRid(candidateRid)
+    if (!resolved) continue
+    try {
+      const node = await web.getDocInfo(resolved)
+      const setType = String(node?.type || '').toLowerCase()
+      if (setType !== 'roi-set') return resolved
+      if (!fallbackSetRid) fallbackSetRid = resolved
+    } catch (_error) {
+      // Ignore and continue checking other candidates.
+    }
+  }
+
+  return fallbackSetRid
+}
+
+async function resolveUsableSetRid(candidateRid) {
+  if (!candidateRid) return null
+
+  const normalizeRid = (rid) => {
+    if (!rid) return null
+    const value = String(rid)
+    return value.startsWith('#') ? value : `#${value}`
+  }
+
+  const isSet = (node) => String(node?.['@type'] || '').toLowerCase() === 'set'
+  const isNonRoiSet = (node) => isSet(node) && String(node?.type || '').toLowerCase() !== 'roi-set'
+
+  const candidate = normalizeRid(candidateRid)
+  if (!candidate) return null
+
+  try {
+    const node = await web.getDocInfo(candidate)
+    if (isSet(node)) {
+      return node['@rid'] || candidate
+    }
+  } catch (_error) {
+    // Ignore and try resolving via graph path.
+  }
+
+  try {
+    const path = await web.getNodePath(candidate)
+    if (!Array.isArray(path)) return null
+
+    const setNodes = path.filter((node) => isSet(node))
+    if (!setNodes.length) return null
+
+    const preferred = setNodes.find((node) => isNonRoiSet(node)) || setNodes[0]
+    return normalizeRid(preferred?.['@rid'])
+  } catch (_error) {
+    return null
+  }
 }
 
 function onImageLoad() {
@@ -581,7 +664,10 @@ async function persistActiveShapes(force = false) {
   }, {})
   const roiFileRid = state.roi_files_by_file[fileRid]
   try {
-    if (roiFileRid) {
+    if (roiFileRid && Object.keys(roisMap).length === 0) {
+      await web.deleteImageROI(fileRid, setRid, roiFileRid)
+      delete state.roi_files_by_file[fileRid]
+    } else if (roiFileRid) {
       await web.updateImageROI(fileRid, setRid, roiFileRid, roisMap)
     } else {
       const result = await web.saveImageROIs(fileRid, setRid, roisMap)
@@ -836,6 +922,18 @@ async function loadContext() {
   selectedShapeId.value = null
 
   try {
+    const preferredSetRid = await resolvePreferredSourceSetRid()
+    if (preferredSetRid) {
+      state.parent = { '@rid': preferredSetRid, '@type': 'Set' }
+      state.parent_type = 'Set'
+      const browseCtx = store.file_browse_context
+      const preferredSkip = (browseCtx && typeof browseCtx.skip === 'number' && browseCtx.skip >= 0)
+        ? browseCtx.skip
+        : 0
+      await loadSetFile(preferredSetRid, preferredSkip)
+      return
+    }
+
     // if (store.source) {
     //   const response = await web.getDocInfo(store.source)
     //   state.file = response
@@ -891,13 +989,59 @@ async function loadContext() {
 }
 
 function findParentNode(nodes, filterRid) {
-  console.log('Finding parent node in path:', nodes)
+  console.log('Finding source parent-of-parent in path:', nodes)
   console.log('Filter RID to exclude:', filterRid)
-  if (!Array.isArray(nodes)) return null
+  if (!Array.isArray(nodes) || nodes.length === 0) return null
+
+  const normalizedFilterRid = String(filterRid || '').startsWith('#')
+    ? String(filterRid)
+    : (filterRid ? `#${filterRid}` : '')
+
+  const isProcessNode = (node) => {
+    const atType = String(node?.['@type'] || '').toLowerCase()
+    const type = String(node?.type || '').toLowerCase()
+    return atType === 'process' || atType === 'setprocess' || type === 'process' || type === 'setprocess'
+  }
+
+  const isSetNode = (node) => {
+    const atType = String(node?.['@type'] || '').toLowerCase()
+    return atType === 'set'
+  }
+
+  const isImageFileNode = (node) => {
+    const atType = String(node?.['@type'] || '').toLowerCase()
+    const type = String(node?.type || '').toLowerCase()
+    return atType === 'file' && type === 'image'
+  }
+
+  const roiIndex = nodes.findIndex((node) => {
+    const rid = String(node?.['@rid'] || '')
+    if (normalizedFilterRid && rid === normalizedFilterRid) return true
+    return isSetNode(node) && String(node?.type || '').toLowerCase() === 'roi-set'
+  })
+
+  const processIndex = (() => {
+    if (roiIndex >= 0) {
+      for (let i = roiIndex + 1; i < nodes.length; i++) {
+        if (isProcessNode(nodes[i])) return i
+      }
+    }
+    return nodes.findIndex((node) => isProcessNode(node))
+  })()
+
+  if (processIndex >= 0) {
+    for (let i = processIndex + 1; i < nodes.length; i++) {
+      const node = nodes[i]
+      if (isSetNode(node) || isImageFileNode(node)) {
+        return node
+      }
+    }
+  }
+
   const candidates = nodes.filter(node => isFileOrSetNode(node, filterRid))
-  const setNode = candidates.find(node => node?.['@type'] === 'Set')
+  const setNode = candidates.find(node => isSetNode(node) && String(node?.type || '').toLowerCase() !== 'roi-set')
   if (setNode) return setNode
-  const imageFile = candidates.find(node => node?.['@type'] === 'File' && node?.type === 'image')
+  const imageFile = candidates.find(node => isImageFileNode(node))
   if (imageFile) return imageFile
   if (candidates.length) return candidates[0]
   return null
@@ -919,8 +1063,10 @@ async function loadSingleFile(rid) {
 }
 
 async function loadSetFile(setRid, skip) {
-  console.log('Loading set file for set RID:', setRid, 'skip:', skip)
-  const response = await web.getSetFiles(setRid, skip, 1)
+  const usableSetRid = await resolveUsableSetRid(setRid)
+  console.log('Loading set file for set RID:', setRid, 'resolved:', usableSetRid, 'skip:', skip)
+  if (!usableSetRid) return
+  const response = await web.getSetFiles(usableSetRid, skip, 1)
   const file = response.files[0]
   if (!file) return
   state.file_count = response.file_count || 1
@@ -928,7 +1074,8 @@ async function loadSetFile(setRid, skip) {
   const fileInfo = await web.getDocInfo(file['@rid'])
   fileInfo.thumbnail = buildThumbnailPath(fileInfo.path)
   state.file = fileInfo
-  await loadROIsForCurrentFile(setRid)
+  // ROI data is stored under the ROI set context, not under the source input set.
+  await loadROIsForCurrentFile()
 }
 
 function buildThumbnailPath(filePath) {

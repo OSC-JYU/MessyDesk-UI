@@ -18,9 +18,10 @@
         <v-col>
 
               <v-file-input
-                label="Select File (image, pdf, txt, zip, html, json)"
+                label="Select File (image, pdf, txt, md, zip, html, json)"
                 show-size
-                ref="upload" accept="image/*,.pdf,text/plain,.zip,.html,.json" 
+                v-model="state.uploadFile"
+                accept="image/*,.pdf,text/plain,text/markdown,.md,.zip,.html,.json" 
             ></v-file-input>
         </v-col>
       </v-card-text>
@@ -68,9 +69,10 @@
         <v-col>
 
               <v-file-input
-                label="Select File (image, pdf, txt, html, json)"
+                label="Select File (image, pdf, txt, html, json, md)"
                 show-size
-                ref="upload" accept="image/*,.pdf,text/plain,.html,.json" 
+                v-model="state.setUploadFile"
+                accept="image/*,.pdf,text/plain,.html,.json,.md" 
             ></v-file-input>
         </v-col>
       </v-card-text>
@@ -113,12 +115,11 @@
   const apiUrl = import.meta.env.VITE_API_PATH
 
 	const route = useRoute();
-  const upload = ref(null);
-
-
 	var state = reactive({
 		loading: false,
-    error: ''
+    error: '',
+    uploadFile: null,
+    setUploadFile: null
 	})
 
 	const props = defineProps({
@@ -133,18 +134,18 @@
       return null
     }
 
+    function toSingleFile(value) {
+      if (!value) return null
+      if (Array.isArray(value)) return value[0] || null
+      if (typeof File !== 'undefined' && value instanceof File) return value
+      return value && typeof value === 'object' ? value : null
+    }
+
     function getSelectedFile() {
-      const input = upload.value
-      if (!input) return null
-
-      if (Array.isArray(input.files) && input.files.length) {
-        return input.files[0]
+      if (store.set_uploader_open) {
+        return toSingleFile(state.setUploadFile)
       }
-
-      const model = input.modelValue
-      if (Array.isArray(model) && model.length) return model[0]
-      if (model && typeof model === 'object') return model
-      return null
+      return toSingleFile(state.uploadFile)
     }
 
 
@@ -172,6 +173,8 @@
 
         store.uploader_open = false
         store.set_uploader_open = false
+        state.uploadFile = null
+        state.setUploadFile = null
       } catch (e) {
         alert(e?.message || 'Upload failed')
       } finally {
@@ -183,6 +186,8 @@
 
 		store.uploader_open = false
 		store.set_uploader_open = false
+    state.uploadFile = null
+    state.setUploadFile = null
 	}
 
 

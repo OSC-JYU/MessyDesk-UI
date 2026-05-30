@@ -29,26 +29,48 @@
           </v-expansion-panel-text>
         </v-expansion-panel>
 
-        <!-- Version (only for editable types / images) -->
+        <!-- Quick edits (only for editable types / images) -->
         <v-expansion-panel v-if="showVersion" value="version">
           <v-expansion-panel-title class="tool-panel-title">
             <v-icon size="16" class="mr-2">mdi-history</v-icon>
-            <span>Version</span>
-            <v-chip v-if="file && file.edited" size="x-small" color="orange" variant="tonal" class="ml-auto mr-2">edited</v-chip>
+            <span>Quick edits</span>
+            <v-chip v-if="file && file.edited" size="x-small" color="orange" variant="tonal" class="ml-auto mr-2">quick edit</v-chip>
           </v-expansion-panel-title>
           <v-expansion-panel-text class="tool-panel-body">
             <VersionTools 
               :file="file" 
               :imageRotation="imageRotation"
+              :imageCropMode="imageCropMode"
+              :hasImageCropSelection="hasImageCropSelection"
+              :thumbnailPending="thumbnailPending"
+              :textEditMode="textEditMode"
+              :supportsTextEditing="supportsTextEditing"
               :toast="toast"
+              @start-edit="$emit('start-edit')"
               @save-edit="$emit('save-edit')" 
+              @cancel-edit="$emit('cancel-edit')"
               @revert-edit="$emit('revert-edit')"
               @rotate-left="$emit('rotate-left')"
               @rotate-right="$emit('rotate-right')"
+              @start-crop="$emit('start-crop')"
+              @clear-crop="$emit('clear-crop')"
+              @cancel-crop="$emit('cancel-crop')"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>
+
+      <div v-if="supportsTextEditing" class="tool-section-static px-3 py-2">
+        <div class="text-caption text-medium-emphasis mb-1">Display</div>
+        <v-switch
+          :model-value="markdownEnabled"
+          density="compact"
+          hide-details
+          color="primary"
+          label="Render Markdown"
+          @update:model-value="$emit('toggle-markdown', $event)"
+        ></v-switch>
+      </div>
     </template>
   </v-sheet>
 </template>
@@ -62,12 +84,18 @@ import VersionTools from './VersionTools.vue'
 const props = defineProps({
   file: { type: Object, default: null },
   imageRotation: { type: Number, default: 0 },
+  imageCropMode: { type: Boolean, default: false },
+  hasImageCropSelection: { type: Boolean, default: false },
+  thumbnailPending: { type: Boolean, default: false },
+  textEditMode: { type: Boolean, default: false },
+  markdownEnabled: { type: Boolean, default: false },
+  supportsTextEditing: { type: Boolean, default: false },
   entities: { type: [Array, Object], default: () => ({}) },
   collapsed: { type: Boolean, default: false },
   toast: { type: Object, default: () => ({ show: false, text: '', color: 'success' }) }
 })
 
-defineEmits(['toggle-collapse', 'refresh', 'file-updated', 'save-edit', 'revert-edit', 'rotate-left', 'rotate-right'])
+defineEmits(['toggle-collapse', 'refresh', 'file-updated', 'start-edit', 'save-edit', 'cancel-edit', 'revert-edit', 'toggle-markdown', 'rotate-left', 'rotate-right', 'start-crop', 'clear-crop', 'cancel-crop'])
 
 // All closed by default
 const openPanels = ref([])

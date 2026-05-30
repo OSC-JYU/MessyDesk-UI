@@ -388,20 +388,6 @@ web.importFile = async function(dir, filename, mode) {
 	return result
 }
 
-web.getStyle = async function() {
-	var result = await axios.get(`/api/styles`)
-	for(var style of result.data) {
-		for(var key in style.style) {
-
-			// eval functions from json
-			if(typeof style.style[key] === 'string' && style.style[key].startsWith('(')) {
-				var style_str = style.style[key].replace(/##/g,"'")
-				style.style[key] = eval(style_str)
-			}
-		}
-	}
-	return result.data
-}
 
 web.getDocInfo = async function(rid) {
 	var result = await axios.get(`/api/documents/${rid.replace('#','')}`)
@@ -609,6 +595,11 @@ web.getImageROIs = async function(rid, set_rid) {
 
 web.updateImageROI = async function(rid, set_rid, roi_rid, rois) {
 	var result = await axios.put(`/api/images/${rid.replace('#','')}/sets/${set_rid.replace('#','')}/rois/${roi_rid.replace('#','')}`, { rois })
+	return result
+}
+
+web.deleteImageROI = async function(rid, set_rid, roi_rid) {
+	var result = await axios.delete(`/api/images/${rid.replace('#','')}/sets/${set_rid.replace('#','')}/rois/${roi_rid.replace('#','')}`)
 	return result
 }
 

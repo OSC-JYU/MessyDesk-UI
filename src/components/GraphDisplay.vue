@@ -402,6 +402,7 @@
         setItems: [],
         setPanelNode: null,
         panel_roi_set: null,
+        roi_presence_cache: {},
         selected_source_rid: null,
         selected_source_label: '',
         setPanel: false, 
@@ -614,7 +615,7 @@
     })
 
 
-    flow.onNodeDoubleClick((payload, maybeNode) => {
+    flow.onNodeDoubleClick(async (payload, maybeNode) => {
         const node = resolveFlowNode(payload, maybeNode)
         if (!node) return
 
@@ -628,6 +629,93 @@
             'project', 'set', 'search-set', 'search', 'roi-set',
             'process', 'setprocess', 'filter', 'nextcloud', 'dspace7'
         ])
+        const isSetLikeNode = (candidate) => {
+            const graphType = String(candidate?.type || '').toLowerCase()
+            const dataType = String(candidate?.data?.type || '').toLowerCase()
+            const atType = String(candidate?.data?.['@type'] || '').toLowerCase()
+            return atType === 'set'
+                || graphType === 'set'
+                || graphType === 'search-set'
+                || dataType === 'set'
+                || dataType === 'roi-set'
+        }
+        const isImageLikeNode = (candidate) => {
+            const atType = String(candidate?.data?.['@type'] || '').toLowerCase()
+            const graphType = String(candidate?.type || '').toLowerCase()
+            const dataType = String(candidate?.data?.type || '').toLowerCase()
+            const extension = String(candidate?.data?.extension || '').toLowerCase()
+            const label = String(candidate?.data?.label || '').toLowerCase()
+            const imageExtensions = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tif', 'tiff', 'heic', 'heif'])
+            const hasImageExtension = imageExtensions.has(extension)
+                || Array.from(imageExtensions).some((ext) => label.endsWith('.' + ext))
+            return atType === 'file'
+                && (graphType === 'image' || dataType === 'image' || hasImageExtension)
+        }
+        const isFileLikeNode = (candidate) => {
+            const atType = String(candidate?.data?.['@type'] || '').toLowerCase()
+            return atType === 'file'
+        }
+        const isRoiJsonFileNode = (candidate) => {
+            const dataType = String(candidate?.data?.type || '').toLowerCase()
+            const extension = String(candidate?.data?.extension || '').toLowerCase()
+            const label = String(candidate?.data?.label || '').toLowerCase()
+            return dataType === 'roi.json' || extension === 'json' || label.endsWith('.roi.json')
+        }
+        const resolveSourceFileRidFromRoiPath = async (roiSetRid) => {
+            try {
+                const pathNodes = await web.getNodePath(roiSetRid)
+                if (!Array.isArray(pathNodes) || !pathNodes.length) return null
+
+                const imageExtensions = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tif', 'tiff', 'heic', 'heif'])
+                const files = pathNodes.filter((item) => {
+                    const atType = String(item?.['@type'] || '').toLowerCase()
+                    if (atType !== 'file') return false
+
+                    const type = String(item?.type || '').toLowerCase()
+                    const extension = String(item?.extension || '').toLowerCase()
+                    const label = String(item?.label || '').toLowerCase()
+                    const isRoiJson = type === 'roi.json' || extension === 'json' || label.endsWith('.roi.json')
+                    return !isRoiJson
+                })
+
+                if (!files.length) return null
+
+                const preferred = files.find((item) => {
+                    const type = String(item?.type || '').toLowerCase()
+                    const extension = String(item?.extension || '').toLowerCase()
+                    const label = String(item?.label || '').toLowerCase()
+                    return type === 'image' || imageExtensions.has(extension) || Array.from(imageExtensions).some((ext) => label.endsWith('.' + ext))
+                }) || files[0]
+
+                return preferred?.['@rid'] || null
+            } catch (_error) {
+                return null
+            }
+        }
+        const resolveRoiSourceNode = (roiNode) => {
+            const queue = [...(flow.getIncomers(roiNode) || [])]
+            const visited = new Set([roiNode?.id])
+            let bestFile = null
+            let bestSet = null
+
+            while (queue.length) {
+                const current = queue.shift()
+                if (!current || visited.has(current.id)) continue
+                visited.add(current.id)
+
+                if (isImageLikeNode(current)) return current
+                if (!bestFile && isFileLikeNode(current)) bestFile = current
+                if (!bestSet && isSetLikeNode(current)) bestSet = current
+
+                const parents = flow.getIncomers(current) || []
+                for (const parent of parents) {
+                    if (parent && !visited.has(parent.id)) queue.push(parent)
+                }
+            }
+
+            if (bestFile) return bestFile
+            return bestSet
+        }
         const isFileNode = atType === 'file'
             || canonicalType === 'file'
             || dataType === 'file'
@@ -641,11 +729,55 @@
         } else if(node.type == "set") {
             toggleSetPanel(node, null)
         }else if(node.type == 'roi-set') {
-            const parents = flow.getIncomers(node) || []
-            const parentSet = parents.find((n) => n?.type === 'set') || parents[0]
-            if (parentSet) {
-                toggleSetPanel(parentSet, node)
+            const sourceNode = resolveRoiSourceNode(node)
+
+            // Single-image input: open editor directly.
+            if (sourceNode && isImageLikeNode(sourceNode)) {
+                store.filter_editor = node
+                emit('open-node', sourceNode.id)
+                return
             }
+
+            // Single-file input without reliable image typing metadata: still open editor directly.
+            if (sourceNode && isFileLikeNode(sourceNode) && !isRoiJsonFileNode(sourceNode)) {
+                store.filter_editor = node
+                emit('open-node', sourceNode.id)
+                return
+            }
+
+            // Deterministic fallback: resolve source file from ROI set path (excluding roi.json files).
+            const resolvedRid = await resolveSourceFileRidFromRoiPath(node.id)
+            if (resolvedRid) {
+                store.filter_editor = node
+                emit('open-node', resolvedRid)
+                return
+            }
+
+            // Set input: open source set panel first so user picks starting image.
+            if (sourceNode && isSetLikeNode(sourceNode)) {
+                try {
+                    const preview = await web.getSetFiles(sourceNode.id, 0, 2)
+                    const fileCount = Number(preview?.file_count || 0)
+                    const singleFile = Array.isArray(preview?.files) ? preview.files[0] : null
+                    if (fileCount === 1 && singleFile?.['@rid']) {
+                        const browseContext = {
+                            mode: 'flat',
+                            sourceRid: null,
+                            sourceLabel: null,
+                        }
+                        store.filter_editor = node
+                        emit('open-node', singleFile['@rid'], sourceNode.id, fileCount, 0, browseContext)
+                        return
+                    }
+                } catch (_error) {
+                    // If set preview fails, fall back to opening the set panel.
+                }
+                toggleSetPanel(sourceNode, node)
+                return
+            }
+
+            // Fallback: at least open ROI set panel instead of no-op.
+            toggleSetPanel(node, null)
         } else if(isFileNode && !isZipNode) {
             
             // find source file and cruncher of this file
@@ -1198,6 +1330,58 @@
         totalPages.value = Math.max(1, Math.ceil((state.setdata.group_count || 0) / filesPerPage))
     }
 
+    function getActiveRoiSetRid() {
+        const roiNode = state.panel_roi_set
+        if(!roiNode) return null
+        const rid = roiNode.id || roiNode['@rid'] || roiNode?.data?.['@rid'] || null
+        if(!rid) return null
+        return String(rid).startsWith('#') ? String(rid) : '#' + String(rid)
+    }
+
+    function hasRoiData(payload) {
+        if(!payload) return false
+        if(Array.isArray(payload)) return payload.length > 0
+        if(payload.rois && typeof payload.rois === 'object') return Object.keys(payload.rois).length > 0
+        if(typeof payload === 'object') {
+            const ignored = new Set(['@rid', 'rid', 'roi_rid'])
+            return Object.keys(payload).some((key) => !ignored.has(String(key)))
+        }
+        return false
+    }
+
+    async function hydrateRoiCountsForSetItems() {
+        const roiSetRid = getActiveRoiSetRid()
+        if(!roiSetRid) return
+        if(!Array.isArray(state.setdata?.files) || state.setdata.files.length === 0) return
+
+        const updates = await Promise.all(state.setdata.files.map(async (file) => {
+            const fileRid = file?.['@rid']
+            if(!fileRid) return { fileRid: null, hasRois: false }
+
+            const cacheKey = `${roiSetRid}|${fileRid}`
+            if(state.roi_presence_cache[cacheKey] !== undefined) {
+                return { fileRid, hasRois: state.roi_presence_cache[cacheKey] }
+            }
+
+            try {
+                const rois = await web.getImageROIs(fileRid, roiSetRid)
+                const hasRois = hasRoiData(rois)
+                state.roi_presence_cache[cacheKey] = hasRois
+                return { fileRid, hasRois }
+            } catch (_error) {
+                state.roi_presence_cache[cacheKey] = false
+                return { fileRid, hasRois: false }
+            }
+        }))
+
+        const hasRoisByRid = new Map(updates.filter((item) => item.fileRid).map((item) => [item.fileRid, item.hasRois]))
+        state.setdata.files = state.setdata.files.map((file) => ({
+            ...file,
+            has_rois: Boolean(hasRoisByRid.get(file['@rid'])),
+        }))
+        syncSetItemsAndPagination()
+    }
+
     async function loadSetGroups() {
         if(!state.setPanelNode || !state.setPanelNode.id) {
             state.setPanelLoading = false
@@ -1212,6 +1396,7 @@
             )
             state.setdata.mode = 'flat'
             syncSetItemsAndPagination()
+            await hydrateRoiCountsForSetItems()
         } finally {
             state.setPanelLoading = false
         }

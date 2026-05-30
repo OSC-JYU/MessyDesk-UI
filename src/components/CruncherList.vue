@@ -20,17 +20,17 @@
                     </v-tab>
                     <v-tab value="tasks">
                         <v-icon start icon="mdi-format-list-bulleted"></v-icon>
-                        By Task
+                        By Crucnhers
                     </v-tab>
                     <v-tab value="filters">
                         <v-icon start icon="mdi-filter-variant"></v-icon>
-                        Filters
+                        Filters and ROIs
                     </v-tab>
                 </v-tabs>
 
                 <v-window v-model="state.activeTab" class="mt-2" :transition="false" :reverse-transition="false">
                     <v-window-item value="services">
-                <div v-if="state.service_count === 0" class="alert alert-warning">No crunchers found. </div>
+                <div v-if="state.service_count === 0" class="alert alert-info">No services found. </div>
 
                 <v-expansion-panels v-model="openPanel" @update:model-value="onPanelChange">
                     <v-expansion-panel v-for="service in services.result.for_format" :key="service.id">
@@ -268,7 +268,7 @@
                     </v-window-item>
 
                     <v-window-item value="tasks">
-                        <div v-if="allTasks.length === 0" class="alert alert-info">No tasks available.</div>
+                        <div v-if="allTasks.length === 0" class="alert alert-info">No crunchers available.</div>
                         <v-expansion-panels>
                             <v-expansion-panel v-for="item in allTasks" :key="item.serviceId + '__' + item.taskKey">
                                 <v-expansion-panel-title>
@@ -749,10 +749,13 @@
 			task_object.info = createUserInfo(task.info, task.values)
 		}
 		console.log(task_object)
+
+        const currentType = String(store.current_node?.data?.type || '').toLowerCase()
+        const isSetLikeNode = currentType === 'set' || currentType.endsWith('-set')
         
         if(store.current_node.data.type == 'source') {
             var res = await web.createSourceProcess(task_object, store.current().id)
-        } else if(store.current_node.data.type == 'set') {
+        } else if(isSetLikeNode) {
             var res = await web.createSetProcess(task_object, store.current().id)
         } else  if (store.cruncher_filter == 'ROI') {
             var res = await web.createROIProcess(task_object, store.current().id)

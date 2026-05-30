@@ -57,6 +57,7 @@ export const store = reactive({
   reorder_target: '',
   settings_show_descriptions: true,
   settings_show_entities: true,
+  settings_text_markdown: false,
   running_processes: {},
 
 

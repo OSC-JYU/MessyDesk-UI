@@ -44,18 +44,18 @@ const props = defineProps({
  
   
   <v-row align="center">
-    <!-- <v-col cols="auto">
+    <v-col cols="auto">
       <img v-if="!data.error" :src="CookieIconWhite"/>
-    </v-col> -->
+    </v-col>
     <v-col>
       <!-- <p class="p-2" v-if="data.info">
         <i>{{ data.info }}</i>
       </p>
       
-      <i>{{ data.duration }}</i>
+      <i>{{ data.duration }}</i> -->
       <v-chip class="mb-2" v-if="data.service" color="blue" variant="flat">
       {{ data.service }} 
-    </v-chip> -->
+    </v-chip> 
     <v-chip v-if="data.model" class="mb-2" color="orange" variant="flat">
        {{ data.model }}
     </v-chip>

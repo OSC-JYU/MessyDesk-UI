@@ -8,7 +8,7 @@
       density="compact"
       class="mb-2"
     >
-      This file is a reference node. Versioning is not available.
+      This file is a reference node. Quick edits are not available.
     </v-alert>
 
     <template v-if="file && isImage && !isReference">
@@ -26,9 +26,82 @@
           </v-btn>
         </div>
       </div>
-      <v-btn v-if="hasPendingRotation" color="primary" block size="x-small" class="mt-1" @click="$emit('save-edit')">
-        Save rotated version
+      <div class="d-flex align-center justify-space-between mt-2 mb-1">
+        <span class="text-caption d-flex align-center">
+          <v-icon size="14" class="mr-1">mdi-crop</v-icon>
+          Crop
+        </span>
+        <div>
+          <v-btn
+            v-if="!imageCropMode"
+            size="x-small"
+            variant="outlined"
+            :disabled="thumbnailPending || hasPendingRotation"
+            @click="$emit('start-crop')"
+          >
+            Start crop
+          </v-btn>
+          <template v-else>
+            <v-btn
+              size="x-small"
+              variant="outlined"
+              class="mr-1"
+              :disabled="!hasImageCropSelection"
+              @click="$emit('clear-crop')"
+            >
+              Clear
+            </v-btn>
+            <v-btn size="x-small" variant="outlined" @click="$emit('cancel-crop')">Cancel</v-btn>
+          </template>
+        </div>
+      </div>
+
+      <v-alert
+        v-if="imageCropMode"
+        type="info"
+        variant="tonal"
+        density="compact"
+        class="mt-2"
+      >
+        Draw one rectangle on the image.
+      </v-alert>
+
+      <v-btn v-if="hasPendingImageEdit" color="primary" block size="x-small" class="mt-1" @click="$emit('save-edit')">
+        Save quick edit
       </v-btn>
+
+      <v-alert
+        v-if="thumbnailPending"
+        type="info"
+        variant="tonal"
+        density="compact"
+        class="mt-2"
+      >
+        Waiting for thumbnail update...
+      </v-alert>
+    </template>
+
+    <template v-if="file && isEditable && !isImage && !isReference">
+      <v-btn
+        v-if="!textEditMode"
+        color="primary"
+        block
+        size="x-small"
+        class="mt-1"
+        :disabled="!supportsTextEditing"
+        @click="$emit('start-edit')"
+      >
+        Start edit
+      </v-btn>
+
+      <template v-else>
+        <v-btn color="primary" block size="x-small" class="mt-1" @click="$emit('save-edit')">
+          Save quick edit
+        </v-btn>
+        <v-btn color="secondary" block size="x-small" class="mt-1" @click="$emit('cancel-edit')">
+          Cancel edit
+        </v-btn>
+      </template>
     </template>
 
     <v-btn
@@ -39,7 +112,7 @@
       class="mt-1"
       @click="$emit('revert-edit')"
     >
-      Revert to original
+      Revert quick edit
     </v-btn>
 
     <v-alert
@@ -60,10 +133,15 @@ import { computed } from 'vue'
 const props = defineProps({
   file: { type: Object, default: null },
   imageRotation: { type: Number, default: 0 },
+  imageCropMode: { type: Boolean, default: false },
+  hasImageCropSelection: { type: Boolean, default: false },
+  thumbnailPending: { type: Boolean, default: false },
+  textEditMode: { type: Boolean, default: false },
+  supportsTextEditing: { type: Boolean, default: false },
   toast: { type: Object, default: () => ({ show: false, text: '', color: 'success' }) }
 })
 
-defineEmits(['save-edit', 'revert-edit', 'rotate-left', 'rotate-right'])
+defineEmits(['save-edit', 'revert-edit', 'rotate-left', 'rotate-right', 'start-edit', 'cancel-edit', 'start-crop', 'clear-crop', 'cancel-crop'])
 
 const isImage = computed(() => {
   return props.file && (props.file.type === 'image' || props.file['@type'] === 'Image')
@@ -83,6 +161,10 @@ const isReference = computed(() => {
 const hasPendingRotation = computed(() => {
   const degrees = Number(props.imageRotation || 0)
   return Number.isFinite(degrees) && (Math.abs(degrees) % 360) !== 0
+})
+
+const hasPendingImageEdit = computed(() => {
+  return hasPendingRotation.value || Boolean(props.hasImageCropSelection)
 })
 
 const showVersion = computed(() => {

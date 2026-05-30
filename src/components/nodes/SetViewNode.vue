@@ -140,6 +140,9 @@ function thumbnailSrc(fileData) {
       <v-row >
         <v-chip v-if="!data.is_group && store.settings_show_entities" v-for="entity of data.entities" :key="entity.id"  :color="entity.color" ><v-icon v-if="entity.icon" :icon="'mdi-' + entity.icon.toLowerCase()" start></v-icon> {{ entity.label }}</v-chip>
         <v-chip v-if="data.is_group" color="teal-darken-2" variant="flat">{{ data.file_count || 0 }} files</v-chip>
+        <v-chip v-if="!data.is_group && data.has_rois" color="orange-darken-2" variant="flat">
+          Has ROIs
+        </v-chip>
       </v-row>
       <v-row
         v-if="data.is_group || data.type == 'image' || data.type == 'pdf' || data.info"

@@ -50,7 +50,9 @@
         <template v-else-if="store.file">
           <component
             :is="displayComponent"
+            ref="displayRef"
             v-bind="displayProps"
+            @crop-selection-change="onCropSelectionChange"
           />
         </template>
       </v-col>
@@ -60,16 +62,28 @@
         <FileTools
           :file="store.file"
           :imageRotation="state.imageRotation"
+          :imageCropMode="state.imageCropMode"
+          :hasImageCropSelection="state.hasImageCropSelection"
+          :thumbnailPending="state.thumbnailPending"
+          :textEditMode="state.textEditMode"
+          :markdownEnabled="state.markdownEnabled"
+          :supportsTextEditing="supportsTextEditing"
           :entities="state.entities"
           :collapsed="state.toolsCollapsed"
           :toast="state.toast"
           @toggle-collapse="state.toolsCollapsed = !state.toolsCollapsed"
           @refresh="refreshContent"
           @file-updated="onFileUpdated"
-          @save-edit="saveImageEdit"
-          @revert-edit="revertImageEdit"
+          @start-edit="startTextEdit"
+          @save-edit="onSaveEdit"
+          @cancel-edit="cancelTextEdit"
+          @revert-edit="onRevertEdit"
+          @toggle-markdown="setMarkdownEnabled"
           @rotate-left="rotateLeft"
           @rotate-right="rotateRight"
+          @start-crop="startImageCrop"
+          @clear-crop="clearImageCrop"
+          @cancel-crop="cancelImageCrop"
         />
       </v-col>
     </v-row>
@@ -77,7 +91,7 @@
 </template>
 
 <script setup>
-import { reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import { reactive, computed, onMounted, onUnmounted, watch, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import web from '../../web.js'
 import { store } from '../Store.js'
@@ -110,6 +124,8 @@ const props = defineProps({
   projectRid: { type: String, default: null }
 })
 
+const displayRef = ref(null)
+
 const effectiveProjectRid = computed(() => props.projectRid || route.params.rid || null)
 let fileLoadToken = 0
 
@@ -117,6 +133,9 @@ let fileLoadToken = 0
 const typeMap = {
   'image': MultiDisplay,
   'pdf': PDFDisplay,
+  'text': TextDisplay,
+  'html': TextDisplay,
+  'json': TextDisplay,
   'csv': TextDisplay,
   'ocr.json': OCRDisplay,
   'polygons.json': LineSegmentationDisplay,
@@ -130,7 +149,7 @@ const typeMap = {
 const extensionMap = {
   'hocr': HOCRDisplay,
   'json': JSONDisplay,
-  'txt': MultiDisplay,
+  'txt': TextDisplay,
 }
 
 const displayComponent = computed(() => {
@@ -142,9 +161,6 @@ const displayComponent = computed(() => {
   // Check type first
   if (fileType && typeMap[fileType]) return typeMap[fileType]
 
-  // Special: text + txt → MultiDisplay
-  if (fileType === 'text' && fileExt === 'txt') return MultiDisplay
-
   // Extension fallback
   if (fileExt && extensionMap[fileExt]) return extensionMap[fileExt]
 
@@ -153,7 +169,16 @@ const displayComponent = computed(() => {
 
 const displayProps = computed(() => {
   if (displayComponent.value === MultiDisplay) {
-    return { imageRotation: state.imageRotation }
+    return {
+      imageRotation: state.imageRotation,
+      thumbnailVersion: state.thumbnailVersion,
+      cropMode: state.imageCropMode,
+    }
+  }
+  if (displayComponent.value === TextDisplay) {
+    return {
+      markdownEnabled: state.markdownEnabled,
+    }
   }
   return {}
 })
@@ -163,6 +188,10 @@ const showStandaloneCloseButton = computed(() => {
   return mode !== 'set' && mode !== 'search'
 })
 
+const supportsTextEditing = computed(() => {
+  return displayComponent.value === TextDisplay
+})
+
 var state = reactive({
   entities: {},
   pathCollapsed: false,
@@ -170,6 +199,12 @@ var state = reactive({
   skip: 1,
   file_count: 0,
   imageRotation: 0,
+  imageCropMode: false,
+  hasImageCropSelection: false,
+  thumbnailVersion: Date.now(),
+  thumbnailPending: false,
+  textEditMode: false,
+  markdownEnabled: Boolean(store.settings_text_markdown),
   contextFileRid: null,
   lineageLevel: 0,
   lineageOffset: 0,
@@ -254,9 +289,39 @@ function showToast(text, color = 'success') {
   setTimeout(() => { state.toast.show = false }, 2600)
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function waitForThumbnailUpdate(fileRid) {
+  if (!fileRid) return
+  state.thumbnailPending = true
+  showToast('Waiting for thumbnail update...', 'success')
+
+  const maxAttempts = 6
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    state.thumbnailVersion = Date.now()
+    await sleep(500)
+  }
+
+  state.thumbnailPending = false
+  showToast('Thumbnail updated', 'success')
+}
+
 function isReferenceFile(file) {
   if (!file) return false
   return Boolean(file.ref || file.ref_rid)
+}
+
+function isImageFile(file) {
+  if (!file) return false
+  return file.type === 'image' || file['@type'] === 'Image'
+}
+
+function isTextLikeFile(file) {
+  if (!file) return false
+  const t = String(file.type || '').toLowerCase()
+  return ['text', 'csv', 'html', 'json'].includes(t) || t.endsWith('.json')
 }
 
 // --- Set tools navigation ---
@@ -322,6 +387,7 @@ async function refreshContent() {
       console.error('Thumbnail refresh failed:', e)
     }
   }
+  state.thumbnailVersion = Date.now()
   store.file = await web.getDocInfo(store.file['@rid'])
   state.entities = await web.getEntities()
 }
@@ -333,11 +399,58 @@ function normalizeRotation(value) {
 }
 
 function rotateLeft() {
+  if (state.imageCropMode) {
+    showToast('Finish or cancel crop before rotating', 'error')
+    return
+  }
   state.imageRotation = normalizeRotation(state.imageRotation - 90)
 }
 
 function rotateRight() {
+  if (state.imageCropMode) {
+    showToast('Finish or cancel crop before rotating', 'error')
+    return
+  }
   state.imageRotation = normalizeRotation(state.imageRotation + 90)
+}
+
+function canUseImageCropActions() {
+  return Boolean(displayRef.value)
+    && typeof displayRef.value.getImageCropSelection === 'function'
+    && typeof displayRef.value.clearImageCropSelection === 'function'
+}
+
+function onCropSelectionChange(hasSelection) {
+  state.hasImageCropSelection = Boolean(hasSelection)
+}
+
+function startImageCrop() {
+  if (!isImageFile(store.file)) return
+  if (isReferenceFile(store.file)) {
+    showToast('Reference files cannot be quick-edited', 'error')
+    return
+  }
+  if (!canUseImageCropActions()) {
+    showToast('Crop is not available for this file view', 'error')
+    return
+  }
+  if (normalizeRotation(state.imageRotation) !== 0) {
+    showToast('Save or reset rotation before starting crop', 'error')
+    return
+  }
+
+  state.imageCropMode = true
+}
+
+function clearImageCrop() {
+  if (!canUseImageCropActions()) return
+  displayRef.value.clearImageCropSelection()
+  state.hasImageCropSelection = false
+}
+
+function cancelImageCrop() {
+  clearImageCrop()
+  state.imageCropMode = false
 }
 
 async function rotateImageBlob(blob, degrees) {
@@ -373,46 +486,200 @@ async function rotateImageBlob(blob, degrees) {
   }
 }
 
+async function cropImageBlob(blob, crop) {
+  if (!crop || !crop.width || !crop.height) return blob
+
+  const url = URL.createObjectURL(blob)
+  try {
+    const image = await new Promise((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => resolve(img)
+      img.onerror = reject
+      img.src = url
+    })
+
+    const x = Math.max(0, Math.round(Number(crop.x || 0)))
+    const y = Math.max(0, Math.round(Number(crop.y || 0)))
+    const maxWidth = Math.max(1, image.width - x)
+    const maxHeight = Math.max(1, image.height - y)
+    const width = Math.max(1, Math.min(maxWidth, Math.round(Number(crop.width || 0))))
+    const height = Math.max(1, Math.min(maxHeight, Math.round(Number(crop.height || 0))))
+
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+
+    const context = canvas.getContext('2d')
+    if (!context) return blob
+    context.drawImage(image, x, y, width, height, 0, 0, width, height)
+
+    const output = await new Promise((resolve) => {
+      canvas.toBlob((b) => resolve(b || blob), blob.type || 'image/png', 0.95)
+    })
+    return output
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
 async function saveImageEdit() {
   if (!store.file?.['@rid']) return
   if (isReferenceFile(store.file)) {
-    showToast('Reference files cannot be versioned', 'error')
+    showToast('Reference files cannot be quick-edited', 'error')
     return
   }
   try {
+    state.thumbnailPending = true
+    const cropSelection = canUseImageCropActions() ? displayRef.value.getImageCropSelection() : null
+    const hasCrop = Boolean(cropSelection)
+    const hasRotation = normalizeRotation(state.imageRotation) !== 0
+    if (!hasCrop && !hasRotation) {
+      state.thumbnailPending = false
+      showToast('No quick edit to save', 'error')
+      return
+    }
+
     const originalBlob = await web.getNodeFileBlob(store.file['@rid'])
-    const rotatedBlob = await rotateImageBlob(originalBlob, state.imageRotation)
+    const croppedBlob = hasCrop ? await cropImageBlob(originalBlob, cropSelection) : originalBlob
+    const editedBlob = await rotateImageBlob(croppedBlob, state.imageRotation)
     await web.createFileVersion(store.file['@rid'], {
-      file: rotatedBlob,
+      file: editedBlob,
       filename: store.file.label || 'edited-image.png',
-      operation: 'rotate',
-      params: { degrees: normalizeRotation(state.imageRotation) },
+      operation: hasCrop ? 'crop' : 'rotate',
+      params: {
+        degrees: normalizeRotation(state.imageRotation),
+        crop: hasCrop ? cropSelection : null,
+      },
     })
     await web.createFileThumbnail(store.file['@rid'])
     store.file = await web.getDocInfo(store.file['@rid'])
     state.imageRotation = 0
-    showToast('Edited version saved', 'success')
+    cancelImageCrop()
+    await waitForThumbnailUpdate(store.file['@rid'])
+    showToast('Quick edit saved', 'success')
   } catch (e) {
     console.error('Error saving image edit:', e)
-    showToast('Saving edited version failed', 'error')
+    state.thumbnailPending = false
+    showToast('Saving quick edit failed', 'error')
+  }
+}
+
+function canUseTextEditorActions() {
+  return Boolean(displayRef.value)
+    && typeof displayRef.value.startTextEdit === 'function'
+    && typeof displayRef.value.cancelTextEdit === 'function'
+    && typeof displayRef.value.saveTextEdit === 'function'
+    && typeof displayRef.value.revertTextEdit === 'function'
+}
+
+function startTextEdit() {
+  if (!store.file?.['@rid']) return
+  if (isReferenceFile(store.file)) {
+    showToast('Reference files cannot be quick-edited', 'error')
+    return
+  }
+  if (!canUseTextEditorActions()) {
+    showToast('Text editing is not available for this file view', 'error')
+    return
+  }
+
+  displayRef.value.startTextEdit()
+  state.textEditMode = true
+}
+
+function cancelTextEdit() {
+  if (!canUseTextEditorActions()) return
+  displayRef.value.cancelTextEdit()
+  state.textEditMode = false
+}
+
+function setMarkdownEnabled(enabled) {
+  const nextValue = Boolean(enabled)
+  state.markdownEnabled = nextValue
+  store.settings_text_markdown = nextValue
+}
+
+async function saveTextEdit() {
+  if (!store.file?.['@rid']) return
+  if (!canUseTextEditorActions()) {
+    showToast('Text editing is not available for this file view', 'error')
+    return
+  }
+
+  try {
+    await displayRef.value.saveTextEdit()
+    store.file = await web.getDocInfo(store.file['@rid'])
+    state.textEditMode = false
+    showToast('Quick edit saved', 'success')
+  } catch (e) {
+    console.error('Error saving text edit:', e)
+    showToast('Saving quick edit failed', 'error')
   }
 }
 
 async function revertImageEdit() {
   if (!store.file?.['@rid']) return
   if (isReferenceFile(store.file)) {
-    showToast('Reference files cannot be versioned', 'error')
+    showToast('Reference files cannot be quick-edited', 'error')
     return
   }
   try {
+    state.thumbnailPending = true
     await web.revertFileVersion(store.file['@rid'])
     await web.createFileThumbnail(store.file['@rid'])
     store.file = await web.getDocInfo(store.file['@rid'])
     state.imageRotation = 0
-    showToast('Reverted to original', 'success')
+    cancelImageCrop()
+    await waitForThumbnailUpdate(store.file['@rid'])
+    showToast('Quick edit reverted', 'success')
   } catch (e) {
     console.error('Error reverting image edit:', e)
-    showToast('Revert failed', 'error')
+    state.thumbnailPending = false
+    showToast('Quick edit revert failed', 'error')
+  }
+}
+
+async function revertTextEdit() {
+  if (!store.file?.['@rid']) return
+  if (isReferenceFile(store.file)) {
+    showToast('Reference files cannot be quick-edited', 'error')
+    return
+  }
+  if (!canUseTextEditorActions()) {
+    showToast('Text editing is not available for this file view', 'error')
+    return
+  }
+
+  try {
+    await displayRef.value.revertTextEdit()
+    store.file = await web.getDocInfo(store.file['@rid'])
+    state.textEditMode = false
+    showToast('Quick edit reverted', 'success')
+  } catch (e) {
+    console.error('Error reverting text edit:', e)
+    showToast('Quick edit revert failed', 'error')
+  }
+}
+
+async function onSaveEdit() {
+  if (isImageFile(store.file)) {
+    await saveImageEdit()
+    return
+  }
+
+  if (isTextLikeFile(store.file)) {
+    await saveTextEdit()
+  }
+}
+
+async function onRevertEdit() {
+  if (isImageFile(store.file)) {
+    await revertImageEdit()
+    return
+  }
+
+  if (isTextLikeFile(store.file)) {
+    await revertTextEdit()
   }
 }
 
@@ -612,8 +879,19 @@ watch(() => route.params.fileRid, async (newRid) => {
       state.lineageLevel = 0
       state.lineageOffset = 0
     }
+    state.textEditMode = false
+    state.imageRotation = 0
+    state.imageCropMode = false
+    state.hasImageCropSelection = false
     state.entities = await web.getEntities()
   }
+})
+
+watch(() => store.file?.['@rid'], () => {
+  state.textEditMode = false
+  state.imageRotation = 0
+  state.imageCropMode = false
+  state.hasImageCropSelection = false
 })
 
 onMounted(async () => {
