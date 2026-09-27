@@ -7,6 +7,7 @@ import GraphDisplay from './components/GraphDisplay.vue'
 import FilesMain from './components/FilesMain.vue'
 import Main from './components/Main.vue'
 import ServicesMain from './components/ServicesMain.vue'
+import ServicesAdmin from './components/ServicesAdmin.vue'
 import PromptsMain from './components/PromptsMain.vue'
 import CrunchersMain from './components/CrunchersMain.vue'
 import SearchMain from './components/SearchMain.vue'
@@ -23,6 +24,8 @@ import FileDisplayWrapper from './components/displays/FileDisplayWrapper.vue'
 
 import { createApp } from 'vue'
 import App from './App.vue'
+import { store } from './components/Store.js'
+import web from './web.js'
 
 // Vuetify
 import 'vuetify/styles'
@@ -112,6 +115,13 @@ const router = createRouter({
     },
 
     {
+      path: '/services/admin',
+      name: 'services-admin',
+      component: ServicesAdmin,
+      meta: { requiresAdmin: true }
+    },
+
+    {
       path: '/intro',
       name: 'introduction',
       component: Introduction
@@ -188,6 +198,15 @@ const router = createRouter({
       component: Login
     }
   ]
+})
+
+router.beforeEach(async (to) => {
+  if (!to.meta || !to.meta.requiresAdmin) return true
+  if (!store.user) {
+    try { store.user = await web.getMe() } catch (e) { /* ignore */ }
+  }
+  if (store.user && store.user.access === 'admin') return true
+  return { name: 'services' }
 })
 
 //const app = createApp(App)

@@ -23,6 +23,18 @@
                 v-model="state.uploadFile"
                 accept="image/*,.pdf,text/plain,text/markdown,.md,.zip,.html,.json" 
             ></v-file-input>
+
+            <v-alert v-if="pdfUploadBlocked" type="warning" density="compact" class="mb-2">
+              PDF import is unavailable — the PDF splitter service is not running.
+            </v-alert>
+
+            <v-checkbox
+              v-if="selectedFileIsPdf && !pdfUploadBlocked"
+              v-model="state.deleteOriginal"
+              label="Remove source PDF after import"
+              density="compact"
+              hide-details
+            ></v-checkbox>
         </v-col>
       </v-card-text>
 
@@ -48,6 +60,7 @@
         <v-btn
           class="ms-auto primary"
           text="Upload" 
+          :disabled="pdfUploadBlocked"
           @click="sendFile()"
         ></v-btn>
       </template>
@@ -74,6 +87,18 @@
                 v-model="state.setUploadFile"
                 accept="image/*,.pdf,text/plain,.html,.json,.md" 
             ></v-file-input>
+
+            <v-alert v-if="pdfUploadBlocked" type="warning" density="compact" class="mb-2">
+              PDF import is unavailable — the PDF splitter service is not running.
+            </v-alert>
+
+            <v-checkbox
+              v-if="selectedFileIsPdf && !pdfUploadBlocked"
+              v-model="state.deleteOriginal"
+              label="Remove source PDF after import"
+              density="compact"
+              hide-details
+            ></v-checkbox>
         </v-col>
       </v-card-text>
 
@@ -98,6 +123,7 @@
         <v-btn
           class="ms-auto primary"
           text="Upload" 
+          :disabled="pdfUploadBlocked"
           @click="sendFile()"
         ></v-btn>
       </template>
@@ -108,7 +134,7 @@
 
 
 <script setup>
-  import { reactive, ref } from "vue";
+  import { reactive, ref, computed, onMounted, watch } from "vue";
 	import { useRoute } from 'vue-router'
   import {store} from "./Store.js";
   import web from "../web.js";
@@ -119,11 +145,39 @@
 		loading: false,
     error: '',
     uploadFile: null,
-    setUploadFile: null
+    setUploadFile: null,
+    pdfSplitterAvailable: false,
+    deleteOriginal: true
 	})
 
 	const props = defineProps({
         mode: ''
+    })
+
+    // Check if PDF splitter is available
+    async function checkPdfSplitter() {
+      try {
+        const services = await web.getServices()
+        const splitter = services?.['md-pypdf_fs']
+        state.pdfSplitterAvailable = Boolean(splitter?.consumers?.length > 0)
+      } catch {
+        state.pdfSplitterAvailable = false
+      }
+    }
+
+    // Check splitter availability when dialog opens
+    watch(() => store.uploader_open || store.set_uploader_open, (open) => {
+      if (open) checkPdfSplitter()
+    })
+
+    const selectedFileIsPdf = computed(() => {
+      const file = getSelectedFile()
+      if (!file) return false
+      return file.name?.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf'
+    })
+
+    const pdfUploadBlocked = computed(() => {
+      return selectedFileIsPdf.value && !state.pdfSplitterAvailable
     })
 
     function getProjectRid() {
@@ -163,12 +217,22 @@
         return
       }
 
+      if (pdfUploadBlocked.value) {
+        alert('PDF import requires the PDF splitter service (md-pypdf_fs) to be running.')
+        return
+      }
+
+      const uploadOptions = {}
+      if (selectedFileIsPdf.value && !state.deleteOriginal) {
+        uploadOptions.deleteOriginal = false
+      }
+
       state.loading = true
       try {
         if (store.set_uploader_open && store.current_node && store.current_node.type == 'set') {
-          await web.uploadFile(file, projectRid, store.current_node.id)
+          await web.uploadFile(file, projectRid, store.current_node.id, uploadOptions)
         } else {
-          await web.uploadFile(file, projectRid)
+          await web.uploadFile(file, projectRid, null, uploadOptions)
         }
 
         store.uploader_open = false

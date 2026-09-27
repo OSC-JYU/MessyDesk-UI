@@ -1,0 +1,145 @@
+# Processing & Crunchers
+
+## Concepts
+
+- **Service:** A registered processing backend (e.g., OCR, NER, image processing). Services register with the platform and advertise their capabilities.
+- **Cruncher:** The UI term for a processing task offered by a service. Each service exposes one or more cruncher tasks.
+- **Batch:** A group of processing jobs (e.g., running OCR on all files in a set). Has lifecycle states: running → paused/cancelling → finished.
+
+**Verified from:** `src/components/CruncherList.vue`, `src/web.js` (batch methods), `src/components/GraphDisplay.vue` (process tracking)
+
+## Processing Scope
+
+Processing can be triggered at three levels:
+
+| Scope | API Pattern | Trigger |
+|-------|-------------|---------|
+| Single file | `POST /api/queue/:service/files/:rid` | From cruncher list on selected node |
+| Set (batch) | `POST /api/queue/:service/sets/:rid` | From cruncher list on set node |
+| Source | `POST /api/queue/:service/sources/:rid` | From source node processing |
+| ROI | `POST /api/queue/:service/files/:rid/roi` | ROI-specific processing |
+| **Auto-import** | Automatic on PDF upload | `afterFileCreated()` in import pipeline |
+
+**Verified from:** `src/web.js` (`createFileProcess`, `createSetProcess`, `createSourceProcess`, `createROIProcess`)
+
+### PDF Auto-Import
+
+PDF uploads automatically trigger the split pipeline without user action. The Process node has `role: 'import'`, which causes ProcessingNode.vue to display "Importing…" instead of "Crunching…". Files with `processable: false` (non-splitter PDF outputs) only show the split cruncher in CruncherList.
+
+**Verified from:** `src/components/nodes/ProcessingNode.vue`, `src/components/Uploader.vue`
+
+## Cruncher Selection UI (`CruncherList.vue`)
+
+The cruncher dialog is opened by:
+1. Setting `store.current_node` to the target node
+2. Optionally setting `store.cruncher_filter` to filter by format
+3. Setting `store.crunchers_open = true`
+
+The dialog fetches services compatible with the current node's file type via `web.getServicesForFile(file_rid, filter)`.
+
+A search field at the top filters client-side across service/task/filter `name`, `description` and `id`. While a query is entered, the category tabs are replaced by a flat matching list (each result tagged with its category); clearing the search restores the tabbed view.
+
+It groups services and filters into tabs by `category` (from `service.json`/`filter.json`, see [service-descriptor-format.md](../../MessyDesk/wiki/service-descriptor-format.md) in MessyDesk):
+- **Preparation & annotation** — includes Filters and ROIs alongside regular services
+- **Linguistic & statistical analysis**
+- **Task-specific machine learning**
+- **Generative AI**
+- **Uncategorized** — shown only when a service/filter is missing a valid `category`
+
+A 5th category, `system`, marks internal-only services/filters. The backend excludes them from `getServicesForNode()`/the filters list entirely, so they never appear in any tab.
+
+Within each category tab, services are listed with their tasks nested inside (one expansion panel per service, tasks shown when expanded). There is no separate "By Crunchers" flat list or "Filters and ROIs" tab anymore — filters render as additional entries within their category's panel list.
+
+Each service card shows metadata:
+- Access type: open source / proprietary
+- Location: on-premise / external (with data warning)
+- Status: stable / experimental
+- Model selection (if service offers multiple models)
+
+**Verified from:** `src/components/CruncherList.vue`
+
+## Service Metadata Shape
+
+```js
+{
+  id: 'service-id',
+  name: 'Human-readable name',
+  description: 'What it does',
+  source_url: 'https://...',
+  access: 'open' | 'proprietary',
+  location: 'local' | 'external',
+  status: 'stable' | 'experimental',
+  category: 'preparation' | 'linguistic' | 'ml' | 'generative', // optional; missing/invalid -> Uncategorized tab
+  supported_types: ['image', 'text', ...],
+  supported_formats: ['jpg', 'png', ...],
+  consumers: [...],        // active consumer instances
+  nomad: Boolean,          // orchestrated via Nomad
+  models: { model_id: { name, description, output } },
+  tasks: { task_id: { name, description, params_help } }
+}
+```
+
+**Inferred from:** `src/components/CruncherList.vue`, `src/components/ServicesMain.vue` (template bindings)
+
+### `params_help` display types
+
+Each `params_help.<key>` entry is rendered in `CruncherList.vue` based on its `display` field:
+
+| `display` | Control |
+|-----------|---------|
+| (default/none) | Plain text input, bound to `task.values[key]` as a string |
+| `checkbox` | Single checkbox, or one checkbox per `values` entry if `values` is an array |
+| `dropdown` | `v-select` over `values` |
+| `tagpicker` | `TagPickerField.vue` \u2014 toggles between free-form comma-string entry (same as default) and picking from the user's existing Tag entities (with descriptions), plus an inline "define a new tag" form. In pick mode, `task.values[key]` becomes a JSON array of `{label, description}` instead of a string. This is a per-task opt-in (set on the specific task's `params_help`, not the whole service): MD-Gliner2's `classify_text` uses it for its `labels` param (whole-document category, maps cleanly onto a fixed tag), but `extract_entities` (NER) deliberately does not \u2014 it extracts many per-mention spans per label, so it isn't restricted to/linked with a fixed existing-tag set the same way (see MessyDesk's `tags.md` \u00a78 step 8, and [graph-data-model.md](../../MessyDesk/wiki/architecture/graph-data-model.md#entitytag-system) for how `Tag.description` and `autotagNerFile`'s reuse-by-label matching interact) |
+| `component: 'dspace'` | `DspaceQueryForm.vue` (special-cased before `display` is checked) |
+
+## Process Tracking and Progress
+
+### BatchProgressPanel (Floating Panel)
+
+A persistent floating panel (`src/components/BatchProgressPanel.vue`) is rendered in `App.vue` outside the router-view. It is visible whenever there are active batch jobs and shows:
+- Service name and status (running/paused/cancelling/failed)
+- Progress: processed files / total files / failed files
+- ETA (when available)
+- Progress bar (color-coded by status)
+- Pause/Resume/Cancel buttons per job
+
+The panel reads from `batchStore.jobs` reactively.
+
+### Graph View Banners
+
+GraphDisplay.vue also shows running process banners at the top of the graph view with the same controls. These read from the local `state.running_processes` which mirrors `store.running_processes`.
+
+### Progress Update Flow
+
+1. A single SSE connection is managed by `src/services/events.js` (opened on app mount in `App.vue`)
+2. SSE events are parsed and routed to `batchStore.handleEvent()` for batch state
+3. Graph-specific events (`add`, `update`, `add_and_finish`) are dispatched as `window` custom events (`md-sse`)
+4. `GraphDisplay.vue` listens for `md-sse` events to update the visual graph
+5. On SSE reconnect, `batchStore.hydrate()` fetches active jobs from `GET /api/queue/jobs/active`
+
+**No polling timer.** All progress is SSE-driven with hydration on reconnect.
+
+### Batch Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> running
+    running --> paused : pause
+    paused --> running : resume
+    running --> cancelling : cancel
+    paused --> cancelling : cancel
+    cancelling --> [*] : complete
+    running --> [*] : finish
+```
+
+**Verified from:** `src/stores/batchStore.js`, `src/services/events.js`, `src/components/BatchProgressPanel.vue`
+
+## Process Creator Dialog
+
+`ProcessCreator.vue` renders a form with:
+- Dynamic parameters from `store.process.tasks[store.task_id].params_help`
+- Each param has: `name`, `help`, `values` (allowed values)
+- Submit calls the appropriate `web.createFileProcess/createSetProcess` method
+
+**Verified from:** `src/components/ProcessCreator.vue`

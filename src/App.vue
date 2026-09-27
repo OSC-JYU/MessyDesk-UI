@@ -6,6 +6,8 @@
     import { onMounted, onUnmounted, reactive } from 'vue'
     import {store} from "./components/Store.js";
     import web from "./web.js";
+    import { connect as connectEvents, disconnect as disconnectEvents } from './services/events.js'
+    import BatchProgressPanel from './components/BatchProgressPanel.vue'
 
     var intervalID = null
 
@@ -42,10 +44,12 @@ function reload() {
 onMounted(() => {
   login()
   intervalID = setInterval(() => login(), 30000);
+  connectEvents()
 });
 
 onUnmounted(() => {
   clearInterval(intervalID)
+  disconnectEvents()
 });
 
 </script>
@@ -64,6 +68,7 @@ onUnmounted(() => {
       <template v-else>
 
           <router-view />
+          <BatchProgressPanel />
     </template>
     	</v-app>
 

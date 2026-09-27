@@ -2,38 +2,61 @@
     .chip-flat {
         size: 10px;
     }
+
+    .category-tab {
+        height: auto;
+        min-height: 76px;
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+
+    .category-tab-label {
+        white-space: normal;
+        text-align: center;
+        line-height: 1.2;
+        font-size: 0.8rem;
+        max-width: 160px;
+    }
 </style>
 
 <template>
     <v-container>
         <template v-if="store.current_node" class="overflow-y-auto graph-display mt-4">
             <div>
+                <v-text-field
+                    v-model="state.search"
+                    label="Search crunchers"
+                    placeholder="Search by name, description, task..."
+                    prepend-inner-icon="mdi-magnify"
+                    variant="outlined"
+                    density="comfortable"
+                    clearable
+                    class="mb-4"
+                />
+
+                <template v-if="!isSearching">
                 <v-tabs
                     v-model="state.activeTab"
                     color="primary"
                     class="mb-4"
-                    align-tabs="start"
+                    align-tabs="center"
+                    height="76"
+                    grow
                 >
-                    <v-tab value="services">
-                        <v-icon start icon="mdi-view-module"></v-icon>
-                        By Service
-                    </v-tab>
-                    <v-tab value="tasks">
-                        <v-icon start icon="mdi-format-list-bulleted"></v-icon>
-                        By Crucnhers
-                    </v-tab>
-                    <v-tab value="filters">
-                        <v-icon start icon="mdi-filter-variant"></v-icon>
-                        Filters and ROIs
+                    <v-tab v-for="cat in categoryTabs" :key="cat.value" :value="cat.value" class="category-tab">
+                        <div class="d-flex flex-column align-center">
+                            <v-icon :icon="cat.icon" class="mb-1"></v-icon>
+                            <span class="category-tab-label">{{ cat.title }}</span>
+                        </div>
                     </v-tab>
                 </v-tabs>
 
                 <v-window v-model="state.activeTab" class="mt-2" :transition="false" :reverse-transition="false">
-                    <v-window-item value="services">
-                <div v-if="state.service_count === 0" class="alert alert-info">No services found. </div>
+                    <v-window-item v-for="cat in categoryTabs" :key="cat.value" :value="cat.value">
+                <div v-if="categorizedServices(cat.value).length === 0 && categorizedFilters(cat.value).length === 0" class="alert alert-info">No services found. </div>
 
-                <v-expansion-panels v-model="openPanel" @update:model-value="onPanelChange">
-                    <v-expansion-panel v-for="service in services.result.for_format" :key="service.id">
+                <v-expansion-panels v-model="openPanel" @update:model-value="(value) => onPanelChange(value, categorizedServices(cat.value))">
+                    <v-expansion-panel v-for="service in categorizedServices(cat.value)" :key="service.id">
                         <template v-if="service.id !== 'thumbnailer' && Object.keys(service.tasks).length > 0">
                             <v-expansion-panel-title>
                                 <div class="d-flex flex-column">
@@ -196,11 +219,17 @@
                                                         <template v-if="help.component && help.component == 'dspace'">
                                                             <DspaceQueryForm :dspace-url="service.dspace_url || ''" :source-rid="store.current_node.id" @query-executed="handleDspaceQuery" />
                                                         </template>
-                                                        <template v-else-if="help.display && help.display == 'checkbox'">
+                                                        <template v-else-if="help.display && help.display == 'checkbox' && Array.isArray(help.values)">
                                                             <v-checkbox v-model="task.values[key]" v-for="value in help.values" :label="value.title" :value="value.value"></v-checkbox>
+                                                        </template>
+                                                        <template v-else-if="help.display && help.display == 'checkbox'">
+                                                            <v-checkbox v-model="task.values[key]" :label="help.name"></v-checkbox>
                                                         </template>
                                                         <template v-else-if="help.display && help.display == 'dropdown'">
                                                             <v-select v-model="task.values[key]" :items="help.values"></v-select>
+                                                        </template>
+                                                        <template v-else-if="help.display && help.display == 'tagpicker'">
+                                                            <TagPickerField v-model="task.values[key]" />
                                                         </template>
                                                         <template v-else>   
                                                             <input v-model="task.values[key]" type="text" class="form-control" placeholder="" aria-label="Username" aria-describedby="basic-addon1">
@@ -217,8 +246,11 @@
                                                         <template v-if="help.component && help.component == 'dspace'">
                                                             <DspaceQueryForm :dspace-url="service.dspace_url || ''" :source-rid="store.current_node.id" @query-executed="handleDspaceQuery" />
                                                         </template>
-                                                        <template v-else-if="help.display && help.display == 'checkbox'">
+                                                        <template v-else-if="help.display && help.display == 'checkbox' && Array.isArray(help.values)">
                                                             <v-checkbox v-model="task.values[key]" v-for="value in help.values" :label="value.title" :value="value.value"></v-checkbox>
+                                                        </template>
+                                                        <template v-else-if="help.display && help.display == 'checkbox'">
+                                                            <v-checkbox v-model="task.values[key]" :label="help.name"></v-checkbox>
                                                         </template>
                                                         <template v-else-if="help.display && help.display == 'dropdown'">
                                                             <v-select v-model="task.values[key]" :items="help.values"></v-select>
@@ -265,12 +297,52 @@
                         </template>
                     </v-expansion-panel>
                 </v-expansion-panels>
-                    </v-window-item>
 
-                    <v-window-item value="tasks">
-                        <div v-if="allTasks.length === 0" class="alert alert-info">No crunchers available.</div>
-                        <v-expansion-panels>
-                            <v-expansion-panel v-for="item in allTasks" :key="item.serviceId + '__' + item.taskKey">
+                <div v-if="categorizedFilters(cat.value).length" class="mt-4">
+                    <div v-if="state.filter_operation_message" class="alert alert-info">
+                        {{ state.filter_operation_message }}
+                    </div>
+                    <v-expansion-panels>
+                        <v-expansion-panel v-for="filter in categorizedFilters(cat.value)" :key="filter.id">
+                            <v-expansion-panel-title>
+                                <div class="font-weight-bold">{{ filter.name || filter.id }}</div>
+                                <span class="text-caption ml-2">{{ filter.description }}</span>
+                            </v-expansion-panel-title>
+                            <v-expansion-panel-text>
+                                <div class="d-flex flex-row-reverse mb-4">
+                                    <v-btn
+                                        class="text-none ms-4 text-white"
+                                        color="blue-darken-4"
+                                        rounded="1"
+                                        variant="flat"
+                                        title="Create filter"
+                                        :loading="state.filter_creating_id === filter.id"
+                                        :disabled="Boolean(state.filter_creating_id)"
+                                        @click="createFilter(filter)">
+                                        Create Filter
+                                    </v-btn>
+                                </div>
+                                <div v-if="filter.supported_types && filter.supported_types.length">
+                                    <b>supported types: {{ filter.supported_types.join(', ') }}</b>
+                                </div>
+                                <div v-else>supported types: all</div>
+                                <div v-if="filter.supported_formats && filter.supported_formats.length">
+                                    <b>supported formats: {{ filter.supported_formats.join(', ') }}</b>
+                                </div>
+                                <div v-else>supported formats: all</div>
+                            </v-expansion-panel-text>
+                        </v-expansion-panel>
+                    </v-expansion-panels>
+                </div>
+                    </v-window-item>
+                </v-window>
+                </template>
+
+                <template v-else>
+                    <div v-if="searchResults.length === 0" class="alert alert-info">No matching crunchers found.</div>
+                    <v-expansion-panels v-else>
+                        <v-expansion-panel v-for="item in searchResults" :key="item.key">
+                            <template v-if="item.kind === 'task'">
                                 <v-expansion-panel-title>
                                     <div class="font-weight-bold">{{ item.task.name }}</div>
                                     <span class="text-caption ml-2">{{ item.task.description }}</span>
@@ -280,6 +352,9 @@
                                     <v-chip size="small" class="ml-2" color="primary" variant="flat">
                                         <v-icon start icon="mdi-cog"></v-icon>
                                         {{ item.serviceName }}
+                                    </v-chip>
+                                    <v-chip size="small" class="ml-2" variant="outlined">
+                                        {{ item.categoryTitle }}
                                     </v-chip>
                                     <v-btn
                                         size="small"
@@ -309,11 +384,17 @@
                                                 <template v-if="help.component && help.component == 'dspace'">
                                                     <DspaceQueryForm :dspace-url="item.service.dspace_url || ''" :source-rid="store.current_node.id" @query-executed="handleDspaceQuery" />
                                                 </template>
-                                                <template v-else-if="help.display && help.display == 'checkbox'">
+                                                <template v-else-if="help.display && help.display == 'checkbox' && Array.isArray(help.values)">
                                                     <v-checkbox v-model="item.task.values[key]" v-for="value in help.values" :label="value.title" :value="value.value"></v-checkbox>
+                                                </template>
+                                                <template v-else-if="help.display && help.display == 'checkbox'">
+                                                    <v-checkbox v-model="item.task.values[key]" :label="help.name"></v-checkbox>
                                                 </template>
                                                 <template v-else-if="help.display && help.display == 'dropdown'">
                                                     <v-select v-model="item.task.values[key]" :items="help.values"></v-select>
+                                                </template>
+                                                <template v-else-if="help.display && help.display == 'tagpicker'">
+                                                    <TagPickerField v-model="item.task.values[key]" />
                                                 </template>
                                                 <template v-else>
                                                     <input v-model="item.task.values[key]" type="text" class="form-control" placeholder="" aria-label="Username" aria-describedby="basic-addon1">
@@ -330,8 +411,11 @@
                                                 <template v-if="help.component && help.component == 'dspace'">
                                                     <DspaceQueryForm :dspace-url="item.service.dspace_url || ''" :source-rid="store.current_node.id" @query-executed="handleDspaceQuery" />
                                                 </template>
-                                                <template v-else-if="help.display && help.display == 'checkbox'">
+                                                <template v-else-if="help.display && help.display == 'checkbox' && Array.isArray(help.values)">
                                                     <v-checkbox v-model="item.task.values[key]" v-for="value in help.values" :label="value.title" :value="value.value"></v-checkbox>
+                                                </template>
+                                                <template v-else-if="help.display && help.display == 'checkbox'">
+                                                    <v-checkbox v-model="item.task.values[key]" :label="help.name"></v-checkbox>
                                                 </template>
                                                 <template v-else-if="help.display && help.display == 'dropdown'">
                                                     <v-select v-model="item.task.values[key]" :items="help.values"></v-select>
@@ -362,20 +446,14 @@
                                     <div v-else>supported formats: all</div>
                                     <div v-if="item.task.output_type">output type: {{ item.task.output_type }}</div>
                                 </v-expansion-panel-text>
-                            </v-expansion-panel>
-                        </v-expansion-panels>
-                    </v-window-item>
-
-                    <v-window-item value="filters">
-                        <div v-if="filtersList.length === 0" class="alert alert-info">No filters available.</div>
-                        <div v-if="state.filter_operation_message" class="alert alert-info">
-                            {{ state.filter_operation_message }}
-                        </div>
-                        <v-expansion-panels v-else>
-                            <v-expansion-panel v-for="filter in filtersList" :key="filter.id">
+                            </template>
+                            <template v-else>
                                 <v-expansion-panel-title>
-                                    <div class="font-weight-bold">{{ filter.name || filter.id }}</div>
-                                    <span class="text-caption ml-2">{{ filter.description }}</span>
+                                    <div class="font-weight-bold">{{ item.filter.name || item.filter.id }}</div>
+                                    <span class="text-caption ml-2">{{ item.filter.description }}</span>
+                                    <v-chip size="small" class="ml-2" variant="outlined">
+                                        {{ item.categoryTitle }}
+                                    </v-chip>
                                 </v-expansion-panel-title>
                                 <v-expansion-panel-text>
                                     <div class="d-flex flex-row-reverse mb-4">
@@ -385,25 +463,26 @@
                                             rounded="1"
                                             variant="flat"
                                             title="Create filter"
-                                            :loading="state.filter_creating_id === filter.id"
+                                            :loading="state.filter_creating_id === item.filter.id"
                                             :disabled="Boolean(state.filter_creating_id)"
-                                            @click="createFilter(filter)">
+                                            @click="createFilter(item.filter)">
                                             Create Filter
                                         </v-btn>
                                     </div>
-                                    <div v-if="filter.supported_types && filter.supported_types.length">
-                                        <b>supported types: {{ filter.supported_types.join(', ') }}</b>
+                                    <div v-if="item.filter.supported_types && item.filter.supported_types.length">
+                                        <b>supported types: {{ item.filter.supported_types.join(', ') }}</b>
                                     </div>
                                     <div v-else>supported types: all</div>
-                                    <div v-if="filter.supported_formats && filter.supported_formats.length">
-                                        <b>supported formats: {{ filter.supported_formats.join(', ') }}</b>
+                                    <div v-if="item.filter.supported_formats && item.filter.supported_formats.length">
+                                        <b>supported formats: {{ item.filter.supported_formats.join(', ') }}</b>
                                     </div>
                                     <div v-else>supported formats: all</div>
                                 </v-expansion-panel-text>
-                            </v-expansion-panel>
-                        </v-expansion-panels>
-                    </v-window-item>
-                </v-window>
+                            </template>
+                        </v-expansion-panel>
+                    </v-expansion-panels>
+                </template>
+
 
                 <v-dialog v-model="state.tag_filter_open" max-width="720">
                     <v-card>
@@ -482,6 +561,7 @@
     import {store} from "./Store.js";
     import web from "../web.js";
     import DspaceQueryForm from "./DspaceQueryForm.vue";
+    import TagPickerField from "./TagPickerField.vue";
 
     const route  = useRoute();
     const router = useRouter();
@@ -501,7 +581,8 @@
         selected_service: null,
         selected_model: null,
         show_model_selection: false,
-		activeTab: 'services',
+		activeTab: 'preparation',
+		search: '',
 		tag_filter_open: false,
 		tag_filter_entities: [],
 		tag_filter_selected_entities: [],
@@ -656,14 +737,15 @@
         }
     }
 
-    async function onPanelChange(value) {
+    async function onPanelChange(value, list) {
         state.current_queue = null
         state.selected_service = null
         state.selected_model = null
         state.show_model_selection = false
         
         if (value !== null && value !== undefined) {
-            const openedService = services.result.for_format[value]
+            const openedService = (list || services.result.for_format || [])[value]
+            if (!openedService) return
             console.log('Panel opened:', openedService.name, openedService.id)
             
             state.selected_service = openedService
@@ -830,22 +912,100 @@
         }
     )
 
-    const allTasks = computed(() => {
-        if(!services.result || !services.result.for_format) return []
-        const items = []
-        for(const service of services.result.for_format) {
-            if(service.id === 'thumbnailer') continue
-            const taskEntries = Object.entries(service.tasks || {})
-            for(const [taskKey, task] of taskEntries) {
-                items.push({ service, serviceId: service.id, serviceName: service.name, taskKey, task })
-            }
-        }
-        return items.sort((a, b) => a.task.name.localeCompare(b.task.name))
+    // The 4 tool categories from docs/help/3.tools.md; anything else (or missing) falls into 'uncategorized'.
+    const CATEGORIES = [
+        { value: 'preparation', title: 'Preparation & annotation', icon: 'mdi-content-cut' },
+        { value: 'linguistic', title: 'Linguistic & statistical analysis', icon: 'mdi-alphabetical' },
+        { value: 'ml', title: 'Task-specific machine learning', icon: 'mdi-brain' },
+        { value: 'generative', title: 'Generative AI', icon: 'mdi-creation' },
+    ]
+    const CATEGORY_VALUES = new Set(CATEGORIES.map(c => c.value))
+    // Internal-only category; the backend already excludes these from responses, this is defense in depth.
+    const SYSTEM_CATEGORY = 'system'
+
+    function normalizeCategory(value) {
+        if (value === SYSTEM_CATEGORY) return SYSTEM_CATEGORY
+        return CATEGORY_VALUES.has(value) ? value : 'uncategorized'
+    }
+
+    function categorizedServices(catValue) {
+        if (!services.result?.for_format) return []
+        return services.result.for_format.filter(service =>
+            service.id !== 'thumbnailer' &&
+            Object.keys(service.tasks || {}).length > 0 &&
+            normalizeCategory(service.category) === catValue
+        )
+    }
+
+    function categorizedFilters(catValue) {
+        if (!Array.isArray(services.result?.filters)) return []
+        return services.result.filters.filter(filter => normalizeCategory(filter.category) === catValue)
+    }
+
+    const categoryTabs = computed(() => {
+        const hasUncategorized =
+            (services.result?.for_format || []).some(service =>
+                service.id !== 'thumbnailer' &&
+                Object.keys(service.tasks || {}).length > 0 &&
+                normalizeCategory(service.category) === 'uncategorized'
+            ) ||
+            (services.result?.filters || []).some(filter => normalizeCategory(filter.category) === 'uncategorized')
+
+        const tabs = [...CATEGORIES]
+        if (hasUncategorized) tabs.push({ value: 'uncategorized', title: 'Uncategorized', icon: 'mdi-help-circle-outline' })
+        return tabs
     })
 
-    const filtersList = computed(() => {
-        if(!services.result || !Array.isArray(services.result.filters)) return []
-        return services.result.filters
+    function categoryTitle(catValue) {
+        return CATEGORIES.find(cat => cat.value === catValue)?.title || 'Uncategorized'
+    }
+
+    const isSearching = computed(() => state.search.trim().length > 0)
+
+    const searchResults = computed(() => {
+        const query = state.search.trim().toLowerCase()
+        if (!query) return []
+
+        const items = []
+
+        for (const service of services.result?.for_format || []) {
+            if (service.id === 'thumbnailer') continue
+            const category = normalizeCategory(service.category)
+            if (category === SYSTEM_CATEGORY) continue
+            for (const [taskKey, task] of Object.entries(service.tasks || {})) {
+                const haystack = [service.name, service.description, service.id, task.name, task.description, taskKey]
+                    .filter(Boolean).join(' ').toLowerCase()
+                if (haystack.includes(query)) {
+                    items.push({
+                        kind: 'task',
+                        key: `task__${service.id}__${taskKey}`,
+                        service, serviceId: service.id, serviceName: service.name,
+                        task, taskKey,
+                        category, categoryTitle: categoryTitle(category),
+                    })
+                }
+            }
+        }
+
+        for (const filter of services.result?.filters || []) {
+            const category = normalizeCategory(filter.category)
+            if (category === SYSTEM_CATEGORY) continue
+            const haystack = [filter.name, filter.description, filter.id].filter(Boolean).join(' ').toLowerCase()
+            if (haystack.includes(query)) {
+                items.push({
+                    kind: 'filter',
+                    key: `filter__${filter.id}`,
+                    filter,
+                    category, categoryTitle: categoryTitle(category),
+                })
+            }
+        }
+
+        return items.sort((a, b) => {
+            const nameA = a.kind === 'task' ? a.task.name : (a.filter.name || a.filter.id)
+            const nameB = b.kind === 'task' ? b.task.name : (b.filter.name || b.filter.id)
+            return String(nameA).localeCompare(String(nameB))
+        })
     })
 
 </script>

@@ -100,43 +100,6 @@
 <DebugFloatingWindow/>
 
 
- 
-<template v-for="(process, key) in state.running_processes" :key="key" >
-    <v-banner v-if="process.status == 'running' || process.status == 'paused' || process.status == 'cancelling'"
-        class="process-banner"
-        lines="two"
-        :color="process.status == 'paused' ? 'amber-darken-2' : (process.status == 'cancelling' ? 'red-darken-1' : 'teal-darken-2')"
-        :icon="process.status == 'paused' ? 'mdi-pause-circle' : (process.status == 'cancelling' ? 'mdi-close-circle' : 'mdi-run')"
-    >
-        <template v-slot:text>
-            <div class="process-banner-text">
-                <div class="process-banner-main">[{{ key }}] {{ process.message }}</div>
-                <div v-if="process.batch" class="process-banner-sub">
-                    State: {{ getBatchStatus(process.batch, process.status) }} | Processed: {{ process.batch.processed_files ?? 0 }}/{{ process.batch.total_files ?? '?' }} | Failed: {{ process.batch.failed_files ?? 0 }}<span v-if="shouldShowEta(process.batch)"> | ETA: {{ formatEta(process.batch.eta_sec) }}</span>
-                </div>
-            </div>
-        </template>
-        <v-progress-linear
-            v-if="process.batch && process.batch.total_files > 0"
-            :model-value="Math.min(100, ((process.batch.processed_files || 0) / process.batch.total_files) * 100)"
-            height="4"
-            class="mb-2"
-            color="white"
-            bg-color="rgba(255,255,255,0.35)"
-        ></v-progress-linear>
-        <v-btn v-if="process.status == 'running'" color="white" class="mr-2" @click="pauseProcess(key)">
-            Pause
-        </v-btn>
-        <v-btn v-if="process.status == 'paused'" color="white" class="mr-2" @click="resumeProcess(key)">
-            Resume
-        </v-btn>
-        <v-btn v-if="process.status == 'running' || process.status == 'paused'" color="white" @click="cancelProcess(key)">
-            Cancel 
-        </v-btn>
-
-    </v-banner>
-</template>
-
 
 
  <div id="container" class="w-100">
@@ -419,7 +382,6 @@
         running_processes: store.running_processes
     })
 
-    let batchRefreshTimer = null
     let setPanelRefreshTimer = null
     let suppressSetReload = false
 
@@ -452,81 +414,34 @@
 
 
 
-    function connectSSE() {
-        if (eventSource) {
-            eventSource.close();
+    function handleSSEEvent(event) {
+        const wsdata = event.detail
+        if (!wsdata?.command) return
+        console.log('wsdata', wsdata)
+        if (wsdata.command === 'add') {
+            addNode(wsdata)
+        } else if (wsdata.command === 'update') {
+            updateNodeKey(wsdata.target, wsdata.node)
+        } else if (wsdata.command === 'add_and_finish') {
+            addNode(wsdata)
+        } else if (wsdata.command === 'process_update' || wsdata.command === 'process_finished') {
+            updateProcess(wsdata)
         }
-
-        const url = `${apiUrl}/events`;
-        console.log('Connecting to SSE at:', url);
-        
-        // Create EventSource with the last event ID if available
-        eventSource = new EventSource(url);
-
-        eventSource.onopen = () => {
-            console.log('SSE Connection opened');
-            console.log('Last event ID:', eventSource.lastEventId);
-        };
-
-        eventSource.onmessage = (event) => {
-            // Log the event ID for debugging
-            //console.log('Event ID:', event.lastEventId);
-          
-            try {
-                
-                var wsdata = JSON.parse(event.data);
-                console.log('wsdata', wsdata)
-                if(wsdata.command == 'add') {
-                    addNode(wsdata)
-                } else if(wsdata.command == 'update') {
-                    updateNodeKey(wsdata.target, wsdata.node)
-                } else if(wsdata.command == 'add_and_finish') {
-                    addNode(wsdata)
-                } else if(wsdata.command == 'process_update' || wsdata.command == 'process_finished') {
-                    updateProcess(wsdata)
-                }
-
-            } catch(e) {
-                console.error('SSE message parsing error:', e);
-                console.error('Raw message:', event.data);
-            }
-        }
-
-        eventSource.onerror = (error) => {
-            console.error('SSE Error:', error);
-            console.error('EventSource readyState:', eventSource.readyState);
-            console.error('Last event ID before error:', eventSource.lastEventId);
-            
-            // Close the current connection
-            if (eventSource) {
-                eventSource.close();
-            }
-            
-            // Attempt to reconnect after a delay
-            setTimeout(connectSSE, 5000);
-        };
     }
 
     // Connect when component is mounted
     onMounted(() => {
-        console.log('Component mounted, connecting to SSE...');
-        connectSSE();
-        batchRefreshTimer = setInterval(refreshRunningBatches, 3000)
+        console.log('Component mounted, listening to SSE events...');
+        window.addEventListener('md-sse', handleSSEEvent)
     });
 
     // Clean up when component is unmounted
     onUnmounted(() => {
-        console.log('Component unmounting, closing SSE connection...');
-        if (eventSource) {
-            eventSource.close();
-        }
+        console.log('Component unmounting...');
+        window.removeEventListener('md-sse', handleSSEEvent)
         if(setPanelRefreshTimer) {
             clearTimeout(setPanelRefreshTimer)
             setPanelRefreshTimer = null
-        }
-        if(batchRefreshTimer) {
-            clearInterval(batchRefreshTimer)
-            batchRefreshTimer = null
         }
     });
 
@@ -925,16 +840,6 @@
         }
         Object.assign(state.running_processes[processRid], attrs)
         store.running_processes = state.running_processes
-    }
-
-    async function refreshRunningBatches() {
-        const ids = Object.keys(state.running_processes)
-        for(const processRid of ids) {
-            const process = state.running_processes[processRid]
-            if(process?.status == 'running' || process?.status == 'paused' || process?.status == 'cancelling') {
-                await hydrateBatchInfo(processRid)
-            }
-        }
     }
 
     async function hydrateBatchInfo(processRid) {

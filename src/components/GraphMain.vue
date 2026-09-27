@@ -190,7 +190,7 @@
           </template>
 
           <!-- CRUNCHERS dialog-->
-            <v-dialog v-model="store.crunchers_open" width="auto" min-width="900" max-width="900">
+            <v-dialog v-model="store.crunchers_open" width="auto" min-width="900" max-width="1400">
 
               <v-card>
                   <v-toolbar>

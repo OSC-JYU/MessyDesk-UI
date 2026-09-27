@@ -139,6 +139,54 @@ web.getServices = async function(rid) {
 	return result.data
 }
 
+// --- Service control ---
+
+web.getQueueStatus = async function(topic) {
+	var result = await axios.get(`/api/queue/${encodeURIComponent(topic)}/status`)
+	return result.data
+}
+
+web.getActiveJobs = async function() {
+	var result = await axios.get(`/api/queue/jobs/active`)
+	return result.data
+}
+
+web.flushQueue = async function(topic) {
+	var result = await axios.get(`/api/queue/${encodeURIComponent(topic)}/flush`)
+	return result.data
+}
+
+web.cancelJob = async function(rid) {
+	var result = await axios.post(`/api/batches/${encodeURIComponent(rid)}/cancel`)
+	return result.data
+}
+
+web.startService = async function(serviceId, nomad_hcl) {
+	var payload = nomad_hcl ? { nomad_hcl } : {}
+	var result = await axios.post(`/api/nomad/service/${encodeURIComponent(serviceId)}`, payload)
+	return result.data
+}
+
+web.stopService = async function(serviceId) {
+	var result = await axios.delete(`/api/nomad/service/${encodeURIComponent(serviceId)}`)
+	return result.data
+}
+
+web.installService = async function(payload) {
+	var result = await axios.post(`/api/services/install`, payload)
+	return result.data
+}
+
+web.forgetService = async function(serviceId) {
+	var result = await axios.delete(`/api/services/${encodeURIComponent(serviceId)}`)
+	return result.data
+}
+
+web.reloadServices = async function() {
+	var result = await axios.post(`/api/services/reload`, {})
+	return result.data
+}
+
 web.getPrompts = async function(rid) {
 	var result = await axios.get(`/api/prompts`)
 	return result.data
@@ -247,11 +295,6 @@ web.getSchemas = async function() {
 
 web.getQueries = async function(menu) {
 	var result = await axios.get(`/api/queries`)
-	return result.data.result
-}
-
-web.getTags = async function() {
-	var result = await axios.get(`/api/tags`)
 	return result.data.result
 }
 
@@ -372,8 +415,58 @@ web.getTags = async function() {
 	return result.data
 }
 
-web.createTag = async function(label) {
-	var result = await axios.post(`/api/tags`, {label: label})
+web.createTag = async function(label, description) {
+	var result = await axios.post(`/api/tags`, {label: label, description: description})
+	return result.data
+}
+
+web.getMachineTags = async function() {
+	var result = await axios.get(`/api/tags/machine`)
+	return result.data
+}
+
+web.getMachineTagFiles = async function(entityRID, serviceId, task) {
+	var result = await axios.get(`/api/tags/machine/${entityRID.replace('#','')}/files`, {params: {service_id: serviceId, task: task}})
+	return result.data
+}
+
+web.getMachineTagMentions = async function(entityRID, serviceId, task, options = {}) {
+	var result = await axios.get(`/api/tags/machine/${entityRID.replace('#','')}/mentions`, {params: {
+		service_id: serviceId,
+		task: task,
+		search: options.search,
+		page: options.page,
+		pageSize: options.pageSize
+	}})
+	return result.data
+}
+
+web.getNerRegions = async function(fileRID) {
+	var result = await axios.get(`/api/files/${fileRID.replace('#','')}/ner`)
+	return result.data
+}
+
+// NER never creates tags (see MessyDesk's tags.md \u00a71): labels/files/mentions are read
+// straight off ner.json runs, not TagLink, so these have no entity rid to key on.
+web.getNerLabelGroups = async function(search) {
+	var result = await axios.get(`/api/tags/ner/labels`, {params: {search}})
+	return result.data
+}
+
+web.getNerLabelFiles = async function(serviceId, task, label) {
+	var result = await axios.get(`/api/tags/ner/labels/files`, {params: {service_id: serviceId, task: task, label: label}})
+	return result.data
+}
+
+web.getNerLabelMentions = async function(serviceId, task, label, options = {}) {
+	var result = await axios.get(`/api/tags/ner/labels/mentions`, {params: {
+		service_id: serviceId,
+		task: task,
+		label: label,
+		search: options.search,
+		page: options.page,
+		pageSize: options.pageSize
+	}})
 	return result.data
 }
 
@@ -537,6 +630,17 @@ web.cancelBatch = async function(process_rid) {
 	return result.data
 }
 
+web.getActiveJobs = async function() {
+	const result = await axios.get('/api/queue/jobs/active')
+	return result.data
+}
+
+web.dismissJob = async function(rid) {
+	const cleanRid = String(rid).replace('#', '')
+	const result = await axios.post(`/api/queue/jobs/${cleanRid}/dismiss`)
+	return result.data
+}
+
 web.createNode = async function(data) {
 
 	var result = await axios.post(`/api/graph/vertices`, data)
@@ -622,11 +726,15 @@ web.uploadFile = async function(fileObject, project_rid, set_rid, options = {}) 
 		formData.append('no_thumbnails', 'true')
 	}
 
-	const noThumbQuery = options.noThumbnails ? '?no-thumbnails=true' : ''
+	const queryParams = []
+	if(options.noThumbnails) queryParams.push('no-thumbnails=true')
+	if(options.deleteOriginal === false) queryParams.push('delete_original=false')
+	const queryString = queryParams.length > 0 ? '?' + queryParams.join('&') : ''
+
 	if(set_rid) 
-		await axios.post(`/api/projects/${project_rid.replace('#','')}/upload/${set_rid.replace('#','')}${noThumbQuery}`, formData)
+		await axios.post(`/api/projects/${project_rid.replace('#','')}/upload/${set_rid.replace('#','')}${queryString}`, formData)
 	else
-		await axios.post(`/api/projects/${project_rid.replace('#','')}/upload${noThumbQuery}`, formData)
+		await axios.post(`/api/projects/${project_rid.replace('#','')}/upload${queryString}`, formData)
 }
 
 

@@ -3,7 +3,6 @@
     import ImageDisplay from './displays/ImageDisplay.vue'
     import OSDDisplay from './displays/OSDDisplay.vue'
     import HOCRDisplay from './displays/HOCRDisplay.vue'
-    import NER_Display from './displays/NER_Display.vue'
     import TextDisplay from './displays/TextDisplay.vue'
     import PDFDisplay from './displays/PDFDisplay.vue'
     import HumanJSONDisplay from './displays/HumanJSONDisplay.vue'
@@ -71,7 +70,6 @@
                 <HumanJSONDisplay v-if="state.file  && state.file.type=='human.json'"/>
                 <PDFDisplay v-if="state.file  && state.file.type=='pdf'"/>
                 <HOCRDisplay v-if="state.file && state.file.extension=='hocr'"/>
-                <NER_Display v-if="state.file && state.file.extension=='json' && state.file.label.includes('.ner.json')"/>
               </v-col>
 
             </v-row>

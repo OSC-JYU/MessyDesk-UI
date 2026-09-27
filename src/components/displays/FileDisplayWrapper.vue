@@ -114,7 +114,6 @@ import TextDisplay from './TextDisplay.vue'
 import OCRDisplay from './OCRDisplay.vue'
 import OSDDisplay from './OSDDisplay.vue'
 import HumanJSONDisplay from './HumanJSONDisplay.vue'
-import NER_Display from './NER_Display.vue'
 import TextRawDisplay from './TextRawDisplay.vue'
 import SimilarityDisplay from './SimilarityDisplay.vue'
 import LineSegmentationDisplay from './LineSegmentationDisplay.vue'
@@ -141,7 +140,6 @@ const typeMap = {
   'polygons.json': LineSegmentationDisplay,
   'osd.json': OSDDisplay,
   'human.json': HumanJSONDisplay,
-  'ner.json': NER_Display,
   'dspace7.json': TextRawDisplay,
   'similarity.json': SimilarityDisplay,
 }

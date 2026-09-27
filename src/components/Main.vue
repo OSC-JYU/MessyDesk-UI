@@ -1,8 +1,9 @@
 <script setup>
-import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import web from '../web.js'
 import { store } from './Store.js'
+import { batchStore } from '@/stores/batchStore'
 import JYUHeader_main from './JYUHeader_main.vue'
 
 const router = useRouter()
@@ -42,7 +43,6 @@ const state = reactive({
   sortKey: 'name',
   sortDirection: 'asc',
   loadError: '',
-  eventSource: null,
   examples: [
     {
       title: 'Old Letters To Searchable Text',
@@ -73,7 +73,7 @@ const state = reactive({
 })
 
 const runningJobs = computed(() => {
-  return Object.entries(store.running_processes || {})
+  return Object.entries(batchStore.jobs)
     .map(([rid, data]) => ({ rid, ...data }))
     .filter(job => ['running', 'paused', 'cancelling'].includes(job.status))
 })
@@ -97,77 +97,6 @@ function formatEta(etaSec) {
   const hours = Math.floor(minutes / 60)
   const remMin = minutes % 60
   return `${hours}h ${remMin}m`
-}
-
-function getBatchStatus(batch, fallback = 'running') {
-  if (!batch) return fallback
-  return batch.status || batch.state || fallback
-}
-
-function renderEta(batch) {
-  if (!batch || batch.eta_sec === null || batch.eta_sec === undefined) return ''
-  return `, ETA ${formatEta(batch.eta_sec)}`
-}
-
-async function hydrateBatch(processRid) {
-  try {
-    const batch = await web.getBatch(processRid)
-    if (!batch) return
-    if (!store.running_processes[processRid]) {
-      store.running_processes[processRid] = { status: getBatchStatus(batch, 'running'), message: 'Working...', batch: null }
-    }
-    const processed = batch.processed_files ?? 0
-    const total = batch.total_files ?? '?'
-    const failed = batch.failed_files ?? 0
-    store.running_processes[processRid].status = getBatchStatus(batch, store.running_processes[processRid].status)
-    store.running_processes[processRid].batch = batch
-    store.running_processes[processRid].message = `${processed}/${total} files, failed ${failed}${renderEta(batch)}`
-  } catch (error) {
-    console.log('batch hydrate failed', processRid, error?.message)
-  }
-}
-
-function connectSSE() {
-  if (state.eventSource) {
-    state.eventSource.close()
-  }
-
-  state.eventSource = new EventSource(`${import.meta.env.VITE_API_PATH}/events`)
-
-  state.eventSource.onmessage = async (event) => {
-    try {
-      const wsdata = JSON.parse(event.data)
-      if (!wsdata?.process?.['@rid']) return
-      const processRid = wsdata.process['@rid']
-
-      if (!store.running_processes[processRid]) {
-        store.running_processes[processRid] = { status: 'running', message: 'Working...', batch: null }
-      }
-
-      if (wsdata.command === 'process_update') {
-        store.running_processes[processRid].status = getBatchStatus(wsdata?.batch, wsdata?.process?.status || 'running')
-        if (wsdata.batch) {
-          const processed = wsdata.batch.processed_files ?? wsdata.current_file ?? 0
-          const total = wsdata.batch.total_files ?? wsdata.total_files ?? '?'
-          const failed = wsdata.batch.failed_files ?? 0
-          store.running_processes[processRid].batch = wsdata.batch
-          store.running_processes[processRid].message = `${processed}/${total} files, failed ${failed}${renderEta(wsdata.batch)}`
-        } else {
-          await hydrateBatch(processRid)
-        }
-      }
-
-      if (wsdata.command === 'process_finished') {
-        store.running_processes[processRid].status = getBatchStatus(wsdata?.batch, wsdata?.process?.status || 'done')
-        if (wsdata.batch) {
-          store.running_processes[processRid].batch = wsdata.batch
-          store.running_processes[processRid].message = `Done ${wsdata.batch.processed_files ?? 0}/${wsdata.batch.total_files ?? '?'}${renderEta(wsdata.batch)}`
-        }
-      }
-    } catch (error) {
-      console.log('main SSE parse failed', error?.message)
-    }
-  }
 }
 
 const activeCrunchers = computed(() => {
@@ -616,17 +545,6 @@ async function reindexProjectSearch() {
 
 onMounted(async () => {
   await Promise.all([loadProjects(), loadCrunchers(), loadSsoUser()])
-  connectSSE()
-  for (const rid of Object.keys(store.running_processes || {})) {
-    await hydrateBatch(rid)
-  }
-})
-
-onUnmounted(() => {
-  if (state.eventSource) {
-    state.eventSource.close()
-    state.eventSource = null
-  }
 })
 </script>
 

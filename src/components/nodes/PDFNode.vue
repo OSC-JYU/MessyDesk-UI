@@ -92,6 +92,7 @@ const props = defineProps({
 const { node } = useNode()
 
 const showPdfIcon = computed(() => {
+  return false
   const isPdf = props.data?._type === 'pdf' || props.data?.type === 'pdf'
   return isPdf && (!props.data?.forward || !props.data?.image)
 })
@@ -116,7 +117,7 @@ function openCrunchers() {
 <template>
   <div class="node-pdf nodrag">
     <div class="header">{{ data.label }}</div>
-    <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" :src="CookieIcon" />
+    <!-- <img @click="openCrunchers(node.id)" title="Add cruncher" class ="crunch_add" :src="CookieIcon" /> -->
     <div class="m-2">
       <div v-if="showPdfIcon" class="pdf-icon-wrap">
         <v-icon class="pdf-icon" size="120" color="red-darken-2">mdi-file-pdf-box</v-icon>

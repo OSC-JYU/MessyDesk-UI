@@ -81,6 +81,11 @@ const navigationProjectRid = computed(() => {
   return ''
 })
 
+// Opened from within a project (project-search route / projectRid prop): the project context is
+// fixed by that route, so there's nothing to pick - project selection only makes sense from the
+// standalone /search page.
+const hasFixedProjectContext = computed(() => Boolean(props.projectRid || route.params.rid))
+
 const allDocs = computed(() => state.result?.response?.docs || [])
 const totalPages = computed(() => Math.max(1, Math.ceil(allDocs.value.length / filesPerPage)))
 const visibleDocs = computed(() => {
@@ -355,41 +360,43 @@ watch(
                 label="Search text"
                 density="comfortable"
                 variant="outlined"
+                prepend-inner-icon="mdi-magnify"
+                clearable
                 @keydown.enter="search"
               ></v-text-field>
 
-              <v-btn color="primary" block class="search-btn" @click="search">Search</v-btn>
-
-              <div class="search-info-text text-caption text-medium-emphasis">
+              <div v-if="!hasFixedProjectContext" class="search-info-text text-caption text-medium-emphasis">
                 Search all projects by default, or select one or more projects below to narrow results.
               </div>
 
-              <v-select
-                v-model="state.project_input"
-                :items="state.projects"
-                item-title="title"
-                item-value="value"
-                label="Project"
-                density="comfortable"
-                variant="outlined"
-                @update:model-value="addProjectByValue"
-              ></v-select>
+              <template v-if="!hasFixedProjectContext">
+                <v-select
+                  v-model="state.project_input"
+                  :items="state.projects"
+                  item-title="title"
+                  item-value="value"
+                  label="Project"
+                  density="comfortable"
+                  variant="outlined"
+                  @update:model-value="addProjectByValue"
+                ></v-select>
 
-              <div class="mb-2">
-                <v-chip
-                  v-for="project in state.selected_projects"
-                  :key="project.value"
-                  class="mr-2 mb-2"
-                  color="teal-darken-2"
-                  @click="removeProject(project)"
-                >
-                  {{ project.title }}
-                  <v-icon end>mdi-close</v-icon>
-                </v-chip>
-                <div v-if="state.selected_projects.length === 0" class="text-caption text-medium-emphasis">
-                  No project selected: searching across all your projects.
+                <div class="mb-2">
+                  <v-chip
+                    v-for="project in state.selected_projects"
+                    :key="project.value"
+                    class="mr-2 mb-2"
+                    color="teal-darken-2"
+                    @click="removeProject(project)"
+                  >
+                    {{ project.title }}
+                    <v-icon end>mdi-close</v-icon>
+                  </v-chip>
+                  <div v-if="state.selected_projects.length === 0" class="text-caption text-medium-emphasis">
+                    No project selected: searching across all your projects.
+                  </div>
                 </div>
-              </div>
+              </template>
 
               <v-alert
                 v-if="state.projectFilterIgnored && selectedProjectRids.length > 0"
@@ -426,10 +433,6 @@ watch(
 
 .search-sidebar-card {
   background: rgba(255, 255, 255, 0.9);
-}
-
-.search-btn {
-  margin-bottom: 14px;
 }
 
 .search-info-text {

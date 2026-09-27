@@ -51,7 +51,8 @@ const props = defineProps({
     <v-col cols="auto">
 
       <img v-if="data.image" :src="data.image" />  
-      <p class="ml-2" v-if="data.status == 'running'"><img :src="WaitIcon" /> Crunching... </p> 
+      <p class="ml-2" v-if="data.status == 'running' && data.role === 'import'"><img :src="WaitIcon" /> Importing... </p> 
+      <p class="ml-2" v-else-if="data.status == 'running'"><img :src="WaitIcon" /> Crunching... </p> 
       <p class="ml-2" v-if="data.status == 'waiting'"><v-icon start icon="mdi-bed-clock" class="mr-2"></v-icon> Waiting in queue... </p> 
       <img v-else-if="!data.error && data.status != 'running' && data.status != 'waiting'" :src="CookieIconWhite"/>
  
