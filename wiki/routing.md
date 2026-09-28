@@ -28,11 +28,20 @@ The router uses `createWebHistory` with `VITE_PUBLIC_PATH` as the base. Routes a
 | `/help/services/:service/:assetPath(.*)*` | service-help-asset | `HelpMain` | Help asset resolution |
 | `/tags` | tags | redirect → entities | Legacy alias |
 | `/entities` | entities | `EntitiesMain` | Global entity/tag browser |
-| `/admin` | admin | `AdminMain` | Admin panel |
+| `/admin` | admin | `AdminMain` | Admin panel (Requests/Users/Services/Service Groups tabs); gated by `meta.requiresAdmin` |
 | `/about` | about | `About` | About page |
 | `/login` | login | `Login` | SSO permission request page |
 
 **Verified from:** `src/main.js` (route definitions)
+
+### Admin Route Guard
+
+`/admin` has `meta: { requiresAdmin: true }`; a router `beforeEach` guard checks
+`store.user.access === 'admin'` for any matched route with that meta and redirects away otherwise.
+This is enforced independently of nav-link visibility (which merely hides the link for non-admins) and
+independently of each backend admin route's own `access === 'admin'` check.
+
+**Verified from:** `src/main.js`
 
 ## Key Routing Patterns
 

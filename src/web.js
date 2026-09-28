@@ -279,6 +279,48 @@ web.createUser = async function(data) {
 	}
 }
 
+web.updateUserServiceGroups = async function(rid, service_groups) {
+	var result = await axios.put(`/api/users/${rid.replace('#','')}/service-groups`, {service_groups})
+	return result.data
+}
+
+web.getServiceGroups = async function() {
+	var result = await axios.get(`/api/service-groups`)
+	return result.data
+}
+
+web.createServiceGroup = async function(data) {
+	try {
+		var result = await axios.post(`/api/service-groups`, data)
+		return result.data
+	} catch (error) {
+		throw(error)
+	}
+}
+
+web.updateServiceGroup = async function(id, data) {
+	try {
+		var result = await axios.put(`/api/service-groups/${encodeURIComponent(id)}`, data)
+		return result.data
+	} catch (error) {
+		throw(error)
+	}
+}
+
+web.deleteServiceGroup = async function(id) {
+	var result = await axios.delete(`/api/service-groups/${encodeURIComponent(id)}`)
+	return result.data
+}
+
+web.uploadServiceGroupLogo = async function(id, fileObject) {
+	var formData = new FormData()
+	formData.append('file', fileObject)
+	var result = await axios.post(`/api/service-groups/${encodeURIComponent(id)}/logo`, formData, {
+		headers: {'Content-Type': 'multipart/form-data'}
+	})
+	return result.data
+}
+
 web.getServicesForFile = async function(file_rid, filter) {
 	var filter_query = ''
 	if(filter) filter_query = '?filter='+filter

@@ -93,8 +93,11 @@
     </v-card>
   </v-dialog>
 
-</template>
+  <v-snackbar v-model="state.uploadDone.show" color="success" timeout="3000">
+    {{ state.uploadDone.text }}
+  </v-snackbar>
 
+</template>
 
 <script setup>
   import { reactive, ref, computed, watch } from "vue";
@@ -110,7 +113,8 @@
     uploadFile: null,
     setUploadFile: [],
     pdfSplitterAvailable: false,
-    uploadProgress: { completed: 0, total: 0 }
+    uploadProgress: { completed: 0, total: 0 },
+    uploadDone: { show: false, text: '' }
 	})
 
   const singleFileInputRef = ref(null)
@@ -249,8 +253,11 @@
           if (result.failed?.length) {
             const failedNames = result.failed.map((f) => f.filename || 'unknown').join(', ')
             alert(`${result.uploaded.length} of ${files.length} files uploaded. Failed: ${failedNames}`)
+          } else {
+            state.uploadDone = { show: true, text: `${result.uploaded.length} file${result.uploaded.length === 1 ? '' : 's'} uploaded.` }
           }
 
+          store.reload(null)
           close()
         } catch (e) {
           alert(e?.message || 'Upload failed')

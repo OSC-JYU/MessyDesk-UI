@@ -28,7 +28,8 @@ const state = reactive({
   types: [],
   entity_schema: [],
   selected_entities: [],
-  machine_tags: [],
+  ner_label_groups: [],
+  machine_entity_tags: [],
   tag_mentions: {},
   global_search: '',
   mention_preview: { tagKey: null, loading: false, error: null, fileRid: null, fileLabel: null, mentionText: null, html: '' },
@@ -128,17 +129,43 @@ const panelNode = computed(() => {
   }
 })
 
-// Machine/NER tags (\u00a76) are grouped by the service+task run that produced them, so a user
-// always knows which tool found a given label rather than mixing them in with manual tags.
-const machineTagGroups = computed(() => {
+// Faceted ROI-data (§6) is grouped by the service+task run that produced it, so a user always
+// knows which tool found a given label rather than mixing it in with manual tags.
+const nerLabelGroups = computed(() => {
   const groups = new Map()
-  for (const tag of state.machine_tags) {
+  for (const tag of state.ner_label_groups) {
     const key = `${tag.service_id}:${tag.task}`
     if (!groups.has(key)) groups.set(key, { key, service_id: tag.service_id, task: tag.task, tags: [] })
     groups.get(key).tags.push(tag)
   }
   return Array.from(groups.values())
 })
+
+// Real Autotag-created tags (Entity/TagLink, e.g. MD-lingua's detect_language with its "autotag"
+// param on) are grouped the same way for consistency, but each is a real Entity: clicking one
+// reuses selectEntity/getEntityItems, same as a manual tag, rather than the per-mention browsing
+// Faceted ROI-data needs.
+const machineTagGroups = computed(() => {
+  const groups = new Map()
+  for (const tag of state.machine_entity_tags) {
+    const key = `${tag.service_id}:${tag.task}`
+    if (!groups.has(key)) groups.set(key, { key, service_id: tag.service_id, task: tag.task, tags: [] })
+    groups.get(key).tags.push(tag)
+  }
+  return Array.from(groups.values())
+})
+
+function isEntitySelected(entity_rid) {
+  return state.selected_entities.some((e) => e['@rid'] === entity_rid)
+}
+
+function selectMachineTag(tag) {
+  if (isEntitySelected(tag.entity_rid)) {
+    unselect({ '@rid': tag.entity_rid })
+  } else {
+    selectEntity({ '@rid': tag.entity_rid, label: tag.label })
+  }
+}
 
 // Counts are noise while just browsing, but while actively searching they tell the user how many
 // findings back up each accordion - tag.count is already the matching-mention count in that case
@@ -147,13 +174,21 @@ const isSearchActive = computed(() => String(state.global_search || '').trim().l
 function groupMatchCount(group) {
   return group.tags.reduce((sum, tag) => sum + (tag.count || 0), 0)
 }
+// User-created tags only - Autotag-created entities (created_by: 'machine') are browsed in their
+// own "Machine tags" section below instead, grouped by the service/task that created them.
+const userTypes = computed(() => {
+  return state.types
+    .map((type) => ({ ...type, items: (type.items || []).filter((item) => item.created_by !== 'machine') }))
+    .filter((type) => type.items.length > 0)
+})
+
 // The top search box filters manual tag types client-side by label text, and re-queries NER label
 // groups server-side (below) since matches there need to look inside each run's ner.json mention
-// text, not just the label name - matching "Alvar Aalto" under "henkil\u00f6", say.
+// text, not just the label name - matching "Alvar Aalto" under "henkilö", say.
 const filteredTypes = computed(() => {
   const needle = String(state.global_search || '').trim().toLowerCase()
-  if (!needle) return state.types
-  return state.types
+  if (!needle) return userTypes.value
+  return userTypes.value
     .map((type) => ({ ...type, items: (type.items || []).filter((item) => String(item.label || '').toLowerCase().includes(needle)) }))
     .filter((type) => type.items.length > 0)
 })
@@ -167,10 +202,11 @@ const selectedTagFileRids = computed(() => (
 
 async function refreshNerData() {
   const search = String(state.global_search || '').trim()
-  state.machine_tags = await web.getNerLabelGroups(search, {
+  state.ner_label_groups = await web.getNerLabelGroups(search, {
     projectRids: selectedProjectRids.value,
     fileRids: selectedTagFileRids.value,
   })
+  state.machine_entity_tags = await web.getMachineTags()
   // Already-open labels keep browsing live: carry the same text/scope into their own mention search.
   for (const tagState of Object.values(state.tag_mentions)) {
     tagState.search = search
@@ -661,9 +697,33 @@ watch(
               </v-expansion-panels>
 
               <div v-if="machineTagGroups.length" class="mb-3">
-                <div class="text-subtitle-2 mb-1">NER results</div>
+                <div class="text-subtitle-2 mb-1">Machine tags</div>
                 <v-expansion-panels>
                   <v-expansion-panel v-for="group in machineTagGroups" :key="group.key">
+                    <v-expansion-panel-title>
+                      {{ formatServiceLabel(group.service_id) }}: {{ formatTaskLabel(group.task) }}
+                    </v-expansion-panel-title>
+                    <v-expansion-panel-text>
+                      <v-chip
+                        v-for="tag in group.tags"
+                        :key="tag.entity_rid"
+                        class="mr-2 mb-2"
+                        :color="isEntitySelected(tag.entity_rid) ? 'primary' : 'deep-purple'"
+                        variant="tonal"
+                        @click="selectMachineTag(tag)"
+                      >
+                        {{ tag.label }}
+                        <span class="ml-1 text-caption">({{ tag.count }})</span>
+                      </v-chip>
+                    </v-expansion-panel-text>
+                  </v-expansion-panel>
+                </v-expansion-panels>
+              </div>
+
+              <div v-if="nerLabelGroups.length" class="mb-3">
+                <div class="text-subtitle-2 mb-1">NER results</div>
+                <v-expansion-panels>
+                  <v-expansion-panel v-for="group in nerLabelGroups" :key="group.key">
                     <v-expansion-panel-title>
                       {{ formatServiceLabel(group.service_id) }}: {{ formatTaskLabel(group.task) }}
                       <span v-if="isSearchActive" class="ml-1 text-caption">({{ groupMatchCount(group) }})</span>
