@@ -158,23 +158,41 @@ const filteredTypes = computed(() => {
     .filter((type) => type.items.length > 0)
 })
 
+// While one or more manual tags are selected, NER browsing narrows to just the files that match
+// that selection (state.items, already loaded by refreshItems) - lets a user combine a manual tag
+// with NER search to find the actual mention inside already-tagged files.
+const selectedTagFileRids = computed(() => (
+  state.selected_entities.length > 0 ? state.items.map((item) => item['@rid'] || item.rid) : []
+))
+
+async function refreshNerData() {
+  const search = String(state.global_search || '').trim()
+  state.machine_tags = await web.getNerLabelGroups(search, {
+    projectRids: selectedProjectRids.value,
+    fileRids: selectedTagFileRids.value,
+  })
+  // Already-open labels keep browsing live: carry the same text/scope into their own mention search.
+  for (const tagState of Object.values(state.tag_mentions)) {
+    tagState.search = search
+    if (tagState.loaded && tagState.tag) await loadMentions(tagState.tag, 1)
+  }
+}
+
 let globalSearchDebounce = null
 watch(() => state.global_search, () => {
   clearTimeout(globalSearchDebounce)
-  globalSearchDebounce = setTimeout(async () => {
-    const search = String(state.global_search || '').trim()
-    state.machine_tags = await web.getNerLabelGroups(search)
-    // Already-open labels keep browsing live: carry the same text into their own mention search.
-    for (const tagState of Object.values(state.tag_mentions)) {
-      tagState.search = search
-      if (tagState.loaded && tagState.tag) await loadMentions(tagState.tag, 1)
-    }
-  }, 300)
+  globalSearchDebounce = setTimeout(refreshNerData, 300)
 })
 
 // service.json task ids are snake_case; "extract entities" reads better than "extract_entities".
 function formatTaskLabel(task) {
   return String(task || '').replace(/_/g, ' ')
+}
+
+// service.json service ids are all "md-"-prefixed (md-gliner2, md-uvdoc, ...); the prefix is an
+// internal naming convention, not something worth a user's attention here.
+function formatServiceLabel(service_id) {
+  return String(service_id || '').replace(/^md-/, '')
 }
 
 const panelItems = computed(() => {
@@ -246,6 +264,8 @@ async function loadMentions(tag, page = 1) {
       search: tagState.search,
       page,
       pageSize: tagState.pageSize,
+      projectRids: selectedProjectRids.value,
+      fileRids: selectedTagFileRids.value,
     })
     tagState.items = response?.mentions || []
     tagState.total = response?.total || 0
@@ -356,6 +376,7 @@ async function refreshItems() {
     state.items = []
     state.panelOpen = false
     state.page = 1
+    await refreshNerData()
     return
   }
 
@@ -364,6 +385,7 @@ async function refreshItems() {
   state.items = Array.isArray(response) ? response : []
   state.page = 1
   state.panelOpen = state.items.length > 0
+  await refreshNerData()
 }
 
 async function openTaggedFile(payload) {
@@ -412,7 +434,7 @@ async function create() {
   await web.createEntity(state.current_type, state.new_label)
   state.add = false
   state.new_label = ''
-  state.types = await web.getEntities()
+  state.types = await web.getEntities({ projectRids: selectedProjectRids.value })
 }
 
 async function loadProjects(initialSelectionRids = null) {
@@ -438,7 +460,10 @@ async function loadProjects(initialSelectionRids = null) {
   state.selected_projects = found ? [found] : []
 }
 
+// Selecting/deselecting a project re-scopes both the manual tag type list and the NER label
+// groups to that project, not just the currently-shown file results.
 async function onProjectSelectionChange() {
+  state.types = await web.getEntities({ projectRids: selectedProjectRids.value })
   await refreshItems()
 }
 
@@ -477,9 +502,8 @@ async function hydrateState() {
   const saved = buckets[key]
   const savedRids = getSavedProjectRids(saved)
   await loadProjects(savedRids)
-  state.types = await web.getEntities()
+  state.types = await web.getEntities({ projectRids: selectedProjectRids.value })
   state.entity_schema = await web.getEntitySchema()
-  state.machine_tags = await web.getNerLabelGroups()
 
   if (saved) {
     applySavedState(saved)
@@ -494,6 +518,8 @@ async function hydrateState() {
     state.new_label = ''
     state.global_search = ''
   }
+
+  await refreshNerData()
 }
 
 watch(stateKey, async () => {
@@ -639,7 +665,7 @@ watch(
                 <v-expansion-panels>
                   <v-expansion-panel v-for="group in machineTagGroups" :key="group.key">
                     <v-expansion-panel-title>
-                      {{ group.service_id }}: {{ formatTaskLabel(group.task) }}
+                      {{ formatServiceLabel(group.service_id) }}: {{ formatTaskLabel(group.task) }}
                       <span v-if="isSearchActive" class="ml-1 text-caption">({{ groupMatchCount(group) }})</span>
                     </v-expansion-panel-title>
                     <v-expansion-panel-text>

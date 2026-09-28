@@ -1,4 +1,23 @@
 import axios from "axios"
+
+// Shared by entity/tag lookups that can be scoped to one or more projects (options.projectRid /
+// options.projectRids), so Tag view only surfaces tags/NER data used within the current project.
+function projectParams(options = {}) {
+	const projectRids = Array.isArray(options.projectRids)
+		? options.projectRids.filter(Boolean)
+		: (options.projectRid ? [options.projectRid] : [])
+	const params = {}
+	if(projectRids.length === 1) params.project_rid = String(projectRids[0]).replace('#', '')
+	if(projectRids.length > 1) params.project_rids = projectRids.map((r) => String(r).replace('#', '')).join(',')
+	return params
+}
+
+// Narrows NER label/mention lookups to a given set of file rids (options.fileRids), used to
+// intersect NER browsing with an active manual-tag selection in Tag view.
+function fileRidsParams(options = {}) {
+	const fileRids = Array.isArray(options.fileRids) ? options.fileRids.filter(Boolean) : []
+	return fileRids.length ? {file_rids: fileRids.map((r) => String(r).replace('#', '')).join(',')} : {}
+}
 import { en } from "vuetify/locale"
 let web = {}
 
@@ -351,8 +370,8 @@ web.getFiles = async function(dir) {
 	return result.data
 }
 
-web.getEntities = async function(dir) {
-	var result = await axios.get(`/api/entities`)
+web.getEntities = async function(options = {}) {
+	var result = await axios.get(`/api/entities`, {params: projectParams(options)})
 	return result.data
 }
 
@@ -446,15 +465,15 @@ web.getNerRegions = async function(fileRID) {
 	return result.data
 }
 
-// NER never creates tags (see MessyDesk's tags.md \u00a71): labels/files/mentions are read
+// NER never creates tags (see MessyDesk's tags.md section 1): labels/files/mentions are read
 // straight off ner.json runs, not TagLink, so these have no entity rid to key on.
-web.getNerLabelGroups = async function(search) {
-	var result = await axios.get(`/api/tags/ner/labels`, {params: {search}})
+web.getNerLabelGroups = async function(search, options = {}) {
+	var result = await axios.get(`/api/tags/ner/labels`, {params: {search, ...projectParams(options), ...fileRidsParams(options)}})
 	return result.data
 }
 
-web.getNerLabelFiles = async function(serviceId, task, label) {
-	var result = await axios.get(`/api/tags/ner/labels/files`, {params: {service_id: serviceId, task: task, label: label}})
+web.getNerLabelFiles = async function(serviceId, task, label, options = {}) {
+	var result = await axios.get(`/api/tags/ner/labels/files`, {params: {service_id: serviceId, task: task, label: label, ...projectParams(options), ...fileRidsParams(options)}})
 	return result.data
 }
 
@@ -465,7 +484,9 @@ web.getNerLabelMentions = async function(serviceId, task, label, options = {}) {
 		label: label,
 		search: options.search,
 		page: options.page,
-		pageSize: options.pageSize
+		pageSize: options.pageSize,
+		...projectParams(options),
+		...fileRidsParams(options)
 	}})
 	return result.data
 }
