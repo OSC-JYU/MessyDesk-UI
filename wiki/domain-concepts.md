@@ -39,10 +39,17 @@ Sets support:
 - Pagination (10 files per page in graph view, 24 in standalone)
 - ZIP export (async job with status polling)
 - Batch processing (run a cruncher on all files)
-- File upload directly into set
+- File upload directly into set (single or multiple files; multi-file upload is Set-only, never onto the main desk)
 - Thumbnail generation for contained files
 
-**Verified from:** `src/components/GraphDisplay.vue`, `src/components/displays/SetPanel.vue`, `src/web.js`
+Once a Set has been used as the input of a batch cruncher run, it is **locked**: no more files can be
+added to it. There is no mechanism to re-run or extend a finished batch to cover files added afterwards,
+so the backend rejects uploads into an already-processed Set (`Graph.hasSetBeenProcessed`, checked in
+the upload route) and the UI hides the upload button in favor of a warning (`NodeCard.vue`'s `setLocked`,
+backed by the `processed` flag on the Set's graph node data). See
+[processing-crunchers.md](processing-crunchers.md#set-locking-after-batch-processing).
+
+**Verified from:** `src/components/GraphDisplay.vue`, `src/components/displays/SetPanel.vue`, `src/web.js`, `src/components/NodeCard.vue`
 
 ## Source
 

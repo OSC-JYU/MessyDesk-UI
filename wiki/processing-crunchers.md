@@ -28,6 +28,24 @@ PDF uploads automatically trigger the split pipeline without user action. The Pr
 
 **Verified from:** `src/components/nodes/ProcessingNode.vue`, `src/components/Uploader.vue`
 
+### Set Locking After Batch Processing
+
+A Set becomes read-only for uploads once it has been used as the input of a batch cruncher run
+(a `SetProcess`/`DERIVED_FROM` edge with `process_rid` where `@in` is the Set's rid — see MessyDesk's
+`graph.mjs` `connectDerivedFrom`/`hasSetBeenProcessed`/`getProcessedSetRids`). This is a hard rule, not
+a soft warning: there is no supported way to re-run or extend a finished batch to also cover files added
+afterwards.
+
+- Backend: `POST /api/projects/{rid}/upload/{set}` calls `Graph.hasSetBeenProcessed(setRid)` and responds
+  `409 Conflict` if the Set has already been processed, before any file is written.
+- Frontend: the graph query that hydrates Set nodes (`getSetThumbnails` in `graph.mjs`) attaches a bulk-computed
+  `processed` boolean to each Set node's data via `Graph.getProcessedSetRids`. `GraphDisplay.vue` copies this
+  flag onto the vue-flow node. `NodeCard.vue`'s `setLocked` computed reads it to swap the "Upload image to set"
+  button for a warning alert.
+
+**Verified from:** `src/routes/files.mjs`, `src/graph.mjs` (MessyDesk), `src/components/NodeCard.vue`,
+`src/components/GraphDisplay.vue`
+
 ## Cruncher Selection UI (`CruncherList.vue`)
 
 The cruncher dialog is opened by:

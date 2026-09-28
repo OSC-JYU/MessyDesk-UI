@@ -1,116 +1,62 @@
 <template>
 
-	<!-- Modal -->
+  <!-- Hidden native pickers: clicking "Upload" opens these directly, no intermediate step -->
+  <input
+    ref="singleFileInputRef"
+    type="file"
+    style="display: none"
+    accept="image/*,.pdf,text/plain,text/markdown,.md,.zip,.html,.json"
+    @change="onSingleFileChange"
+  />
+  <input
+    ref="multiFileInputRef"
+    type="file"
+    multiple
+    style="display: none"
+    accept="image/*,.pdf,text/plain,.html,.json,.md"
+    @change="onMultiFileChange"
+  />
 
-    <v-dialog
-      v-model="store.uploader_open"
-      width="auto"
-    >
-      <v-card
-        min-width="600"
-        prepend-icon="mdi-update"
-        title="Upload file"
-      >
-      <v-card-text>
-
-
-
-        <v-col>
-
-              <v-file-input
-                label="Select File (image, pdf, txt, md, zip, html, json)"
-                show-size
-                v-model="state.uploadFile"
-                accept="image/*,.pdf,text/plain,text/markdown,.md,.zip,.html,.json" 
-            ></v-file-input>
-
-            <v-alert v-if="pdfUploadBlocked" type="warning" density="compact" class="mb-2">
-              PDF import is unavailable — the PDF splitter service is not running.
-            </v-alert>
-
-            <v-checkbox
-              v-if="selectedFileIsPdf && !pdfUploadBlocked"
-              v-model="state.deleteOriginal"
-              label="Remove source PDF after import"
-              density="compact"
-              hide-details
-            ></v-checkbox>
+  <!-- Main-desk upload: no dialog, just a loading indicator while the single file is sent -->
+  <v-overlay v-if="!store.set_uploader_open" v-model="state.loading" persistent class="align-center justify-center">
+    <v-container class="fill-height fluid">
+      <img :src="apiUrl + 'icons/wait.gif'" />
+      <v-row>
+        <v-col align="center" justify="center">
+          <v-progress-circular :width="3" color="green" indeterminate></v-progress-circular> Digesting...
         </v-col>
-      </v-card-text>
+      </v-row>
+    </v-container>
+  </v-overlay>
 
-
-      <v-container v-if="state.loading" class="fill-height fluid">
-        <img :src="apiUrl + 'icons/wait.gif'" />
-        <v-row >
-          <v-col align="center" justify="center"> <v-progress-circular
-          :width="3"
-          color="green"
-          indeterminate
-        ></v-progress-circular> Digesting...</v-col>
-        </v-row>
-      </v-container>
-     
-      <template v-if="!state.loading" v-slot:actions>
-          <v-btn
-          class="ms-auto"
-          text="Cancel"
-          @click="close()"
-        ></v-btn>
-        <v-divider thickness="0"></v-divider>
-        <v-btn
-          class="ms-auto primary"
-          text="Upload" 
-          :disabled="pdfUploadBlocked"
-          @click="sendFile()"
-        ></v-btn>
-      </template>
-      </v-card>
-    </v-dialog>
-
-    <v-dialog
-      v-model="store.set_uploader_open"
-      width="auto"
+  <!-- Set upload: files are already picked via the native dialog by the time this shows;
+       this is only a minimal confirm/progress step -->
+  <v-dialog
+    v-model="store.set_uploader_open"
+    width="auto"
+  >
+    <v-card
+      min-width="600"
+      prepend-icon="mdi-update"
+      title="Upload files to Set"
     >
-      <v-card
-        min-width="600"
-        prepend-icon="mdi-update"
-        title="Upload file to Set"
-      >
-      <v-card-text>
-
-
+      <v-card-text v-if="!state.loading">
         <v-col>
+          <div>{{ setUploadFiles.length }} file{{ setUploadFiles.length === 1 ? '' : 's' }} selected.</div>
 
-              <v-file-input
-                label="Select Files (image, pdf, txt, html, json, md)"
-                show-size
-                multiple
-                counter
-                v-model="state.setUploadFile"
-                accept="image/*,.pdf,text/plain,.html,.json,.md" 
-            ></v-file-input>
+          <v-alert v-if="largeUploadWarning" type="info" density="compact" class="mt-2">
+            You're uploading {{ setUploadFiles.length }} files; this may take a while.
+          </v-alert>
 
-            <v-alert v-if="largeUploadWarning" type="info" density="compact" class="mb-2">
-              You're uploading {{ setUploadFiles.length }} files; this may take a while.
-            </v-alert>
-
-            <v-alert v-if="pdfUploadBlocked" type="warning" density="compact" class="mb-2">
-              PDF import is unavailable — the PDF splitter service is not running.
-            </v-alert>
-
-            <v-checkbox
-              v-if="selectedFileIsPdf && !pdfUploadBlocked"
-              v-model="state.deleteOriginal"
-              label="Remove source PDF after import"
-              density="compact"
-              hide-details
-            ></v-checkbox>
+          <v-alert v-if="pdfUploadBlocked" type="warning" density="compact" class="mt-2">
+            PDF import is unavailable — the PDF splitter service is not running.
+          </v-alert>
         </v-col>
       </v-card-text>
 
       <v-container v-if="state.loading" class="fill-height fluid">
         <img :src="apiUrl + 'icons/wait.gif'" />
-        <v-row >
+        <v-row>
           <v-col align="center" justify="center">
             <v-progress-circular
               v-if="!state.uploadProgress.total"
@@ -130,8 +76,8 @@
         </v-row>
       </v-container>
 
-      <template v-slot:actions>
-          <v-btn
+      <template v-if="!state.loading" v-slot:actions>
+        <v-btn
           class="ms-auto"
           text="Cancel"
           @click="close()"
@@ -139,7 +85,7 @@
         <v-divider thickness="0"></v-divider>
         <v-btn
           class="ms-auto primary"
-          text="Upload" 
+          text="Upload"
           :disabled="pdfUploadBlocked"
           @click="sendFile()"
         ></v-btn>
@@ -151,7 +97,7 @@
 
 
 <script setup>
-  import { reactive, ref, computed, onMounted, watch } from "vue";
+  import { reactive, ref, computed, watch } from "vue";
 	import { useRoute } from 'vue-router'
   import {store} from "./Store.js";
   import web from "../web.js";
@@ -164,9 +110,11 @@
     uploadFile: null,
     setUploadFile: [],
     pdfSplitterAvailable: false,
-    deleteOriginal: true,
     uploadProgress: { completed: 0, total: 0 }
 	})
+
+  const singleFileInputRef = ref(null)
+  const multiFileInputRef = ref(null)
 
 	const props = defineProps({
         mode: ''
@@ -183,10 +131,39 @@
       }
     }
 
-    // Check splitter availability when dialog opens
-    watch(() => store.uploader_open || store.set_uploader_open, (open) => {
-      if (open) checkPdfSplitter()
+    // "uploader_open" is a one-shot trigger: open the native picker immediately, no dialog step.
+    watch(() => store.uploader_open, (open) => {
+      if (!open) return
+      store.uploader_open = false
+      checkPdfSplitter()
+      singleFileInputRef.value?.click()
     })
+
+    // "set_uploader_open" also triggers the native picker directly; it's flipped back to true
+    // (to show the confirm/progress dialog) only once files have actually been chosen.
+    watch(() => store.set_uploader_open, (open) => {
+      if (!open) return
+      if (setUploadFiles.value.length > 0) return // already showing the confirm dialog
+      store.set_uploader_open = false
+      checkPdfSplitter()
+      multiFileInputRef.value?.click()
+    })
+
+    async function onSingleFileChange(event) {
+      const file = event.target.files?.[0] || null
+      event.target.value = ''
+      if (!file) return
+      state.uploadFile = file
+      await sendFile()
+    }
+
+    function onMultiFileChange(event) {
+      const files = Array.from(event.target.files || [])
+      event.target.value = ''
+      if (!files.length) return
+      state.setUploadFile = files
+      store.set_uploader_open = true
+    }
 
     const selectedFileIsPdf = computed(() => {
       if (store.set_uploader_open) {
@@ -243,6 +220,7 @@
 
       if (!projectRid) {
         alert('Project context missing. Open a project and try again.')
+        close()
         return
       }
 
@@ -252,9 +230,6 @@
       }
 
       const uploadOptions = {}
-      if (selectedFileIsPdf.value && !state.deleteOriginal) {
-        uploadOptions.deleteOriginal = false
-      }
 
       if (store.set_uploader_open && store.current_node && store.current_node.type == 'set') {
         const files = setUploadFiles.value
@@ -276,10 +251,7 @@
             alert(`${result.uploaded.length} of ${files.length} files uploaded. Failed: ${failedNames}`)
           }
 
-          store.uploader_open = false
-          store.set_uploader_open = false
-          state.uploadFile = null
-          state.setUploadFile = []
+          close()
         } catch (e) {
           alert(e?.message || 'Upload failed')
         } finally {
@@ -298,11 +270,7 @@
       state.loading = true
       try {
         await web.uploadFile(file, projectRid, null, uploadOptions)
-
-        store.uploader_open = false
-        store.set_uploader_open = false
-        state.uploadFile = null
-        state.setUploadFile = []
+        close()
       } catch (e) {
         alert(e?.message || 'Upload failed')
       } finally {

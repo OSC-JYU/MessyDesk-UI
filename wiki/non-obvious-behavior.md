@@ -76,7 +76,17 @@ The uploader restricts accepted file types client-side via the `accept` attribut
 
 This is purely UI guidance—the backend may accept other formats.
 
-**PDF gating**: When the PDF splitter service (`md-pypdf_fs`) has no active consumers, the uploader disables the Upload button for PDF files and shows a warning. The backend also enforces this with HTTP 503. A "Remove source PDF after import" checkbox (default checked) controls whether the original file is deleted after splitting.
+**Direct-to-picker UX**: Clicking an "Upload" button does not open a `v-file-input`-based dialog anymore.
+`store.uploader_open`/`store.set_uploader_open` are one-shot triggers that `Uploader.vue` watches to
+immediately `.click()` a hidden native `<input type="file">`. For the main-desk (single-file) upload, the
+file is sent as soon as it's chosen — no confirmation step. For Set (multi-file) upload, `store.set_uploader_open`
+is flipped back to `true` only after files are picked, showing a minimal confirm/progress card (file count,
+large-upload and PDF-gating warnings, Upload/Cancel) rather than a file-browsing step.
+
+**PDF gating**: When the PDF splitter service (`md-pypdf_fs`) has no active consumers, the uploader disables
+the Upload button (Set flow) or aborts with an alert (main-desk flow) for PDF files. The backend also enforces
+this with HTTP 503. The original PDF is always deleted after splitting (no user-facing toggle;
+`delete_original` defaults to `true` server-side and the UI never overrides it to `false`).
 
 **Verified from:** `src/components/Uploader.vue`
 
