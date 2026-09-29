@@ -2,8 +2,9 @@
 import { useId } from 'vue'
 
 // The cruncher icon: a bitten cookie with crumbs flying off the bite and a
-// small "+" (add a cruncher). Inside a button, hovering takes another bite:
-// the cookie wobbles and the crumbs jump.
+// small "+" (add a cruncher). Inside a button, resting the pointer on it takes
+// another bite: the cookie wobbles and the crumbs jump (off with Settings →
+// Reduce motion).
 defineProps({
   size: { type: [Number, String], default: 44 },
   plus: { type: Boolean, default: true },
@@ -100,21 +101,22 @@ const maskId = `crunch-bite-${useId()}`
   transform-origin: center;
 }
 
-/* Another bite when the button it sits in is hovered or focused. */
-:global(:is(button, a):is(:hover, :focus-visible)) > .crunch-icon .crunch-icon__cookie {
-  animation: crunch-wobble 0.45s ease-in-out;
+/* Another bite when the button it sits in is hovered or focused. The short
+   delay keeps cookies still while the pointer only passes over them. */
+:is(button, a):is(:hover, :focus-visible) > .crunch-icon .crunch-icon__cookie {
+  animation: crunch-wobble 0.45s ease-in-out 0.15s;
 }
 
-:global(:is(button, a):is(:hover, :focus-visible)) > .crunch-icon .crunch-icon__crumb--1 {
-  animation: crunch-crumb-1 0.5s ease-out;
+:is(button, a):is(:hover, :focus-visible) > .crunch-icon .crunch-icon__crumb--1 {
+  animation: crunch-crumb-1 0.5s ease-out 0.15s;
 }
 
-:global(:is(button, a):is(:hover, :focus-visible)) > .crunch-icon .crunch-icon__crumb--2 {
-  animation: crunch-crumb-2 0.5s ease-out 0.05s;
+:is(button, a):is(:hover, :focus-visible) > .crunch-icon .crunch-icon__crumb--2 {
+  animation: crunch-crumb-2 0.5s ease-out 0.2s;
 }
 
-:global(:is(button, a):is(:hover, :focus-visible)) > .crunch-icon .crunch-icon__crumb--3 {
-  animation: crunch-crumb-3 0.5s ease-out 0.1s;
+:is(button, a):is(:hover, :focus-visible) > .crunch-icon .crunch-icon__crumb--3 {
+  animation: crunch-crumb-3 0.5s ease-out 0.25s;
 }
 
 @keyframes crunch-wobble {

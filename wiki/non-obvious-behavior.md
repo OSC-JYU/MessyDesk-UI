@@ -89,3 +89,9 @@ this with HTTP 503. The original PDF is always deleted after splitting (no user-
 `workspace.state.selected` is a Vue Flow node (`{ id, type, data, position }`) or `null`. `node.type` picks the node component (`text`, `image`, `set`, `setprocess`, … and `file` for unknown file types), while `node.data.type` keeps the file type from the backend.
 
 **Verified from:** `src/features/project/graphModel.js`, `nodes/index.js`
+
+## 13. `:global()` Swallows the Rest of a Scoped Selector
+
+In a scoped `<style>`, Vue replaces the whole selector with what is inside `:global(...)`: `:global(button:hover) > .icon .part` compiles to plain `button:hover`. This once made every hovered button and link in the app play the cookie's bite animation. Scoped CSS only tags the last part of a selector, so ancestor conditions need no `:global` at all: write `button:hover > .icon .part` (or `[data-motion='off'] .part`). `npm run lint` rejects `:global(...)` followed by more selector.
+
+**Verified from:** `src/ui/CrunchIcon.vue`, `src/ui/ThumbnailImage.vue`, `scripts/check-new-code.mjs`, `e2e/smoke.pw.js` (hover check)

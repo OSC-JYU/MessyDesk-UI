@@ -12,6 +12,11 @@ const bootstrapClass =
 const checks = [
   { name: 'hex colour', test: (line) => /#[0-9a-fA-F]{3,8}\b/.test(line), skip: colourFiles },
   { name: 'inline style attribute', test: (line) => /\sstyle="/.test(line) },
+  // Vue drops everything after :global(...), so ":global(.a) .b" styles .a.
+  {
+    name: ':global() with a selector after it',
+    test: (line) => /:global\([^)]*\)\s*[^\s{,]/.test(line),
+  },
   {
     name: 'Bootstrap class',
     test: (line) =>
