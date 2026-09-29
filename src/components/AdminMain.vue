@@ -34,6 +34,19 @@ em {
         new_label: "",
         new_email: "",
         tab: 0,
+        serviceGroups: [],
+        groupAdd: false,
+        groupSaving: false,
+        groupError: '',
+        newGroup: { id: '', name: '', description: '' },
+        groupLogoUploads: {},
+        group_headers: [
+            { title: 'Logo', key: 'logo', sortable: false },
+            { title: 'Id', key: 'id', sortable: true },
+            { title: 'Name', key: 'name', sortable: true },
+            { title: 'Description', key: 'description', sortable: false },
+            { title: 'Actions', key: 'actions', sortable: false },
+        ],
         request_headers: [
             {
                 title: 'Name',
@@ -118,6 +131,64 @@ em {
       state.result = response.result
     }
 
+    async function loadServiceGroups() {
+      state.serviceGroups = await web.getServiceGroups()
+    }
+    function cancelCreateGroup() {
+      state.groupAdd = false
+      state.groupError = ''
+      state.newGroup = { id: '', name: '', description: '' }
+    }
+
+    async function createServiceGroup() {
+      state.groupError = ''
+      try {
+        await web.createServiceGroup(state.newGroup)
+        state.serviceGroups = await web.getServiceGroups()
+        cancelCreateGroup()
+      } catch (e) {
+        state.groupError = e.message || 'Failed to create service group'
+      }
+    }
+
+    async function saveServiceGroup(group) {
+      try {
+        await web.updateServiceGroup(group.id, {name: group.name, description: group.description})
+      } catch (e) {
+        state.groupError = e.message || 'Failed to update service group'
+      }
+    }
+
+    async function deleteServiceGroup(group) {
+      if (!confirm(`Delete service group "${group.id}"?`)) return
+      await web.deleteServiceGroup(group.id)
+      state.serviceGroups = await web.getServiceGroups()
+    }
+
+    async function uploadGroupLogo(group, event) {
+      const file = event.target.files && event.target.files[0]
+      if (!file) return
+      state.groupLogoUploads[group.id] = true
+      try {
+        const updated = await web.uploadServiceGroupLogo(group.id, file)
+        Object.assign(group, updated)
+      } catch (e) {
+        state.groupError = e.message || 'Failed to upload logo'
+      } finally {
+        state.groupLogoUploads[group.id] = false
+        event.target.value = ''
+      }
+    }
+
+    function groupLogoUrl(group) {
+      if (!group.logo) return null
+      return `/api/service-groups/${encodeURIComponent(group.id)}/logo?v=${group.logo_version || 0}`
+    }
+
+    async function updateUserGroups(user) {
+      await web.updateUserServiceGroups(user['@rid'], user.service_groups || [])
+    }
+
     function openUserDialog(label, email, rid) {
       console.log(rid)
       state.tab = 1
@@ -152,6 +223,7 @@ em {
     onMounted(async()=> {
       state.users = await web.getUsers()
       state.requests = await web.getPermissionRequests()
+      await loadServiceGroups()
       var response = await web.getServices()
       for(var key in response) {
         response[key]['active'] = false
@@ -170,7 +242,7 @@ em {
 
 <template>
 
-<v-card class="mx-auto fill-height" color="grey-lighten-3" flat>
+<v-card class="mx-auto fill-height w-100" color="grey-lighten-3" flat>
     <v-layout class="fill-height">
 
       <JYUHeader_plain/>
@@ -188,7 +260,7 @@ em {
               color="light-blue lighten-3"
             >
 
-            <v-container>
+            <v-container fluid>
 
               <v-row class="mt-6">
                 <v-tabs v-model="state.tab">
@@ -196,6 +268,7 @@ em {
                   <v-tab >Requests</v-tab>
                   <v-tab>Users</v-tab>
                   <v-tab>Services</v-tab>
+                  <v-tab>Service Groups</v-tab>
 
                 </v-tabs>
 
@@ -206,7 +279,7 @@ em {
 
 
                 <v-tabs-window-item>
-                  <v-container>
+                  <v-container fluid>
                     
                     <v-data-table :items="state.requests" :headers="state.request_headers" >
 
@@ -226,7 +299,7 @@ em {
 
 
                 <v-tabs-window-item>
-                    <v-container>
+                    <v-container fluid>
                       
                       <template v-if="state.result && !state.add">
                         <v-data-table :items="state.users" :headers="state.headers">
@@ -240,6 +313,19 @@ em {
                         
                         <template v-slot:item.label="{ item }">
                           <div @click="go(item['@rid'])">{{item.label}}  </div>
+                        </template>
+
+                        <template v-slot:item.service_groups="{ item }">
+                          <v-select
+                            v-model="item.service_groups"
+                            :items="state.serviceGroups.map(g => g.id)"
+                            multiple
+                            density="compact"
+                            variant="underlined"
+                            hide-details
+                            style="min-width: 200px"
+                            @update:model-value="updateUserGroups(item)"
+                          ></v-select>
                         </template>
                         
                       </v-data-table>
@@ -266,7 +352,7 @@ em {
                 </v-tabs-window-item> 
                 
                 <v-tabs-window-item>
-                  <v-container>
+                  <v-container fluid>
                     
                     <v-data-table :items="state.services" :headers="state.service_headers" >
 
@@ -287,7 +373,55 @@ em {
 
                 </v-tabs-window-item> 
 
+                <v-tabs-window-item>
+                  <v-container fluid>
 
+                    <v-alert v-if="state.groupError" type="error" density="compact" class="mb-4" closable @click:close="state.groupError = ''">{{ state.groupError }}</v-alert>
+
+                    <v-data-table :items="state.serviceGroups" :headers="state.group_headers">
+
+                      <template v-slot:item.logo="{ item }">
+                        <v-avatar size="40" rounded>
+                          <v-img v-if="groupLogoUrl(item)" :src="groupLogoUrl(item)" cover></v-img>
+                          <v-icon v-else>mdi-image-off-outline</v-icon>
+                        </v-avatar>
+                        <v-btn size="x-small" variant="text" :loading="state.groupLogoUploads[item.id]" @click="$refs['logo_input_' + item.id].click()">
+                          Upload
+                        </v-btn>
+                        <input :ref="'logo_input_' + item.id" type="file" accept="image/png,image/jpeg,image/webp" hidden @change="uploadGroupLogo(item, $event)" />
+                      </template>
+
+                      <template v-slot:item.name="{ item }">
+                        <v-text-field v-model="item.name" density="compact" variant="underlined" hide-details @blur="saveServiceGroup(item)"></v-text-field>
+                      </template>
+
+                      <template v-slot:item.description="{ item }">
+                        <v-text-field v-model="item.description" density="compact" variant="underlined" hide-details @blur="saveServiceGroup(item)"></v-text-field>
+                      </template>
+
+                      <template v-slot:item.actions="{ item }">
+                        <v-btn color="danger" size="small" @click="deleteServiceGroup(item)"><v-icon>mdi-trash-can</v-icon></v-btn>
+                      </template>
+
+                    </v-data-table>
+
+                    <v-btn v-if="!state.groupAdd" class="btn-primary" @click="state.groupAdd = true">Add new</v-btn>
+
+                    <div v-if="state.groupAdd">
+                      <v-card title="Add new service group">
+                        <v-card-text>
+                          <v-text-field v-model="state.newGroup.id" label="Id (referenced from service.json service_groups)" hint="Letters, numbers, _ and - only" persistent-hint></v-text-field>
+                          <v-text-field v-model="state.newGroup.name" label="Name"></v-text-field>
+                          <v-textarea v-model="state.newGroup.description" label="Description"></v-textarea>
+                          <v-btn @click="cancelCreateGroup()">Cancel</v-btn>
+                          <v-btn @click="createServiceGroup()" color="primary" class="ml-6">Create</v-btn>
+                        </v-card-text>
+                      </v-card>
+                    </div>
+
+                  </v-container>
+
+                </v-tabs-window-item>
 
               </v-tabs-window>
 

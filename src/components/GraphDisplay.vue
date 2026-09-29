@@ -1568,6 +1568,9 @@
             if(node.data.error_count) 
                 flownode.data.error_count = node.data.error_count
 
+            if(node.data.processed)
+                flownode.data.processed = node.data.processed
+
             elements.nodes.push(flownode)
         }
 

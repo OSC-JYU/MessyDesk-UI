@@ -363,12 +363,21 @@
                         {{ state.set_zip_loading ? 'Preparing set zip...' : 'Download set' }}
                     </v-btn>
                     <v-btn
+                        v-if="!setLocked"
                         class="nodecard-button nodecard-button--primary"
                         size="small"
                         @click="store.set_uploader_open = true"
                     >
                         Upload image to set
                     </v-btn>
+                    <v-alert
+                        v-else
+                        type="warning"
+                        density="compact"
+                        class="mt-2 text-left"
+                    >
+                        This set has already been processed by a cruncher, so new files can no longer be added to it.
+                    </v-alert>
                     <div
                         v-if="state.set_zip_message"
                         class="nodecard-status"
@@ -581,6 +590,11 @@
         }
 
         return false
+    })
+
+    const setLocked = computed(() => {
+        const current = store.current()
+        return Boolean(current && current.type === 'set' && current.data?.processed)
     })
 
 

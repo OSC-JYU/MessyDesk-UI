@@ -279,6 +279,48 @@ web.createUser = async function(data) {
 	}
 }
 
+web.updateUserServiceGroups = async function(rid, service_groups) {
+	var result = await axios.put(`/api/users/${rid.replace('#','')}/service-groups`, {service_groups})
+	return result.data
+}
+
+web.getServiceGroups = async function() {
+	var result = await axios.get(`/api/service-groups`)
+	return result.data
+}
+
+web.createServiceGroup = async function(data) {
+	try {
+		var result = await axios.post(`/api/service-groups`, data)
+		return result.data
+	} catch (error) {
+		throw(error)
+	}
+}
+
+web.updateServiceGroup = async function(id, data) {
+	try {
+		var result = await axios.put(`/api/service-groups/${encodeURIComponent(id)}`, data)
+		return result.data
+	} catch (error) {
+		throw(error)
+	}
+}
+
+web.deleteServiceGroup = async function(id) {
+	var result = await axios.delete(`/api/service-groups/${encodeURIComponent(id)}`)
+	return result.data
+}
+
+web.uploadServiceGroupLogo = async function(id, fileObject) {
+	var formData = new FormData()
+	formData.append('file', fileObject)
+	var result = await axios.post(`/api/service-groups/${encodeURIComponent(id)}/logo`, formData, {
+		headers: {'Content-Type': 'multipart/form-data'}
+	})
+	return result.data
+}
+
 web.getServicesForFile = async function(file_rid, filter) {
 	var filter_query = ''
 	if(filter) filter_query = '?filter='+filter
@@ -756,6 +798,63 @@ web.uploadFile = async function(fileObject, project_rid, set_rid, options = {}) 
 		await axios.post(`/api/projects/${project_rid.replace('#','')}/upload/${set_rid.replace('#','')}${queryString}`, formData)
 	else
 		await axios.post(`/api/projects/${project_rid.replace('#','')}/upload${queryString}`, formData)
+}
+
+// Uploads many files into a Set in chunks with limited concurrency, reporting progress.
+// Multiple files are only accepted onto a Set (not the main desk) per backend contract.
+web.uploadFiles = async function(fileObjects, project_rid, set_rid, options = {}) {
+	if(!set_rid) throw new Error('Multiple file upload is only supported for Sets')
+	const files = Array.isArray(fileObjects) ? fileObjects : [fileObjects]
+
+	const chunkSize = options.chunkSize || 20
+	const concurrency = options.concurrency || 3
+	const chunks = []
+	for(let i = 0; i < files.length; i += chunkSize) {
+		chunks.push(files.slice(i, i + chunkSize))
+	}
+
+	const queryParams = []
+	if(options.noThumbnails) queryParams.push('no-thumbnails=true')
+	if(options.deleteOriginal === false) queryParams.push('delete_original=false')
+	const queryString = queryParams.length > 0 ? '?' + queryParams.join('&') : ''
+	const url = `/api/projects/${project_rid.replace('#','')}/upload/${set_rid.replace('#','')}${queryString}`
+
+	const results = { uploaded: [], failed: [] }
+	let completed = 0
+
+	async function sendChunk(chunk) {
+		var formData = new FormData()
+		chunk.forEach((file) => formData.append('file', file))
+		try {
+			var response = await axios.post(url, formData)
+			var data = response.data
+			if(data && (Array.isArray(data.uploaded) || Array.isArray(data.failed))) {
+				results.uploaded.push(...(data.uploaded || []))
+				results.failed.push(...(data.failed || []))
+			} else if(data) {
+				results.uploaded.push(data)
+			}
+		} catch (error) {
+			var message = error?.response?.data?.message || error.message || 'Upload failed'
+			chunk.forEach((file) => results.failed.push({ filename: file.name, error: message }))
+		}
+		completed += chunk.length
+		if(typeof options.onProgress === 'function') {
+			options.onProgress({ completed: completed, total: files.length })
+		}
+	}
+
+	// Run chunks with limited concurrency
+	let nextChunkIndex = 0
+	async function worker() {
+		while(nextChunkIndex < chunks.length) {
+			const current = chunks[nextChunkIndex++]
+			await sendChunk(current)
+		}
+	}
+	await Promise.all(Array.from({ length: Math.min(concurrency, chunks.length) }, worker))
+
+	return results
 }
 
 
