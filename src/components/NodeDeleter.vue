@@ -1,55 +1,42 @@
 <template>
-
-	<!-- Modal -->
-	<div class="modal show" tabindex="-1" style="display:block" v-if="store.node_deleter_open">
-	  <div class="modal-dialog">
-	    <div class="modal-content">
-	      <div class="modal-header">
-	        <h5 class="modal-title">Delete Node</h5>
-	      </div>
-	      <div class="modal-body">
-	        <p class="alert alert-info">Deleting a node deletes also all children nodes!</p>
-			<div v-if="state.deleting" class="alert alert-warning d-flex align-items-center" role="alert">
-				<div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
-				<div>
-					Deleting is in progress. This may take a while for large node trees. Please wait.
-				</div>
-			</div>
-			<p v-if="state.error" class="alert alert-danger">{{ state.error }}</p>
-	      </div>
-	      <div class="modal-footer">
-	        <button type="button" @click="store.node_deleter_open = false" class="btn btn-secondary" data-bs-dismiss="modal" :disabled="state.deleting">Close</button>
-	        <button type="button" @click="deleteNode()" class="btn btn-danger" :disabled="state.deleting">
-				<span v-if="!state.deleting"><b>Delete {{store.current().data.name}}</b> ({{store.current().type}})</span>
-				<span v-else>Deleting...</span>
-			</button>
-	      </div>
-	    </div>
-	  </div>
-	</div>
-
-
+	<ConfirmDialog
+		v-model="store.node_deleter_open"
+		title="Delete node"
+		:message="`Delete ${nodeName}? This also deletes all of its child nodes.`"
+		confirm-text="Delete"
+		danger
+		:loading="state.deleting"
+		:error="state.error"
+		@confirm="deleteNode"
+		@cancel="state.error = ''"
+	>
+		<p v-if="state.deleting" class="deleting-note">
+			Deleting can take a while for large node trees. Please wait.
+		</p>
+	</ConfirmDialog>
 </template>
 
 
 <script setup>
-    import { onMounted, watch, reactive, ref} from "vue";
-	import { useRouter, useRoute } from 'vue-router'
-    import {store} from "./Store.js";
-    import web from "../web.js";
-
-	const router = useRouter();
-
+	import { computed, reactive } from "vue";
+	import { store } from "./Store.js";
+	import web from "../web.js";
+	import ConfirmDialog from "../ui/ConfirmDialog.vue";
 
 	var state = reactive({
 		error: '',
 		deleting: false,
 	})
 
+	defineProps({
+		mode: ''
+	})
 
-	const props = defineProps({
-        mode: ''
-    })
+	const nodeName = computed(() => {
+		const node = store.current() || {}
+		const name = node.data?.name || node.data?.label || ''
+		return node.type ? `“${name}” (${node.type})` : `“${name}”`
+	})
 
 	async function deleteNode() {
 		if(state.deleting) return
@@ -66,6 +53,11 @@
 			state.deleting = false
 		}
 	}
-
-
 </script>
+
+<style scoped>
+.deleting-note {
+	margin: var(--md-space-3) 0 0;
+	color: var(--md-color-text-muted);
+}
+</style>

@@ -18,6 +18,8 @@ export default ({ mode }) => {
       test: {
         environment: 'jsdom',
         globals: true,
+        setupFiles: ['./test/setup.js'],
+        server: { deps: { inline: ['vuetify'] } },
       },
       resolve: {
           alias: {

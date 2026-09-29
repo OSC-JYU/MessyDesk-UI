@@ -80,3 +80,27 @@ test('project routes open', async ({ page, request }) => {
     expect(errors, errors.join('\n')).toEqual([])
   }
 })
+
+test('node delete asks for confirmation and can be cancelled', async ({ page, request }) => {
+  const rid = await firstProjectRid(request)
+  test.skip(!rid, 'backend has no projects')
+  await open(page, `/project/${rid}`)
+
+  const node = page
+    .locator('.vue-flow__node-text, .vue-flow__node-image, .vue-flow__node-pdf')
+    .first()
+  test.skip(!(await node.count()), 'project has no file nodes')
+  await node.click()
+  await page.getByTitle('delete item').click()
+
+  const dialog = page.getByRole('alertdialog', { name: 'Delete node' })
+  await expect(dialog).toBeVisible()
+  await expect(dialog).toContainText('also deletes all of its child nodes')
+  await page.waitForTimeout(400) // let the open transition finish
+  await page.screenshot({ path: `e2e/screenshots/${label}/node-delete-dialog-1440.png` })
+
+  // Cancel only: this test never deletes anything.
+  await dialog.getByRole('button', { name: 'Cancel' }).click()
+  await expect(dialog).toBeHidden()
+  await expect(node).toBeVisible()
+})

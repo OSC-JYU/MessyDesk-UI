@@ -55,6 +55,22 @@ src/
 `style=` attributes and Bootstrap classes under `src/app`, `src/ui`, `src/features`, `src/api`,
 `src/stores` and `src/styles`.
 
+## Shared UI kit (`src/ui/`)
+
+Use these instead of hand-built equivalents. Each has a unit test in `test/ui/`.
+
+| Component | Use it for | Main props / slots |
+| --- | --- | --- |
+| `PageHeader` | Title row of a screen (Junicode title) | `title`, `subtitle`; slots `actions`, `subtitle` |
+| `ConfirmDialog` | Confirming destructive or important actions | `v-model`, `title`, `message`, `confirmText`, `cancelText`, `danger`, `loading`, `error`; emits `confirm`, `cancel`. The parent does the work and closes it. |
+| `EmptyState` | A list or view with nothing in it | `title`, `text`, `icon`; slot `actions` |
+| `LoadingState` | A view or panel that is loading | `text`, `inline` |
+| `ErrorAlert` | A failed load or action | `error` (string, Error or API `{ status, message }`), `title`, `retryable`; emits `retry` |
+| `FormField` | Label, hint and error around any control | `label`, `hint`, `error`, `required`, `id`; default slot gets `{ id, describedby, invalid }` |
+| `StatusChip` | Job, service or process status | `status` (running, queued, paused, done, failed, …), `label` |
+
+`components/NodeDeleter.vue` already uses `ConfirmDialog` in place of its Bootstrap modal.
+
 ## Checks
 
 | Command | What it does |
@@ -62,7 +78,7 @@ src/
 | `npm run build` | Production build |
 | `npm test` | Vitest unit tests |
 | `npm run lint` | ESLint + new-code style gate |
-| `npm run test:e2e` | Playwright: opens every route against the local backend (dev mode on `localhost:8200`, via a Vite server on port 3100) and saves screenshots at 1440 and 1024 px to `e2e/screenshots/$SHOT_LABEL/`. Read-only. |
+| `npm run test:e2e` | Playwright: opens every route against the local backend (dev mode on `localhost:8200`, via a Vite server on port 3100) and saves screenshots at 1440 and 1024 px to `e2e/screenshots/$SHOT_LABEL/`. Read-only; the node-delete test opens the dialog and cancels. |
 
 Take `SHOT_LABEL=before` screenshots before a change and `SHOT_LABEL=after` screenshots after it,
 then compare them side by side.
@@ -72,7 +88,7 @@ then compare them side by side.
 | Stage | Status |
 | --- | --- |
 | 0 Groundwork | Done: dead files removed, ESLint + Prettier, tokens/theme/reset, AppShell with one header, `api/` wrappers, page titles, Playwright smoke tests |
-| 1 Shared UI kit | Not started |
+| 1 Shared UI kit | Done: the seven components above with unit tests; node delete moved from a Bootstrap modal to `ConfirmDialog` |
 | 2 Simple screens | Not started |
 | 3 Home | Not started |
 | 4 Services and admin | Not started |
