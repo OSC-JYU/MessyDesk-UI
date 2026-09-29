@@ -12,7 +12,7 @@ const props = defineProps({ data: { type: Object, required: true } })
 const running = computed(() => props.data.status === 'running')
 const count = computed(() => Number(props.data.count || 0))
 const label = computed(
-  () => `${props.data.label} (${count.value ? `${count.value} files` : 'empty'})`,
+  () => `${props.data.label || 'Set'} (${count.value ? `${count.value} files` : 'empty'})`,
 )
 </script>
 
