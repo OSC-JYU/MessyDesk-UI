@@ -53,6 +53,38 @@ h3,
   letter-spacing: normal !important;
 }
 
+/* Block spacing: nothing above, a little below (what Bootstrap's reboot used
+   to give every screen). */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0 0 var(--md-space-2);
+  line-height: 1.2;
+}
+
+p,
+ul,
+ol,
+dl,
+pre {
+  margin: 0 0 var(--md-space-4);
+}
+
+a {
+  color: var(--md-color-primary);
+}
+
+a:hover {
+  color: var(--md-color-primary-hover);
+}
+
+:focus-visible {
+  outline-color: var(--md-color-focus);
+}
+
 code,
 kbd,
 pre,

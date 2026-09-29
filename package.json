@@ -14,21 +14,15 @@
     "@fontsource/ibm-plex-mono": "^5.3.0",
     "@fontsource/ibm-plex-sans": "^5.3.0",
     "@mdi/font": "^7.4.47",
-    "@popperjs/core": "^2.11.5",
     "@vue-flow/background": "^1.3.0",
     "@vue-flow/core": "^1.33.5",
     "axios": "^1.7.2",
-    "bootstrap": "^5.3.1",
-    "bootstrap-icons": "^1.9.1",
     "dagre": "^0.8.5",
     "dompurify": "^3.4.7",
     "marked": "^18.0.4",
     "vue": "^3.2.31",
     "vue-i18n": "^9.2.2",
-    "vue-pdf-embed": "^2.0.4",
     "vue-router": "^4.1.3",
-    "vue-sidebar-menu-akahon": "^0.1.4",
-    "vue3-image-multiselect-areas": "^1.0.2",
     "vuetify": "^3.5.17"
   },
   "devDependencies": {
@@ -39,11 +33,11 @@
     "eslint": "^10.11.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-vue": "^10.11.1",
+    "eslint-scope": "^9.1.2",
     "globals": "^17.12.0",
     "jsdom": "^29.1.1",
     "prettier": "^3.9.9",
     "vite": "^6.0.7",
-    "vitest": "^4.1.7",
-    "vue-cli-plugin-vuetify": "^2.5.8"
+    "vitest": "^4.1.7"
   }
 }

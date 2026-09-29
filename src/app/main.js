@@ -1,8 +1,3 @@
-// Bootstrap stays loaded until the last old screen is replaced (stage 8).
-import 'bootstrap/dist/css/bootstrap.min.css'
-import 'bootstrap-icons/font/bootstrap-icons.css'
-import 'bootstrap'
-
 import { createApp } from 'vue'
 import { vuetify } from './vuetify.js'
 
