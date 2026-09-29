@@ -16,11 +16,11 @@ The router uses `createWebHistory` with `VITE_PUBLIC_PATH` as the base. Routes a
 | `/project/:rid` (child `''`) | project-graph | `GraphDisplay` | Graph canvas |
 | `/project/:rid/search` | project-search | `features/search/SearchPage` | Project-scoped search |
 | `/project/:rid/entities` | project-entities | `features/tags/TagsPage` | Project-scoped tags |
-| `/project/:rid/file/:fileRid` | project-file | `FileDisplayWrapper` | File viewer |
+| `/project/:rid/file/:fileRid` | project-file | `features/files/FileViewer` | File viewer |
 | `/services` | services | `features/services/ServicesPage` | Service monitor |
 | `/services/admin` | services-admin | `features/services/ServiceControlPage` | Install/start/stop/forget services; `meta.requiresAdmin` |
 | `/intro` | introduction | `features/help/IntroPage` | Introduction tour |
-| `/files/:rid` | files | `FilesMain` | File browser |
+| `/files/:rid` | files | `features/files/FileViewer` | File viewer outside a desk |
 | `/crunchers` | — | redirect → services | Old stand-alone cruncher page |
 | `/search` | search | `features/search/SearchPage` | Search across desks |
 | `/prompts` | prompts | `features/services/PromptsPage` | Saved prompts |
@@ -59,9 +59,9 @@ Child routes render in a `<router-view>` that uses `keep-alive` to cache `GraphD
 
 ### File Navigation via Browse Context
 
-When opening a file from a set, the route includes query parameters (`browseMode`, `setRid`, `setLabel`, `fileCount`, `skip`, `sourceRid`, `sourceLabel`) that encode the browsing context. `FileDisplayWrapper` can hydrate `store.file_browse_context` from these query params on mount, enabling next/prev navigation within a set.
+When opening a file from a set, the route includes query parameters (`browseMode`, `setRid`, `setLabel`, `fileCount`, `skip`, `sourceRid`, `sourceLabel`) that encode the browsing context. `FileViewer` (`useFileViewer.js`) reads them back; see [file-display-system.md](file-display-system.md). This keeps previous/next working within a set after a reload.
 
-**Verified from:** `src/components/displays/FileDisplayWrapper.vue` (`hydrateBrowseContextFromRouteQuery`)
+**Verified from:** `src/features/files/browseQuery.js`, `useFileViewer.js`
 
 ### Legacy Graph Route Redirect
 
@@ -77,7 +77,7 @@ graph TD
     ProjectShell --> GraphView["GraphDisplay"]
     ProjectShell --> SearchView["SearchPage (project)"]
     ProjectShell --> EntitiesView["TagsPage (project)"]
-    ProjectShell --> FileView["FileDisplayWrapper"]
+    ProjectShell --> FileView["FileViewer"]
     GraphView -->|double-click node| FileView
     GraphView -->|double-click set| SetPanel["SetPanel (inline)"]
     SetPanel -->|double-click file| FileView

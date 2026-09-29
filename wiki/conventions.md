@@ -14,7 +14,7 @@ var state = reactive({ ... })
 ```
 No `ref()` for complex state objects. `ref()` is used for single primitive values (e.g., pagination `page`, boolean flags).
 
-**Verified from:** `GraphDisplay.vue`, `FileDisplayWrapper.vue`
+**Verified from:** `GraphDisplay.vue`
 
 ### Global Store Import
 ```js
@@ -56,7 +56,7 @@ There is no global error notification system. Errors are handled locally per com
 - `console.error()` for developer debugging
 - Some methods silently swallow errors (e.g., ROI resolution fallbacks)
 
-**Verified from:** `FileDisplayWrapper.vue`. New screens use `ui/ErrorAlert.vue`.
+**Verified from:** old components. New screens use `ui/ErrorAlert.vue`.
 
 ## i18n Usage
 

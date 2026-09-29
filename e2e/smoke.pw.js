@@ -323,3 +323,68 @@ test('picking a tag lists its files and can be undone', async ({ page }) => {
   await page.getByLabel('Selected tags').locator('.v-chip__close').first().click()
   await expect(page.getByRole('heading', { name: 'Tagged files' })).toBeVisible()
 })
+
+async function firstTextFile(page, rid) {
+  await open(page, `/project/${rid}`)
+  const node = page.locator('.vue-flow__node-text').first()
+  return (await node.count()) ? (await node.getAttribute('data-id')).replace('#', '') : null
+}
+
+test('file viewer shows a text file with lineage, tools and markdown', async ({ page, request }) => {
+  const rid = await firstProjectRid(request)
+  test.skip(!rid, 'backend has no projects')
+  const fileRid = await firstTextFile(page, rid)
+  test.skip(!fileRid, 'project has no text files')
+
+  await open(page, `/project/${rid}/file/${fileRid}`)
+  await expect(page.locator('pre.text-display--plain')).toBeVisible()
+  await expect(page.getByRole('complementary', { name: 'Lineage' })).toContainText('Lineage')
+  const tools = page.getByRole('complementary', { name: 'File tools' })
+  await expect(tools.getByRole('link', { name: 'Open file' })).toBeVisible()
+
+  await tools.getByLabel('Show as Markdown').check()
+  await expect(page.locator('article.text-display--markdown')).toBeVisible()
+  await tools.getByLabel('Show as Markdown').uncheck()
+
+  // Quick edit opens the editor; cancel so nothing is saved.
+  await tools.getByText('Quick edits').click()
+  await tools.getByRole('button', { name: 'Edit text' }).click()
+  await expect(page.getByRole('textbox', { name: 'Edit text' })).toBeVisible()
+  await tools.getByRole('button', { name: 'Cancel edit' }).click()
+  await expect(page.locator('pre.text-display--plain')).toBeVisible()
+  await page.screenshot({ path: `e2e/screenshots/${label}/viewer-text-1440.png` })
+
+  await page.getByRole('button', { name: 'Close file' }).click()
+  await expect(page).toHaveURL(new RegExp(`/project/${rid.replace(':', '\\:')}$`))
+})
+
+test('file viewer keeps set browsing in the URL', async ({ page, request }) => {
+  const rid = await firstProjectRid(request)
+  test.skip(!rid, 'backend has no projects')
+  await open(page, `/project/${rid}`)
+  const setNode = page.locator('.vue-flow__node-set').first()
+  test.skip(!(await setNode.count()), 'project has no sets')
+  const setRid = (await setNode.getAttribute('data-id')).replace('#', '')
+  const files = await (await request.get(`/api/sets/${setRid}/files?skip=0&limit=1`)).json()
+  const first = files?.files?.[0]
+  test.skip(!first, 'set is empty')
+
+  const query = `browseMode=set&setRid=${setRid}&setLabel=Test%20set&fileCount=${files.file_count || 1}&skip=0`
+  await open(page, `/project/${rid}/file/${first['@rid'].replace('#', '')}?${query}`)
+  const bar = page.getByRole('navigation', { name: 'Browse files' })
+  await expect(bar).toContainText('Test set')
+  await expect(bar).toContainText(`1 / ${files.file_count || 1}`)
+  await expect(bar.getByRole('button', { name: 'Previous file' })).toBeDisabled()
+  await page.screenshot({ path: `e2e/screenshots/${label}/viewer-set-1440.png` })
+  await bar.getByRole('button', { name: 'Back to set' }).click()
+  await expect(page).toHaveURL(new RegExp(`openSet=${setRid.replace(':', '(:|%3A)')}`))
+})
+
+test('stand-alone file view opens a file outside a desk', async ({ page, request }) => {
+  const rid = await firstProjectRid(request)
+  test.skip(!rid, 'backend has no projects')
+  const fileRid = await firstTextFile(page, rid)
+  test.skip(!fileRid, 'project has no text files')
+  await open(page, `/files/${fileRid}`)
+  await expect(page.locator('pre.text-display--plain')).toBeVisible()
+})

@@ -79,7 +79,7 @@ Complex dispatch logic based on node type:
 When a set node is double-clicked, `GraphDisplay` switches from showing the VueFlow canvas to showing an inline `SetPanel` component. The set panel:
 - Loads files paginated (10 per page)
 - Supports grouped mode (by source) and flat mode
-- Double-clicking a file in the set panel opens it in `FileDisplayWrapper`
+- Double-clicking a file in the set panel opens it in the file viewer (`features/files/FileViewer.vue`)
 - Has back/restore capability via `store.set_panel_cache`
 
 **Verified from:** `src/components/GraphDisplay.vue`, `src/components/displays/SetPanel.vue`

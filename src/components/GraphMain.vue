@@ -121,9 +121,6 @@
       if (childRoute.name === 'project-graph') {
         return { mode: 'graph', fit: state.node, onOpenNode: openNode }
       }
-      if (childRoute.name === 'project-file') {
-        return { projectRid: projectRid.value }
-      }
       return {}
     }
 

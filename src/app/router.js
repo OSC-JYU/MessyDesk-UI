@@ -47,7 +47,7 @@ const routes = [
       {
         path: 'file/:fileRid',
         name: 'project-file',
-        component: () => import('@/components/displays/FileDisplayWrapper.vue'),
+        component: () => import('@/features/files/FileViewer.vue'),
         meta: { legacy: true, title: 'File' },
       },
     ],
@@ -74,8 +74,8 @@ const routes = [
   {
     path: '/files/:rid',
     name: 'files',
-    component: () => import('@/components/FilesMain.vue'),
-    meta: { legacy: true, title: 'Files' },
+    component: () => import('@/features/files/FileViewer.vue'),
+    meta: { title: 'File' },
   },
   // The old stand-alone cruncher page needed a selected node; crunchers now open from the desk.
   { path: '/crunchers', redirect: { name: 'services' } },

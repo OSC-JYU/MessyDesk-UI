@@ -96,6 +96,6 @@ then compare them side by side.
 | 3 Home | Done: `features/home/` replaces `Main.vue` (list, sort, create, rename, re-index, new Delete desk with type-the-name confirmation, storage, running jobs, active crunchers, news). Delete desk needs the backend fix in `graph.deleteProject` (it calls `deleteNode` without the user rid and returns 500). |
 | 4 Services and admin | Done: `features/services/` (monitor, service control, prompts, cruncher picker with DSpace form and tag filter) and `features/admin/`; old `ServicesMain`, `ServicesAdmin`, `PromptsMain`, `AdminMain`, `CruncherList`, `CrunchersMain`, `DspaceQueryForm`, `TagPickerField`, `ProcessCreator` deleted; `/crunchers` redirects to services |
 | 5 Search and entities | Done: `features/search/` (SearchPage, shared ResultsGrid/ResultCard, ProjectScope, file opener) and `features/tags/` (TagsPage, NER label mentions with preview, add-tag dialog); `stores/fileBrowse.js` and `stores/pageMemory.js` replace old store fields; `SearchMain` and `EntitiesMain` deleted |
-| 6 File viewer | Not started |
+| 6 File viewer | Done: `features/files/` (viewer shell, 9 displays, tools, ROI editor) replaces `FileDisplayWrapper`, `FilesMain` and 22 display/tool components; the big editors were ported without redesign and checked only with unit tests, since the local backend has no image/OCR data |
 | 7 Project graph | Not started |
 | 8 Cleanup | Not started |

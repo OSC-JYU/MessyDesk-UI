@@ -27,7 +27,7 @@ A document stored in the system. Files have:
 
 Files are nodes in the project graph. They can be processing inputs or outputs.
 
-**Verified from:** `src/components/displays/FileDisplayWrapper.vue`, `src/web.js`, `test/components/displays/VersionTools.spec.js`
+**Verified from:** `src/features/files/useQuickEdit.js`, `src/web.js`, `test/features/files/components.spec.js`
 
 ## Set
 

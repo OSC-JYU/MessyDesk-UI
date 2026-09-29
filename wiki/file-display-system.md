@@ -1,119 +1,79 @@
 # File Display System
 
-## Architecture
+The file viewer lives in `src/features/files/`. It serves `/project/:rid/file/:fileRid` (a file
+inside a desk) and `/files/:rid` (a file on its own, e.g. from a search across desks).
 
-File viewing uses a three-column layout orchestrated by `FileDisplayWrapper.vue`:
+**Verified from:** `src/app/router.js`, `src/features/files/FileViewer.vue`
+
+## Layout
 
 ```
-┌──────────┬──────────────────────────┬──────────┐
-│ PathPanel│     Content Display      │FileTools │
-│ (col 2)  │     (dynamic component) │ (col 2)  │
-│          │                          │          │
-│ Ancestry │  Selected by file.type   │ Tags     │
-│ tree     │  and file.extension      │ Edits    │
-│          │                          │ Settings │
-└──────────┴──────────────────────────┴──────────┘
+BrowseBar      set or result-list position, previous/next, back, close
+LineagePanel | display for the file type (or the ROI editor) | FileToolsPanel
 ```
 
-Both side columns are collapsible.
+- **BrowseBar** shows the set name or search query, the position (`3 / 12`), previous/next, "Back
+  to set" / "Back to results" and close. Without a browse context it shows the file name and close.
+- **LineagePanel** shows the path the file came from (`getNodePath`), without users and sets.
+  Clicking an earlier file opens it and remembers the lineage offset (see below).
+- **FileToolsPanel**: file name, description (edited in place), metadata, Open file, Refresh,
+  Tags (add from the entity types, remove with the chip's close button), Quick edits, and "Show as
+  Markdown" for text files.
 
-**Verified from:** `src/components/displays/FileDisplayWrapper.vue` (template)
+## Which display shows a file
 
-## Type Dispatch
+`fileTypes.displayFor(file)` picks a display name by `file.type` first, then `file.extension`, and
+falls back to `json`. `displays/index.js` maps the names to components, each loaded on first use.
 
-`FileDisplayWrapper` selects the center display component using two lookup tables:
+| Type / extension | Display | Notes |
+| --- | --- | --- |
+| `image` | `ImageDisplay` | Preview from `/api/thumbnails/<path>`; rotation preview and crop rectangle for quick edits |
+| `pdf` | `PdfDisplay` | The file in an iframe |
+| `text`, `html`, `json`, `csv`, `.txt` | `TextDisplay` | Plain text, or Markdown sanitised with DOMPurify; in-place editing |
+| `ocr.json` | `OcrDisplay` | Source image (from `getFileAncestors`) and text pieces; hovering a piece marks it on the image |
+| `polygons.json` | `LineSegmentsDisplay` | Line polygons over the source image, zoom and pan (`usePanZoom`) |
+| `human.json` | `HumanJsonDisplay` | Face boxes on the source image and per-face details |
+| `similarity.json` | `SimilarityDisplay` | Original text, query text and matches (`similarity.js`) |
+| `.hocr` | `HocrDisplay` | Page image and hOCR lines with image strips; clicking a word makes it editable (not saved) |
+| anything else, `osd.json`, `dspace7.json` | `JsonDisplay` | Pretty-printed JSON or text |
 
-### Primary lookup: `typeMap` (by `file.type`)
+Derived files (OCR, hOCR, face data) find their image with `sourceImage.js` / `getFileAncestors`
+instead of reading ids from the URL. The data parsing of each display is in a plain module with unit
+tests (`ocr.js`, `lineSegments.js`, `hocr.js`, `similarity.js`, `roi/geometry.js`).
 
-| Type | Component |
-|------|-----------|
-| `image` | `MultiDisplay` |
-| `pdf` | `PDFDisplay` |
-| `text` | `TextDisplay` |
-| `html` | `TextDisplay` |
-| `json` | `TextDisplay` |
-| `csv` | `TextDisplay` |
-| `ocr.json` | `OCRDisplay` |
-| `polygons.json` | `LineSegmentationDisplay` |
-| `osd.json` | `OSDDisplay` |
-| `human.json` | `HumanJSONDisplay` |
-| `dspace7.json` | `TextRawDisplay` |
-| `similarity.json` | `SimilarityDisplay` |
+**Verified from:** `src/features/files/fileTypes.js`, `src/features/files/displays/`
 
-### Fallback lookup: `extensionMap` (by `file.extension`)
+## Browsing
 
-| Extension | Component |
-|-----------|-----------|
-| `hocr` | `HOCRDisplay` |
-| `json` | `JSONDisplay` |
-| `txt` | `TextDisplay` |
+The open file and its browse context are in `stores/fileBrowse.js` (`file`, `context`); the old
+store's `store.file` / `store.file_browse_context` point at them.
 
-### Default
-If neither lookup matches, `JSONDisplay` is used.
+- **Set mode** (`{ mode: 'set', set_rid, set_label, file_count, skip, source_rid, source_label }`,
+  `skip` 0-based) is also written to the URL (`browseMode=set&setRid=…&skip=…`), so a reload keeps
+  it. Previous/next fetch the neighbouring file with `getSetFiles(set, skip, 1)`.
+- **Search mode** (`{ mode: 'search', query, results: [{ rid, label, score, highlight }], index }`)
+  steps through the result list the Search or Tags screen handed over.
+- Arrow keys step too, except while typing in a field.
 
-**Verified from:** `src/components/displays/FileDisplayWrapper.vue` (`typeMap`, `extensionMap`, `displayComponent` computed)
+**Lineage offset:** when the user opens an ancestor (or descendant) of the browsed file in the
+lineage panel, the viewer remembers how many file steps away it is. Previous/next then show the file
+at the same offset from each browsed file, e.g. the OCR result of every page in a set.
+`useFileViewer.js` holds this (`contextRid`, `offset`).
 
-**Important invariant (from memory):** Display routing must use the database-backed `file.type` field rather than mutable labels/filenames, since users may relabel files.
+**Verified from:** `src/features/files/useFileViewer.js`, `browseQuery.js`, `lineage.js`
 
-## Key Display Components
+## Quick edits
 
-### MultiDisplay (Images)
-- Shows the image with rotation support
-- Supports crop mode (user draws a rectangle selection)
-- Emits `crop-selection-change` events to parent
-- Uses `thumbnailVersion` prop for cache busting after thumbnail updates
+`useQuickEdit.js`: images can be rotated (preview only until saved) and cropped (draw one rectangle;
+mapped to original image pixels); text files are edited in place. Saving creates a new file version
+(`createFileVersion`), remakes the thumbnail and reloads the file; "Revert quick edit" restores the
+previous version. Reference files (`ref` / `ref_rid`) cannot be edited.
 
-### TextDisplay
-- Renders text with optional Markdown rendering (using `marked` + `DOMPurify` for XSS safety)
-- Supports inline edit mode (textarea)
-- Watches `store.file` changes to reload content
+## ROI editor
 
-### PDFDisplay
-- Uses `vue-pdf-embed` for rendering
+When a region-of-interest set is opened from the desk, `fileBrowse.roiTarget` (the old store's
+`filter_editor`) holds it and the viewer shows `roi/RoiEditor.vue` instead of the display and tools.
+Regions are rectangles, circles and polygons stored in percent of the image, saved per image and ROI
+set with `saveImageROIs` / `updateImageROI` / `deleteImageROI` (auto-save on by default).
 
-### HOCRDisplay
-- Dedicated viewer for hOCR (HTML-based OCR) format
-
-**Verified from:** `src/components/displays/MultiDisplay.vue`, `src/components/displays/TextDisplay.vue`
-
-## Context Bar (Top of File View)
-
-Depending on `store.file_browse_context.mode`:
-- **`set` mode:** `SetTools` component shows prev/next navigation and "back to set" button
-- **`search` mode:** `SearchTools` component shows navigation within search results
-- **No context:** A standalone close button appears
-
-**Verified from:** `src/components/displays/FileDisplayWrapper.vue` (template, top section)
-
-## Right Column: FileTools
-
-`FileTools.vue` provides an accordion panel with:
-1. **FileInfo** — Always visible; shows file metadata
-2. **Tags** — Entity/tag chips for the current file
-3. **Quick edits** (conditional) — Version tools: text edit, image rotate/crop, revert
-4. **Markdown toggle** — Switch for text files
-
-The "Quick edits" panel only appears for images and editable text types (`text`, `csv`, `html`, `json`).
-
-**Verified from:** `src/components/displays/FileTools.vue`
-
-## Left Column: PathPanel
-
-Shows the file's lineage/ancestry tree. Allows clicking ancestors to navigate.
-
-**Verified from:** `src/components/displays/FileDisplayWrapper.vue` (PathPanel usage)
-
-## File Version Workflow
-
-1. User edits text → saves → calls `web.createFileVersion(rid, payload)` 
-2. Backend creates a new version, returns updated file
-3. User can revert with `web.revertFileVersion(rid)`
-4. For images: rotation/crop → creates version with `operation` and `params` metadata
-
-**Verified from:** `src/web.js` (`createFileVersion`, `revertFileVersion`), `test/components/displays/VersionTools.spec.js`
-
-## ROI Editing Mode
-
-When `store.filter_editor` is set (non-null), the center column renders `ImageROIDisplay` instead of the normal type-dispatched component. This happens when a user double-clicks an ROI-set node and has a source image resolved.
-
-**Verified from:** `src/components/displays/FileDisplayWrapper.vue` (template conditional)
+**Verified from:** `src/features/files/roi/`

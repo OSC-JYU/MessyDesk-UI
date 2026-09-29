@@ -8,7 +8,7 @@ The `file.type` field is assigned by the backend after processing. A file named 
 
 **Implication:** Never rely on filename to determine rendering logic. The same `.json` extension can map to completely different display components.
 
-**Verified from:** `src/components/displays/FileDisplayWrapper.vue` (`typeMap` lookup order)
+**Verified from:** `src/features/files/fileTypes.js` (`displayFor` lookup order)
 
 ## 2. `#` Stripping is Manual and Pervasive
 
@@ -52,9 +52,9 @@ If the backend doesn't support project-scoped search, the search method retries 
 
 ## 8. DOMPurify Applied to Markdown but Not All HTML
 
-`TextDisplay` sanitizes markdown-rendered HTML via `DOMPurify`. The help pages (`/api/help`, `/api/services/{id}/help`) arrive as whole HTML documents with their own nav and stylesheet. `features/help/helpContent.js` takes the nav links and the article, drops the backend stylesheet (which used to be injected into the app and restyled it globally), and sanitises the article with DOMPurify before `HelpArticle.vue` renders it with the app's styles.
+`features/files/displays/TextDisplay.vue` sanitizes markdown-rendered HTML via `DOMPurify`. The help pages (`/api/help`, `/api/services/{id}/help`) arrive as whole HTML documents with their own nav and stylesheet. `features/help/helpContent.js` takes the nav links and the article, drops the backend stylesheet (which used to be injected into the app and restyled it globally), and sanitises the article with DOMPurify before `HelpArticle.vue` renders it with the app's styles.
 
-**Verified from:** `src/components/displays/TextDisplay.vue`, `src/features/help/helpContent.js`
+**Verified from:** `src/features/files/displays/TextDisplay.vue`, `src/features/help/helpContent.js`
 
 ## 9. Session Check Redirect Uses Path Substring Match
 

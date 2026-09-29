@@ -100,7 +100,7 @@ This object encodes how the user arrived at the current file view:
 null
 ```
 
-**Verified from:** `src/components/Store.js` (comments), `src/components/displays/FileDisplayWrapper.vue`
+**Verified from:** `src/stores/fileBrowse.js`, `src/features/files/useFileViewer.js`
 
 ## Invariants
 

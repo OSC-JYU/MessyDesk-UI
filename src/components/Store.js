@@ -25,7 +25,8 @@ export const store = reactive({
   groups: [],
   cruncher_filter: '',
   graph_node_update: '',
-  filter_editor: null,
+  get filter_editor() { return fileBrowse.roiTarget },
+  set filter_editor(value) { fileBrowse.roiTarget = value },
   process_creator_open: false,
   uploader_open: false,
   set_uploader_open: false,
@@ -56,7 +57,6 @@ export const store = reactive({
   reorder_target: '',
   settings_show_descriptions: true,
   settings_show_entities: true,
-  settings_text_markdown: false,
   running_processes: {},
 
 

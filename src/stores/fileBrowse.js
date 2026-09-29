@@ -11,6 +11,11 @@ import { reactive } from 'vue'
 export const fileBrowse = reactive({
   file: null,
   context: null,
+  // The ROI set being edited, when the viewer is in ROI editing mode (set
+  // from the desk; the old store calls it filter_editor).
+  roiTarget: null,
+  // Show text files as rendered Markdown.
+  markdown: false,
 })
 
 // Opens `file` from a list of results, remembering the list for previous/next.
