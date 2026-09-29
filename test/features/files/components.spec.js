@@ -11,6 +11,7 @@ import { getNodeFile, createFileVersion } from '@/api/files.js'
 import TextDisplay from '@/features/files/displays/TextDisplay.vue'
 import QuickEditTool from '@/features/files/tools/QuickEditTool.vue'
 import BrowseBar from '@/features/files/BrowseBar.vue'
+import ImageDisplay from '@/features/files/displays/ImageDisplay.vue'
 
 const textFile = { '@rid': '#76:0', type: 'text', label: 'notes.txt' }
 
@@ -97,5 +98,16 @@ describe('BrowseBar', () => {
     expect(wrapper.text()).toContain('a.jpg')
     expect(wrapper.find('[aria-label="Next file"]').exists()).toBe(false)
     expect(wrapper.find('[aria-label="Close file"]').exists()).toBe(true)
+  })
+})
+
+describe('ImageDisplay', () => {
+  it('shows the "not ready" placeholder when the preview is missing', async () => {
+    const display = mount(ImageDisplay, {
+      props: { file: { '@rid': '#1:0', path: 'data/x/1_0/a.jpg', label: 'a.jpg' } },
+    })
+    await display.get('img').trigger('error')
+    expect(display.text()).toContain('Preview not ready yet')
+    expect(display.find('.image-display__missing').exists()).toBe(true)
   })
 })

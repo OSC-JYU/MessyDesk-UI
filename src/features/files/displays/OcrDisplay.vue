@@ -5,6 +5,7 @@ import DisplayFrame from './DisplayFrame.vue'
 import { useFileContent } from '../useFileContent.js'
 import { previewUrl } from '../fileUrls.js'
 import { parseOcrRegions } from '../ocr.js'
+import ThumbnailImage from '@/ui/ThumbnailImage.vue'
 
 // OCR result: the source image, and the recognised text pieces. Hovering a
 // piece of text shows where it is on the image.
@@ -43,7 +44,7 @@ function regionStyle(region) {
   <div class="ocr">
     <div class="ocr__image">
       <div v-if="imagePath" class="ocr__stage">
-        <img :src="previewUrl(imagePath)" alt="Source image" class="ocr__img" />
+        <ThumbnailImage :src="previewUrl(imagePath)" alt="Source image" class="ocr__img" />
         <div
           v-for="(region, index) in regions"
           v-show="hovered === index"

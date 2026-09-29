@@ -7,6 +7,7 @@ import ErrorAlert from '@/ui/ErrorAlert.vue'
 import { previewUrl } from '../fileUrls.js'
 import { imageAncestorPath, parseLineSegments } from '../lineSegments.js'
 import { usePanZoom } from '../usePanZoom.js'
+import ThumbnailImage from '@/ui/ThumbnailImage.vue'
 
 // Text line segmentation: the line polygons over the source image, and a
 // list of lines. Hovering either highlights the line in both.
@@ -18,6 +19,8 @@ const state = reactive({
   loading: true,
   error: null,
   overlay: { width: 0, height: 0 },
+  // The preview is not made yet (the backend answered 404).
+  imageFailed: false,
 })
 const active = ref(null)
 const image = ref(null)
@@ -49,7 +52,13 @@ function onImageLoad() {
 watch(
   () => props.file['@rid'],
   async (rid) => {
-    Object.assign(state, { loading: true, error: null, data: null, imagePath: null })
+    Object.assign(state, {
+      loading: true,
+      error: null,
+      data: null,
+      imagePath: null,
+      imageFailed: false,
+    })
     active.value = null
     zoom.reset()
     try {
@@ -78,6 +87,7 @@ onUnmounted(() => resizer?.disconnect())
         title="Could not load the line segmentation"
       />
       <p v-else-if="!state.imagePath" class="lines__muted">No source image available.</p>
+      <ThumbnailImage v-else-if="state.imageFailed" alt="Source image" class="lines__pending" />
       <div v-else class="lines__stage" v-on="zoom.handlers" @wheel.prevent="zoom.onWheel">
         <div class="lines__canvas" :style="zoom.style.value">
           <img
@@ -86,6 +96,7 @@ onUnmounted(() => resizer?.disconnect())
             alt="Source image"
             class="lines__img"
             @load="onImageLoad"
+            @error="state.imageFailed = true"
           />
           <svg
             v-if="state.overlay.width"
@@ -248,6 +259,11 @@ onUnmounted(() => resizer?.disconnect())
   align-items: center;
   gap: var(--md-space-2);
   margin-block: var(--md-space-3) var(--md-space-1);
+}
+
+.lines__pending {
+  max-width: var(--md-card-min-width);
+  margin: var(--md-space-6) auto;
 }
 
 .lines__muted {

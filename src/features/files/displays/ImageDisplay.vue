@@ -2,6 +2,7 @@
 import { computed, onUnmounted, reactive, ref, watch } from 'vue'
 import { fileUrl, previewUrl } from '../fileUrls.js'
 import { rectBetween, toImagePixels } from '../imageEdit.js'
+import ThumbnailImage from '@/ui/ThumbnailImage.vue'
 
 // An image, with the rotation preview and the crop rectangle of the
 // viewer's quick edits. The viewer reads the crop through the exposed
@@ -136,10 +137,7 @@ defineExpose({
       />
       <div v-if="state.selection" class="image-display__crop" :style="selectionStyle" />
     </div>
-    <div v-else class="image-display__missing">
-      <v-icon icon="mdi-image-off-outline" size="64" aria-hidden="true" />
-      <p>Image not available</p>
-    </div>
+    <ThumbnailImage v-else :alt="file.label || 'Image'" class="image-display__missing" />
   </div>
 </template>
 
@@ -181,7 +179,7 @@ defineExpose({
 }
 
 .image-display__missing {
-  text-align: center;
-  color: var(--md-color-text-muted);
+  max-width: var(--md-card-min-width);
+  margin: var(--md-space-6) auto;
 }
 </style>

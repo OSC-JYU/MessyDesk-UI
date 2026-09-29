@@ -18,6 +18,7 @@ import {
   rectHandles,
   rectPx,
 } from './geometry.js'
+import ThumbnailImage from '@/ui/ThumbnailImage.vue'
 
 // Draw, move, resize and label regions of interest (rectangles, circles,
 // polygons) on an image, for one ROI set.
@@ -34,6 +35,8 @@ const rois = useRois(
 const shapes = computed(() => rois.state.shapes)
 
 const image = ref(null)
+// The preview is not made yet (the backend answered 404).
+const imageFailed = ref(false)
 const size = reactive({ width: 0, height: 0 })
 const tool = ref('rect')
 const showLabels = ref(true)
@@ -177,6 +180,7 @@ watch(
 watch(
   () => props.file['@rid'],
   () => {
+    imageFailed.value = false
     selectedId.value = null
     Object.assign(polygon, { points: [], hover: null })
   },
@@ -202,6 +206,7 @@ onUnmounted(() => {
       @dblclick.stop.prevent="tool === 'polygon' && finishPolygon()"
     >
       <LoadingState v-if="rois.state.loading" text="Loading regions…" />
+      <ThumbnailImage v-else-if="imageFailed" alt="Image" class="roi__pending" />
       <div v-else class="roi__stage">
         <img
           ref="image"
@@ -210,6 +215,7 @@ onUnmounted(() => {
           class="roi__img"
           draggable="false"
           @load="measure"
+          @error="imageFailed = true"
         />
         <svg v-if="size.width" class="roi__overlay" :width="size.width" :height="size.height">
           <g
@@ -376,5 +382,9 @@ onUnmounted(() => {
   bottom: var(--md-space-4);
   left: var(--md-space-4);
   max-width: var(--md-dialog-width);
+}
+.roi__pending {
+  max-width: var(--md-card-min-width);
+  margin: var(--md-space-6) auto;
 }
 </style>
