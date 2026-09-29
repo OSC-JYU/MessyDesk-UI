@@ -397,6 +397,11 @@ test('desk: select a node, open its crunchers, isolate it, and use the drawer', 
   await open(page, `/project/${rid}`)
   const panel = page.getByRole('complementary', { name: 'Selected item' })
   await expect(page.locator('.gnode__label').first()).not.toBeEmpty()
+  // Handles only anchor edges: invisible and not connectable.
+  const handle = page.locator('.vue-flow__handle').first()
+  await expect(handle).toHaveCSS('opacity', '0')
+  await expect(handle).not.toHaveClass(/connectable/)
+  expect(await page.locator('.vue-flow__edge').count()).toBeGreaterThan(0)
 
   const node = page.locator('.vue-flow__node-text').first()
   test.skip(!(await node.count()), 'project has no text files')

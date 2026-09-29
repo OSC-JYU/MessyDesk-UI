@@ -42,8 +42,22 @@ defineExpose({ crunch })
     <div class="gnode__body">
       <slot :crunch="crunch" />
     </div>
-    <Handle id="a" type="target" :position="Position.Left" />
-    <Handle id="b" type="source" :position="Position.Right" />
+    <Handle
+      id="a"
+      type="target"
+      :position="Position.Left"
+      :connectable="false"
+      :connectable-start="false"
+      :connectable-end="false"
+    />
+    <Handle
+      id="b"
+      type="source"
+      :position="Position.Right"
+      :connectable="false"
+      :connectable-start="false"
+      :connectable-end="false"
+    />
     <slot name="handles" />
   </div>
 </template>

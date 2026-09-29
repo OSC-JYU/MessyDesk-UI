@@ -21,10 +21,11 @@
   stroke-width: 3;
 }
 
+/* The graph is not a node editor: handles only anchor the edges, so they
+   are invisible and cannot start a connection (connectable: false). */
 .desk-graph .vue-flow__handle {
-  width: var(--md-space-2);
-  height: var(--md-space-2);
-  background: var(--md-color-text-muted);
+  opacity: 0;
+  pointer-events: none;
 }
 
 .desk-graph .gnode-icons {

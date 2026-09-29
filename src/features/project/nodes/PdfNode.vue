@@ -25,9 +25,30 @@ const src = computed(() => versioned(props.data.image, props.data.thumbnail_vers
       {{ data.metadata.page_count || 'n/a' }} pages · {{ data.metadata.size }} MB
     </p>
     <template #handles>
-      <Handle id="r" type="target" :position="Position.Right" />
-      <Handle id="t" type="source" :position="Position.Top" />
-      <Handle id="l" type="source" :position="Position.Left" />
+      <Handle
+        id="r"
+        type="target"
+        :position="Position.Right"
+        :connectable="false"
+        :connectable-start="false"
+        :connectable-end="false"
+      />
+      <Handle
+        id="t"
+        type="source"
+        :position="Position.Top"
+        :connectable="false"
+        :connectable-start="false"
+        :connectable-end="false"
+      />
+      <Handle
+        id="l"
+        type="source"
+        :position="Position.Left"
+        :connectable="false"
+        :connectable-start="false"
+        :connectable-end="false"
+      />
     </template>
   </NodeShell>
 </template>

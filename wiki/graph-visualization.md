@@ -55,6 +55,12 @@ event. `useDeskGraph` handles:
 Batch progress (`batch_*` events) goes to `stores/batchStore.js` and the floating jobs panel
 (`features/jobs/JobsPanel.vue`).
 
+## Handles
+
+The graph is not a node editor. Handles only anchor the edges: they are invisible (`graph.css`) and not
+connectable (`connectable`, `connectable-start`, `connectable-end` false on every handle, and
+`nodes-connectable` false on the canvas), so edges stay attached but no new ones can be drawn.
+
 ## Views
 
 - **Isolate** shows only the selected node and everything above and below it.

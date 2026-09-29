@@ -64,7 +64,21 @@ export const ZipNode = node((data) =>
 export const SearchSetNode = node((data) =>
   h('div', { class: 'search-set-node', title: data.label || 'Search index' }, [
     h('i', { class: 'mdi mdi-magnify', 'aria-hidden': 'true' }),
-    h(Handle, { id: 'a', type: 'target', position: Position.Left }),
-    h(Handle, { id: 'b', type: 'source', position: Position.Right }),
+    h(Handle, {
+      id: 'a',
+      type: 'target',
+      position: Position.Left,
+      connectable: false,
+      connectableStart: false,
+      connectableEnd: false,
+    }),
+    h(Handle, {
+      id: 'b',
+      type: 'source',
+      position: Position.Right,
+      connectable: false,
+      connectableStart: false,
+      connectableEnd: false,
+    }),
   ]),
 )

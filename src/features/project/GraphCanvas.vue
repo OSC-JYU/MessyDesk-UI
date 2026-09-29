@@ -105,6 +105,7 @@ watch(
         :nodes="desk.graph.nodes"
         :edges="desk.graph.edges"
         :node-types="nodeTypes"
+        :nodes-connectable="false"
         :default-zoom="0.5"
         :min-zoom="0.1"
         :max-zoom="4"
