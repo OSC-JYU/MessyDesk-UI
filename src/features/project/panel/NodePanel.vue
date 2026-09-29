@@ -108,7 +108,7 @@ const saveLabel = async (value) => {
       <ProcessDetailsDialog v-if="isProcess" v-model="detailsOpen" :node="node" />
     </template>
 
-    <template v-else>
+    <div v-else>
       <h2 class="node-panel__title">{{ workspace.state.desk?.label || 'Desk' }}</h2>
       <p v-if="workspace.state.desk?.description" class="node-panel__muted">
         {{ workspace.state.desk.description }}
@@ -124,9 +124,10 @@ const saveLabel = async (value) => {
         variant="flat"
         prepend-icon="mdi-upload"
         @click="workspace.uploadToDesk()"
-        >Upload file</v-btn
       >
-    </template>
+        Upload file
+      </v-btn>
+    </div>
   </aside>
 </template>
 

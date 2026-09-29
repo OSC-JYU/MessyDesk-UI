@@ -9,7 +9,6 @@ import { vuetify } from './vuetify.js'
 import '@/styles/fonts.css'
 import '@/styles/tokens.css'
 import '@/styles/reset.css'
-import '@/styles/legacy.css'
 
 import { router } from './router.js'
 import { i18n } from './i18n.js'

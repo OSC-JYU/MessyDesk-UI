@@ -62,8 +62,6 @@ const links = [
         </v-list>
       </v-card>
     </div>
-
-    <p class="about-page__image-credit">Background illustration by BiancaVanDijk.</p>
   </div>
 </template>
 
@@ -103,9 +101,4 @@ const links = [
   font-weight: var(--md-font-weight-bold);
 }
 
-.about-page__image-credit {
-  margin: var(--md-space-5) 0 0;
-  font-size: var(--md-font-size-xs);
-  color: var(--md-color-text-muted);
-}
 </style>

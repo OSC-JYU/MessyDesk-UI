@@ -1,4 +1,7 @@
 <script setup>
+// Vue Flow passes more props (id, label, position, …) than a node uses;
+// they must not fall through onto the frame.
+defineOptions({ inheritAttrs: false })
 import { computed } from 'vue'
 import NodeShell from './NodeShell.vue'
 import { versioned } from './thumbnails.js'

@@ -18,31 +18,27 @@ ArcadeDB RIDs include a `#` prefix (`#21:5`). Every API method in `web.js` strip
 
 ## 3. SSE Reconnection Resets State
 
-When SSE reconnects after a failure, there's no mechanism to replay missed events. If a node was added during the disconnection window, the graph won't show it until the next full reload (triggered by `store.reload()`).
+When SSE reconnects after a failure, there's no mechanism to replay missed events (only batch jobs are re-read with `batchStore.hydrate()`). If a node was added during the disconnection window, the graph won't show it until the next reload (`workspace.reload()`).
 
-**Verified from:** `src/components/GraphDisplay.vue` (`connectSSE`)
+**Verified from:** `src/services/events.js`, `src/features/project/useDeskGraph.js`
 
-## 4. `GraphDisplay` Uses `keep-alive`
+## 4. The Graph Canvas Uses `keep-alive`
 
-The `GraphDisplay` component is cached via `<keep-alive>` when navigating to search/entities/file views within a project. This means:
-- The VueFlow instance stays mounted
-- SSE connection stays open
-- Batch polling continues
-- Returning to graph view shows stale data unless an SSE event triggered an update
+`GraphCanvas` is cached with `<keep-alive>` while moving to the desk's search, tags or file views. The Vue Flow instance stays mounted and keeps applying SSE updates, so returning to the graph shows it as it was, without a reload.
 
-**Verified from:** `src/components/GraphMain.vue` (template)
+**Verified from:** `src/features/project/ProjectWorkspace.vue` (template)
 
 ## 5. Position Persistence on Drag (100px Grid Snap)
 
-Dragging a node snaps its position to a 100px grid: `Math.round(position/100)*100`. This happens client-side before saving. If the backend stores sub-grid positions, they'll be overwritten on next drag.
+Dragging a node snaps its position to a 100px grid: `Math.round(position/100)*100`, then saves it with `setProjectAttribute(node, { key: 'position' })`. The graph is still laid out with dagre on load, so saved positions are not used for drawing.
 
-**Verified from:** `src/components/GraphDisplay.vue` (`onNodeDragStop`)
+**Verified from:** `src/features/project/useDeskGraph.js` (`onNodeDragStop`)
 
-## 6. Concurrent Dialog Opening is Possible
+## 6. Dialogs Are Opened Through the Workspace
 
-Store flags like `uploader_open`, `crunchers_open`, etc. are independent booleans. Nothing prevents multiple dialogs from being `true` simultaneously. In practice this rarely happens due to UI flow, but programmatic state manipulation could cause it.
+The desk's dialogs (crunchers, delete node, create set, create source, uploads) are opened with workspace actions (`useWorkspace()`), not global flags. Uploads are one-shot requests: bumping `dialogs.upload.request` or `dialogs.setUpload.request` makes `UploadController` click a hidden file input.
 
-**Verified from:** `src/components/Store.js`
+**Verified from:** `src/features/project/useWorkspace.js`, `dialogs/UploadController.vue`
 
 ## 7. `web.search()` Falls Back Silently on Project Filter Failure
 
@@ -62,11 +58,11 @@ If the backend doesn't support project-scoped search, the search method retries 
 
 **Verified from:** `src/app/App.vue` (`login` function)
 
-## 10. Two Bootstrap + Vuetify Coexistence
+## 10. Bootstrap Is Still Loaded
 
-Both frameworks register global styles. Bootstrap's grid system and Vuetify's grid system (`v-row`/`v-col`) coexist. Some components use Bootstrap classes (`row`, `col-12`), others use Vuetify equivalents. Mixing them in the same template can cause layout conflicts.
+Every screen is built with Vuetify, but `src/app/main.js` still imports Bootstrap's CSS and JS; stage 8 of the rewrite removes them. New code must not use Bootstrap classes (`npm run lint` checks).
 
-**Verified from:** `src/app/App.vue` (imports), component templates
+**Verified from:** `src/app/main.js`
 
 ## 11. File Upload Accepts Limited Formats
 
@@ -76,33 +72,20 @@ The uploader restricts accepted file types client-side via the `accept` attribut
 
 This is purely UI guidance—the backend may accept other formats.
 
-**Direct-to-picker UX**: Clicking an "Upload" button does not open a `v-file-input`-based dialog anymore.
-`store.uploader_open`/`store.set_uploader_open` are one-shot triggers that `Uploader.vue` watches to
-immediately `.click()` a hidden native `<input type="file">`. For the main-desk (single-file) upload, the
-file is sent as soon as it's chosen — no confirmation step. For Set (multi-file) upload, `store.set_uploader_open`
-is flipped back to `true` only after files are picked, showing a minimal confirm/progress card (file count,
+**Direct-to-picker UX**: Clicking an "Upload" button opens the native file picker straight away (see §6).
+For the main-desk (single-file) upload, the file is sent as soon as it's chosen — no confirmation step. For
+Set (multi-file) upload, a minimal confirm/progress dialog shows after files are picked (file count,
 large-upload and PDF-gating warnings, Upload/Cancel) rather than a file-browsing step.
 
 **PDF gating**: When the PDF splitter service (`md-pypdf_fs`) has no active consumers, the uploader disables
-the Upload button (Set flow) or aborts with an alert (main-desk flow) for PDF files. The backend also enforces
+the Upload button (Set flow) or stops with an error message (main-desk flow) for PDF files. The backend also enforces
 this with HTTP 503. The original PDF is always deleted after splitting (no user-facing toggle;
 `delete_original` defaults to `true` server-side and the UI never overrides it to `false`).
 
-**Verified from:** `src/components/Uploader.vue`
+**Verified from:** `src/features/project/dialogs/UploadController.vue`
 
-## 12. `current_node` Shape is Polymorphic
+## 12. The Selected Node Is a Vue Flow Node
 
-`store.current_node` can be:
-- A VueFlow node object (from graph click): `{ id, type, data: { label, type, ... }, position }`
-- `null` (pane click deselect)
-- An object with `{ data: { name: '', type: '' } }` (initial state)
+`workspace.state.selected` is a Vue Flow node (`{ id, type, data, position }`) or `null`. `node.type` picks the node component (`text`, `image`, `set`, `setprocess`, … and `file` for unknown file types), while `node.data.type` keeps the file type from the backend.
 
-Components that read `current_node` must handle all shapes.
-
-**Verified from:** `src/components/Store.js`, `src/components/GraphDisplay.vue`
-
-## 13. Batch Refresh Continues Even When No Processes Are Running
-
-The 3-second `setInterval` for batch polling runs unconditionally while `GraphDisplay` is mounted (which is always, due to keep-alive). It polls `web.getBatch()` for each entry in `store.running_processes` regardless of whether any are active.
-
-**Verified from:** `src/components/GraphDisplay.vue` (`batchRefreshTimer`)
+**Verified from:** `src/features/project/graphModel.js`, `nodes/index.js`

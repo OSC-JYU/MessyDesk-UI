@@ -1,15 +1,10 @@
 <script setup>
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
 import AppHeader from './AppHeader.vue'
-
-const route = useRoute()
-const legacy = computed(() => route.matched.some((r) => r.meta.legacy))
 </script>
 
 <template>
   <AppHeader />
-  <v-main class="app-main" :class="{ 'legacy-screen': legacy }">
+  <v-main class="app-main">
     <slot />
   </v-main>
 </template>

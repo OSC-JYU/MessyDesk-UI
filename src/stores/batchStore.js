@@ -1,5 +1,5 @@
 import { reactive } from 'vue'
-import web from '../web.js'
+import { cancelBatch, dismissJob, getActiveJobs, pauseBatch, resumeBatch } from '@/api/services.js'
 
 export const batchStore = reactive({
   // Map of set_process RID → job state
@@ -114,22 +114,22 @@ batchStore.handleEvent = function (event) {
 // --- Actions (called by UI components) ---
 batchStore.pause = async function (rid) {
   if (this.jobs[rid]) this.jobs[rid].status = 'pausing'
-  await web.pauseBatch(rid)
+  await pauseBatch(rid)
 }
 
 batchStore.resume = async function (rid) {
   if (this.jobs[rid]) this.jobs[rid].status = 'resuming'
-  await web.resumeBatch(rid)
+  await resumeBatch(rid)
 }
 
 batchStore.cancel = async function (rid) {
   if (this.jobs[rid]) this.jobs[rid].status = 'cancelling'
-  await web.cancelBatch(rid)
+  await cancelBatch(rid)
 }
 
 batchStore.dismiss = async function (rid) {
   try {
-    await web.dismissJob(rid)
+    await dismissJob(rid)
   } catch (e) {
     console.log('dismiss failed:', e?.message)
   }
@@ -139,7 +139,7 @@ batchStore.dismiss = async function (rid) {
 // --- Hydration (on app load / reconnect) ---
 batchStore.hydrate = async function () {
   try {
-    const active = await web.getActiveJobs()
+    const active = await getActiveJobs()
     if (Array.isArray(active)) {
       for (const job of active) {
         const rid = job.set_process || job.rid

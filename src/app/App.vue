@@ -5,8 +5,7 @@ import { session } from '@/stores/session.js'
 import { ready } from '@/api/session.js'
 import { connect as connectEvents, disconnect as disconnectEvents } from '@/services/events.js'
 import AppShell from './AppShell.vue'
-// eslint-disable-next-line no-restricted-imports -- replaced in stage 7
-import BatchProgressPanel from '@/components/BatchProgressPanel.vue'
+import JobsPanel from '@/features/jobs/JobsPanel.vue'
 
 const route = useRoute()
 let pingTimer = null
@@ -52,13 +51,11 @@ onUnmounted(() => {
       </v-alert>
     </div>
     <template v-else>
-      <div v-if="route.meta.shell === false" :class="{ 'legacy-screen': route.meta.legacy }">
-        <router-view />
-      </div>
+      <router-view v-if="route.meta.shell === false" />
       <AppShell v-else>
         <router-view />
       </AppShell>
-      <BatchProgressPanel />
+      <JobsPanel />
     </template>
   </v-app>
 </template>

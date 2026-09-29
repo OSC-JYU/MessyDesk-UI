@@ -45,11 +45,11 @@ Sets support:
 Once a Set has been used as the input of a batch cruncher run, it is **locked**: no more files can be
 added to it. There is no mechanism to re-run or extend a finished batch to cover files added afterwards,
 so the backend rejects uploads into an already-processed Set (`Graph.hasSetBeenProcessed`, checked in
-the upload route) and the UI hides the upload button in favor of a warning (`NodeCard.vue`'s `setLocked`,
+the upload route) and the UI hides the upload button in favor of a warning (`panel/NodeTools.vue`'s `setLocked`,
 backed by the `processed` flag on the Set's graph node data). See
 [processing-crunchers.md](processing-crunchers.md#set-locking-after-batch-processing).
 
-**Verified from:** `src/components/GraphDisplay.vue`, `src/components/displays/SetPanel.vue`, `src/web.js`, `src/components/NodeCard.vue`
+**Verified from:** `src/features/project/` (`graphModel.js`, `SetBrowser.vue`, `panel/NodeTools.vue`), `src/web.js`
 
 ## Source
 
@@ -59,7 +59,7 @@ An external data provider connected to a project. Known source types:
 
 Sources are created within a project and appear as graph nodes. They can be targets for batch processing.
 
-**Verified from:** `src/components/GraphDisplay.vue` (node types), `src/components/SourceCreator.vue`, `src/web.js`
+**Verified from:** `src/features/project/nodes/index.js` (node types), `dialogs/CreateSourceDialog.vue`, `src/web.js`
 
 ## Entity (Tag)
 
@@ -89,7 +89,7 @@ Rectangular selections on images. ROIs:
 - Can be used as input for targeted processing (e.g., OCR a specific region)
 - Have their own graph node type (`roi-set`)
 
-**Verified from:** `src/web.js` (ROI methods), `src/components/GraphDisplay.vue` (ROI node handling)
+**Verified from:** `src/web.js` (ROI methods), `src/features/project/useOpenNode.js` (ROI set handling)
 
 ## Cruncher/Process
 
@@ -123,4 +123,4 @@ The backend uses a directed graph (ArcadeDB). Key relationship patterns visible 
 - Entity → File (tagged with)
 - Process → File (produces)
 
-**Inferred from:** `src/components/GraphDisplay.vue` (node double-click logic, `getIncomers` traversal), `src/web.js`
+**Inferred from:** `src/features/project/useOpenNode.js`, `nodeKinds.js` (`roiSourceNode`), `src/web.js`

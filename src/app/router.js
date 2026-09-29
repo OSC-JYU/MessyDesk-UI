@@ -1,11 +1,8 @@
-/* eslint-disable no-restricted-syntax -- the router is the switch between old and new screens */
 import { createRouter, createWebHistory } from 'vue-router'
 import { session } from '@/stores/session.js'
 
-// Each route points at its old view until the new version replaces it.
 // meta.title sets the page title; meta.shell === false hides the app header;
-// meta.drawer shows the header's drawer button for the project workspace;
-// meta.legacy marks a route still served by an old view (see styles/legacy.css).
+// meta.drawer shows the header's drawer button for the project workspace.
 const routes = [
   {
     path: '/',
@@ -23,32 +20,32 @@ const routes = [
 
   {
     path: '/project/:rid',
-    component: () => import('@/components/GraphMain.vue'),
-    meta: { legacy: true, drawer: true, inProject: true },
+    component: () => import('@/features/project/ProjectWorkspace.vue'),
+    meta: { drawer: true, inProject: true },
     children: [
       {
         path: '',
         name: 'project-graph',
-        component: () => import('@/components/GraphDisplay.vue'),
-        meta: { legacy: true, title: 'Desk' },
+        component: () => import('@/features/project/GraphCanvas.vue'),
+        meta: { title: 'Desk' },
       },
       {
         path: 'search',
         name: 'project-search',
         component: () => import('@/features/search/SearchPage.vue'),
-        meta: { legacy: true, title: 'Search' },
+        meta: { title: 'Search' },
       },
       {
         path: 'entities',
         name: 'project-entities',
         component: () => import('@/features/tags/TagsPage.vue'),
-        meta: { legacy: true, title: 'Tags' },
+        meta: { title: 'Tags' },
       },
       {
         path: 'file/:fileRid',
         name: 'project-file',
         component: () => import('@/features/files/FileViewer.vue'),
-        meta: { legacy: true, title: 'File' },
+        meta: { title: 'File' },
       },
     ],
   },

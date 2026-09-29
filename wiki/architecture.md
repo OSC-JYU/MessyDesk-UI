@@ -29,38 +29,24 @@ MessyDesk-UI is a Vue 3 single-page application that serves as the frontend for 
 
 ```
 src/
-├── app/                 # New shell: main.js (bootstrap), router.js (route table, the old/new switch),
-│                        # App.vue (session check, SSE connect, BatchProgressPanel), AppShell.vue +
-│                        # AppHeader.vue (the one header), vuetify.js, i18n.js
-├── styles/              # tokens.css, reset.css, vuetify-theme.js, legacy.css (old global rules)
-├── api/                 # Area modules (projects, files, services, search, entities, admin, session);
-│                        # thin wrappers over web.js for now
-├── stores/              # session.js (signed-in user), ui.js (header/drawer state), batchStore.js
-├── ui/                  # Shared UI kit (stage 1)
-├── features/            # Rewritten screens by area (stages 2-7)
-├── web.js               # Legacy Axios API client, emptied as callers move to api/
-├── services/
-│   └── events.js        # Single SSE connection manager (routes events to stores/DOM)
-└── components/          # Old UI, replaced route by route (see rewrite.md)
-    ├── Store.js         # Old global reactive store (store.user delegates to stores/session.js)
-    ├── BatchProgressPanel.vue  # Floating batch progress panel (rendered in app/App.vue)
-    ├── GraphMain.vue    # Project workspace: drawer + nested route views
-    ├── ProjectDrawer.vue # Project side drawer, toggled from the app header
-    ├── GraphDisplay.vue # Graph canvas (VueFlow) + set panel (listens md-sse events)
-    ├── displays/        # File content viewers (type-dispatched)
-    ├── nodes/           # Graph node renderers (per type)
-    └── ...              # Dialogs, forms, lists
+├── app/        main.js (bootstrap), router.js, App.vue (session check, SSE, jobs panel),
+│               AppShell.vue + AppHeader.vue, vuetify.js, i18n.js
+├── styles/     tokens.css (Fjord light/dark), reset.css, fonts.css, vuetify-theme.js
+├── api/        area modules (projects, files, services, search, entities, admin, session)
+├── stores/     session, ui, fileBrowse, pageMemory, batchStore
+├── ui/         shared UI kit
+├── features/   home, project (desk graph), files (viewer), search, tags, services, admin, help, jobs
+├── services/   events.js (single SSE connection)
+└── web.js      old Axios client behind api/
 ```
 
 ## Architectural Decisions
 
-### 1. No Formal State Management Library
+### 1. Small Stores, No Global Store
 
-State lives in a single `reactive({})` object exported from `Store.js`. Components import it directly. There is no action/mutation/getter pattern. Any component can read or mutate `store.*` properties.
+State lives in small reactive modules in `src/stores/`, and the state of one desk in a workspace shared with provide/inject (`features/project/useWorkspace.js`). See [state-management.md](state-management.md).
 
-**Implication:** Changes propagate via Vue's reactivity system. There is no event log or devtools integration for state changes.
-
-**Verified from:** `src/components/Store.js`
+**Verified from:** `src/stores/`
 
 ### 2. Dual CSS Framework (Vuetify + Bootstrap)
 
@@ -74,15 +60,15 @@ Real-time updates (node additions, process progress) arrive via SSE at `{apiUrl}
 
 Components receive events via:
 - `batchStore` — batch/process events are routed directly to the reactive store
-- `window` custom event `md-sse` — graph-specific events (add, update) are dispatched for `GraphDisplay.vue`
+- `window` custom event `md-sse` — graph events (add, update) are applied by `features/project/useDeskGraph.js`
 
 **Verified from:** `src/services/events.js`, `src/app/App.vue`
 
 ### 4. Dagre for Graph Layout
 
-Node positions are computed by the `dagre` library via the `useLayout` composable. Fixed node dimensions (200×200) are used regardless of actual rendered size. Direction defaults to `LR` (left-to-right).
+Node positions are computed by the `dagre` library by `layoutLeftToRight` in `graphModel.js`. Fixed node dimensions (200×200) are used regardless of actual rendered size. Direction defaults to `LR` (left-to-right).
 
-**Verified from:** `src/components/useLayout.js`
+**Verified from:** `src/features/project/graphModel.js` (`layoutLeftToRight`)
 
 ### 5. File Type Dispatch Pattern
 

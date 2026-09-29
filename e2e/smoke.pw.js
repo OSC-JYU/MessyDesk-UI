@@ -42,6 +42,8 @@ async function open(page, path) {
   // The floating batch panel (shown while jobs run) can cover buttons.
   await page.addStyleTag({ content: '.batch-progress-panel { display: none !important; }' })
   await expect(page.locator('.v-application')).toBeVisible()
+  // A compile error shows Vite's overlay instead of failing the page.
+  await expect(page.locator('vite-error-overlay')).toHaveCount(0)
   return errors
 }
 
@@ -92,7 +94,7 @@ test('node delete asks for confirmation and can be cancelled', async ({ page, re
     .first()
   test.skip(!(await node.count()), 'project has no file nodes')
   await node.click()
-  await page.getByTitle('delete item').click()
+  await page.getByRole('complementary', { name: 'Selected item' }).getByRole('button', { name: 'Delete' }).click()
 
   const dialog = page.getByRole('alertdialog', { name: 'Delete node' })
   await expect(dialog).toBeVisible()
@@ -256,7 +258,7 @@ test('cruncher list opens from a file on the desk', async ({ page, request }) =>
   const rid = await firstProjectRid(request)
   test.skip(!rid, 'backend has no projects')
   await open(page, `/project/${rid}`)
-  const cookie = page.locator('.vue-flow__node-text img[title="Add cruncher"]').first()
+  const cookie = page.locator('.vue-flow__node-text [title="Add cruncher"]').first()
   test.skip(!(await cookie.count()), 'project has no text file nodes')
   await cookie.click()
   const dialog = page.locator('.v-overlay--active .v-card').filter({ hasText: 'Crunchers for' }).first()
@@ -387,4 +389,54 @@ test('stand-alone file view opens a file outside a desk', async ({ page, request
   test.skip(!fileRid, 'project has no text files')
   await open(page, `/files/${fileRid}`)
   await expect(page.locator('pre.text-display--plain')).toBeVisible()
+})
+
+test('desk: select a node, open its crunchers, isolate it, and use the drawer', async ({ page, request }) => {
+  const rid = await firstProjectRid(request)
+  test.skip(!rid, 'backend has no projects')
+  await open(page, `/project/${rid}`)
+  const panel = page.getByRole('complementary', { name: 'Selected item' })
+  await expect(page.locator('.gnode__label').first()).not.toBeEmpty()
+
+  const node = page.locator('.vue-flow__node-text').first()
+  test.skip(!(await node.count()), 'project has no text files')
+  const label = (await node.locator('.gnode__label').textContent()).trim()
+  await node.click()
+  await expect(panel.getByRole('heading', { name: label })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Isolate' }).click()
+  await expect(page.getByRole('button', { name: 'Show all' })).toBeVisible()
+  await page.getByRole('button', { name: 'Show all' }).click()
+
+  await page.getByRole('button', { name: 'Hide processes' }).click()
+  await expect(page.locator('.vue-flow__node-process:visible')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Show processes' }).click()
+
+  await page.getByRole('button', { name: 'Open desk menu' }).click()
+  const drawer = page.locator('.v-navigation-drawer')
+  await expect(drawer.getByText('Add file')).toBeVisible()
+  await drawer.getByText('Create set').click()
+  const dialog = page.locator('.v-overlay--active .v-card').filter({ hasText: 'Create set' }).first()
+  await expect(dialog).toBeVisible()
+  await dialog.getByRole('button', { name: 'Cancel' }).click()
+  await expect(dialog).toBeHidden()
+})
+
+test('desk: a set opens in the set browser and closes back to the graph', async ({ page, request }) => {
+  const rid = await firstProjectRid(request)
+  test.skip(!rid, 'backend has no projects')
+  await open(page, `/project/${rid}`)
+  const set = page.locator('.vue-flow__node-set').filter({ hasText: 'files' }).first()
+  test.skip(!(await set.count()), 'project has no sets with files')
+  await set.dblclick()
+  const grid = page.locator('.set-browser')
+  await expect(grid).toBeVisible()
+  await expect(grid.locator('.result-card').first()).toBeVisible()
+  await page.screenshot({ path: `e2e/screenshots/${label}/desk-set-1440.png` })
+  await grid.locator('.result-card').first().click()
+  await expect(page).toHaveURL(/browseMode=set/)
+  await page.getByRole('button', { name: 'Back to set' }).click()
+  await expect(page.locator('.set-browser')).toBeVisible()
+  await page.getByRole('button', { name: 'Close set' }).click()
+  await expect(page.locator('.vue-flow')).toBeVisible()
 })

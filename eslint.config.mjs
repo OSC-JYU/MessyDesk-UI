@@ -3,8 +3,8 @@ import pluginVue from 'eslint-plugin-vue'
 import globals from 'globals'
 import prettier from 'eslint-config-prettier'
 
-// Old code under src/components/ and src/web.js is replaced route by route
-// (see wiki/rewrite.md) and is not linted; everything else is.
+// src/web.js is the old API client, emptied as callers move to src/api/; it
+// is not linted. Everything else is.
 export default [
   {
     ignores: [

@@ -14,13 +14,10 @@ var state = reactive({ ... })
 ```
 No `ref()` for complex state objects. `ref()` is used for single primitive values (e.g., pagination `page`, boolean flags).
 
-**Verified from:** `GraphDisplay.vue`
+**Verified from:** `src/features/`
 
-### Global Store Import
-```js
-import { store } from './Store.js'   // relative path varies
-```
-Used in nearly every component. Mutations are direct property assignments.
+### Stores
+Small stores in `src/stores/` (`session`, `ui`, `fileBrowse`, `pageMemory`, `batchStore`); state of one desk is shared through `useWorkspace()` (provide/inject). The old global store is gone.
 
 ### API Access
 ```js
@@ -33,13 +30,13 @@ Old components call `web.*` methods; new code calls the `src/api/*` modules. No 
 ### Event Communication
 - Parent↔child: Vue `defineEmits` + `$emit` (standard)
 - Cross-component: Direct store mutation (not event bus)
-- Backend→frontend: SSE in `GraphDisplay.vue`
+- Backend→frontend: SSE via `services/events.js` (`md-sse` window events, read in `features/project/useDeskGraph.js`)
 
 ## Naming Conventions
 
 | Convention | Example | Note |
 |-----------|---------|------|
-| Component files | PascalCase `.vue` | `GraphDisplay.vue`, `SetPanel.vue` |
+| Component files | PascalCase `.vue` | `GraphCanvas.vue`, `SetBrowser.vue` |
 | JS modules | camelCase `.js` | `useLayout.js`, `web.js` |
 | Store property | snake_case | `current_node`, `file_browse_context` |
 | API methods | camelCase | `web.getNodeFile()` |
@@ -68,7 +65,7 @@ Internationalization is configured with `vue-i18n` (legacy mode disabled, global
 
 The test suite uses Vitest with jsdom environment. Test coverage is minimal—only one test file exists:
 
-- `test/components/displays/VersionTools.spec.js` — Tests the VersionTools component in isolation using Vuetify component stubs
+- `test/` mirrors `src/` (`test/ui`, `test/features/…`, `test/stores`); Vuetify is installed for every test in `test/setup.js`
 
 Test patterns:
 - Mount with stubs for Vuetify components
@@ -81,7 +78,7 @@ Test patterns:
 
 - `src/styles/tokens.css` — design tokens (colour, type, spacing, radius, shadow); the only place hex values live, together with `src/styles/vuetify-theme.js`
 - `src/styles/reset.css` — global reset and base typography (IBM Plex Sans body, IBM Plex Mono for code, Junicode titles; fonts in `src/styles/fonts.css`)
-- `src/styles/legacy.css` — global rules old screens still need, including the old `position: relative; margin: 0` reset scoped to `.legacy-screen` and overlays; nothing new is added here
+- `src/features/project/graph.css` — Vue Flow styles inside the desk
 - Component-scoped `<style scoped>` blocks
 - Many old components use unscoped `<style>` (global CSS leakage risk)
 

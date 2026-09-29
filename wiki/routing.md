@@ -2,7 +2,7 @@
 
 ## Router Setup
 
-The router uses `createWebHistory` with `VITE_PUBLIC_PATH` as the base. Routes are defined in `src/app/router.js`. Every route component is lazy-loaded (`() => import(...)`), so each screen is its own chunk. Route `meta` carries `title` (page title, set in `router.afterEach`), `legacy` (still served by an old view in `src/components/`), `drawer` / `inProject` (project workspace header behaviour) and `shell: false` (no app header, used by the login page).
+The router uses `createWebHistory` with `VITE_PUBLIC_PATH` as the base. Routes are defined in `src/app/router.js`. Every route component is lazy-loaded (`() => import(...)`), so each screen is its own chunk. Route `meta` carries `title` (page title, set in `router.afterEach`), `drawer` / `inProject` (project workspace header behaviour) and `shell: false` (no app header, used by the login page).
 
 **Verified from:** `src/app/router.js`
 
@@ -12,8 +12,8 @@ The router uses `createWebHistory` with `VITE_PUBLIC_PATH` as the base. Routes a
 |------|------|-----------|-------|
 | `/` | Home | `features/home/HomePage` | Desk list and home dashboard |
 | `/graph` | — | redirect | Legacy: redirects `?node=xxx` → `/project/xxx` |
-| `/project/:rid` | — | `GraphMain` | Shell for project views (nested routes) |
-| `/project/:rid` (child `''`) | project-graph | `GraphDisplay` | Graph canvas |
+| `/project/:rid` | — | `features/project/ProjectWorkspace` | Desk shell for the nested routes |
+| `/project/:rid` (child `''`) | project-graph | `features/project/GraphCanvas` | Graph canvas |
 | `/project/:rid/search` | project-search | `features/search/SearchPage` | Project-scoped search |
 | `/project/:rid/entities` | project-entities | `features/tags/TagsPage` | Project-scoped tags |
 | `/project/:rid/file/:fileRid` | project-file | `features/files/FileViewer` | File viewer |
@@ -48,14 +48,14 @@ independently of each backend admin route's own `access === 'admin'` check.
 
 ### Project Context (Nested Routes)
 
-`/project/:rid` is a nested route shell (`GraphMain`). The shell provides:
-- The app bar/header with tabs (Desk, Search, Tags)
-- Shared sidepanel (NodeCard) when in graph view
-- Dialogs (Uploader, NodeDeleter, SetCreator, SourceCreator)
+`/project/:rid` is a nested route shell (`ProjectWorkspace`). It provides:
+- The desk drawer (opened from the header's menu button)
+- The node panel beside the graph
+- The desk's dialogs (crunchers, delete, create set/source, uploads) through the workspace (`useWorkspace`)
 
-Child routes render in a `<router-view>` that uses `keep-alive` to cache `GraphDisplay`.
+Child routes render in a `<router-view>` that uses `keep-alive` to cache `GraphCanvas`.
 
-**Verified from:** `src/components/GraphMain.vue` template
+**Verified from:** `src/features/project/ProjectWorkspace.vue`
 
 ### File Navigation via Browse Context
 
@@ -73,8 +73,8 @@ The old URL pattern `/graph?node=xxx` is redirected to `/project/xxx` for backwa
 
 ```mermaid
 graph TD
-    Home["/ (Main)"] --> ProjectShell["/project/:rid (GraphMain)"]
-    ProjectShell --> GraphView["GraphDisplay"]
+    Home["/ (HomePage)"] --> ProjectShell["/project/:rid (ProjectWorkspace)"]
+    ProjectShell --> GraphView["GraphCanvas"]
     ProjectShell --> SearchView["SearchPage (project)"]
     ProjectShell --> EntitiesView["TagsPage (project)"]
     ProjectShell --> FileView["FileViewer"]

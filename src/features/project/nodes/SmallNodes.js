@@ -14,6 +14,7 @@ const icons = (...names) =>
 
 function node(render) {
   return {
+    inheritAttrs: false,
     props: { data: { type: Object, required: true } },
     setup(props) {
       return () => render(props.data)

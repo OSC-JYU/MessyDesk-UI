@@ -8,35 +8,25 @@ questions) is the "MessyDesk UI rewrite plan" document; this page records what t
 ```
 src/
   app/        main.js, router.js, App.vue, AppShell.vue, AppHeader.vue
-  styles/     tokens.css, reset.css, vuetify-theme.js (+ legacy.css until the old screens are gone)
+  styles/     tokens.css, reset.css, fonts.css, vuetify-theme.js
   api/        one module per backend area
   stores/     one small store per area
   ui/         shared building blocks (stage 1)
   features/   home, project, files, search, services, admin, help
 ```
 
-## How old and new code live together
+## How old and new code lived together
 
-- **The router is the switch.** Each route in `src/app/router.js` points at its old view until
-  the new one is ready. Routes still served by old views carry `meta.legacy: true`. The old file is
-  deleted in the same change that switches the route.
-- **One direction.** New code may not import from `src/components/`. ESLint enforces this
-  (`no-restricted-imports` for static imports, `no-restricted-syntax` for `import()`). The router and
-  `App.vue` (for `BatchProgressPanel`) are the only allowed exceptions, marked with
-  `eslint-disable` comments. Old code may import new stores and API modules.
+Every route was switched from its old view to the new one in turn, and the old files were deleted in the
+same change. Since stage 7 there is no old UI code left: `src/components/` and the old global store are
+gone. What remains of the old setup is `src/web.js` (the API client behind `src/api/`) and Bootstrap,
+which stage 8 removes.
+
 - **One header.** `AppShell` renders `AppHeader` and the main area for every route except
-  `meta.shell: false` (login). The project drawer lives in the project workspace
-  (`components/ProjectDrawer.vue`) and is toggled through `stores/ui.js`; `GraphMain` also puts the
-  open project's name into `ui.projectLabel` for the header.
-- **Styles.** Tokens, the Vuetify theme and the reset load globally, so old screens pick up the
-  new fonts and colours. The old `* { position: relative; margin: 0; font-weight: normal }` reset
-  now applies only inside `.legacy-screen` (the main area of `meta.legacy` routes) and Vuetify
-  overlays, with zero specificity. Bootstrap stays loaded until stage 8.
-- **API.** `src/api/*.js` wrap `web.js` one function at a time; new code calls `api/`, and
-  `web.js` shrinks as old callers move.
-- **State.** New features get their own small stores. `stores/session.js` owns the signed-in user and
-  `stores/fileBrowse.js` the open file and its browse context; the old `store.user`, `store.file` and
-  `store.file_browse_context` are getters/setters onto them. Nothing new is added to the old store.
+  `meta.shell: false` (login).
+- **API.** `src/api/*.js` wrap `web.js`; code calls `api/` only.
+- **State.** Small stores (`src/stores/`) and, per desk, the workspace (`useWorkspace`). Dialogs are
+  opened through workspace actions, never global flags.
 
 ## Style rules for new code
 
@@ -72,7 +62,6 @@ Use these instead of hand-built equivalents. Each has a unit test in `test/ui/`.
 | `SectionCard` | A titled panel on a screen | `title`, `overline`; slots `actions`, default |
 | `StatusChip` | Job, service or process status | `status` (running, queued, paused, done, failed, …), `label` |
 
-`components/NodeDeleter.vue` already uses `ConfirmDialog` in place of its Bootstrap modal.
 
 ## Checks
 
@@ -98,5 +87,5 @@ then compare them side by side.
 | 4 Services and admin | Done: `features/services/` (monitor, service control, prompts, cruncher picker with DSpace form and tag filter) and `features/admin/`; old `ServicesMain`, `ServicesAdmin`, `PromptsMain`, `AdminMain`, `CruncherList`, `CrunchersMain`, `DspaceQueryForm`, `TagPickerField`, `ProcessCreator` deleted; `/crunchers` redirects to services |
 | 5 Search and entities | Done: `features/search/` (SearchPage, shared ResultsGrid/ResultCard, ProjectScope, file opener) and `features/tags/` (TagsPage, NER label mentions with preview, add-tag dialog); `stores/fileBrowse.js` and `stores/pageMemory.js` replace old store fields; `SearchMain` and `EntitiesMain` deleted |
 | 6 File viewer | Done: `features/files/` (viewer shell, 9 displays, tools, ROI editor) replaces `FileDisplayWrapper`, `FilesMain` and 22 display/tool components; the big editors were ported without redesign and checked only with unit tests, since the local backend has no image/OCR data |
-| 7 Project graph | Not started |
+| 7 Project graph | Done: `features/project/` (workspace, canvas, 8 node components on a shared shell, set browser, node panel, dialogs) and `features/jobs/JobsPanel.vue` replace GraphMain, GraphDisplay, NodeCard, the 23 node files, creators, uploader, drawer, set panel and the debug panel; the old store and legacy.css are deleted |
 | 8 Cleanup | Not started |
