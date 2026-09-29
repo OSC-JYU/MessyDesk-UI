@@ -3,32 +3,98 @@
  * new code comes from here (or from the Vuetify theme, which uses the same
  * values in vuetify-theme.js). Components never hardcode hex values or pixels.
  */
-:root {
-  /* Colour */
-  --md-color-header: #002957; /* navy app header */
-  --md-color-primary: #1565c0;
-  --md-color-teal: #187a62;
-  --md-color-graph: #13547a; /* graph workspace and processing nodes */
-  --md-color-graph-light: #80d0c7;
+:root,
+[data-theme='fjord'] {
+  /* Colour: the Fjord theme. Teal is the action colour, navy (secondary)
+     marks sets, the process colours are for the graph's processing steps. */
+  --md-color-header: #0d3b3a; /* app header (brand navy) */
+  --md-color-text-on-dark: #ffffff;
+  --md-color-text-on-dark-muted: #a9d6cf;
+  --md-color-bg: #eaf2f1; /* page */
+  --md-color-surface: #ffffff;
+  --md-color-surface-subtle: #f3f8f7;
+  --md-color-border: #cfdfdc;
+  --md-color-border-strong: #5f8b86;
+  --md-color-text: #143532;
+  --md-color-text-muted: #47625e;
+  --md-color-primary: #0f6e6a;
+  --md-color-primary-hover: #0a504d;
+  --md-color-on-primary: #ffffff;
+  --md-color-primary-soft: #dcf0ed;
+  --md-color-teal: #0f6e6a;
+  --md-color-secondary: #1d5a8c;
+  --md-color-on-secondary: #ffffff;
+  --md-color-secondary-soft: #e2ecf6;
+  --md-color-graph: #1d4f6e; /* processing steps in the graph */
+  --md-color-on-graph: #ffffff;
+  --md-color-graph-light: #8fd4c2;
   --md-gradient-graph: linear-gradient(
     to top right,
-    rgba(19, 84, 122, 0.8),
-    rgba(128, 208, 199, 0.8)
+    rgba(29, 79, 110, 0.9),
+    rgba(143, 212, 194, 0.85)
   );
-  --md-color-bg: #edf2f6; /* page */
-  --md-color-surface: #ffffff;
-  --md-color-border: #d3dde6;
-  --md-color-text: #17324f;
-  --md-color-text-muted: #56708a;
-  --md-color-text-on-dark: #ffffff;
+  --md-color-focus: #0f6e6a;
 
   /* Status */
-  --md-color-info: #1565c0;
-  --md-color-success: #187a62;
-  --md-color-warning: #b26a00;
+  --md-color-info: #1d5a8c;
+  --md-color-success: #2e7d32;
+  --md-color-success-soft: #e8f5e9;
+  --md-color-warning: #9a5b00;
+  --md-color-warning-soft: #fff3e0;
   --md-color-error: #c62828;
+  --md-color-on-error: #ffffff;
+  --md-color-error-soft: #ffebee;
   --md-color-highlight: #fff3a3;
 
+  /* Depth */
+  --md-shadow-1: 0 1px 2px rgba(13, 59, 58, 0.08);
+  --md-shadow-2: 0 6px 18px rgba(13, 59, 58, 0.1);
+  --md-shadow-3: 0 16px 40px rgba(13, 59, 58, 0.18);
+}
+
+[data-theme='fjord-dark'] {
+  --md-color-header: #0a2625;
+  --md-color-text-on-dark: #e4f1ee;
+  --md-color-text-on-dark-muted: #a9d6cf;
+  --md-color-bg: #0c1a19;
+  --md-color-surface: #132625;
+  --md-color-surface-subtle: #182e2d;
+  --md-color-border: #27413f;
+  --md-color-border-strong: #6a948f;
+  --md-color-text: #e4f1ee;
+  --md-color-text-muted: #9fbab5;
+  --md-color-primary: #5cc4b6;
+  --md-color-primary-hover: #86d6cb;
+  --md-color-on-primary: #0a1e1c;
+  --md-color-primary-soft: #173c39;
+  --md-color-teal: #5cc4b6;
+  --md-color-secondary: #7fb2e3;
+  --md-color-on-secondary: #0b1a2a;
+  --md-color-secondary-soft: #1a3048;
+  --md-color-graph: #2a6a8f;
+  --md-color-on-graph: #ffffff;
+  --md-color-graph-light: #8fd4c2;
+  --md-gradient-graph: linear-gradient(
+    to top right,
+    rgba(42, 106, 143, 0.9),
+    rgba(143, 212, 194, 0.6)
+  );
+  --md-color-focus: #86d6cb;
+  --md-color-info: #7fb2e3;
+  --md-color-success: #7cc98a;
+  --md-color-success-soft: #1b3326;
+  --md-color-warning: #f0b05a;
+  --md-color-warning-soft: #3a2c14;
+  --md-color-error: #ef7a7a;
+  --md-color-on-error: #0b1a2a;
+  --md-color-error-soft: #3d1f24;
+  --md-color-highlight: #5a4a00;
+  --md-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --md-shadow-2: 0 6px 18px rgba(0, 0, 0, 0.45);
+  --md-shadow-3: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+:root {
   /* Typography */
   --md-font-body: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --md-font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -58,8 +124,6 @@
   --md-radius-md: 8px;
   --md-radius-lg: 12px;
   --md-radius-pill: 999px;
-  --md-shadow-1: 0 1px 2px rgba(23, 50, 79, 0.08), 0 1px 3px rgba(23, 50, 79, 0.06);
-  --md-shadow-2: 0 4px 12px rgba(23, 50, 79, 0.1);
 
   /* Layout */
   --md-header-height: 64px;

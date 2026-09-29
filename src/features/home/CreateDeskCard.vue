@@ -44,7 +44,7 @@ async function submit() {
         hide-details="auto"
         class="create-desk__field"
       />
-      <v-btn type="submit" color="secondary" size="large" variant="flat" :loading="state.pending">
+      <v-btn type="submit" color="primary" size="large" variant="flat" :loading="state.pending">
         Create desk
       </v-btn>
     </form>

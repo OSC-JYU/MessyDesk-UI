@@ -69,7 +69,7 @@ const columns = [
         <td>{{ row.sizeText }}</td>
         <td>{{ row.itemsText }}</td>
         <td>
-          <v-chip size="small" variant="tonal" color="secondary" label>{{ row.docsText }}</v-chip>
+          <v-chip size="small" variant="tonal" color="primary" label>{{ row.docsText }}</v-chip>
         </td>
         <td>{{ row.expiresText }}</td>
         <td class="desk-table__actions">

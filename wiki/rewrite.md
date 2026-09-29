@@ -45,8 +45,9 @@ src/
 - Design system fonts, bundled (`styles/fonts.css`) and named in `tokens.css`: IBM Plex Sans for UI
   text (`--md-font-body`), IBM Plex Mono for ids and JSON (`--md-font-mono`), Junicode for titles
   (`--md-font-title`; applied to `h1`–`h3`, Vuetify `text-h1`–`text-h4` and `.md-title`).
-- Colours: navy `#002957` header, primary `#1565c0`, teal `#187a62`, graph `#13547a` / `#80d0c7`,
-  page `#edf2f6`, text `#17324f`. Spacing on a 4 px scale; radii 4 / 8 / 12 px.
+- Colours: the Fjord theme (`tokens.css`, Vuetify themes `fjord` (default) and `fjordDark`, CSS switched by
+  `<html data-theme>`). Teal (`primary`) is the action colour, navy (`secondary`) marks sets, the process
+  colours are for the graph. Spacing on a 4 px scale; radii 4 / 8 / 12 px.
 - Styles are scoped; no inline `style=` except computed positions (graph, ROI overlays).
 - Dialogs live next to the feature that opens them and are opened with a prop or composable, not a
   global `store.*_open` flag.

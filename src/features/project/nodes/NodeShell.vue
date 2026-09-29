@@ -73,7 +73,7 @@ defineExpose({ crunch })
 
 .gnode--set,
 .gnode--roi {
-  --kind: var(--md-color-teal);
+  --kind: var(--md-color-secondary);
 }
 
 .gnode--source {
@@ -91,7 +91,7 @@ defineExpose({ crunch })
 .gnode--process {
   border: 0;
   background: var(--md-gradient-graph);
-  color: var(--md-color-text-on-dark);
+  color: var(--md-color-on-graph);
 }
 
 .gnode__header {

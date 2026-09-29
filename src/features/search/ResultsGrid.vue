@@ -31,7 +31,7 @@ const offset = computed(() => (page.value - 1) * props.perPage)
 <template>
   <section class="results" :aria-label="title">
     <header class="results__header">
-      <v-icon icon="mdi-folder-search-outline" color="secondary" aria-hidden="true" />
+      <v-icon icon="mdi-folder-search-outline" color="primary" aria-hidden="true" />
       <h2 class="results__title">{{ title }}</h2>
       <span v-if="count" class="results__count">{{ count }} files</span>
       <slot name="actions" />
