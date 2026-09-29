@@ -14,13 +14,17 @@ const props = defineProps({
   emptyTitle: { type: String, default: 'No results' },
   emptyText: { type: String, default: '' },
   perPage: { type: Number, default: 24 },
+  // With `total` set, `results` is the current page only and the parent
+  // loads pages (v-model:page); otherwise the grid pages `results` itself.
+  total: { type: Number, default: null },
 })
 
 const page = defineModel('page', { type: Number, default: 1 })
 const emit = defineEmits(['open'])
 
-const pages = computed(() => pageCount(props.results.length, props.perPage))
-const visible = computed(() => pageOf(props.results, page.value, props.perPage))
+const count = computed(() => props.total ?? props.results.length)
+const pages = computed(() => pageCount(count.value, props.perPage))
+const visible = computed(() => (props.total === null ? pageOf(props.results, page.value, props.perPage) : props.results))
 const offset = computed(() => (page.value - 1) * props.perPage)
 </script>
 
@@ -29,7 +33,8 @@ const offset = computed(() => (page.value - 1) * props.perPage)
     <header class="results__header">
       <v-icon icon="mdi-folder-search-outline" color="secondary" aria-hidden="true" />
       <h2 class="results__title">{{ title }}</h2>
-      <span v-if="results.length" class="results__count">{{ results.length }} files</span>
+      <span v-if="count" class="results__count">{{ count }} files</span>
+      <slot name="actions" />
     </header>
 
     <div class="results__body">

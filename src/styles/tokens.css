@@ -68,5 +68,11 @@
   --md-dialog-width: 480px;
   --md-card-min-width: 280px;
   --md-media-max-height: 320px;
+
+  /* Graph nodes */
+  --md-node-width: 280px;
+  --md-node-width-wide: 320px;
+  --md-node-body-max-height: 360px;
+  --md-node-cookie-size: 44px;
   --md-content-max-width: 1280px;
 }

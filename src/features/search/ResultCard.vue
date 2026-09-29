@@ -8,7 +8,8 @@ defineEmits(['open'])
 <template>
   <button type="button" class="result-card" :title="`Open ${result.label}`" @click="$emit('open')">
     <span class="result-card__label">{{ result.label }}</span>
-    <span v-if="result.entities.length" class="result-card__tags">
+    <span v-if="result.entities.length || result.badge" class="result-card__tags">
+      <v-chip v-if="result.badge" size="x-small" color="warning" variant="flat" label>{{ result.badge }}</v-chip>
       <v-chip
         v-for="entity in result.entities"
         :key="entity.id || entity['@rid'] || entity.label"
