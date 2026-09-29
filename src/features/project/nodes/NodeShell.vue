@@ -5,7 +5,7 @@ import { useWorkspace } from '../useWorkspace.js'
 
 // Frame shared by all graph nodes: a coloured header with the label, the
 // cookie that opens the crunchers, and the connection handles.
-const props = defineProps({
+defineProps({
   label: { type: String, default: '' },
   kind: { type: String, default: 'file' }, // file | image | set | process | source | roi | zip | error
   icon: { type: String, default: '' },
