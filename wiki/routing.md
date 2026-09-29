@@ -18,26 +18,26 @@ The router uses `createWebHistory` with `VITE_PUBLIC_PATH` as the base. Routes a
 | `/project/:rid/entities` | project-entities | `EntitiesMain` | Project-scoped tags |
 | `/project/:rid/file/:fileRid` | project-file | `FileDisplayWrapper` | File viewer |
 | `/services` | services | `ServicesMain` | Service catalog |
-| `/intro` | introduction | `Introduction` | Onboarding page |
+| `/intro` | introduction | `features/help/IntroPage` | Introduction tour |
 | `/files/:rid` | files | `FilesMain` | File browser |
 | `/crunchers` | crunchers | `CrunchersMain` | All crunchers view |
 | `/search` | search | `SearchMain` | Global search |
 | `/prompts` | prompts | `PromptsMain` | Saved prompts |
-| `/help/:slug?` | help | `HelpMain` | General help |
-| `/help/services/:service/` | service-help | `HelpMain` | Per-service help |
-| `/help/services/:service/:assetPath(.*)*` | service-help-asset | `HelpMain` | Help asset resolution |
+| `/help/:slug?` | help | `features/help/HelpPage` | General help |
+| `/help/services/:service/` | service-help | `features/help/HelpPage` | Per-service help |
+| `/help/services/:service/:assetPath(.*)*` | service-help-asset | `features/help/HelpPage` | Help asset resolution |
 | `/tags` | tags | redirect → entities | Legacy alias |
 | `/entities` | entities | `EntitiesMain` | Global entity/tag browser |
 | `/admin` | admin | `AdminMain` | Admin panel (Requests/Users/Services/Service Groups tabs); gated by `meta.requiresAdmin` |
-| `/about` | about | `About` | About page |
-| `/login` | login | `Login` | SSO permission request page |
+| `/about` | about | `features/help/AboutPage` | About page |
+| `/login` | login | `features/help/LoginPage` | SSO permission request page (no app header) |
 
 **Verified from:** `src/app/router.js` (route definitions)
 
 ### Admin Route Guard
 
 `/admin` has `meta: { requiresAdmin: true }`; a router `beforeEach` guard checks
-`store.user.access === 'admin'` for any matched route with that meta and redirects away otherwise.
+`session.isAdmin` (`stores/session.js`) for any matched route with that meta and redirects away otherwise.
 This is enforced independently of nav-link visibility (which merely hides the link for non-admins) and
 independently of each backend admin route's own `access === 'admin'` check.
 

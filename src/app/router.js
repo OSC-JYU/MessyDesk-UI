@@ -68,8 +68,8 @@ const routes = [
   {
     path: '/intro',
     name: 'introduction',
-    component: () => import('@/components/Introduction.vue'),
-    meta: { legacy: true, title: 'Introduction' },
+    component: () => import('@/features/help/IntroPage.vue'),
+    meta: { title: 'Introduction' },
   },
   {
     path: '/files/:rid',
@@ -98,20 +98,20 @@ const routes = [
   {
     path: '/help/services/:service/',
     name: 'service-help',
-    component: () => import('@/components/HelpMain.vue'),
-    meta: { legacy: true, title: 'Help' },
+    component: () => import('@/features/help/HelpPage.vue'),
+    meta: { title: 'Help' },
   },
   {
     path: '/help/services/:service/:assetPath(.*)*',
     name: 'service-help-asset',
-    component: () => import('@/components/HelpMain.vue'),
-    meta: { legacy: true, title: 'Help' },
+    component: () => import('@/features/help/HelpPage.vue'),
+    meta: { title: 'Help' },
   },
   {
     path: '/help/:slug?',
     name: 'help',
-    component: () => import('@/components/HelpMain.vue'),
-    meta: { legacy: true, title: 'Help' },
+    component: () => import('@/features/help/HelpPage.vue'),
+    meta: { title: 'Help' },
   },
   { path: '/tags', name: 'tags', redirect: { name: 'entities' } },
   {
@@ -129,14 +129,14 @@ const routes = [
   {
     path: '/about',
     name: 'about',
-    component: () => import('@/components/About.vue'),
-    meta: { legacy: true, title: 'About' },
+    component: () => import('@/features/help/AboutPage.vue'),
+    meta: { title: 'About' },
   },
   {
     path: '/login',
     name: 'login',
-    component: () => import('@/components/Login.vue'),
-    meta: { legacy: true, title: 'Sign in', shell: false },
+    component: () => import('@/features/help/LoginPage.vue'),
+    meta: { title: 'Sign in', shell: false },
   },
 ]
 

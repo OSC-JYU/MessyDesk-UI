@@ -40,6 +40,8 @@ async function open(page, path) {
   page.on('pageerror', (err) => errors.push(err.message))
   await page.goto(path)
   await page.waitForLoadState('networkidle').catch(() => {})
+  // The floating batch panel (shown while jobs run) can cover buttons.
+  await page.addStyleTag({ content: '.batch-progress-panel { display: none !important; }' })
   await expect(page.locator('.v-application')).toBeVisible()
   return errors
 }
@@ -103,4 +105,35 @@ test('node delete asks for confirmation and can be cancelled', async ({ page, re
   await dialog.getByRole('button', { name: 'Cancel' }).click()
   await expect(dialog).toBeHidden()
   await expect(node).toBeVisible()
+})
+
+test('help topics navigate inside the app', async ({ page }) => {
+  await open(page, '/help')
+  await expect(page.getByRole('heading', { level: 1, name: 'Help and tutorials' })).toBeVisible()
+  await page.getByRole('navigation', { name: 'Help topics' }).getByText('Tools').click()
+  await expect(page).toHaveURL(/\/help\/tools$/)
+  await expect(page.locator('.help-article h2').first()).toBeVisible()
+  // The backend's own help stylesheet must not leak into the app.
+  expect(await page.locator('link[href*="help.css"]').count()).toBe(0)
+})
+
+test('introduction steps forward and back', async ({ page }) => {
+  await open(page, '/intro')
+  await expect(page.getByRole('heading', { name: '1. What is MessyDesk?' })).toBeVisible()
+  await page.getByRole('button', { name: 'Next' }).click()
+  await expect(page.getByRole('heading', { name: '2. Design' })).toBeVisible()
+  await page.getByRole('button', { name: 'Previous' }).click()
+  await expect(page.getByRole('heading', { name: '1. What is MessyDesk?' })).toBeVisible()
+})
+
+test('login page shows the SSO identity and the request button', async ({ page }) => {
+  // A registered user is sent from /login to the home page, so answer the
+  // session ping as for someone signed in through SSO without an account.
+  await page.route(/\/api$/, (route) => route.fulfill({ status: 401, body: 'Unauthorized' }))
+  await open(page, '/login')
+  await page.screenshot({ path: `e2e/screenshots/${label}/login-unregistered-1440.png` })
+  await expect(page.locator('.v-app-bar')).toHaveCount(0)
+  await expect(page.getByText('local.user@localhost')).toBeVisible()
+  // Not clicked: sending would create a permission request in the backend.
+  await expect(page.locator('.login-card .v-btn')).toBeVisible()
 })

@@ -56,7 +56,7 @@ There is no global error notification system. Errors are handled locally per com
 - `console.error()` for developer debugging
 - Some methods silently swallow errors (e.g., ROI resolution fallbacks)
 
-**Verified from:** `Login.vue`, `Main.vue`, `FileDisplayWrapper.vue`
+**Verified from:** `Main.vue`, `FileDisplayWrapper.vue`. New screens use `ui/ErrorAlert.vue`.
 
 ## i18n Usage
 

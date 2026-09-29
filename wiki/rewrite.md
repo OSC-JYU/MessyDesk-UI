@@ -89,7 +89,7 @@ then compare them side by side.
 | --- | --- |
 | 0 Groundwork | Done: dead files removed, ESLint + Prettier, tokens/theme/reset, AppShell with one header, `api/` wrappers, page titles, Playwright smoke tests |
 | 1 Shared UI kit | Done: the seven components above with unit tests; node delete moved from a Bootstrap modal to `ConfirmDialog` |
-| 2 Simple screens | Not started |
+| 2 Simple screens | Done: Help, Introduction, About and Login rewritten in `features/help/`; old `HelpMain`, `Introduction`, `About`, `Login` deleted |
 | 3 Home | Not started |
 | 4 Services and admin | Not started |
 | 5 Search and entities | Not started |

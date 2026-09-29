@@ -64,5 +64,9 @@
   /* Layout */
   --md-header-height: 64px;
   --md-header-logo-size: 40px;
+  --md-logo-size-lg: 80px;
+  --md-dialog-width: 480px;
+  --md-card-min-width: 280px;
+  --md-media-max-height: 320px;
   --md-content-max-width: 1280px;
 }

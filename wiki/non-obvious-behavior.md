@@ -52,9 +52,9 @@ If the backend doesn't support project-scoped search, the search method retries 
 
 ## 8. DOMPurify Applied to Markdown but Not All HTML
 
-`TextDisplay` sanitizes markdown-rendered HTML via `DOMPurify`. However, `HelpMain.vue` renders backend-provided HTML directly (received from `/api/help`) without visible sanitization in the frontend—relying on the backend to serve safe HTML.
+`TextDisplay` sanitizes markdown-rendered HTML via `DOMPurify`. The help pages (`/api/help`, `/api/services/{id}/help`) arrive as whole HTML documents with their own nav and stylesheet. `features/help/helpContent.js` takes the nav links and the article, drops the backend stylesheet (which used to be injected into the app and restyled it globally), and sanitises the article with DOMPurify before `HelpArticle.vue` renders it with the app's styles.
 
-**Verified from:** `src/components/displays/TextDisplay.vue`, `src/components/HelpMain.vue`
+**Verified from:** `src/components/displays/TextDisplay.vue`, `src/features/help/helpContent.js`
 
 ## 9. Session Check Redirect Uses Path Substring Match
 

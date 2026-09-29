@@ -26,15 +26,17 @@ When `store.logged_out` is `true`, the entire `<router-view>` is replaced with a
 
 ## Login Page
 
-The `/login` route shows `Login.vue`, which:
-1. Calls `web.sso()` → `GET /api/sso` to get SSO user info
+The `/login` route shows `features/help/LoginPage.vue`, without the app header. It:
+1. Calls `getSsoUser()` (`api/session.js`) → `GET /api/sso` to get SSO user info (the old page called `.json()` on the axios response, so the identity never showed)
 2. Displays user email/name
 3. Shows "not registered" message (i18n)
-4. Provides a button to send a permission request (`web.addPermissionRequest()`)
+4. Provides a button to send a permission request (`addPermissionRequest()` → `POST /api/permissions/request`)
+
+A registered user who opens `/login` is sent to the home page by the session check in `App.vue`.
 
 This is not a login form—it's a registration/permission-request page for authenticated but unauthorized users.
 
-**Verified from:** `src/components/Login.vue`
+**Verified from:** `src/features/help/LoginPage.vue`
 
 ## Permissions
 
