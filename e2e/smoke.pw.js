@@ -94,7 +94,10 @@ test('node delete asks for confirmation and can be cancelled', async ({ page, re
     .first()
   test.skip(!(await node.count()), 'project has no file nodes')
   await node.click()
-  await page.getByRole('complementary', { name: 'Selected item' }).getByRole('button', { name: 'Delete' }).click()
+  await page
+    .getByRole('complementary', { name: 'Selected item' })
+    .getByRole('button', { name: 'Delete' })
+    .click()
 
   const dialog = page.getByRole('alertdialog', { name: 'Delete node' })
   await expect(dialog).toBeVisible()
@@ -148,7 +151,10 @@ test('home lists desks, sorts them and opens one', async ({ page }) => {
   await nameHeader.getByRole('button').click()
   await expect(nameHeader).toHaveAttribute('aria-sort', 'descending')
   await table.getByRole('columnheader', { name: /Items/ }).getByRole('button').click()
-  await expect(table.getByRole('columnheader', { name: /Items/ })).toHaveAttribute('aria-sort', 'ascending')
+  await expect(table.getByRole('columnheader', { name: /Items/ })).toHaveAttribute(
+    'aria-sort',
+    'ascending',
+  )
 
   const firstDesk = table.locator('tbody tr').first().getByRole('link')
   await firstDesk.click()
@@ -228,7 +234,9 @@ test('services monitor and control load, and live refresh can pause', async ({ p
     await expect(dialog).toBeHidden()
   }
   await page.getByRole('button', { name: 'Install' }).click()
-  await expect(page.locator('.v-overlay--active .v-card').filter({ hasText: 'Install service' })).toBeVisible()
+  await expect(
+    page.locator('.v-overlay--active .v-card').filter({ hasText: 'Install service' }),
+  ).toBeVisible()
 })
 
 test('prompts open a new prompt form that needs a name and content', async ({ page }) => {
@@ -261,7 +269,10 @@ test('cruncher list opens from a file on the desk', async ({ page, request }) =>
   const cookie = page.locator('.vue-flow__node-text [title="Add cruncher"]').first()
   test.skip(!(await cookie.count()), 'project has no text file nodes')
   await cookie.click()
-  const dialog = page.locator('.v-overlay--active .v-card').filter({ hasText: 'Crunchers for' }).first()
+  const dialog = page
+    .locator('.v-overlay--active .v-card')
+    .filter({ hasText: 'Crunchers for' })
+    .first()
   await expect(dialog).toBeVisible()
   await expect(dialog.getByRole('tab').first()).toBeVisible()
   await dialog.getByRole('textbox', { name: 'Search crunchers' }).fill('index')
@@ -332,7 +343,10 @@ async function firstTextFile(page, rid) {
   return (await node.count()) ? (await node.getAttribute('data-id')).replace('#', '') : null
 }
 
-test('file viewer shows a text file with lineage, tools and markdown', async ({ page, request }) => {
+test('file viewer shows a text file with lineage, tools and markdown', async ({
+  page,
+  request,
+}) => {
   const rid = await firstProjectRid(request)
   test.skip(!rid, 'backend has no projects')
   const fileRid = await firstTextFile(page, rid)
@@ -391,7 +405,10 @@ test('stand-alone file view opens a file outside a desk', async ({ page, request
   await expect(page.locator('pre.text-display--plain')).toBeVisible()
 })
 
-test('desk: select a node, open its crunchers, isolate it, and use the drawer', async ({ page, request }) => {
+test('desk: select a node, open its crunchers, isolate it, and use the drawer', async ({
+  page,
+  request,
+}) => {
   const rid = await firstProjectRid(request)
   test.skip(!rid, 'backend has no projects')
   await open(page, `/project/${rid}`)
@@ -409,6 +426,19 @@ test('desk: select a node, open its crunchers, isolate it, and use the drawer', 
   await node.click()
   await expect(panel.getByRole('heading', { name: label })).toBeVisible()
 
+  // Nodes are laid out by dagre and cannot be dragged: a drag on a node pans
+  // the view, and the node keeps its place in the graph.
+  await expect(node).not.toHaveClass(/draggable/)
+  const position = () => node.evaluate((el) => el.style.transform)
+  const before = await position()
+  const box = await node.boundingBox()
+  await page.mouse.move(box.x + box.width / 2, box.y + 20)
+  await page.mouse.down()
+  await page.mouse.move(box.x + box.width / 2 + 150, box.y + 120, { steps: 8 })
+  await page.mouse.up()
+  expect(await position()).toBe(before)
+  expect((await node.boundingBox()).x).not.toBe(box.x) // the view moved instead
+
   await page.getByRole('button', { name: 'Isolate' }).click()
   await expect(page.getByRole('button', { name: 'Show all' })).toBeVisible()
   await page.getByRole('button', { name: 'Show all' }).click()
@@ -421,13 +451,19 @@ test('desk: select a node, open its crunchers, isolate it, and use the drawer', 
   const drawer = page.locator('.v-navigation-drawer')
   await expect(drawer.getByText('Add file')).toBeVisible()
   await drawer.getByText('Create set').click()
-  const dialog = page.locator('.v-overlay--active .v-card').filter({ hasText: 'Create set' }).first()
+  const dialog = page
+    .locator('.v-overlay--active .v-card')
+    .filter({ hasText: 'Create set' })
+    .first()
   await expect(dialog).toBeVisible()
   await dialog.getByRole('button', { name: 'Cancel' }).click()
   await expect(dialog).toBeHidden()
 })
 
-test('desk: a set opens in the set browser and closes back to the graph', async ({ page, request }) => {
+test('desk: a set opens in the set browser and closes back to the graph', async ({
+  page,
+  request,
+}) => {
   const rid = await firstProjectRid(request)
   test.skip(!rid, 'backend has no projects')
   await open(page, `/project/${rid}`)
