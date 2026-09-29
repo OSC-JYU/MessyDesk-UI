@@ -439,6 +439,12 @@ test('desk: select a node, open its crunchers, isolate it, and use the drawer', 
   expect(await position()).toBe(before)
   expect((await node.boundingBox()).x).not.toBe(box.x) // the view moved instead
 
+  // Only the cookie takes a bite on hover; other buttons and links stay still.
+  const tab = page.getByRole('tab', { name: 'Search' })
+  await tab.hover()
+  await page.waitForTimeout(250)
+  expect(await tab.evaluate((el) => getComputedStyle(el).animationName)).toBe('none')
+
   await page.getByRole('button', { name: 'Isolate' }).click()
   await expect(page.getByRole('button', { name: 'Show all' })).toBeVisible()
   await page.getByRole('button', { name: 'Show all' }).click()

@@ -9,6 +9,7 @@ export const THEME_OPTIONS = [
   { value: 'light', title: 'Fjord light', icon: 'mdi-white-balance-sunny' },
   { value: 'dark', title: 'Fjord dark', icon: 'mdi-weather-night' },
   { value: 'system', title: 'Follow the system', icon: 'mdi-monitor' },
+  { value: 'classic', title: 'MessyDesk classic', icon: 'mdi-palette-outline' },
 ]
 
 export const COOKIE_OPTIONS = [
@@ -19,11 +20,17 @@ export const COOKIE_OPTIONS = [
   { value: 'blueberry', title: 'Blueberry' },
 ]
 
-const DEFAULTS = { theme: 'light', cookie: 'classic' }
+export const MOTION_OPTIONS = [
+  { value: 'on', title: 'Animations on' },
+  { value: 'off', title: 'Reduce motion' },
+]
+
+const DEFAULTS = { theme: 'light', cookie: 'classic', motion: 'on' }
 const STORAGE_KEY = 'md-settings'
 const allowed = {
   theme: THEME_OPTIONS.map((o) => o.value),
   cookie: COOKIE_OPTIONS.map((o) => o.value),
+  motion: MOTION_OPTIONS.map((o) => o.value),
 }
 
 // Known keys with allowed values only.

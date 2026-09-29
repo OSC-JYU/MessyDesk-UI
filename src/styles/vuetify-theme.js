@@ -1,6 +1,6 @@
 // Vuetify themes built from the same values as tokens.css. Keep the two in
 // step: Vuetify needs literal colours at build time, CSS reads the custom
-// properties (switched with <html data-theme="fjord" | "fjord-dark">).
+// properties (switched with <html data-theme="fjord" | "fjord-dark" | "classic">).
 // Teal (primary) is the action colour; navy (secondary) marks sets.
 
 const variables = {
@@ -69,5 +69,36 @@ export const fjordDark = {
   variables: { ...variables, 'border-color': '#e4f1ee' },
 }
 
+// MessyDesk classic: the original navy and blue look.
+export const classic = {
+  dark: false,
+  colors: {
+    background: '#edf2f6',
+    surface: '#ffffff',
+    'surface-bright': '#ffffff',
+    'surface-light': '#f5f8fb',
+    'surface-variant': '#e3eefb',
+    'on-background': '#17324f',
+    'on-surface': '#17324f',
+    'on-surface-variant': '#17324f',
+    primary: '#1565c0',
+    'primary-darken-1': '#0d4f9c',
+    'on-primary': '#ffffff',
+    secondary: '#187a62',
+    'secondary-darken-1': '#11604c',
+    'on-secondary': '#ffffff',
+    header: '#002957',
+    'on-header': '#ffffff',
+    graph: '#13547a',
+    'graph-light': '#80d0c7',
+    info: '#1565c0',
+    success: '#187a62',
+    warning: '#b26a00',
+    error: '#c62828',
+    'on-error': '#ffffff',
+  },
+  variables: { ...variables, 'border-color': '#17324f' },
+}
+
 // Vuetify theme name → the data-theme value tokens.css uses.
-export const themeAttribute = { fjord: 'fjord', fjordDark: 'fjord-dark' }
+export const themeAttribute = { fjord: 'fjord', fjordDark: 'fjord-dark', classic: 'classic' }

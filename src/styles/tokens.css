@@ -110,6 +110,57 @@
   --md-drop-shadow: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
 }
 
+/* MessyDesk classic: the original navy and blue look. Blue is the action
+   colour, teal (secondary) marks sets. */
+[data-theme='classic'] {
+  --md-color-header: #002957;
+  --md-color-text-on-dark: #ffffff;
+  --md-color-text-on-dark-muted: #b9cde4;
+  --md-color-bg: #edf2f6;
+  --md-color-surface: #ffffff;
+  --md-color-surface-subtle: #f5f8fb;
+  --md-color-border: #d3dde6;
+  --md-color-border-strong: #6d8aa6;
+  --md-color-text: #17324f;
+  --md-color-text-muted: #56708a;
+  --md-color-primary: #1565c0;
+  --md-color-primary-hover: #0d4f9c;
+  --md-color-on-primary: #ffffff;
+  --md-color-primary-soft: #e3eefb;
+  --md-color-teal: #187a62;
+  --md-color-secondary: #187a62;
+  --md-color-on-secondary: #ffffff;
+  --md-color-secondary-soft: #e1f2ec;
+  --md-color-graph: #13547a;
+  --md-color-on-graph: #ffffff;
+  --md-color-graph-light: #80d0c7;
+  --md-gradient-graph: linear-gradient(
+    to top right,
+    rgba(19, 84, 122, 0.8),
+    rgba(128, 208, 199, 0.8)
+  );
+  --md-color-focus: #1565c0;
+  --md-cookie-classic: #d9a25f;
+  --md-cookie-classic-edge: #b27a3c;
+  --md-cookie-classic-chip: #5a3413;
+  --md-color-cookie: var(--md-cookie-classic);
+  --md-color-cookie-edge: var(--md-cookie-classic-edge);
+  --md-color-cookie-chip: var(--md-cookie-classic-chip);
+  --md-color-info: #1565c0;
+  --md-color-success: #187a62;
+  --md-color-success-soft: #e1f2ec;
+  --md-color-warning: #b26a00;
+  --md-color-warning-soft: #fff3e0;
+  --md-color-error: #c62828;
+  --md-color-on-error: #ffffff;
+  --md-color-error-soft: #ffebee;
+  --md-color-highlight: #fff3a3;
+  --md-shadow-1: 0 1px 2px rgba(23, 50, 79, 0.08), 0 1px 3px rgba(23, 50, 79, 0.06);
+  --md-shadow-2: 0 4px 12px rgba(23, 50, 79, 0.1);
+  --md-shadow-3: 0 16px 40px rgba(23, 50, 79, 0.18);
+  --md-drop-shadow: drop-shadow(0 2px 3px rgba(23, 50, 79, 0.3));
+}
+
 /* Cookie colour presets, chosen on the Settings page. The attribute sits on
    <html>, or on a single element to preview a preset there. */
 [data-cookie='classic'] {

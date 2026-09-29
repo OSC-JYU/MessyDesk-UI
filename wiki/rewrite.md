@@ -94,5 +94,5 @@ then compare them side by side.
 
 ## After the rewrite
 
-- **Settings page** (`features/settings/`, account menu → Settings): theme (Fjord light, Fjord dark, follow the system) and the cruncher cookie colour (classic, double chocolate, matcha, strawberry, blueberry). Presets are `[data-cookie]` blocks in `tokens.css`. Needs the backend `PUT /api/me/settings` (MessyDesk branch `claude/user-settings`).
+- **Settings page** (`features/settings/`, account menu → Settings): theme (Fjord light, Fjord dark, follow the system, or MessyDesk classic, the original navy and blue look: `[data-theme='classic']` in `tokens.css` and `classic` in `vuetify-theme.js`), the cruncher cookie colour (classic, double chocolate, matcha, strawberry, blueberry) and motion (`data-motion='off'` on `<html>` stops animations, see `reset.css`). Presets are `[data-cookie]` blocks in `tokens.css`. Needs the backend `PUT /api/me/settings` (MessyDesk branch `claude/user-settings`).
 - **Thumbnail placeholder** (`ui/ThumbnailImage.vue`): the backend answers 404 for a thumbnail that is not made yet, and the UI shows a themed placeholder (a cookie with rising steam, "Preview not ready yet") instead of the old bitmap. It tries again when the thumbnail version changes. Used by the graph nodes, node panel, search results and lineage panel.

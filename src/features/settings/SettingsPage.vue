@@ -4,16 +4,34 @@ import PageHeader from '@/ui/PageHeader.vue'
 import SectionCard from '@/ui/SectionCard.vue'
 import ErrorAlert from '@/ui/ErrorAlert.vue'
 import CrunchIcon from '@/ui/CrunchIcon.vue'
-import { settings, saveSetting, THEME_OPTIONS, COOKIE_OPTIONS } from '@/stores/settings.js'
+import {
+  settings,
+  saveSetting,
+  THEME_OPTIONS,
+  COOKIE_OPTIONS,
+  MOTION_OPTIONS,
+} from '@/stores/settings.js'
 
-// The user's own settings: theme and the colour of the cruncher cookie. A
+// The user's own settings: theme, the colour of the cruncher cookie and
+// whether things animate. A
 // choice applies at once and is saved to the user's account.
 const error = ref(null)
 const saved = ref(false)
 
 // Each theme card previews itself: tokens.css defines the colours for any
 // element with a data-theme attribute.
-const previewThemes = { light: ['fjord'], dark: ['fjord-dark'], system: ['fjord', 'fjord-dark'] }
+const previewThemes = {
+  light: ['fjord'],
+  dark: ['fjord-dark'],
+  system: ['fjord', 'fjord-dark'],
+  classic: ['classic'],
+}
+
+const motionText = {
+  on: 'The cookie takes a bite when you point at it; placeholders steam.',
+  off: 'Everything stays still.',
+}
+const motionIcon = { on: 'mdi-motion-play-outline', off: 'mdi-motion-pause-outline' }
 
 async function choose(key, value) {
   if (settings[key] === value) return
@@ -111,6 +129,31 @@ async function choose(key, value) {
           </label>
         </div>
       </SectionCard>
+
+      <SectionCard title="Motion" overline="Accessibility">
+        <div class="settings-options" role="radiogroup" aria-label="Motion">
+          <label
+            v-for="option in MOTION_OPTIONS"
+            :key="option.value"
+            class="settings-option"
+            :class="{ 'settings-option--selected': settings.motion === option.value }"
+          >
+            <input
+              type="radio"
+              name="motion"
+              class="d-sr-only"
+              :value="option.value"
+              :checked="settings.motion === option.value"
+              @change="choose('motion', option.value)"
+            />
+            <span class="settings-option__title">
+              <v-icon :icon="motionIcon[option.value]" size="18" aria-hidden="true" />
+              {{ option.title }}
+            </span>
+            <span class="settings-option__text">{{ motionText[option.value] }}</span>
+          </label>
+        </div>
+      </SectionCard>
     </div>
   </div>
 </template>
@@ -188,6 +231,11 @@ async function choose(key, value) {
   align-items: center;
   gap: var(--md-space-2);
   font-weight: var(--md-font-weight-medium);
+}
+
+.settings-option__text {
+  color: var(--md-color-text-muted);
+  font-size: var(--md-font-size-sm);
 }
 
 .settings-option--selected .settings-option__title {

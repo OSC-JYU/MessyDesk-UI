@@ -133,4 +133,9 @@ watch(
     opacity: 0.6;
   }
 }
+
+/* Settings → Reduce motion: still steam. */
+[data-motion='off'] .thumbnail__steam path {
+  opacity: 0.6;
+}
 </style>

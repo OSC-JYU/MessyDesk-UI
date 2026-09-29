@@ -101,3 +101,12 @@ svg,
 video {
   max-width: 100%;
 }
+
+/* "Reduce motion" in Settings (and the system setting): no animations, and
+   transitions end at once so their events still fire. */
+[data-motion='off'] *,
+[data-motion='off'] *::before,
+[data-motion='off'] *::after {
+  animation: none !important;
+  transition-duration: 0.01ms !important;
+}

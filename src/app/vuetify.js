@@ -4,7 +4,7 @@ import { ref, watch, watchEffect } from 'vue'
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
-import { fjord, fjordDark, themeAttribute } from '@/styles/vuetify-theme.js'
+import { fjord, fjordDark, classic, themeAttribute } from '@/styles/vuetify-theme.js'
 import { settings } from '@/stores/settings.js'
 
 export const vuetify = createVuetify({
@@ -12,7 +12,7 @@ export const vuetify = createVuetify({
   directives,
   theme: {
     defaultTheme: 'fjord',
-    themes: { fjord, fjordDark },
+    themes: { fjord, fjordDark, classic },
   },
 })
 
@@ -24,15 +24,22 @@ watch(
 )
 
 // The theme the user picked in Settings; "system" follows the OS setting and
-// changes with it.
+// changes with it (Fjord light or dark).
 const darkQuery = window.matchMedia?.('(prefers-color-scheme: dark)')
 const systemDark = ref(Boolean(darkQuery?.matches))
 darkQuery?.addEventListener?.('change', (event) => (systemDark.value = event.matches))
 
 watchEffect(() => {
+  if (settings.theme === 'classic') {
+    vuetify.theme.global.name.value = 'classic'
+    return
+  }
   const dark = settings.theme === 'dark' || (settings.theme === 'system' && systemDark.value)
   vuetify.theme.global.name.value = dark ? 'fjordDark' : 'fjord'
 })
+
+// "Reduce motion" in Settings turns the playful animations off (reset.css).
+watchEffect(() => (document.documentElement.dataset.motion = settings.motion))
 
 // The cookie colour preset (tokens.css).
 watchEffect(() => (document.documentElement.dataset.cookie = settings.cookie))
