@@ -71,7 +71,9 @@ describe('SearchPage', () => {
     await searchFor(wrapper, 'friend')
     await wrapper.findAll('.result-card')[1].trigger('click')
     await flushPromises()
-    await vi.waitFor(() => expect(router.currentRoute.value.fullPath).toBe('/project/1:0/file/73:0'))
+    await vi.waitFor(() =>
+      expect(router.currentRoute.value.fullPath).toBe('/project/1:0/file/73:0'),
+    )
     expect(fileBrowse.file).toEqual({ '@rid': '#73:0' })
     expect(fileBrowse.context).toMatchObject({ mode: 'search', query: 'friend', index: 1 })
     expect(fileBrowse.context.results.map((r) => r.rid)).toEqual(['#76:0', '#73:0'])

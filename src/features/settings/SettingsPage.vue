@@ -11,6 +11,7 @@ import {
   COOKIE_OPTIONS,
   MOTION_OPTIONS,
 } from '@/stores/settings.js'
+import { themeAttribute } from '@/styles/vuetify-theme.js'
 
 // The user's own settings: theme, the colour of the cruncher cookie and
 // whether things animate. A
@@ -20,12 +21,8 @@ const saved = ref(false)
 
 // Each theme card previews itself: tokens.css defines the colours for any
 // element with a data-theme attribute.
-const previewThemes = {
-  light: ['fjord'],
-  dark: ['fjord-dark'],
-  system: ['fjord', 'fjord-dark'],
-  classic: ['classic'],
-}
+const previewThemes = (option) =>
+  option.vuetify ? [themeAttribute[option.vuetify]] : ['fjord', 'fjord-dark']
 
 const motionText = {
   on: 'The cookie takes a bite when you point at it; placeholders steam.',
@@ -79,7 +76,7 @@ async function choose(key, value) {
             />
             <span class="theme-preview" aria-hidden="true">
               <span
-                v-for="theme in previewThemes[option.value]"
+                v-for="theme in previewThemes(option)"
                 :key="theme"
                 :data-theme="theme"
                 class="theme-preview__half"

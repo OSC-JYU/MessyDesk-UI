@@ -5,11 +5,22 @@ import { saveSettings } from '@/api/session.js'
 // kept in localStorage so the page starts in the right theme before /api/me
 // has answered. src/app/vuetify.js applies them.
 
+// `vuetify` is the Vuetify theme name (src/styles/vuetify-theme.js); "system"
+// switches between Fjord light and dark with the OS setting.
 export const THEME_OPTIONS = [
-  { value: 'light', title: 'Fjord light', icon: 'mdi-white-balance-sunny' },
-  { value: 'dark', title: 'Fjord dark', icon: 'mdi-weather-night' },
+  { value: 'light', title: 'Fjord', icon: 'mdi-white-balance-sunny', vuetify: 'fjord' },
+  { value: 'dark', title: 'Fjord dark', icon: 'mdi-weather-night', vuetify: 'fjordDark' },
   { value: 'system', title: 'Follow the system', icon: 'mdi-monitor' },
-  { value: 'classic', title: 'MessyDesk classic', icon: 'mdi-palette-outline' },
+  { value: 'navy', title: 'Navy', icon: 'mdi-white-balance-sunny', vuetify: 'navy' },
+  { value: 'navy-dark', title: 'Navy dark', icon: 'mdi-weather-night', vuetify: 'navyDark' },
+  { value: 'slate', title: 'Slate', icon: 'mdi-white-balance-sunny', vuetify: 'slate' },
+  { value: 'warm', title: 'Reading room', icon: 'mdi-white-balance-sunny', vuetify: 'warm' },
+  {
+    value: 'warm-dark',
+    title: 'Reading room dark',
+    icon: 'mdi-weather-night',
+    vuetify: 'warmDark',
+  },
 ]
 
 export const COOKIE_OPTIONS = [

@@ -10,7 +10,7 @@ workspace shared by provide/inject.
 | `stores/fileBrowse.js` | The open file, its browse context (set or result list), the ROI set being edited, the Markdown preference |
 | `stores/pageMemory.js` | Per-screen, per-scope memory for the browser session (Search, Tags, set browser page) |
 | `stores/batchStore.js` | Batch jobs from SSE events, with pause/resume/cancel/dismiss |
-| `stores/settings.js` | The user's UI settings (`theme`: light/dark/system/classic, `cookie`: colour preset, `motion`: on/off). Filled from `GET /api/me`, saved with `PUT /api/me/settings`, cached in localStorage so the page starts in the right theme; `app/vuetify.js` applies them (Vuetify theme, `data-theme`, `data-cookie`, `data-motion` on `<html>`) |
+| `stores/settings.js` | The user's UI settings (`theme`: light/dark (Fjord), system, navy, navy-dark, slate, warm, warm-dark, `cookie`: colour preset, `motion`: on/off). Filled from `GET /api/me`, saved with `PUT /api/me/settings`, cached in localStorage so the page starts in the right theme; `app/vuetify.js` applies them (Vuetify theme, `data-theme`, `data-cookie`, `data-motion` on `<html>`) |
 | `features/project/useWorkspace.js` | One desk: selected node, reload/fit requests, dialog state |
 
 ## Browse context

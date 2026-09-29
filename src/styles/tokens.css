@@ -110,34 +110,36 @@
   --md-drop-shadow: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
 }
 
-/* MessyDesk classic: the original navy and blue look. Blue is the action
-   colour, teal (secondary) marks sets. */
-[data-theme='classic'] {
+/* The other themes (Settings page). Same tokens; the source palettes use the
+   names brand-navy, page, ink, process, which map onto --md-color-*. */
+/* Navy: the original MessyDesk look. Blue is the action colour, teal
+   (secondary) marks sets. */
+[data-theme='light'] {
   --md-color-header: #002957;
   --md-color-text-on-dark: #ffffff;
-  --md-color-text-on-dark-muted: #b9cde4;
+  --md-color-text-on-dark-muted: #9fc2e4;
   --md-color-bg: #edf2f6;
   --md-color-surface: #ffffff;
-  --md-color-surface-subtle: #f5f8fb;
-  --md-color-border: #d3dde6;
-  --md-color-border-strong: #6d8aa6;
+  --md-color-surface-subtle: #f5f7fa;
+  --md-color-border: #d5dee8;
+  --md-color-border-strong: #6d88a6;
   --md-color-text: #17324f;
-  --md-color-text-muted: #56708a;
+  --md-color-text-muted: #4f6580;
   --md-color-primary: #1565c0;
-  --md-color-primary-hover: #0d4f9c;
+  --md-color-primary-hover: #0d47a1;
   --md-color-on-primary: #ffffff;
-  --md-color-primary-soft: #e3eefb;
-  --md-color-teal: #187a62;
+  --md-color-primary-soft: #e3f2fd;
+  --md-color-teal: #1565c0;
   --md-color-secondary: #187a62;
   --md-color-on-secondary: #ffffff;
-  --md-color-secondary-soft: #e1f2ec;
+  --md-color-secondary-soft: #e3f4ee;
   --md-color-graph: #13547a;
   --md-color-on-graph: #ffffff;
   --md-color-graph-light: #80d0c7;
   --md-gradient-graph: linear-gradient(
     to top right,
-    rgba(19, 84, 122, 0.8),
-    rgba(128, 208, 199, 0.8)
+    rgba(19, 84, 122, 0.9),
+    rgba(128, 208, 199, 0.85)
   );
   --md-color-focus: #1565c0;
   --md-cookie-classic: #d9a25f;
@@ -147,18 +149,218 @@
   --md-color-cookie-edge: var(--md-cookie-classic-edge);
   --md-color-cookie-chip: var(--md-cookie-classic-chip);
   --md-color-info: #1565c0;
-  --md-color-success: #187a62;
-  --md-color-success-soft: #e1f2ec;
-  --md-color-warning: #b26a00;
+  --md-color-success: #2e7d32;
+  --md-color-success-soft: #e8f5e9;
+  --md-color-warning: #9a5b00;
   --md-color-warning-soft: #fff3e0;
   --md-color-error: #c62828;
   --md-color-on-error: #ffffff;
   --md-color-error-soft: #ffebee;
   --md-color-highlight: #fff3a3;
-  --md-shadow-1: 0 1px 2px rgba(23, 50, 79, 0.08), 0 1px 3px rgba(23, 50, 79, 0.06);
-  --md-shadow-2: 0 4px 12px rgba(23, 50, 79, 0.1);
-  --md-shadow-3: 0 16px 40px rgba(23, 50, 79, 0.18);
-  --md-drop-shadow: drop-shadow(0 2px 3px rgba(23, 50, 79, 0.3));
+  --md-shadow-1: 0 1px 2px rgba(14, 67, 101, 0.08);
+  --md-shadow-2: 0 6px 18px rgba(14, 67, 101, 0.1);
+  --md-shadow-3: 0 16px 40px rgba(14, 67, 101, 0.18);
+  --md-drop-shadow: drop-shadow(0 2px 3px rgba(14, 67, 101, 0.3));
+}
+
+/* Navy dark. */
+[data-theme='dark'] {
+  --md-color-header: #0a1d33;
+  --md-color-text-on-dark: #e6edf4;
+  --md-color-text-on-dark-muted: #9fc2e4;
+  --md-color-bg: #0e1a26;
+  --md-color-surface: #152433;
+  --md-color-surface-subtle: #1a2b3c;
+  --md-color-border: #2c4157;
+  --md-color-border-strong: #6f8aa6;
+  --md-color-text: #e6edf4;
+  --md-color-text-muted: #9fb2c6;
+  --md-color-primary: #64a8f0;
+  --md-color-primary-hover: #8cc0f5;
+  --md-color-on-primary: #0b1a2a;
+  --md-color-primary-soft: #1b3552;
+  --md-color-teal: #64a8f0;
+  --md-color-secondary: #4cc3a3;
+  --md-color-on-secondary: #0b1a2a;
+  --md-color-secondary-soft: #173a36;
+  --md-color-graph: #1f6a94;
+  --md-color-on-graph: #ffffff;
+  --md-color-graph-light: #80d0c7;
+  --md-gradient-graph: linear-gradient(
+    to top right,
+    rgba(31, 106, 148, 0.9),
+    rgba(128, 208, 199, 0.6)
+  );
+  --md-color-focus: #8cc0f5;
+  --md-cookie-classic: #d9a25f;
+  --md-cookie-classic-edge: #e0b377;
+  --md-cookie-classic-chip: #4a2a0f;
+  --md-color-cookie: var(--md-cookie-classic);
+  --md-color-cookie-edge: var(--md-cookie-classic-edge);
+  --md-color-cookie-chip: var(--md-cookie-classic-chip);
+  --md-color-info: #64a8f0;
+  --md-color-success: #7cc98a;
+  --md-color-success-soft: #1b3326;
+  --md-color-warning: #f0b05a;
+  --md-color-warning-soft: #3a2c14;
+  --md-color-error: #ef7a7a;
+  --md-color-on-error: #0b1a2a;
+  --md-color-error-soft: #3d1f24;
+  --md-color-highlight: #5a4a00;
+  --md-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --md-shadow-2: 0 6px 18px rgba(0, 0, 0, 0.45);
+  --md-shadow-3: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --md-drop-shadow: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+}
+
+/* Slate: neutral greys with a muted blue action colour. */
+[data-theme='slate'] {
+  --md-color-header: #1f2833;
+  --md-color-text-on-dark: #f3f5f7;
+  --md-color-text-on-dark-muted: #aab6c3;
+  --md-color-bg: #f1f3f5;
+  --md-color-surface: #ffffff;
+  --md-color-surface-subtle: #f6f7f9;
+  --md-color-border: #dde1e6;
+  --md-color-border-strong: #76808c;
+  --md-color-text: #1d242c;
+  --md-color-text-muted: #56606b;
+  --md-color-primary: #2d5b93;
+  --md-color-primary-hover: #1f4371;
+  --md-color-on-primary: #ffffff;
+  --md-color-primary-soft: #e6edf6;
+  --md-color-teal: #2d5b93;
+  --md-color-secondary: #3f6b5a;
+  --md-color-on-secondary: #ffffff;
+  --md-color-secondary-soft: #e6efeb;
+  --md-color-graph: #34495e;
+  --md-color-on-graph: #ffffff;
+  --md-color-graph-light: #9fb4c8;
+  --md-gradient-graph: linear-gradient(
+    to top right,
+    rgba(52, 73, 94, 0.9),
+    rgba(159, 180, 200, 0.85)
+  );
+  --md-color-focus: #2d5b93;
+  --md-cookie-classic: #d9a25f;
+  --md-cookie-classic-edge: #b27a3c;
+  --md-cookie-classic-chip: #5a3413;
+  --md-color-cookie: var(--md-cookie-classic);
+  --md-color-cookie-edge: var(--md-cookie-classic-edge);
+  --md-color-cookie-chip: var(--md-cookie-classic-chip);
+  --md-color-info: #2d5b93;
+  --md-color-success: #2e7d32;
+  --md-color-success-soft: #e8f5e9;
+  --md-color-warning: #9a5b00;
+  --md-color-warning-soft: #fff3e0;
+  --md-color-error: #c62828;
+  --md-color-on-error: #ffffff;
+  --md-color-error-soft: #ffebee;
+  --md-color-highlight: #fff3a3;
+  --md-shadow-1: 0 1px 2px rgba(31, 40, 51, 0.08);
+  --md-shadow-2: 0 6px 18px rgba(31, 40, 51, 0.1);
+  --md-shadow-3: 0 16px 40px rgba(31, 40, 51, 0.18);
+  --md-drop-shadow: drop-shadow(0 2px 3px rgba(31, 40, 51, 0.3));
+}
+
+/* Reading room: warm paper tones, green actions, rust sets. */
+[data-theme='warm'] {
+  --md-color-header: #2f4a3e;
+  --md-color-text-on-dark: #fbf6ee;
+  --md-color-text-on-dark-muted: #cfdcc9;
+  --md-color-bg: #f5efe6;
+  --md-color-surface: #fffcf7;
+  --md-color-surface-subtle: #f9f4ec;
+  --md-color-border: #e4d9c9;
+  --md-color-border-strong: #8c7a66;
+  --md-color-text: #2e261f;
+  --md-color-text-muted: #6a5b4d;
+  --md-color-primary: #1f6650;
+  --md-color-primary-hover: #154a3a;
+  --md-color-on-primary: #ffffff;
+  --md-color-primary-soft: #e2efe7;
+  --md-color-teal: #1f6650;
+  --md-color-secondary: #9a4a26;
+  --md-color-on-secondary: #ffffff;
+  --md-color-secondary-soft: #f7e6dc;
+  --md-color-graph: #3d5a73;
+  --md-color-on-graph: #ffffff;
+  --md-color-graph-light: #d6b27a;
+  --md-gradient-graph: linear-gradient(
+    to top right,
+    rgba(61, 90, 115, 0.9),
+    rgba(214, 178, 122, 0.85)
+  );
+  --md-color-focus: #1f6650;
+  --md-cookie-classic: #d9a25f;
+  --md-cookie-classic-edge: #b27a3c;
+  --md-cookie-classic-chip: #5a3413;
+  --md-color-cookie: var(--md-cookie-classic);
+  --md-color-cookie-edge: var(--md-cookie-classic-edge);
+  --md-color-cookie-chip: var(--md-cookie-classic-chip);
+  --md-color-info: #1f6650;
+  --md-color-success: #2f7a3a;
+  --md-color-success-soft: #e7f2e3;
+  --md-color-warning: #8f5a00;
+  --md-color-warning-soft: #fbeed3;
+  --md-color-error: #b3261e;
+  --md-color-on-error: #ffffff;
+  --md-color-error-soft: #fbe6e1;
+  --md-color-highlight: #fbe38a;
+  --md-shadow-1: 0 1px 2px rgba(74, 52, 32, 0.08);
+  --md-shadow-2: 0 6px 18px rgba(74, 52, 32, 0.1);
+  --md-shadow-3: 0 16px 40px rgba(74, 52, 32, 0.18);
+  --md-drop-shadow: drop-shadow(0 2px 3px rgba(74, 52, 32, 0.3));
+}
+
+/* Reading room dark. */
+[data-theme='warm-dark'] {
+  --md-color-header: #18241e;
+  --md-color-text-on-dark: #f3ebdf;
+  --md-color-text-on-dark-muted: #b9c7b3;
+  --md-color-bg: #1b1713;
+  --md-color-surface: #25201a;
+  --md-color-surface-subtle: #2d2720;
+  --md-color-border: #3e352b;
+  --md-color-border-strong: #8f7f6c;
+  --md-color-text: #f1e8dc;
+  --md-color-text-muted: #bfb0a0;
+  --md-color-primary: #74c2a4;
+  --md-color-primary-hover: #98d4bc;
+  --md-color-on-primary: #16201b;
+  --md-color-primary-soft: #233a31;
+  --md-color-teal: #74c2a4;
+  --md-color-secondary: #e59b74;
+  --md-color-on-secondary: #231710;
+  --md-color-secondary-soft: #3d271c;
+  --md-color-graph: #56799a;
+  --md-color-on-graph: #ffffff;
+  --md-color-graph-light: #d6b27a;
+  --md-gradient-graph: linear-gradient(
+    to top right,
+    rgba(86, 121, 154, 0.9),
+    rgba(214, 178, 122, 0.6)
+  );
+  --md-color-focus: #98d4bc;
+  --md-cookie-classic: #d9a25f;
+  --md-cookie-classic-edge: #e0b377;
+  --md-cookie-classic-chip: #4a2a0f;
+  --md-color-cookie: var(--md-cookie-classic);
+  --md-color-cookie-edge: var(--md-cookie-classic-edge);
+  --md-color-cookie-chip: var(--md-cookie-classic-chip);
+  --md-color-info: #74c2a4;
+  --md-color-success: #8fcf8a;
+  --md-color-success-soft: #223322;
+  --md-color-warning: #f0b660;
+  --md-color-warning-soft: #3b2d15;
+  --md-color-error: #f08a7e;
+  --md-color-on-error: #231311;
+  --md-color-error-soft: #3f211d;
+  --md-color-highlight: #5d4a12;
+  --md-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --md-shadow-2: 0 6px 18px rgba(0, 0, 0, 0.45);
+  --md-shadow-3: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --md-drop-shadow: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
 }
 
 /* Cookie colour presets, chosen on the Settings page. The attribute sits on

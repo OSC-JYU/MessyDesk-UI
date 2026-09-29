@@ -1,6 +1,6 @@
 // Vuetify themes built from the same values as tokens.css. Keep the two in
 // step: Vuetify needs literal colours at build time, CSS reads the custom
-// properties (switched with <html data-theme="fjord" | "fjord-dark" | "classic">).
+// properties (switched with <html data-theme="…">, see themeAttribute below).
 // Teal (primary) is the action colour; navy (secondary) marks sets.
 
 const variables = {
@@ -69,36 +69,168 @@ export const fjordDark = {
   variables: { ...variables, 'border-color': '#e4f1ee' },
 }
 
-// MessyDesk classic: the original navy and blue look.
-export const classic = {
+// Navy
+export const navy = {
   dark: false,
   colors: {
     background: '#edf2f6',
     surface: '#ffffff',
     'surface-bright': '#ffffff',
-    'surface-light': '#f5f8fb',
-    'surface-variant': '#e3eefb',
+    'surface-light': '#f5f7fa',
+    'surface-variant': '#e3f2fd',
     'on-background': '#17324f',
     'on-surface': '#17324f',
     'on-surface-variant': '#17324f',
     primary: '#1565c0',
-    'primary-darken-1': '#0d4f9c',
+    'primary-darken-1': '#0d47a1',
     'on-primary': '#ffffff',
     secondary: '#187a62',
-    'secondary-darken-1': '#11604c',
+    'secondary-darken-1': '#136450',
     'on-secondary': '#ffffff',
     header: '#002957',
     'on-header': '#ffffff',
     graph: '#13547a',
     'graph-light': '#80d0c7',
     info: '#1565c0',
-    success: '#187a62',
-    warning: '#b26a00',
+    success: '#2e7d32',
+    warning: '#9a5b00',
     error: '#c62828',
     'on-error': '#ffffff',
   },
   variables: { ...variables, 'border-color': '#17324f' },
 }
 
+// Navy dark
+export const navyDark = {
+  dark: true,
+  colors: {
+    background: '#0e1a26',
+    surface: '#152433',
+    'surface-bright': '#1a2b3c',
+    'surface-light': '#1a2b3c',
+    'surface-variant': '#1b3552',
+    'on-background': '#e6edf4',
+    'on-surface': '#e6edf4',
+    'on-surface-variant': '#e6edf4',
+    primary: '#64a8f0',
+    'primary-darken-1': '#8cc0f5',
+    'on-primary': '#0b1a2a',
+    secondary: '#4cc3a3',
+    'secondary-darken-1': '#3e9f85',
+    'on-secondary': '#0b1a2a',
+    header: '#0a1d33',
+    'on-header': '#e6edf4',
+    graph: '#1f6a94',
+    'graph-light': '#80d0c7',
+    info: '#64a8f0',
+    success: '#7cc98a',
+    warning: '#f0b05a',
+    error: '#ef7a7a',
+    'on-error': '#0b1a2a',
+  },
+  variables: { ...variables, 'border-color': '#e6edf4' },
+}
+
+// Slate
+export const slate = {
+  dark: false,
+  colors: {
+    background: '#f1f3f5',
+    surface: '#ffffff',
+    'surface-bright': '#ffffff',
+    'surface-light': '#f6f7f9',
+    'surface-variant': '#e6edf6',
+    'on-background': '#1d242c',
+    'on-surface': '#1d242c',
+    'on-surface-variant': '#1d242c',
+    primary: '#2d5b93',
+    'primary-darken-1': '#1f4371',
+    'on-primary': '#ffffff',
+    secondary: '#3f6b5a',
+    'secondary-darken-1': '#335749',
+    'on-secondary': '#ffffff',
+    header: '#1f2833',
+    'on-header': '#f3f5f7',
+    graph: '#34495e',
+    'graph-light': '#9fb4c8',
+    info: '#2d5b93',
+    success: '#2e7d32',
+    warning: '#9a5b00',
+    error: '#c62828',
+    'on-error': '#ffffff',
+  },
+  variables: { ...variables, 'border-color': '#1d242c' },
+}
+
+// Reading room
+export const warm = {
+  dark: false,
+  colors: {
+    background: '#f5efe6',
+    surface: '#fffcf7',
+    'surface-bright': '#fffcf7',
+    'surface-light': '#f9f4ec',
+    'surface-variant': '#e2efe7',
+    'on-background': '#2e261f',
+    'on-surface': '#2e261f',
+    'on-surface-variant': '#2e261f',
+    primary: '#1f6650',
+    'primary-darken-1': '#154a3a',
+    'on-primary': '#ffffff',
+    secondary: '#9a4a26',
+    'secondary-darken-1': '#7e3c1f',
+    'on-secondary': '#ffffff',
+    header: '#2f4a3e',
+    'on-header': '#fbf6ee',
+    graph: '#3d5a73',
+    'graph-light': '#d6b27a',
+    info: '#1f6650',
+    success: '#2f7a3a',
+    warning: '#8f5a00',
+    error: '#b3261e',
+    'on-error': '#ffffff',
+  },
+  variables: { ...variables, 'border-color': '#2e261f' },
+}
+
+// Reading room dark
+export const warmDark = {
+  dark: true,
+  colors: {
+    background: '#1b1713',
+    surface: '#25201a',
+    'surface-bright': '#2d2720',
+    'surface-light': '#2d2720',
+    'surface-variant': '#233a31',
+    'on-background': '#f1e8dc',
+    'on-surface': '#f1e8dc',
+    'on-surface-variant': '#f1e8dc',
+    primary: '#74c2a4',
+    'primary-darken-1': '#98d4bc',
+    'on-primary': '#16201b',
+    secondary: '#e59b74',
+    'secondary-darken-1': '#bb7f5f',
+    'on-secondary': '#231710',
+    header: '#18241e',
+    'on-header': '#f3ebdf',
+    graph: '#56799a',
+    'graph-light': '#d6b27a',
+    info: '#74c2a4',
+    success: '#8fcf8a',
+    warning: '#f0b660',
+    error: '#f08a7e',
+    'on-error': '#231311',
+  },
+  variables: { ...variables, 'border-color': '#f1e8dc' },
+}
+
 // Vuetify theme name → the data-theme value tokens.css uses.
-export const themeAttribute = { fjord: 'fjord', fjordDark: 'fjord-dark', classic: 'classic' }
+export const themeAttribute = {
+  fjord: 'fjord',
+  fjordDark: 'fjord-dark',
+  navy: 'light',
+  navyDark: 'dark',
+  slate: 'slate',
+  warm: 'warm',
+  warmDark: 'warm-dark',
+}

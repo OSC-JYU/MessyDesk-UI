@@ -47,15 +47,27 @@ describe('SettingsPage', () => {
   it('shows the three themes and the cookie flavours with the current ones checked', () => {
     const page = mount(SettingsPage)
     const themes = page.findAll('input[name="theme"]')
-    expect(themes.map((i) => i.attributes('value'))).toEqual(['light', 'dark', 'system', 'classic'])
+    expect(themes.map((i) => i.attributes('value'))).toEqual([
+      'light',
+      'dark',
+      'system',
+      'navy',
+      'navy-dark',
+      'slate',
+      'warm',
+      'warm-dark',
+    ])
     expect(themes[0].element.checked).toBe(true)
     expect(page.text()).toContain('Follow the system')
     const cookies = page.findAll('input[name="cookie"]')
     expect(cookies).toHaveLength(5)
     expect(page.find('[data-cookie="matcha"] .crunch-icon').exists()).toBe(true)
-    // The system card previews both Fjord themes; classic previews itself.
+    // The system card previews both Fjord themes; the others preview themselves.
     expect(page.findAll('.settings-option')[2].findAll('[data-theme]')).toHaveLength(2)
-    expect(page.find('.settings-option [data-theme="classic"]').exists()).toBe(true)
+    expect(page.text()).toContain('Reading room dark')
+    for (const attr of ['light', 'dark', 'slate', 'warm', 'warm-dark']) {
+      expect(page.find(`.settings-option [data-theme="${attr}"]`).exists()).toBe(true)
+    }
   })
 
   it('saves a choice and says so', async () => {

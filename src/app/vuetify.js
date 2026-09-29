@@ -4,15 +4,17 @@ import { ref, watch, watchEffect } from 'vue'
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
-import { fjord, fjordDark, classic, themeAttribute } from '@/styles/vuetify-theme.js'
-import { settings } from '@/stores/settings.js'
+import * as themes from '@/styles/vuetify-theme.js'
+import { settings, THEME_OPTIONS } from '@/stores/settings.js'
+
+const { themeAttribute } = themes
 
 export const vuetify = createVuetify({
   components,
   directives,
   theme: {
     defaultTheme: 'fjord',
-    themes: { fjord, fjordDark, classic },
+    themes: Object.fromEntries(Object.keys(themeAttribute).map((name) => [name, themes[name]])),
   },
 })
 
@@ -30,12 +32,9 @@ const systemDark = ref(Boolean(darkQuery?.matches))
 darkQuery?.addEventListener?.('change', (event) => (systemDark.value = event.matches))
 
 watchEffect(() => {
-  if (settings.theme === 'classic') {
-    vuetify.theme.global.name.value = 'classic'
-    return
-  }
-  const dark = settings.theme === 'dark' || (settings.theme === 'system' && systemDark.value)
-  vuetify.theme.global.name.value = dark ? 'fjordDark' : 'fjord'
+  const chosen = THEME_OPTIONS.find((option) => option.value === settings.theme)
+  if (chosen?.vuetify) vuetify.theme.global.name.value = chosen.vuetify
+  else vuetify.theme.global.name.value = systemDark.value ? 'fjordDark' : 'fjord'
 })
 
 // "Reduce motion" in Settings turns the playful animations off (reset.css).
