@@ -86,7 +86,7 @@ Node positions are computed by the `dagre` library via the `useLayout` composabl
 
 ### 5. File Type Dispatch Pattern
 
-File display uses a two-level lookup: first by `file.type` (backend-assigned semantic type like `image`, `ocr.json`, `ner.json`), then by `file.extension` as fallback. The mapping is defined in `FileDisplayWrapper.vue`.
+File display uses a two-level lookup: first by `file.type` (backend-assigned semantic type like `image`, `ocr.json`, `ner.json`), then by `file.extension` as fallback. The mapping is `displayFor` in `src/features/files/fileTypes.js`.
 
 **Verified from:** `src/features/files/fileTypes.js` (`displayFor`); see [file-display-system.md](file-display-system.md)
 
