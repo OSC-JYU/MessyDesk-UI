@@ -1,6 +1,6 @@
 <script setup>
 import { Handle, Position, useNode } from '@vue-flow/core'
-import cookieIcon from '@/assets/images/cookie-bite-solid_blue.svg'
+import CrunchIcon from '@/ui/CrunchIcon.vue'
 import { useWorkspace } from '../useWorkspace.js'
 
 // Frame shared by all graph nodes: a coloured header with the label, the
@@ -35,9 +35,10 @@ defineExpose({ crunch })
       type="button"
       class="gnode__crunch nodrag"
       title="Add cruncher"
+      aria-label="Add cruncher"
       @click.stop="crunch('')"
     >
-      <img :src="cookieIcon" alt="Add cruncher" />
+      <CrunchIcon />
     </button>
     <div class="gnode__body">
       <slot :crunch="crunch" />
@@ -143,26 +144,19 @@ defineExpose({ crunch })
 
 .gnode__crunch {
   position: absolute;
-  top: calc(var(--md-space-6) * -1);
-  right: calc(var(--md-space-6) * -1);
-  width: var(--md-node-cookie-size);
-  height: var(--md-node-cookie-size);
+  top: calc(var(--md-space-5) * -1);
+  right: calc(var(--md-space-5) * -1);
   padding: 0;
   border: 0;
   border-radius: 50%;
   background: transparent;
   cursor: pointer;
-  transition: transform 0.15s ease;
+  filter: var(--md-drop-shadow);
 }
 
-.gnode__crunch:hover,
 .gnode__crunch:focus-visible {
-  transform: scale(1.1);
-}
-
-.gnode__crunch img {
-  width: 100%;
-  height: 100%;
+  outline: 3px solid var(--md-color-focus);
+  outline-offset: 2px;
 }
 
 .gnode :deep(pre) {

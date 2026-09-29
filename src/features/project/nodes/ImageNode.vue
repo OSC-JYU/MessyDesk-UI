@@ -4,6 +4,7 @@
 defineOptions({ inheritAttrs: false })
 import { computed } from 'vue'
 import NodeShell from './NodeShell.vue'
+import CrunchIcon from '@/ui/CrunchIcon.vue'
 import { versioned } from './thumbnails.js'
 
 // An image: its thumbnail, size, and regions of interest with their own
@@ -25,15 +26,15 @@ const src = computed(() => versioned(props.data.image, props.data.thumbnail_vers
           <span class="image-node__rois"
             ><v-icon icon="mdi-selection" size="16" aria-hidden="true" /> {{ data.roi_count }}</span
           >
-          <v-btn
-            icon="mdi-cookie"
-            size="x-small"
-            variant="text"
-            class="nodrag"
+          <button
+            type="button"
+            class="image-node__roi-crunch nodrag"
             title="Crunch the regions"
             aria-label="Crunch the regions"
             @click.stop="crunch('ROI')"
-          />
+          >
+            <CrunchIcon :size="26" :plus="false" />
+          </button>
         </template>
       </div>
     </template>
@@ -57,6 +58,13 @@ const src = computed(() => versioned(props.data.image, props.data.thumbnail_vers
   gap: var(--md-space-2);
   margin-block-start: var(--md-space-2);
   color: var(--md-color-text-muted);
+}
+
+.image-node__roi-crunch {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
 }
 
 .image-node__rois {
