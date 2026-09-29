@@ -12,9 +12,9 @@ The `file.type` field is assigned by the backend after processing. A file named 
 
 ## 2. `#` Stripping is Manual and Pervasive
 
-ArcadeDB RIDs include a `#` prefix (`#21:5`). Every API method in `web.js` strips it manually with `.replace('#','')` before building URLs. This is done per-call, not centralized. Missing a strip would produce invalid URLs.
+ArcadeDB RIDs include a `#` prefix (`#21:5`). Every API method in `api/client.js` strips it manually with `.replace('#','')` before building URLs. This is done per-call, not centralized. Missing a strip would produce invalid URLs.
 
-**Verified from:** `src/web.js` (every method)
+**Verified from:** `src/api/client.js` (every method)
 
 ## 3. SSE Reconnection Resets State
 
@@ -44,7 +44,7 @@ The desk's dialogs (crunchers, delete node, create set, create source, uploads) 
 
 If the backend doesn't support project-scoped search, the search method retries without the filter and tags the result with `_project_filter_ignored = true`. The UI should (but may not always) indicate to the user that results are unfiltered.
 
-**Verified from:** `src/web.js` (`search` method)
+**Verified from:** `src/api/client.js` (`search` method)
 
 ## 8. DOMPurify Applied to Markdown but Not All HTML
 
@@ -56,13 +56,13 @@ If the backend doesn't support project-scoped search, the search method retries 
 
 `src/app/App.vue` uses `window.location.pathname.includes('login')` to detect the login page. If `VITE_PUBLIC_PATH` contained the string "login", this check would incorrectly match.
 
-**Verified from:** `src/app/App.vue` (`login` function)
+**Verified from:** `src/app/App.vue` (`onLoginPage`)
 
-## 10. Bootstrap Is Still Loaded
+## 10. Bootstrap Class Names Do Nothing
 
-Every screen is built with Vuetify, but `src/app/main.js` still imports Bootstrap's CSS and JS; stage 8 of the rewrite removes them. New code must not use Bootstrap classes (`npm run lint` checks).
+Bootstrap is no longer installed (stage 8), so classes like `row`, `btn` or `mt-3`-style Bootstrap utilities have no styles of their own. Vuetify has utilities with the same names for spacing (`mt-3`, `pa-2`), which still work. `npm run lint` fails on Bootstrap-only classes. Base margins for headings, paragraphs and lists come from `src/styles/reset.css`.
 
-**Verified from:** `src/app/main.js`
+**Verified from:** `src/app/main.js`, `src/styles/reset.css`, `scripts/check-new-code.mjs`
 
 ## 11. File Upload Accepts Limited Formats
 

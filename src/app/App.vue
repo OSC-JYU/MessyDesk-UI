@@ -3,26 +3,37 @@ import { onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { session } from '@/stores/session.js'
 import { ready } from '@/api/session.js'
+import { onAuthError } from '@/api/client.js'
 import { connect as connectEvents, disconnect as disconnectEvents } from '@/services/events.js'
 import AppShell from './AppShell.vue'
 import JobsPanel from '@/features/jobs/JobsPanel.vue'
 
 const route = useRoute()
-let pingTimer = null
+const onLoginPage = () => window.location.pathname.includes('login')
 
-// Session check by polling; replaced by a 401 handler in api/ in stage 8.
+// Any API call that comes back 401 (no account) sends the user to the login
+// page; a 302 (the sign-in proxy redirecting) means the session has expired.
+function handleAuthError(status) {
+  if (status === 401) {
+    if (!onLoginPage()) window.location.href = 'login'
+  } else {
+    session.expired = true
+  }
+}
+
+// One check on start and whenever the tab comes back into view, so an expired
+// session shows up before the user tries to do something.
 async function checkSession() {
   try {
     await ready()
-    if (window.location.pathname.includes('login'))
-      window.location.href = import.meta.env.VITE_PUBLIC_PATH || '/'
-  } catch (e) {
-    if (e.status == 401 && !window.location.pathname.includes('login')) {
-      window.location.href = 'login'
-    } else {
-      session.expired = e.status == 302
-    }
+    if (onLoginPage()) window.location.href = import.meta.env.VITE_PUBLIC_PATH || '/'
+  } catch {
+    // handleAuthError has dealt with it.
   }
+}
+
+function onVisible() {
+  if (document.visibilityState === 'visible') checkSession()
 }
 
 function reload() {
@@ -30,13 +41,15 @@ function reload() {
 }
 
 onMounted(() => {
+  onAuthError(handleAuthError)
   checkSession()
-  pingTimer = setInterval(checkSession, 30000)
+  document.addEventListener('visibilitychange', onVisible)
   connectEvents()
 })
 
 onUnmounted(() => {
-  clearInterval(pingTimer)
+  onAuthError(null)
+  document.removeEventListener('visibilitychange', onVisible)
   disconnectEvents()
 })
 </script>

@@ -6,7 +6,7 @@
 - **Cruncher:** The UI term for a processing task offered by a service. Each service exposes one or more cruncher tasks.
 - **Batch:** A group of processing jobs (e.g., running OCR on all files in a set). Has lifecycle states: running → paused/cancelling → finished.
 
-**Verified from:** `src/features/services/crunchers/`, `src/web.js` (batch methods), `src/features/project/useDeskGraph.js` (process updates)
+**Verified from:** `src/features/services/crunchers/`, `src/api/client.js` (batch methods), `src/features/project/useDeskGraph.js` (process updates)
 
 ## Processing Scope
 
@@ -20,7 +20,7 @@ Processing can be triggered at three levels:
 | ROI | `POST /api/queue/:service/files/:rid/roi` | ROI-specific processing |
 | **Auto-import** | Automatic on PDF upload | `afterFileCreated()` in import pipeline |
 
-**Verified from:** `src/web.js` (`createFileProcess`, `createSetProcess`, `createSourceProcess`, `createROIProcess`)
+**Verified from:** `src/api/client.js` (`createFileProcess`, `createSetProcess`, `createSourceProcess`, `createROIProcess`)
 
 ### PDF Auto-Import
 

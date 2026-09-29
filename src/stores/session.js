@@ -5,7 +5,7 @@ import { getMe } from '@/api/session.js'
 // old global store read the same object.
 export const session = reactive({
   user: null,
-  // Set when the backend reports an expired session (HTTP 302 on the ping).
+  // Set when the backend reports an expired session (HTTP 302 on any request).
   expired: false,
   loading: null,
 

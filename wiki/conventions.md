@@ -21,9 +21,9 @@ Small stores in `src/stores/` (`session`, `ui`, `fileBrowse`, `pageMemory`, `bat
 
 ### API Access
 ```js
-import web from '../web.js'
+import { getProject } from '@/api/projects.js'
 ```
-Old components call `web.*` methods; new code calls the `src/api/*` modules. No component uses `axios` directly.
+Code calls the `src/api/*` modules, which wrap the Axios client in `src/api/client.js`. No component uses `axios` or `client.js` directly.
 
 **Verified from:** all component files
 
@@ -37,7 +37,7 @@ Old components call `web.*` methods; new code calls the `src/api/*` modules. No 
 | Convention | Example | Note |
 |-----------|---------|------|
 | Component files | PascalCase `.vue` | `GraphCanvas.vue`, `SetBrowser.vue` |
-| JS modules | camelCase `.js` | `useLayout.js`, `web.js` |
+| JS modules | camelCase `.js` | `useWorkspace.js`, `graphModel.js` |
 | Store property | snake_case | `current_node`, `file_browse_context` |
 | API methods | camelCase | `web.getNodeFile()` |
 | Route names | kebab-case | `project-graph`, `service-help` |

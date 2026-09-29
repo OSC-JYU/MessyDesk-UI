@@ -14,11 +14,10 @@ MessyDesk-UI is a Vue 3 single-page application that serves as the frontend for 
 | Build tool | Vite | ^6.0.7 |
 | Router | vue-router | ^4.1.3 |
 | State | Reactive singleton (no Vuex/Pinia) | — |
-| UI framework | Vuetify 3 (Bootstrap 5 still loaded for old screens until stage 8) | ^3.5.17 / ^5.3.1 |
+| UI framework | Vuetify 3 | ^3.5.17 |
 | Graph visualization | @vue-flow/core + dagre | ^1.33.5 / ^0.8.5 |
 | HTTP client | Axios | ^1.7.2 |
 | i18n | vue-i18n | ^9.2.2 |
-| PDF rendering | vue-pdf-embed | ^2.0.4 |
 | Markdown | marked + DOMPurify | ^18.0.4 / ^3.4.7 |
 | Test runner | Vitest + jsdom + @vue/test-utils; Playwright route smoke tests | ^4.1.7 |
 | Lint / format | ESLint (flat config, eslint-plugin-vue) + Prettier | — |
@@ -29,15 +28,14 @@ MessyDesk-UI is a Vue 3 single-page application that serves as the frontend for 
 
 ```
 src/
-├── app/        main.js (bootstrap), router.js, App.vue (session check, SSE, jobs panel),
+├── app/        main.js (bootstrap), router.js, App.vue (auth handler, SSE, jobs panel),
 │               AppShell.vue + AppHeader.vue, vuetify.js, i18n.js
 ├── styles/     tokens.css (Fjord light/dark), reset.css, fonts.css, vuetify-theme.js
-├── api/        area modules (projects, files, services, search, entities, admin, session)
+├── api/        client.js (Axios) + area modules (projects, files, services, search, entities, admin, session)
 ├── stores/     session, ui, fileBrowse, pageMemory, batchStore
 ├── ui/         shared UI kit
 ├── features/   home, project (desk graph), files (viewer), search, tags, services, admin, help, jobs
-├── services/   events.js (single SSE connection)
-└── web.js      old Axios client behind api/
+└── services/   events.js (single SSE connection)
 ```
 
 ## Architectural Decisions
@@ -48,9 +46,9 @@ State lives in small reactive modules in `src/stores/`, and the state of one des
 
 **Verified from:** `src/stores/`
 
-### 2. Dual CSS Framework (Vuetify + Bootstrap)
+### 2. One UI Framework (Vuetify)
 
-Both Vuetify 3 and Bootstrap 5 are loaded. Vuetify provides structural components (dialogs, app bars, expansion panels). Bootstrap provides utility classes and icons. They coexist via separate CSS imports in `src/app/main.js`. Bootstrap is being dropped: new code uses Vuetify only, and Bootstrap is removed with the last old screen.
+Vuetify 3 is the only component library; icons are Material Design Icons (`mdi-*`). Colours and spacing come from `src/styles/tokens.css` and the Vuetify theme (`src/styles/vuetify-theme.js`). Bootstrap was removed in stage 8.
 
 **Verified from:** `src/app/main.js` (imports), `package.json`
 
@@ -81,10 +79,10 @@ File display uses a two-level lookup: first by `file.type` (backend-assigned sem
 | Variable | Purpose | Used in |
 |----------|---------|---------|
 | `VITE_PUBLIC_PATH` | Base path for router history and static assets | `main.js`, `vite.config.js` |
-| `VITE_API_PATH` | Axios `baseURL` for all API requests | `web.js` |
+| `VITE_API_PATH` | Axios `baseURL` for all API requests | `api/client.js` |
 | `VITE_FALLBACK_LOCALE` | i18n fallback locale | `main.js` |
 
-**Verified from:** `src/app/main.js`, `src/web.js`, `vite.config.js`
+**Verified from:** `src/app/main.js`, `src/api/client.js`, `vite.config.js`
 
 ## Dev Server Proxy
 

@@ -1,12 +1,10 @@
-// Style gate for the rewrite: new code (everything outside src/components/ and
-// src/web.js) may not use hex colours, inline style attributes or Bootstrap
-// classes. Colours live in src/styles/tokens.css and src/styles/vuetify-theme.js.
+// Style gate: code under src/ may not use hex colours, inline style attributes
+// or Bootstrap classes. Colours live in src/styles/tokens.css and src/styles/vuetify-theme.js.
 import fs from 'node:fs'
 import path from 'node:path'
 
 const roots = ['src/app', 'src/ui', 'src/features', 'src/api', 'src/stores', 'src/styles']
 const colourFiles = new Set(['src/styles/tokens.css', 'src/styles/vuetify-theme.js'])
-const legacyFiles = new Set(['src/styles/legacy.css'])
 
 const bootstrapClass =
   /^(row|container(-fluid)?|col(-(sm|md|lg|xl|xxl))?-\d+|btn(-[\w-]+)?|form-(control|select|check|label)|card-(body|header|footer|title|text)|navbar[\w-]*|dropdown-[\w-]+|bi|bi-[\w-]+|[mp]-\d|justify-content-[\w-]+|align-items-[\w-]+|vh-100|list-group[\w-]*)$/
@@ -35,7 +33,6 @@ function* walk(dir) {
 let failures = 0
 for (const root of roots) {
   for (const file of walk(root)) {
-    if (legacyFiles.has(file)) continue
     fs.readFileSync(file, 'utf8')
       .split('\n')
       .forEach((line, i) => {

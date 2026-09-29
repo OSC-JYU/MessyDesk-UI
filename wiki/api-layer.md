@@ -1,13 +1,13 @@
-# API Layer (`web.js`)
+# API Layer (`src/api/`)
 
 ## Design
 
-All HTTP communication is centralized in `src/web.js`, which exports a single `web` object with async methods. Axios is configured once with:
+All HTTP communication goes through `src/api/client.js`, which exports a single `web` object with async methods. Code does not import it directly: it calls the area modules in `src/api/` (`projects`, `files`, `services`, `search`, `entities`, `admin`, `session`), which wrap it. Axios is configured once with:
 
 - `baseURL` from `VITE_API_PATH`
-- A global response interceptor that normalizes errors into `{ status, message }` shape
+- A global response interceptor that normalizes errors into `{ status, message }` shape and reports 401/302 responses to the handler set with `onAuthError()` (see [authentication.md](authentication.md))
 
-**Verified from:** `src/web.js`
+**Verified from:** `src/api/client.js`
 
 ## Error Handling Pattern
 
@@ -19,9 +19,9 @@ The interceptor transforms Axios errors into three categories:
 | No response (network) | `0` | `'Network error - no response received'` |
 | Request config error | `0` | `'Request configuration error'` |
 
-Components consuming `web.*` functions receive rejected promises with `{ status, message }` objects (not Axios error objects).
+Components calling `api/` functions receive rejected promises with `{ status, message }` objects (not Axios error objects).
 
-**Verified from:** `src/web.js` (interceptor)
+**Verified from:** `src/api/client.js` (interceptor)
 
 ## API Method Categories
 
@@ -149,7 +149,7 @@ the UI filters its regions by label client-side.
 
 All methods that accept a graph RID (OrientDB-style `#cluster:position`) strip the `#` prefix before embedding it in URLs using `.replace('#','')`. This is applied consistently across all methods.
 
-**Verified from:** `src/web.js` (every method using rid parameters)
+**Verified from:** `src/api/client.js` (every method using rid parameters)
 
 ## Fallback Behavior
 
@@ -157,4 +157,4 @@ All methods that accept a graph RID (OrientDB-style `#cluster:position`) strip t
 
 **Inferred purpose:** Allows the UI to gracefully degrade when the backend doesn't support project-scoped filtering.
 
-**Verified from:** `src/web.js` (`search`, `getEntityItems` methods)
+**Verified from:** `src/api/client.js` (`search`, `getEntityItems` methods)

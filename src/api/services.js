@@ -1,7 +1,6 @@
 // Services (crunchers), queues, processes, prompts and service help.
-// Thin wrappers over the legacy web.js client so old and new screens share one
-// backend layer. Callers move here first; web.js is emptied as they do.
-import web from '@/web.js'
+// Thin wrappers over the Axios client in client.js, grouped by area.
+import web from './client.js'
 
 export const getServices = (...args) => web.getServices(...args)
 export const getQueueStatus = (...args) => web.getQueueStatus(...args)

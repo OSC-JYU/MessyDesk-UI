@@ -4,23 +4,21 @@
 
 The application uses SSO (Single Sign-On) with session-based authentication. The backend handles the auth protocol; the frontend only checks session validity.
 
-**Verified from:** `src/app/App.vue`, `src/web.js`
+**Verified from:** `src/app/App.vue`, `src/api/client.js`
 
 ## Session Check Mechanism
 
-`src/app/App.vue` on mount:
-1. Calls `web.ready()` → `GET /api`
-2. If successful and currently on `/login` page, redirects to home
-3. If 401 and not on `/login`, redirects to `/login`
-4. If 302 (expired session), sets `store.logged_out = true` (shows "session expired" banner)
+The API client (`src/api/client.js`) reports every 401 or 302 response to a handler that `src/app/App.vue` registers with `onAuthError()`:
+- 401 (no MessyDesk account) and not on `/login` → redirect to `/login`
+- 302 (the sign-in proxy redirecting, i.e. the session expired) → `session.expired = true` (shows the "session expired" banner)
 
-This check repeats every 30 seconds via `setInterval`.
+So an expired session is noticed on the first API call that fails, from any screen. In addition, `App.vue` calls `ready()` (`GET /api`) on mount and whenever the tab becomes visible again (`visibilitychange`), so the banner shows up before the user acts after a long break. When that check succeeds on `/login`, the user is sent to the home page. There is no timer (until stage 8 the check ran every 30 seconds).
 
-**Verified from:** `src/app/App.vue` (`login` function, `onMounted`)
+**Verified from:** `src/app/App.vue` (`handleAuthError`, `checkSession`), `src/api/client.js` (`onAuthError`), `test/api/client.spec.js`
 
 ## Session Expiry UI
 
-When `store.logged_out` is `true`, the entire `<router-view>` is replaced with a centered alert: "Your session expired" + reload button.
+When `session.expired` (`src/stores/session.js`) is `true`, the entire `<router-view>` is replaced with a centered alert: "Your session expired" + reload button.
 
 **Verified from:** `src/app/App.vue` (template)
 
@@ -40,16 +38,16 @@ This is not a login form—it's a registration/permission-request page for authe
 
 ## Permissions
 
-- `web.addPermissionRequest()` — User requests access
-- `web.getPermissionRequests()` — Admin lists pending requests
-- `web.removePermissionRequest(rid)` — Admin approves/removes request
+- `addPermissionRequest()` (`api/session.js`) — User requests access
+- `getPermissionRequests()` (`api/admin.js`) — Admin lists pending requests
+- `removePermissionRequest(rid)` (`api/admin.js`) — Admin approves/removes request
 
-**Verified from:** `src/web.js`
+**Verified from:** `src/api/client.js`
 
 ## Non-Obvious Behavior
 
 - **No token management in frontend:** Authentication is entirely cookie/session-based. The frontend never handles tokens, JWTs, or auth headers.
-- **Periodic polling, not event-driven:** Session validity is checked by polling every 30 seconds, not by intercepting 401s from API calls (though the global error interceptor does catch them).
+- **Event-driven, not polled:** Session validity comes from the status of real API calls (401/302 in the interceptor), plus one check when the tab becomes visible.
 - **Redirect logic assumes path-based routing:** The login redirect uses `window.location.pathname.includes('login')` which could break if the public path prefix contains "login".
 
 **Verified from:** `src/app/App.vue`

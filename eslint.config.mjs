@@ -3,15 +3,11 @@ import pluginVue from 'eslint-plugin-vue'
 import globals from 'globals'
 import prettier from 'eslint-config-prettier'
 
-// src/web.js is the old API client, emptied as callers move to src/api/; it
-// is not linted. Everything else is.
 export default [
   {
     ignores: [
       'dist/**',
       'node_modules/**',
-      'src/components/**',
-      'src/web.js',
       'test-results/**',
       'playwright-report/**',
     ],

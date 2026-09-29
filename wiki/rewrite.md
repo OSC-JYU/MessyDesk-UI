@@ -19,12 +19,12 @@ src/
 
 Every route was switched from its old view to the new one in turn, and the old files were deleted in the
 same change. Since stage 7 there is no old UI code left: `src/components/` and the old global store are
-gone. What remains of the old setup is `src/web.js` (the API client behind `src/api/`) and Bootstrap,
-which stage 8 removes.
+gone. Stage 8 removed Bootstrap and the unused dependencies and moved the old API client to
+`src/api/client.js`.
 
 - **One header.** `AppShell` renders `AppHeader` and the main area for every route except
   `meta.shell: false` (login).
-- **API.** `src/api/*.js` wrap `web.js`; code calls `api/` only.
+- **API.** `src/api/*.js` wrap `client.js`; code calls the area modules only.
 - **State.** Small stores (`src/stores/`) and, per desk, the workspace (`useWorkspace`). Dialogs are
   opened through workspace actions, never global flags.
 
@@ -88,4 +88,4 @@ then compare them side by side.
 | 5 Search and entities | Done: `features/search/` (SearchPage, shared ResultsGrid/ResultCard, ProjectScope, file opener) and `features/tags/` (TagsPage, NER label mentions with preview, add-tag dialog); `stores/fileBrowse.js` and `stores/pageMemory.js` replace old store fields; `SearchMain` and `EntitiesMain` deleted |
 | 6 File viewer | Done: `features/files/` (viewer shell, 9 displays, tools, ROI editor) replaces `FileDisplayWrapper`, `FilesMain` and 22 display/tool components; the big editors were ported without redesign and checked only with unit tests, since the local backend has no image/OCR data |
 | 7 Project graph | Done: `features/project/` (workspace, canvas, 8 node components on a shared shell, set browser, node panel, dialogs) and `features/jobs/JobsPanel.vue` replace GraphMain, GraphDisplay, NodeCard, the 23 node files, creators, uploader, drawer, set panel and the debug panel; the old store and legacy.css are deleted |
-| 8 Cleanup | Not started |
+| 8 Cleanup | Done: Bootstrap, bootstrap-icons, Popper, vue-pdf-embed, vue-sidebar-menu-akahon, vue3-image-multiselect-areas and vue-cli-plugin-vuetify removed; `reset.css` covers what Bootstrap's reboot did; `web.js` moved to `src/api/client.js` and linted; 30 s session polling replaced by a 401/302 handler in the API client. Bundle vs stage 0: JS 1,412 → 656 kB, CSS 1,125 → 787 kB |

@@ -9,7 +9,7 @@ The top-level organizational unit. A project contains files, sets, processing re
 - Projects can be deleted (destroys all contained nodes)
 - Projects track storage size
 
-**Verified from:** `src/web.js` (`createProject`, `deleteProject`, `getProject`)
+**Verified from:** `src/api/client.js` (`createProject`, `deleteProject`, `getProject`)
 
 ## File
 
@@ -27,7 +27,7 @@ A document stored in the system. Files have:
 
 Files are nodes in the project graph. They can be processing inputs or outputs.
 
-**Verified from:** `src/features/files/useQuickEdit.js`, `src/web.js`, `test/features/files/components.spec.js`
+**Verified from:** `src/features/files/useQuickEdit.js`, `src/api/client.js`, `test/features/files/components.spec.js`
 
 ## Set
 
@@ -49,7 +49,7 @@ the upload route) and the UI hides the upload button in favor of a warning (`pan
 backed by the `processed` flag on the Set's graph node data). See
 [processing-crunchers.md](processing-crunchers.md#set-locking-after-batch-processing).
 
-**Verified from:** `src/features/project/` (`graphModel.js`, `SetBrowser.vue`, `panel/NodeTools.vue`), `src/web.js`
+**Verified from:** `src/features/project/` (`graphModel.js`, `SetBrowser.vue`, `panel/NodeTools.vue`), `src/api/client.js`
 
 ## Source
 
@@ -59,7 +59,7 @@ An external data provider connected to a project. Known source types:
 
 Sources are created within a project and appear as graph nodes. They can be targets for batch processing.
 
-**Verified from:** `src/features/project/nodes/index.js` (node types), `dialogs/CreateSourceDialog.vue`, `src/web.js`
+**Verified from:** `src/features/project/nodes/index.js` (node types), `dialogs/CreateSourceDialog.vue`, `src/api/client.js`
 
 ## Entity (Tag)
 
@@ -79,7 +79,7 @@ each matching file's `ner.json` regions on demand (`web.getNerLabelGroups`/`getN
 no separate region-scoped tag data model for that case. `TagsMain.vue` (since deleted) was not
 wired into any route; it is dead code, not the component this behaviour lives in.
 
-**Verified from:** `src/features/tags/`, `src/web.js` (entity/tag methods)
+**Verified from:** `src/features/tags/`, `src/api/client.js` (entity/tag methods)
 
 ## ROI (Region of Interest)
 
@@ -89,7 +89,7 @@ Rectangular selections on images. ROIs:
 - Can be used as input for targeted processing (e.g., OCR a specific region)
 - Have their own graph node type (`roi-set`)
 
-**Verified from:** `src/web.js` (ROI methods), `src/features/project/useOpenNode.js` (ROI set handling)
+**Verified from:** `src/api/client.js` (ROI methods), `src/features/project/useOpenNode.js` (ROI set handling)
 
 ## Cruncher/Process
 
@@ -109,7 +109,7 @@ the full model, including the logo upload/resize flow.
 
 OrientDB-style identifiers in format `#cluster:position` (e.g., `#21:5`). The frontend consistently strips the `#` prefix when embedding in URLs. The `@rid` field on returned objects always includes the `#`.
 
-**Verified from:** `src/web.js` (all methods use `.replace('#','')`)
+**Verified from:** `src/api/client.js` (all methods use `.replace('#','')`)
 
 ## Graph Relationships
 
@@ -123,4 +123,4 @@ The backend uses a directed graph (ArcadeDB). Key relationship patterns visible 
 - Entity → File (tagged with)
 - Process → File (produces)
 
-**Inferred from:** `src/features/project/useOpenNode.js`, `nodeKinds.js` (`roiSourceNode`), `src/web.js`
+**Inferred from:** `src/features/project/useOpenNode.js`, `nodeKinds.js` (`roiSourceNode`), `src/api/client.js`
