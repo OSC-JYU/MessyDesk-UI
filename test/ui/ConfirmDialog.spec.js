@@ -50,6 +50,11 @@ describe('ConfirmDialog', () => {
     expect(wrapper.emitted('cancel')).toBeUndefined()
   })
 
+  it('keeps confirm disabled when asked', async () => {
+    await mountOpen({ confirmDisabled: true })
+    expect(button('confirm').disabled).toBe(true)
+  })
+
   it('shows an error', async () => {
     await mountOpen({ error: 'Deleting node failed' })
     expect(document.body.textContent).toContain('Deleting node failed')

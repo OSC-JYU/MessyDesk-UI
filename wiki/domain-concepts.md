@@ -76,7 +76,7 @@ only shows manual tags, real Autotag-created tags are browsed in their own "Mach
 by `(service_id, task)` (`web.getMachineTags`), and Faceted ROI-data results (see MessyDesk's
 [glossary.md](../../MessyDesk/wiki/glossary.md)) are browsed in a separate "NER results" section that reads
 each matching file's `ner.json` regions on demand (`web.getNerLabelGroups`/`getNerLabelMentions`) — there is
-no separate region-scoped tag data model for that case. `TagsMain.vue` exists in the codebase but is not
+no separate region-scoped tag data model for that case. `TagsMain.vue` (since deleted) was not
 wired into any route; it is dead code, not the component this behaviour lives in.
 
 **Verified from:** `src/components/EntitiesMain.vue`, `src/web.js` (entity/tag methods)

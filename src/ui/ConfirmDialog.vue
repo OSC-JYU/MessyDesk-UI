@@ -11,6 +11,8 @@ const props = defineProps({
   cancelText: { type: String, default: 'Cancel' },
   danger: { type: Boolean, default: false },
   loading: { type: Boolean, default: false },
+  // Keeps the confirm button disabled, e.g. until a name is typed.
+  confirmDisabled: { type: Boolean, default: false },
   error: { type: String, default: '' },
 })
 
@@ -53,6 +55,7 @@ function cancel() {
           :color="danger ? 'error' : 'primary'"
           variant="flat"
           :loading="loading"
+          :disabled="confirmDisabled"
           data-test="confirm"
           @click="emit('confirm')"
         >

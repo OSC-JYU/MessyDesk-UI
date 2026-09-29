@@ -10,7 +10,7 @@ The router uses `createWebHistory` with `VITE_PUBLIC_PATH` as the base. Routes a
 
 | Path | Name | Component | Notes |
 |------|------|-----------|-------|
-| `/` | Home | `Main` | Project listing & dashboard |
+| `/` | Home | `features/home/HomePage` | Desk list and home dashboard |
 | `/graph` | — | redirect | Legacy: redirects `?node=xxx` → `/project/xxx` |
 | `/project/:rid` | — | `GraphMain` | Shell for project views (nested routes) |
 | `/project/:rid` (child `''`) | project-graph | `GraphDisplay` | Graph canvas |

@@ -10,8 +10,8 @@ const routes = [
   {
     path: '/',
     name: 'Home',
-    component: () => import('@/components/Main.vue'),
-    meta: { legacy: true, title: 'Desks' },
+    component: () => import('@/features/home/HomePage.vue'),
+    meta: { title: 'Desks' },
   },
 
   // Legacy redirect: /graph?node=xxx → /project/xxx

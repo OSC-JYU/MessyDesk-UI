@@ -67,6 +67,7 @@ Use these instead of hand-built equivalents. Each has a unit test in `test/ui/`.
 | `LoadingState` | A view or panel that is loading | `text`, `inline` |
 | `ErrorAlert` | A failed load or action | `error` (string, Error or API `{ status, message }`), `title`, `retryable`; emits `retry` |
 | `FormField` | Label, hint and error around any control | `label`, `hint`, `error`, `required`, `id`; default slot gets `{ id, describedby, invalid }` |
+| `SectionCard` | A titled panel on a screen | `title`, `overline`; slots `actions`, default |
 | `StatusChip` | Job, service or process status | `status` (running, queued, paused, done, failed, …), `label` |
 
 `components/NodeDeleter.vue` already uses `ConfirmDialog` in place of its Bootstrap modal.
@@ -78,6 +79,7 @@ Use these instead of hand-built equivalents. Each has a unit test in `test/ui/`.
 | `npm run build` | Production build |
 | `npm test` | Vitest unit tests |
 | `npm run lint` | ESLint + new-code style gate |
+| `E2E_WRITE=1 npm run test:e2e` | Also runs tests that change data: creates, renames and deletes a throwaway desk |
 | `npm run test:e2e` | Playwright: opens every route against the local backend (dev mode on `localhost:8200`, via a Vite server on port 3100) and saves screenshots at 1440 and 1024 px to `e2e/screenshots/$SHOT_LABEL/`. Read-only; the node-delete test opens the dialog and cancels. |
 
 Take `SHOT_LABEL=before` screenshots before a change and `SHOT_LABEL=after` screenshots after it,
@@ -90,7 +92,7 @@ then compare them side by side.
 | 0 Groundwork | Done: dead files removed, ESLint + Prettier, tokens/theme/reset, AppShell with one header, `api/` wrappers, page titles, Playwright smoke tests |
 | 1 Shared UI kit | Done: the seven components above with unit tests; node delete moved from a Bootstrap modal to `ConfirmDialog` |
 | 2 Simple screens | Done: Help, Introduction, About and Login rewritten in `features/help/`; old `HelpMain`, `Introduction`, `About`, `Login` deleted |
-| 3 Home | Not started |
+| 3 Home | Done: `features/home/` replaces `Main.vue` (list, sort, create, rename, re-index, new Delete desk with type-the-name confirmation, storage, running jobs, active crunchers, news). Delete desk needs the backend fix in `graph.deleteProject` (it calls `deleteNode` without the user rid and returns 500). |
 | 4 Services and admin | Not started |
 | 5 Search and entities | Not started |
 | 6 File viewer | Not started |

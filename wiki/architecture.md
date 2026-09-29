@@ -44,7 +44,6 @@ src/
 └── components/          # Old UI, replaced route by route (see rewrite.md)
     ├── Store.js         # Old global reactive store (store.user delegates to stores/session.js)
     ├── BatchProgressPanel.vue  # Floating batch progress panel (rendered in app/App.vue)
-    ├── Main.vue         # Home page (project listing)
     ├── GraphMain.vue    # Project workspace: drawer + nested route views
     ├── ProjectDrawer.vue # Project side drawer, toggled from the app header
     ├── GraphDisplay.vue # Graph canvas (VueFlow) + set panel (listens md-sse events)

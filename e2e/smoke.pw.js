@@ -137,3 +137,73 @@ test('login page shows the SSO identity and the request button', async ({ page }
   // Not clicked: sending would create a permission request in the backend.
   await expect(page.locator('.login-card .v-btn')).toBeVisible()
 })
+
+test('home lists desks, sorts them and opens one', async ({ page }) => {
+  await open(page, '/')
+  const table = page.locator('.desk-table')
+  await expect(table).toBeVisible()
+  const nameHeader = table.getByRole('columnheader', { name: /Desk/ })
+  await expect(nameHeader).toHaveAttribute('aria-sort', 'ascending')
+  await nameHeader.getByRole('button').click()
+  await expect(nameHeader).toHaveAttribute('aria-sort', 'descending')
+  await table.getByRole('columnheader', { name: /Items/ }).getByRole('button').click()
+  await expect(table.getByRole('columnheader', { name: /Items/ })).toHaveAttribute('aria-sort', 'ascending')
+
+  const firstDesk = table.locator('tbody tr').first().getByRole('link')
+  await firstDesk.click()
+  await expect(page).toHaveURL(/\/project\//)
+})
+
+test('desk dialogs open and cancel without changing anything', async ({ page }) => {
+  await open(page, '/')
+  const row = page.locator('.desk-table tbody tr').first()
+  const deskName = (await row.getByRole('link').textContent()).trim()
+
+  for (const [item, title] of [
+    ['Rename desk', 'Rename desk'],
+    ['Re-index search', 'Re-index search'],
+    ['Delete desk', 'Delete desk'],
+  ]) {
+    await row.getByRole('button', { name: `Actions for ${deskName}` }).click()
+    await page.locator('.v-overlay--active .v-list-item', { hasText: item }).click()
+    const dialog = page.locator('.v-overlay--active .v-card').filter({ hasText: title })
+    await expect(dialog).toBeVisible()
+    if (item === 'Delete desk') {
+      await expect(dialog.getByRole('button', { name: 'Delete desk' })).toBeDisabled()
+      await page.waitForTimeout(400)
+      await page.screenshot({ path: `e2e/screenshots/${label}/home-delete-dialog-1440.png` })
+    }
+    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    await expect(dialog).toBeHidden()
+  }
+})
+
+// Creates, renames and deletes a throwaway desk. Writes to the backend, so it
+// only runs with E2E_WRITE=1.
+test('desk lifecycle: create, rename, delete', async ({ page }) => {
+  test.skip(!process.env.E2E_WRITE, 'set E2E_WRITE=1 to run tests that change backend data')
+  const name = `e2e desk ${Date.now()}`
+  const renamed = `${name} renamed`
+
+  await open(page, '/')
+  await page.getByLabel('Desk name').fill(name)
+  await page.getByRole('button', { name: 'Create desk' }).click()
+  await expect(page).toHaveURL(/\/project\//)
+
+  await open(page, '/')
+  const row = page.locator('.desk-table tbody tr', { hasText: name })
+  await row.getByRole('button', { name: `Actions for ${name}` }).click()
+  await page.locator('.v-overlay--active .v-list-item', { hasText: 'Rename desk' }).click()
+  const renameDialog = page.locator('.v-overlay--active .v-card').filter({ hasText: 'Rename desk' })
+  await renameDialog.getByLabel('Desk name').fill(renamed)
+  await renameDialog.getByRole('button', { name: 'Save' }).click()
+  await expect(page.locator('.desk-table').getByRole('link', { name: renamed })).toBeVisible()
+
+  const renamedRow = page.locator('.desk-table tbody tr', { hasText: renamed })
+  await renamedRow.getByRole('button', { name: `Actions for ${renamed}` }).click()
+  await page.locator('.v-overlay--active .v-list-item', { hasText: 'Delete desk' }).click()
+  const deleteDialog = page.locator('.v-overlay--active .v-card').filter({ hasText: 'Delete desk' })
+  await deleteDialog.getByLabel('Type the desk name to confirm').fill(renamed)
+  await deleteDialog.getByRole('button', { name: 'Delete desk' }).click()
+  await expect(page.locator('.desk-table').getByRole('link', { name: renamed })).toHaveCount(0)
+})

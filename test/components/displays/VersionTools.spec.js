@@ -93,14 +93,18 @@ describe('VersionTools', () => {
       hasImageCropSelection: false,
     })
 
-    const startCropButton = wrapper.findAll('button').find((button) => button.text().includes('Start crop'))
+    const startCropButton = wrapper
+      .findAll('button')
+      .find((button) => button.text().includes('Start crop'))
     expect(startCropButton).toBeTruthy()
     await startCropButton.trigger('click')
     expect(wrapper.emitted('start-crop')).toBeTruthy()
 
     await wrapper.setProps({ imageCropMode: true, hasImageCropSelection: true })
     const clearButton = wrapper.findAll('button').find((button) => button.text().includes('Clear'))
-    const cancelButton = wrapper.findAll('button').find((button) => button.text().includes('Cancel'))
+    const cancelButton = wrapper
+      .findAll('button')
+      .find((button) => button.text().includes('Cancel'))
 
     expect(clearButton).toBeTruthy()
     expect(cancelButton).toBeTruthy()
