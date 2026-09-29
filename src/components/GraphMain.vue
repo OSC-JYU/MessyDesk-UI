@@ -21,7 +21,7 @@
     import NodeDeleter from './NodeDeleter.vue'
     import Uploader from './Uploader.vue'
     import NodeCard from './NodeCard.vue'
-    import CruncherList from './CruncherList.vue'
+    import CruncherPicker from '../features/services/crunchers/CruncherPicker.vue'
     import ProjectDrawer from './ProjectDrawer.vue'
     import { ui } from '../stores/ui.js'
 
@@ -54,6 +54,12 @@
 
     // Project RID from route
     const projectRid = computed(() => route.params.rid || null)
+
+    // A process or filter was started from the cruncher list.
+    function onCrunchersDone({ reload }) {
+      store.crunchers_open = false
+      if (reload) store.reload(null)
+    }
 
     function fitToNode(id) {
         state.node = id + '-' + Math.random()
@@ -185,26 +191,22 @@
           </template>
 
           <!-- CRUNCHERS dialog-->
-            <v-dialog v-model="store.crunchers_open" width="auto" min-width="900" max-width="1400">
-
-              <v-card>
-                  <v-toolbar>
-                  <v-btn
-                      icon="mdi-close"
-                      @click="store.crunchers_open = false"
-                  ></v-btn>
-                  <v-toolbar-title>Available crunchers for {{ store.current_node.type }} {{ store.cruncher_filter }}</v-toolbar-title>
-
-
-                  <v-spacer></v-spacer>
-
-
+            <v-dialog v-model="store.crunchers_open" width="auto" min-width="900" max-width="1400" scrollable>
+              <v-card rounded="lg">
+                  <v-toolbar color="surface" density="comfortable" class="border-b">
+                    <v-toolbar-title>Crunchers for {{ store.current_node?.data?.label || store.current_node?.type }} {{ store.cruncher_filter }}</v-toolbar-title>
+                    <v-btn icon="mdi-close" aria-label="Close" @click="store.crunchers_open = false"></v-btn>
                   </v-toolbar>
-
-                  <CruncherList />
+                  <v-card-text class="pa-0">
+                    <CruncherPicker
+                      v-if="store.crunchers_open"
+                      :node="{ id: store.current_node?.id, type: store.current_node?.data?.type }"
+                      :cruncher-filter="store.cruncher_filter"
+                      @done="onCrunchersDone"
+                    />
+                  </v-card-text>
               </v-card>
-
-              </v-dialog>
+            </v-dialog>
 
         </v-main>
     </v-layout>

@@ -26,7 +26,7 @@ Used in nearly every component. Mutations are direct property assignments.
 ```js
 import web from '../web.js'
 ```
-All API calls go through `web.*` methods. No direct `axios` usage in components (with one exception: `ServicesMain.vue` imports `axios` directly for queue loading).
+Old components call `web.*` methods; new code calls the `src/api/*` modules. No component uses `axios` directly.
 
 **Verified from:** all component files
 

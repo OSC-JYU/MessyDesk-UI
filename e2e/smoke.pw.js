@@ -17,7 +17,6 @@ const staticRoutes = [
   ['help', '/help'],
   ['intro', '/intro'],
   ['about', '/about'],
-  ['crunchers', '/crunchers'],
   ['login', '/login'],
 ]
 
@@ -206,4 +205,74 @@ test('desk lifecycle: create, rename, delete', async ({ page }) => {
   await deleteDialog.getByLabel('Type the desk name to confirm').fill(renamed)
   await deleteDialog.getByRole('button', { name: 'Delete desk' }).click()
   await expect(page.locator('.desk-table').getByRole('link', { name: renamed })).toHaveCount(0)
+})
+
+test('services monitor and control load, and live refresh can pause', async ({ page }) => {
+  await open(page, '/services')
+  await expect(page.getByRole('heading', { level: 1, name: 'Services' })).toBeVisible()
+  const live = page.getByRole('button', { name: 'Live' })
+  await live.click()
+  await expect(page.getByRole('button', { name: 'Paused' })).toBeVisible()
+  await page.getByRole('link', { name: 'Control' }).click()
+  await expect(page).toHaveURL(/\/services\/admin$/)
+  await expect(page.getByRole('heading', { level: 1, name: 'Service control' })).toBeVisible()
+  // Forget asks first; cancel so nothing changes.
+  const forget = page.getByRole('button', { name: 'Forget' }).first()
+  if (await forget.count()) {
+    await forget.click()
+    const dialog = page.getByRole('alertdialog', { name: 'Forget service' })
+    await expect(dialog).toBeVisible()
+    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    await expect(dialog).toBeHidden()
+  }
+  await page.getByRole('button', { name: 'Install' }).click()
+  await expect(page.locator('.v-overlay--active .v-card').filter({ hasText: 'Install service' })).toBeVisible()
+})
+
+test('prompts open a new prompt form that needs a name and content', async ({ page }) => {
+  await open(page, '/prompts')
+  await expect(page.getByRole('heading', { level: 1, name: 'Prompts' })).toBeVisible()
+  await page.getByRole('button', { name: /Add text to text prompt/i }).click()
+  const dialog = page.locator('.v-overlay--active .v-card').filter({ hasText: 'New prompt' })
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByRole('button', { name: 'Save' })).toBeDisabled()
+  await dialog.getByRole('button', { name: 'Cancel' }).click()
+  await expect(dialog).toBeHidden()
+})
+
+test('admin tabs switch and remember the tab in the URL', async ({ page }) => {
+  await open(page, '/admin')
+  await expect(page.getByRole('heading', { level: 1, name: 'Admin' })).toBeVisible()
+  await page.getByRole('tab', { name: 'Users' }).click()
+  await expect(page).toHaveURL(/tab=users/)
+  await expect(page.getByText('local.user@localhost')).toBeVisible()
+  await page.reload()
+  await expect(page.getByRole('tab', { name: 'Users' })).toHaveAttribute('aria-selected', 'true')
+  await page.getByRole('tab', { name: 'Service groups' }).click()
+  await expect(page).toHaveURL(/tab=groups/)
+})
+
+test('cruncher list opens from a file on the desk', async ({ page, request }) => {
+  const rid = await firstProjectRid(request)
+  test.skip(!rid, 'backend has no projects')
+  await open(page, `/project/${rid}`)
+  const cookie = page.locator('.vue-flow__node-text img[title="Add cruncher"]').first()
+  test.skip(!(await cookie.count()), 'project has no text file nodes')
+  await cookie.click()
+  const dialog = page.locator('.v-overlay--active .v-card').filter({ hasText: 'Crunchers for' }).first()
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByRole('tab').first()).toBeVisible()
+  await dialog.getByRole('textbox', { name: 'Search crunchers' }).fill('index')
+  await page.waitForTimeout(300)
+  await page.screenshot({ path: `e2e/screenshots/${label}/crunchers-search-1440.png` })
+  await dialog.getByRole('textbox', { name: 'Search crunchers' }).fill('')
+  await page.waitForTimeout(300)
+  await page.screenshot({ path: `e2e/screenshots/${label}/crunchers-1440.png` })
+  await dialog.getByRole('button', { name: 'Close' }).click()
+  await expect(dialog).toBeHidden()
+})
+
+test('the old /crunchers page redirects to services', async ({ page }) => {
+  await open(page, '/crunchers')
+  await expect(page).toHaveURL(/\/services$/)
 })

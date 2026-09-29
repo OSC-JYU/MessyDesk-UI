@@ -56,14 +56,14 @@ const routes = [
   {
     path: '/services',
     name: 'services',
-    component: () => import('@/components/ServicesMain.vue'),
-    meta: { legacy: true, title: 'Services' },
+    component: () => import('@/features/services/ServicesPage.vue'),
+    meta: { title: 'Services' },
   },
   {
     path: '/services/admin',
     name: 'services-admin',
-    component: () => import('@/components/ServicesAdmin.vue'),
-    meta: { legacy: true, title: 'Service control', requiresAdmin: true },
+    component: () => import('@/features/services/ServiceControlPage.vue'),
+    meta: { title: 'Service control', requiresAdmin: true },
   },
   {
     path: '/intro',
@@ -77,12 +77,8 @@ const routes = [
     component: () => import('@/components/FilesMain.vue'),
     meta: { legacy: true, title: 'Files' },
   },
-  {
-    path: '/crunchers',
-    name: 'crunchers',
-    component: () => import('@/components/CrunchersMain.vue'),
-    meta: { legacy: true, title: 'Crunchers' },
-  },
+  // The old stand-alone cruncher page needed a selected node; crunchers now open from the desk.
+  { path: '/crunchers', redirect: { name: 'services' } },
   {
     path: '/search',
     name: 'search',
@@ -92,8 +88,8 @@ const routes = [
   {
     path: '/prompts',
     name: 'prompts',
-    component: () => import('@/components/PromptsMain.vue'),
-    meta: { legacy: true, title: 'Prompts' },
+    component: () => import('@/features/services/PromptsPage.vue'),
+    meta: { title: 'Prompts' },
   },
   {
     path: '/help/services/:service/',
@@ -123,8 +119,8 @@ const routes = [
   {
     path: '/admin',
     name: 'admin',
-    component: () => import('@/components/AdminMain.vue'),
-    meta: { legacy: true, title: 'Admin', requiresAdmin: true },
+    component: () => import('@/features/admin/AdminPage.vue'),
+    meta: { title: 'Admin', requiresAdmin: true },
   },
   {
     path: '/about',

@@ -99,7 +99,7 @@ A processing operation that transforms or analyzes files. See [processing-crunch
 
 Admin-managed entity (`id`, `name`, `description`, `logo`) formalizing the `service_groups` values used
 in `service.json` descriptors and on `User.service_groups` to gate which users can use a
-service/task. Managed from the admin-only Service Groups tab in `AdminMain.vue`; user membership is
+service/task. Managed from the admin-only Service groups tab of the Admin page (`features/admin/ServiceGroupsTab.vue`); user membership is
 edited inline from the Users tab in the same component. See the backend
 [glossary](../../MessyDesk/wiki/glossary.md) and
 [service-descriptor-format.md](../../MessyDesk/wiki/service-descriptor-format.md#service-groups) for

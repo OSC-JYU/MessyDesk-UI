@@ -6,7 +6,7 @@
 - **Cruncher:** The UI term for a processing task offered by a service. Each service exposes one or more cruncher tasks.
 - **Batch:** A group of processing jobs (e.g., running OCR on all files in a set). Has lifecycle states: running → paused/cancelling → finished.
 
-**Verified from:** `src/components/CruncherList.vue`, `src/web.js` (batch methods), `src/components/GraphDisplay.vue` (process tracking)
+**Verified from:** `src/features/services/crunchers/`, `src/web.js` (batch methods), `src/components/GraphDisplay.vue` (process tracking)
 
 ## Processing Scope
 
@@ -46,14 +46,16 @@ afterwards.
 **Verified from:** `src/routes/files.mjs`, `src/graph.mjs` (MessyDesk), `src/components/NodeCard.vue`,
 `src/components/GraphDisplay.vue`
 
-## Cruncher Selection UI (`CruncherList.vue`)
+## Cruncher Selection UI (`features/services/crunchers/CruncherPicker.vue`)
 
-The cruncher dialog is opened by:
+The cruncher dialog lives in `GraphMain.vue` and is opened by:
 1. Setting `store.current_node` to the target node
 2. Optionally setting `store.cruncher_filter` to filter by format
 3. Setting `store.crunchers_open = true`
 
-The dialog fetches services compatible with the current node's file type via `web.getServicesForFile(file_rid, filter)`.
+`GraphMain` passes the node (`{ id, type }`) and the filter to `CruncherPicker`, which has no dependency on the old store. The picker fetches services compatible with the node via `getServicesForFile(file_rid, filter)` and emits `done` (`{ reload }`) when it has started a process (no reload; the new node arrives over SSE) or created a filter (reload). The pure parts (catalogue preparation, categories, search, building the process request, choosing the queue endpoint) are in `crunchers.js`.
+
+The endpoint depends on the node: `source` → `createSourceProcess`, a set (`set` or `*-set`) → `createSetProcess`, `cruncher_filter === 'ROI'` → `createROIProcess`, otherwise `createFileProcess`.
 
 A search field at the top filters client-side across service/task/filter `name`, `description` and `id`. While a query is entered, the category tabs are replaced by a flat matching list (each result tagged with its category); clearing the search restores the tabbed view.
 
@@ -74,7 +76,7 @@ Each service card shows metadata:
 - Status: stable / experimental
 - Model selection (if service offers multiple models)
 
-**Verified from:** `src/components/CruncherList.vue`
+**Verified from:** `src/features/services/crunchers/CruncherPicker.vue`, `crunchers.js`
 
 ## Service Metadata Shape
 
@@ -97,19 +99,19 @@ Each service card shows metadata:
 }
 ```
 
-**Inferred from:** `src/components/CruncherList.vue`, `src/components/ServicesMain.vue` (template bindings)
+**Inferred from:** `src/features/services/crunchers/CruncherService.vue`, `src/features/services/ServicesPage.vue` (template bindings)
 
 ### `params_help` display types
 
-Each `params_help.<key>` entry is rendered in `CruncherList.vue` based on its `display` field:
+Each `params_help.<key>` entry is rendered by `crunchers/ParamField.vue` based on its `display` field (tasks without `params_help` use the service's):
 
 | `display` | Control |
 |-----------|---------|
 | (default/none) | Plain text input, bound to `task.values[key]` as a string |
 | `checkbox` | Single checkbox, or one checkbox per `values` entry if `values` is an array |
 | `dropdown` | `v-select` over `values` |
-| `tagpicker` | `TagPickerField.vue` \u2014 toggles between free-form comma-string entry (same as default) and picking from the user's existing Tag entities (with descriptions), plus an inline "define a new tag" form. In pick mode, `task.values[key]` becomes a JSON array of `{label, description}` instead of a string. This is a per-task opt-in (set on the specific task's `params_help`, not the whole service): MD-Gliner2's `classify_text` uses it for its `labels` param (whole-document category, maps cleanly onto a fixed tag), but `extract_entities` (NER) deliberately does not \u2014 it extracts many per-mention spans per label, so it isn't restricted to/linked with a fixed existing-tag set the same way (see MessyDesk's `tags.md` \u00a78 step 8, and [graph-data-model.md](../../MessyDesk/wiki/architecture/graph-data-model.md#entitytag-system) for how `Tag.description` and `autotagNerFile`'s reuse-by-label matching interact) |
-| `component: 'dspace'` | `DspaceQueryForm.vue` (special-cased before `display` is checked) |
+| `tagpicker` | `crunchers/TagPickerField.vue` \u2014 toggles between free-form comma-string entry (same as default) and picking from the user's existing Tag entities (with descriptions), plus an inline "define a new tag" form. In pick mode, `task.values[key]` becomes a JSON array of `{label, description}` instead of a string. This is a per-task opt-in (set on the specific task's `params_help`, not the whole service): MD-Gliner2's `classify_text` uses it for its `labels` param (whole-document category, maps cleanly onto a fixed tag), but `extract_entities` (NER) deliberately does not \u2014 it extracts many per-mention spans per label, so it isn't restricted to/linked with a fixed existing-tag set the same way (see MessyDesk's `tags.md` \u00a78 step 8, and [graph-data-model.md](../../MessyDesk/wiki/architecture/graph-data-model.md#entitytag-system) for how `Tag.description` and `autotagNerFile`'s reuse-by-label matching interact) |
+| `component: 'dspace'` | `crunchers/DspaceQueryForm.vue` (query building in `dspaceQuery.js`; special-cased before `display` is checked) |
 
 ## Process Tracking and Progress
 
@@ -153,11 +155,3 @@ stateDiagram-v2
 
 **Verified from:** `src/stores/batchStore.js`, `src/services/events.js`, `src/components/BatchProgressPanel.vue`
 
-## Process Creator Dialog
-
-`ProcessCreator.vue` renders a form with:
-- Dynamic parameters from `store.process.tasks[store.task_id].params_help`
-- Each param has: `name`, `help`, `values` (allowed values)
-- Submit calls the appropriate `web.createFileProcess/createSetProcess` method
-
-**Verified from:** `src/components/ProcessCreator.vue`

@@ -17,18 +17,19 @@ The router uses `createWebHistory` with `VITE_PUBLIC_PATH` as the base. Routes a
 | `/project/:rid/search` | project-search | `SearchMain` | Project-scoped search |
 | `/project/:rid/entities` | project-entities | `EntitiesMain` | Project-scoped tags |
 | `/project/:rid/file/:fileRid` | project-file | `FileDisplayWrapper` | File viewer |
-| `/services` | services | `ServicesMain` | Service catalog |
+| `/services` | services | `features/services/ServicesPage` | Service monitor |
+| `/services/admin` | services-admin | `features/services/ServiceControlPage` | Install/start/stop/forget services; `meta.requiresAdmin` |
 | `/intro` | introduction | `features/help/IntroPage` | Introduction tour |
 | `/files/:rid` | files | `FilesMain` | File browser |
-| `/crunchers` | crunchers | `CrunchersMain` | All crunchers view |
+| `/crunchers` | — | redirect → services | Old stand-alone cruncher page |
 | `/search` | search | `SearchMain` | Global search |
-| `/prompts` | prompts | `PromptsMain` | Saved prompts |
+| `/prompts` | prompts | `features/services/PromptsPage` | Saved prompts |
 | `/help/:slug?` | help | `features/help/HelpPage` | General help |
 | `/help/services/:service/` | service-help | `features/help/HelpPage` | Per-service help |
 | `/help/services/:service/:assetPath(.*)*` | service-help-asset | `features/help/HelpPage` | Help asset resolution |
 | `/tags` | tags | redirect → entities | Legacy alias |
 | `/entities` | entities | `EntitiesMain` | Global entity/tag browser |
-| `/admin` | admin | `AdminMain` | Admin panel (Requests/Users/Services/Service Groups tabs); gated by `meta.requiresAdmin` |
+| `/admin` | admin | `features/admin/AdminPage` | Admin panel (Requests/Users/Services/Service groups tabs, tab kept in `?tab=`); gated by `meta.requiresAdmin` |
 | `/about` | about | `features/help/AboutPage` | About page |
 | `/login` | login | `features/help/LoginPage` | SSO permission request page (no app header) |
 
