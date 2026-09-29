@@ -1,4 +1,6 @@
 <script setup>
+import ThumbnailImage from '@/ui/ThumbnailImage.vue'
+
 // One file in a results grid: name, tags, a thumbnail for images and PDFs,
 // and the matching text.
 defineProps({ result: { type: Object, required: true } })
@@ -9,7 +11,9 @@ defineEmits(['open'])
   <button type="button" class="result-card" :title="`Open ${result.label}`" @click="$emit('open')">
     <span class="result-card__label">{{ result.label }}</span>
     <span v-if="result.entities.length || result.badge" class="result-card__tags">
-      <v-chip v-if="result.badge" size="x-small" color="warning" variant="flat" label>{{ result.badge }}</v-chip>
+      <v-chip v-if="result.badge" size="x-small" color="warning" variant="flat" label>{{
+        result.badge
+      }}</v-chip>
       <v-chip
         v-for="entity in result.entities"
         :key="entity.id || entity['@rid'] || entity.label"
@@ -21,11 +25,10 @@ defineEmits(['open'])
         {{ entity.label }}
       </v-chip>
     </span>
-    <img
+    <ThumbnailImage
       v-if="result.thumb && (result.type === 'image' || result.type === 'pdf')"
       :src="result.thumb"
-      alt=""
-      loading="lazy"
+      lazy
       class="result-card__thumb"
     />
     <v-icon

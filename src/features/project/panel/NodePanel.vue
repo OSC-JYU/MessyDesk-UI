@@ -5,6 +5,7 @@ import { useWorkspace } from '../useWorkspace.js'
 import EditableText from './EditableText.vue'
 import NodeTools from './NodeTools.vue'
 import ProcessDetailsDialog from './ProcessDetailsDialog.vue'
+import ThumbnailImage from '@/ui/ThumbnailImage.vue'
 
 // Right-hand panel of the desk: the selected node's label, description,
 // preview and tools, or an introduction when nothing is selected.
@@ -81,10 +82,9 @@ const saveLabel = async (value) => {
       </v-alert>
 
       <div class="node-panel__content">
-        <img
+        <ThumbnailImage
           v-if="['image', 'pdf'].includes(node.type) && node.data.image"
           :src="node.data.image"
-          alt=""
           class="node-panel__image"
         />
         <p v-if="node.data.info" class="node-panel__info">

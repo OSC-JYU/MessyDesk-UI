@@ -6,6 +6,7 @@ import { computed } from 'vue'
 import NodeShell from './NodeShell.vue'
 import CrunchIcon from '@/ui/CrunchIcon.vue'
 import { versioned } from './thumbnails.js'
+import ThumbnailImage from '@/ui/ThumbnailImage.vue'
 
 // An image: its thumbnail, size, and regions of interest with their own
 // cruncher button.
@@ -16,7 +17,7 @@ const src = computed(() => versioned(props.data.image, props.data.thumbnail_vers
 <template>
   <NodeShell :label="data.label" kind="image" icon="mdi-image-outline" crunchable>
     <template #default="{ crunch }">
-      <img v-if="src" :key="src" :src="src" alt="" class="image-node__thumb" draggable="false" />
+      <ThumbnailImage :src="src" />
       <pre v-if="data.description" class="image-node__description">{{ data.description }}</pre>
       <div v-if="data.metadata" class="image-node__meta">
         <span
@@ -42,12 +43,6 @@ const src = computed(() => versioned(props.data.image, props.data.thumbnail_vers
 </template>
 
 <style scoped>
-.image-node__thumb {
-  display: block;
-  width: 100%;
-  border-radius: var(--md-radius-sm);
-}
-
 .image-node__description {
   margin-block-start: var(--md-space-2) !important;
 }

@@ -4,6 +4,7 @@
 defineOptions({ inheritAttrs: false })
 import { computed } from 'vue'
 import NodeShell from './NodeShell.vue'
+import ThumbnailImage from '@/ui/ThumbnailImage.vue'
 
 // A set of files: file count, a preview grid (thumbnails, PDF icons or text
 // samples), and the cruncher once it has files and is not being filled.
@@ -33,7 +34,7 @@ const label = computed(
           color="error"
           aria-hidden="true"
         />
-        <img v-else :src="path" alt="" draggable="false" />
+        <ThumbnailImage v-else :src="path" compact />
       </template>
     </div>
     <div v-else-if="data.text_samples?.length" class="set-node__samples">
@@ -60,11 +61,6 @@ const label = computed(
   gap: var(--md-space-2);
   align-items: center;
   justify-items: center;
-}
-
-.set-node__grid img {
-  max-width: 100%;
-  border-radius: var(--md-radius-sm);
 }
 
 .set-node__samples {

@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { getNodePath } from '@/api/projects.js'
 import { previewUrl } from './fileUrls.js'
+import ThumbnailImage from '@/ui/ThumbnailImage.vue'
 import {
   isOpenable,
   levelLabel,
@@ -78,12 +79,12 @@ function open(node) {
             {{ nodeKind(node) }}
           </span>
           <span class="lineage__label" :title="node.label">{{ node.label }}</span>
-          <img
+          <ThumbnailImage
             v-if="node.type === 'image' && node.path"
             :src="previewUrl(node.path)"
-            alt=""
+            lazy
+            compact
             class="lineage__thumb"
-            loading="lazy"
           />
         </component>
       </li>
