@@ -32,9 +32,9 @@ src/
 │               AppShell.vue + AppHeader.vue, vuetify.js, i18n.js
 ├── styles/     tokens.css (Fjord light/dark), reset.css, fonts.css, vuetify-theme.js
 ├── api/        client.js (Axios) + area modules (projects, files, services, search, entities, admin, session)
-├── stores/     session, ui, fileBrowse, pageMemory, batchStore
+├── stores/     session, settings, ui, fileBrowse, pageMemory, batchStore
 ├── ui/         shared UI kit
-├── features/   home, project (desk graph), files (viewer), search, tags, services, admin, help, jobs
+├── features/   home, project (desk graph), files (viewer), search, tags, services, admin, help, jobs, settings
 └── services/   events.js (single SSE connection)
 ```
 

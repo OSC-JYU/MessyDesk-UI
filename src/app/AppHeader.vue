@@ -37,6 +37,7 @@ const menu = computed(() =>
     { title: 'Admin', icon: 'mdi-account-cog', to: { name: 'admin' }, admin: true },
     { title: 'Prompts', icon: 'mdi-text-box-outline', to: { name: 'prompts' } },
     { title: 'Help', icon: 'mdi-help-circle-outline', to: { name: 'help' } },
+    { title: 'Settings', icon: 'mdi-cog-outline', to: { name: 'settings' } },
   ].filter((item) => !item.admin || session.isAdmin),
 )
 

@@ -1,5 +1,6 @@
 import { reactive } from 'vue'
 import { getMe } from '@/api/session.js'
+import { setSettings } from './settings.js'
 
 // The signed-in user. Loaded once by the app shell; the router guard and the
 // old global store read the same object.
@@ -17,7 +18,10 @@ export const session = reactive({
     if (this.user) return this.user
     if (!this.loading) {
       this.loading = getMe()
-        .then((user) => (this.user = user))
+        .then((user) => {
+          if (user?.settings) setSettings(user.settings)
+          return (this.user = user)
+        })
         .catch(() => null)
         .finally(() => (this.loading = null))
     }

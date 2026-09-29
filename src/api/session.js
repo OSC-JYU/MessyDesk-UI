@@ -5,6 +5,8 @@ import web from './client.js'
 export const sso = (...args) => web.sso(...args)
 export const ready = (...args) => web.ready(...args)
 export const getMe = (...args) => web.getMe(...args)
+// Saves some of the user's UI settings ({ theme, cookie }); returns them all.
+export const saveSettings = (...args) => web.saveSettings(...args)
 export const getInitData = (...args) => web.getInitData(...args)
 export const addPermissionRequest = (...args) => web.addPermissionRequest(...args)
 

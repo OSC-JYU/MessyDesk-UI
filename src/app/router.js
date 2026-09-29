@@ -120,6 +120,12 @@ const routes = [
     meta: { title: 'Admin', requiresAdmin: true },
   },
   {
+    path: '/settings',
+    name: 'settings',
+    component: () => import('@/features/settings/SettingsPage.vue'),
+    meta: { title: 'Settings' },
+  },
+  {
     path: '/about',
     name: 'about',
     component: () => import('@/features/help/AboutPage.vue'),

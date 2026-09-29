@@ -34,9 +34,14 @@
     rgba(143, 212, 194, 0.85)
   );
   --md-color-focus: #0f6e6a;
-  --md-color-cookie: #d9a25f; /* the cruncher cookie */
-  --md-color-cookie-edge: #b27a3c;
-  --md-color-cookie-chip: #5a3413;
+  /* The cruncher cookie. The classic colours depend on the theme; the other
+     presets (Settings page) are below. */
+  --md-cookie-classic: #d9a25f;
+  --md-cookie-classic-edge: #b27a3c;
+  --md-cookie-classic-chip: #5a3413;
+  --md-color-cookie: var(--md-cookie-classic);
+  --md-color-cookie-edge: var(--md-cookie-classic-edge);
+  --md-color-cookie-chip: var(--md-cookie-classic-chip);
 
   /* Status */
   --md-color-info: #1d5a8c;
@@ -84,9 +89,12 @@
     rgba(143, 212, 194, 0.6)
   );
   --md-color-focus: #86d6cb;
-  --md-color-cookie: #d9a25f;
-  --md-color-cookie-edge: #e0b377;
-  --md-color-cookie-chip: #4a2a0f;
+  --md-cookie-classic: #d9a25f;
+  --md-cookie-classic-edge: #e0b377;
+  --md-cookie-classic-chip: #4a2a0f;
+  --md-color-cookie: var(--md-cookie-classic);
+  --md-color-cookie-edge: var(--md-cookie-classic-edge);
+  --md-color-cookie-chip: var(--md-cookie-classic-chip);
   --md-color-info: #7fb2e3;
   --md-color-success: #7cc98a;
   --md-color-success-soft: #1b3326;
@@ -100,6 +108,38 @@
   --md-shadow-2: 0 6px 18px rgba(0, 0, 0, 0.45);
   --md-shadow-3: 0 16px 40px rgba(0, 0, 0, 0.55);
   --md-drop-shadow: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+}
+
+/* Cookie colour presets, chosen on the Settings page. The attribute sits on
+   <html>, or on a single element to preview a preset there. */
+[data-cookie='classic'] {
+  --md-color-cookie: var(--md-cookie-classic);
+  --md-color-cookie-edge: var(--md-cookie-classic-edge);
+  --md-color-cookie-chip: var(--md-cookie-classic-chip);
+}
+
+[data-cookie='chocolate'] {
+  --md-color-cookie: #6b3f22;
+  --md-color-cookie-edge: #9a6a45;
+  --md-color-cookie-chip: #f3e6d2;
+}
+
+[data-cookie='matcha'] {
+  --md-color-cookie: #a5c77f;
+  --md-color-cookie-edge: #6f9650;
+  --md-color-cookie-chip: #34501f;
+}
+
+[data-cookie='strawberry'] {
+  --md-color-cookie: #f2a9b6;
+  --md-color-cookie-edge: #d0788b;
+  --md-color-cookie-chip: #8c2a3e;
+}
+
+[data-cookie='blueberry'] {
+  --md-color-cookie: #a3b8e2;
+  --md-color-cookie-edge: #6c86bf;
+  --md-color-cookie-chip: #2b3f78;
 }
 
 :root {
@@ -139,6 +179,7 @@
   --md-logo-size-lg: 80px;
   --md-dialog-width: 480px;
   --md-card-min-width: 280px;
+  --md-swatch-min-width: 128px;
   --md-media-max-height: 320px;
 
   /* Graph nodes */

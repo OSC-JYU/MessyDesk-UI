@@ -356,6 +356,11 @@ web.getMe = async function () {
   return result.data
 }
 
+web.saveSettings = async function (settings) {
+  var result = await axios.put(`/api/me/settings`, settings)
+  return result.data
+}
+
 web.getSchemas = async function () {
   var result = await axios.get(`/api/schemas`)
   return result.data.result

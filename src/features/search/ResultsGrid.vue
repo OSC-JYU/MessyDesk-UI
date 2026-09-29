@@ -24,7 +24,9 @@ const emit = defineEmits(['open'])
 
 const count = computed(() => props.total ?? props.results.length)
 const pages = computed(() => pageCount(count.value, props.perPage))
-const visible = computed(() => (props.total === null ? pageOf(props.results, page.value, props.perPage) : props.results))
+const visible = computed(() =>
+  props.total === null ? pageOf(props.results, page.value, props.perPage) : props.results,
+)
 const offset = computed(() => (page.value - 1) * props.perPage)
 </script>
 

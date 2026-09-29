@@ -100,5 +100,4 @@ const links = [
   padding: 0 0 var(--md-space-2);
   font-weight: var(--md-font-weight-bold);
 }
-
 </style>

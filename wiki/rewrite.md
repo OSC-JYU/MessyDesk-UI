@@ -12,7 +12,7 @@ src/
   api/        one module per backend area
   stores/     one small store per area
   ui/         shared building blocks (stage 1)
-  features/   home, project, files, search, services, admin, help
+  features/   home, project, files, search, services, admin, help, settings
 ```
 
 ## How old and new code lived together
@@ -61,6 +61,8 @@ Use these instead of hand-built equivalents. Each has a unit test in `test/ui/`.
 | `FormField` | Label, hint and error around any control | `label`, `hint`, `error`, `required`, `id`; default slot gets `{ id, describedby, invalid }` |
 | `SectionCard` | A titled panel on a screen | `title`, `overline`; slots `actions`, default |
 | `StatusChip` | Job, service or process status | `status` (running, queued, paused, done, failed, …), `label` |
+| `ThumbnailImage` | Any thumbnail from `/api/thumbnails` | `src`, `alt`, `lazy`, `compact` (no text); shows the "not ready" placeholder on 404 |
+| `CrunchIcon` | The cruncher cookie button icon | `size`, `plus`; colours follow the cookie preset |
 
 
 ## Checks
@@ -89,3 +91,8 @@ then compare them side by side.
 | 6 File viewer | Done: `features/files/` (viewer shell, 9 displays, tools, ROI editor) replaces `FileDisplayWrapper`, `FilesMain` and 22 display/tool components; the big editors were ported without redesign and checked only with unit tests, since the local backend has no image/OCR data |
 | 7 Project graph | Done: `features/project/` (workspace, canvas, 8 node components on a shared shell, set browser, node panel, dialogs) and `features/jobs/JobsPanel.vue` replace GraphMain, GraphDisplay, NodeCard, the 23 node files, creators, uploader, drawer, set panel and the debug panel; the old store and legacy.css are deleted |
 | 8 Cleanup | Done: Bootstrap, bootstrap-icons, Popper, vue-pdf-embed, vue-sidebar-menu-akahon, vue3-image-multiselect-areas and vue-cli-plugin-vuetify removed; `reset.css` covers what Bootstrap's reboot did; `web.js` moved to `src/api/client.js` and linted; 30 s session polling replaced by a 401/302 handler in the API client. Bundle vs stage 0: JS 1,412 → 656 kB, CSS 1,125 → 787 kB |
+
+## After the rewrite
+
+- **Settings page** (`features/settings/`, account menu → Settings): theme (Fjord light, Fjord dark, follow the system) and the cruncher cookie colour (classic, double chocolate, matcha, strawberry, blueberry). Presets are `[data-cookie]` blocks in `tokens.css`. Needs the backend `PUT /api/me/settings` (MessyDesk branch `claude/user-settings`).
+- **Thumbnail placeholder** (`ui/ThumbnailImage.vue`): the backend answers 404 for a thumbnail that is not made yet, and the UI shows a themed placeholder (a cookie with rising steam, "Preview not ready yet") instead of the old bitmap. It tries again when the thumbnail version changes. Used by the graph nodes, node panel, search results and lineage panel.
