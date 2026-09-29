@@ -80,7 +80,7 @@ Test patterns:
 ## CSS Organization
 
 - `src/styles/tokens.css` — design tokens (colour, type, spacing, radius, shadow); the only place hex values live, together with `src/styles/vuetify-theme.js`
-- `src/styles/reset.css` — global reset and base typography (Inter body font, JetBrains Mono for code)
+- `src/styles/reset.css` — global reset and base typography (IBM Plex Sans body, IBM Plex Mono for code, Junicode titles; fonts in `src/styles/fonts.css`)
 - `src/styles/legacy.css` — global rules old screens still need, including the old `position: relative; margin: 0` reset scoped to `.legacy-screen` and overlays; nothing new is added here
 - Component-scoped `<style scoped>` blocks
 - Many old components use unscoped `<style>` (global CSS leakage risk)

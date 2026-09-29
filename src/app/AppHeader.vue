@@ -64,7 +64,7 @@ onMounted(() => session.loadUser())
 
     <v-spacer />
 
-    <v-tabs :model-value="activeTab" class="nav-tabs" height="64" slider-color="accent">
+    <v-tabs :model-value="activeTab" class="nav-tabs" height="64" slider-color="graph-light">
       <v-tab v-for="tab in tabs" :key="tab.label" :to="tab.to" :exact="true">
         {{ tab.label }}
       </v-tab>
@@ -95,8 +95,8 @@ onMounted(() => session.loadUser())
 
 <style scoped>
 .app-header {
-  background: var(--md-gradient-brand), var(--md-color-brand-700) !important;
-  color: var(--md-color-text-on-brand) !important;
+  background: var(--md-color-header) !important;
+  color: var(--md-color-text-on-dark) !important;
 }
 
 .brand {
@@ -109,14 +109,13 @@ onMounted(() => session.loadUser())
 }
 
 .brand-logo {
-  height: 40px;
+  height: var(--md-header-logo-size);
   width: auto;
 }
 
 .brand-name {
-  font-size: var(--md-font-size-lg);
-  font-weight: var(--md-font-weight-bold);
-  letter-spacing: 0.01em;
+  font-family: var(--md-font-title);
+  font-size: var(--md-font-size-xl);
 }
 
 .brand-divider {

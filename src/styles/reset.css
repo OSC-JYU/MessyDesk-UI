@@ -27,10 +27,6 @@ body {
 
 /* Vuetify hardcodes Roboto on the app root and its typography classes. */
 .v-application,
-.v-application .text-h1,
-.v-application .text-h2,
-.v-application .text-h3,
-.v-application .text-h4,
 .v-application .text-h5,
 .v-application .text-h6,
 .v-application .text-subtitle-1,
@@ -41,6 +37,20 @@ body {
 .v-application .text-caption,
 .v-application .text-overline {
   font-family: var(--md-font-body) !important;
+}
+
+/* Titles use Junicode. */
+h1,
+h2,
+h3,
+.v-application .text-h1,
+.v-application .text-h2,
+.v-application .text-h3,
+.v-application .text-h4,
+.md-title {
+  font-family: var(--md-font-title) !important;
+  font-weight: var(--md-font-weight-regular);
+  letter-spacing: normal !important;
 }
 
 code,
