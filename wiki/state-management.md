@@ -35,7 +35,7 @@ The store has the following key properties (grouped by concern):
 | `file_count` | Number/null | Total files in current browse set |
 | `skip` | Number/null | Current offset in browse set |
 | `source` | String/null | Source set RID for browsing |
-| `file_browse_context` | Object/null | Unified browse context (see below) |
+| `file_browse_context` | Object/null | Unified browse context (see below). Now a getter/setter onto `stores/fileBrowse.js` (`context`); `store.file` likewise maps to `fileBrowse.file` |
 | `filter_editor` | Object/null | Active ROI filter node (enables ROI editing mode) |
 
 ### Dialog Visibility Flags
@@ -61,8 +61,6 @@ The store has the following key properties (grouped by concern):
 ### Per-Page State Caches
 | Property | Purpose |
 |----------|---------|
-| `search_page_states` | Keyed by project RID, stores search query/results per context |
-| `entities_page_states` | Keyed by project RID, stores tag selection/results per context |
 | `set_panel_cache` | Snapshot of set panel state for restore on navigation back |
 
 ### Process Tracking
@@ -71,6 +69,8 @@ The store has the following key properties (grouped by concern):
 | `running_processes` | Object keyed by process RID, tracks running batch jobs |
 
 **Verified from:** `src/components/Store.js`
+
+Search and Tags remember their state per scope (a desk rid or `global`) in `stores/pageMemory.js` (`recall`/`remember`), for the browser session; the old `search_page_states`/`entities_page_states` fields are gone.
 
 ## `file_browse_context` Shape
 

@@ -35,13 +35,13 @@ const routes = [
       {
         path: 'search',
         name: 'project-search',
-        component: () => import('@/components/SearchMain.vue'),
+        component: () => import('@/features/search/SearchPage.vue'),
         meta: { legacy: true, title: 'Search' },
       },
       {
         path: 'entities',
         name: 'project-entities',
-        component: () => import('@/components/EntitiesMain.vue'),
+        component: () => import('@/features/tags/TagsPage.vue'),
         meta: { legacy: true, title: 'Tags' },
       },
       {
@@ -82,8 +82,8 @@ const routes = [
   {
     path: '/search',
     name: 'search',
-    component: () => import('@/components/SearchMain.vue'),
-    meta: { legacy: true, title: 'Search' },
+    component: () => import('@/features/search/SearchPage.vue'),
+    meta: { title: 'Search' },
   },
   {
     path: '/prompts',
@@ -113,8 +113,8 @@ const routes = [
   {
     path: '/entities',
     name: 'entities',
-    component: () => import('@/components/EntitiesMain.vue'),
-    meta: { legacy: true, title: 'Tags' },
+    component: () => import('@/features/tags/TagsPage.vue'),
+    meta: { title: 'Tags' },
   },
   {
     path: '/admin',

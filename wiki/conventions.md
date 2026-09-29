@@ -14,7 +14,7 @@ var state = reactive({ ... })
 ```
 No `ref()` for complex state objects. `ref()` is used for single primitive values (e.g., pagination `page`, boolean flags).
 
-**Verified from:** `GraphDisplay.vue`, `FileDisplayWrapper.vue`, `SearchMain.vue`
+**Verified from:** `GraphDisplay.vue`, `FileDisplayWrapper.vue`
 
 ### Global Store Import
 ```js

@@ -14,21 +14,21 @@ The router uses `createWebHistory` with `VITE_PUBLIC_PATH` as the base. Routes a
 | `/graph` | — | redirect | Legacy: redirects `?node=xxx` → `/project/xxx` |
 | `/project/:rid` | — | `GraphMain` | Shell for project views (nested routes) |
 | `/project/:rid` (child `''`) | project-graph | `GraphDisplay` | Graph canvas |
-| `/project/:rid/search` | project-search | `SearchMain` | Project-scoped search |
-| `/project/:rid/entities` | project-entities | `EntitiesMain` | Project-scoped tags |
+| `/project/:rid/search` | project-search | `features/search/SearchPage` | Project-scoped search |
+| `/project/:rid/entities` | project-entities | `features/tags/TagsPage` | Project-scoped tags |
 | `/project/:rid/file/:fileRid` | project-file | `FileDisplayWrapper` | File viewer |
 | `/services` | services | `features/services/ServicesPage` | Service monitor |
 | `/services/admin` | services-admin | `features/services/ServiceControlPage` | Install/start/stop/forget services; `meta.requiresAdmin` |
 | `/intro` | introduction | `features/help/IntroPage` | Introduction tour |
 | `/files/:rid` | files | `FilesMain` | File browser |
 | `/crunchers` | — | redirect → services | Old stand-alone cruncher page |
-| `/search` | search | `SearchMain` | Global search |
+| `/search` | search | `features/search/SearchPage` | Search across desks |
 | `/prompts` | prompts | `features/services/PromptsPage` | Saved prompts |
 | `/help/:slug?` | help | `features/help/HelpPage` | General help |
 | `/help/services/:service/` | service-help | `features/help/HelpPage` | Per-service help |
 | `/help/services/:service/:assetPath(.*)*` | service-help-asset | `features/help/HelpPage` | Help asset resolution |
 | `/tags` | tags | redirect → entities | Legacy alias |
-| `/entities` | entities | `EntitiesMain` | Global entity/tag browser |
+| `/entities` | entities | `features/tags/TagsPage` | Tag browser across desks |
 | `/admin` | admin | `features/admin/AdminPage` | Admin panel (Requests/Users/Services/Service groups tabs, tab kept in `?tab=`); gated by `meta.requiresAdmin` |
 | `/about` | about | `features/help/AboutPage` | About page |
 | `/login` | login | `features/help/LoginPage` | SSO permission request page (no app header) |
@@ -75,8 +75,8 @@ The old URL pattern `/graph?node=xxx` is redirected to `/project/xxx` for backwa
 graph TD
     Home["/ (Main)"] --> ProjectShell["/project/:rid (GraphMain)"]
     ProjectShell --> GraphView["GraphDisplay"]
-    ProjectShell --> SearchView["SearchMain (project)"]
-    ProjectShell --> EntitiesView["EntitiesMain (project)"]
+    ProjectShell --> SearchView["SearchPage (project)"]
+    ProjectShell --> EntitiesView["TagsPage (project)"]
     ProjectShell --> FileView["FileDisplayWrapper"]
     GraphView -->|double-click node| FileView
     GraphView -->|double-click set| SetPanel["SetPanel (inline)"]

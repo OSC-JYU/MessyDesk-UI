@@ -34,8 +34,9 @@ src/
   overlays, with zero specificity. Bootstrap stays loaded until stage 8.
 - **API.** `src/api/*.js` wrap `web.js` one function at a time; new code calls `api/`, and
   `web.js` shrinks as old callers move.
-- **State.** New features get their own small stores. `stores/session.js` owns the signed-in user;
-  the old `store.user` is a getter/setter onto it. Nothing new is added to the old store.
+- **State.** New features get their own small stores. `stores/session.js` owns the signed-in user and
+  `stores/fileBrowse.js` the open file and its browse context; the old `store.user`, `store.file` and
+  `store.file_browse_context` are getters/setters onto them. Nothing new is added to the old store.
 
 ## Style rules for new code
 
@@ -94,7 +95,7 @@ then compare them side by side.
 | 2 Simple screens | Done: Help, Introduction, About and Login rewritten in `features/help/`; old `HelpMain`, `Introduction`, `About`, `Login` deleted |
 | 3 Home | Done: `features/home/` replaces `Main.vue` (list, sort, create, rename, re-index, new Delete desk with type-the-name confirmation, storage, running jobs, active crunchers, news). Delete desk needs the backend fix in `graph.deleteProject` (it calls `deleteNode` without the user rid and returns 500). |
 | 4 Services and admin | Done: `features/services/` (monitor, service control, prompts, cruncher picker with DSpace form and tag filter) and `features/admin/`; old `ServicesMain`, `ServicesAdmin`, `PromptsMain`, `AdminMain`, `CruncherList`, `CrunchersMain`, `DspaceQueryForm`, `TagPickerField`, `ProcessCreator` deleted; `/crunchers` redirects to services |
-| 5 Search and entities | Not started |
+| 5 Search and entities | Done: `features/search/` (SearchPage, shared ResultsGrid/ResultCard, ProjectScope, file opener) and `features/tags/` (TagsPage, NER label mentions with preview, add-tag dialog); `stores/fileBrowse.js` and `stores/pageMemory.js` replace old store fields; `SearchMain` and `EntitiesMain` deleted |
 | 6 File viewer | Not started |
 | 7 Project graph | Not started |
 | 8 Cleanup | Not started |

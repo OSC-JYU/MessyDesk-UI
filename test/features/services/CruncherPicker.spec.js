@@ -24,7 +24,14 @@ const catalogue = {
         rotate: {
           name: 'Rotate',
           description: 'Rotate an image',
-          params_help: { angle: { name: 'Angle', display: 'dropdown', values: { 90: '90°', 180: '180°' }, default: '90' } },
+          params_help: {
+            angle: {
+              name: 'Angle',
+              display: 'dropdown',
+              values: { 90: '90°', 180: '180°' },
+              default: '90',
+            },
+          },
         },
       },
     },
@@ -34,7 +41,9 @@ const catalogue = {
 
 const router = createRouter({
   history: createMemoryHistory(),
-  routes: [{ path: '/help/services/:service/', name: 'service-help', component: { template: '<div />' } }],
+  routes: [
+    { path: '/help/services/:service/', name: 'service-help', component: { template: '<div />' } },
+  ],
 })
 
 async function mountPicker(node = { id: '#76:0', type: 'image' }) {

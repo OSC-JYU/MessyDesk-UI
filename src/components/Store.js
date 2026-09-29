@@ -1,5 +1,6 @@
 import { reactive } from 'vue'
 import { session } from "../stores/session.js";
+import { fileBrowse } from "../stores/fileBrowse.js";
 
 export const store = reactive({
   update: 0,
@@ -42,18 +43,15 @@ export const store = reactive({
   projects: [],
   setdata: {},
   set_browse_context: null,
-  file: null,
+  // The open file and its browse context live in stores/fileBrowse.js.
+  get file() { return fileBrowse.file },
+  set file(value) { fileBrowse.file = value },
   file_count: null,
   skip: null,
   source: null,
-  file_browse_context: null,
-  // file_browse_context shapes:
-  //   null: file opened directly (no top bar)
-  //   { mode: 'set', set_rid, set_label, file_count, skip, source_rid, source_label }
-  //   { mode: 'search', query, results: [{rid, label, score, highlight}], index }
+  get file_browse_context() { return fileBrowse.context },
+  set file_browse_context(value) { fileBrowse.context = value },
   current_project: {},
-  search_page_states: {},
-  entities_page_states: {},
   set_panel_cache: null,
   reorder_target: '',
   settings_show_descriptions: true,
