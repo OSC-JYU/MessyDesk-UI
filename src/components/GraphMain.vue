@@ -14,27 +14,34 @@
 </style>
 
 <script setup>
-    import { reactive, computed } from "vue";
+    import { reactive, computed, watch, onUnmounted } from "vue";
     import { useRoute, useRouter } from 'vue-router'
     import web from "../web.js";
     import {store} from "./Store.js";
     import NodeDeleter from './NodeDeleter.vue'
     import Uploader from './Uploader.vue'
     import NodeCard from './NodeCard.vue'
-    import JYUHeader from './JYUHeader.vue'
     import CruncherList from './CruncherList.vue'
+    import ProjectDrawer from './ProjectDrawer.vue'
+    import { ui } from '../stores/ui.js'
 
     import SetCreator from './SetCreator.vue'
     import SourceCreator from './SourceCreator.vue'
 
     import CookieIcon from '@/assets/images/cookie-bite-solid_blue.svg';
 
-    document.title = "MessyDesk"
 
     const route  = useRoute();
     const router = useRouter();
 
     var state = reactive({node:''})
+
+    // Show the open project's name in the app header.
+    watch(() => store.current_project?.data?.label, (label) => { ui.projectLabel = label || '' }, { immediate: true })
+    onUnmounted(() => {
+      ui.projectLabel = ''
+      ui.drawerOpen = false
+    })
 
     // Derive active view from route name for header tab highlighting
     const activeView = computed(() => {
@@ -50,18 +57,6 @@
 
     function fitToNode(id) {
         state.node = id + '-' + Math.random()
-    }
-
-    function changeView(view) {
-      if (!projectRid.value) return
-      const rid = projectRid.value
-      if (view === 'graph' || view === 0) {
-        router.push({ name: 'project-graph', params: { rid } })
-      } else if (view === 'search' || view === 1) {
-        router.push({ name: 'project-search', params: { rid } })
-      } else if (view === 'entities' || view === 2) {
-        router.push({ name: 'project-entities', params: { rid } })
-      }
     }
 
     async function openNode(node_rid, source_rid, total_count, skip, browseContext) {
@@ -147,7 +142,7 @@
     
     <v-layout class="fill-height">
 
-        <JYUHeader mode="graph" :activeView="activeView" :projectRid="projectRid" @fit-to-node="fitToNode" @change-view="changeView"/>
+        <ProjectDrawer @fit-to-node="fitToNode" />
         <v-main class="fill-height">
 
           <!-- Graph view: wrap with sidepanel layout -->

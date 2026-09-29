@@ -4,6 +4,7 @@ Engineering knowledge base for the MessyDesk-UI frontend application.
 
 ## Pages
 
+- [UI rewrite](rewrite.md) — Target structure, style rules, how old and new code coexist, stage status
 - [Architecture](architecture.md) — Technology stack, module map, key design decisions
 - [Routing](routing.md) — Route table, navigation patterns, nested routes
 - [State Management](state-management.md) — Global store design, state shape, invariants

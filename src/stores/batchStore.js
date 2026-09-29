@@ -7,16 +7,16 @@ export const batchStore = reactive({
   minimized: false,
 
   get hasActiveJobs() {
-    return Object.values(this.jobs).some(j =>
-      ['running', 'paused', 'queued', 'pausing', 'resuming', 'cancelling'].includes(j.status)
+    return Object.values(this.jobs).some((j) =>
+      ['running', 'paused', 'queued', 'pausing', 'resuming', 'cancelling'].includes(j.status),
     )
   },
 
   get activeJobCount() {
-    return Object.values(this.jobs).filter(j =>
-      ['running', 'paused', 'queued', 'pausing', 'resuming', 'cancelling'].includes(j.status)
+    return Object.values(this.jobs).filter((j) =>
+      ['running', 'paused', 'queued', 'pausing', 'resuming', 'cancelling'].includes(j.status),
     ).length
-  }
+  },
 })
 
 // --- Event handler (called by events service) ---
@@ -25,7 +25,14 @@ batchStore.handleEvent = function (event) {
   if (!rid) return
 
   if (!this.jobs[rid]) {
-    this.jobs[rid] = { rid, status: 'unknown', service_id: '', total_files: 0, processed_files: 0, failed_files: 0 }
+    this.jobs[rid] = {
+      rid,
+      status: 'unknown',
+      service_id: '',
+      total_files: 0,
+      processed_files: 0,
+      failed_files: 0,
+    }
   }
   const job = this.jobs[rid]
 
@@ -37,7 +44,7 @@ batchStore.handleEvent = function (event) {
         total_files: event.total_files || job.total_files,
         processed_files: 0,
         failed_files: 0,
-        started_at: Date.now()
+        started_at: Date.now(),
       })
       break
 
@@ -49,7 +56,7 @@ batchStore.handleEvent = function (event) {
           total_files: event.batch.total_files ?? event.total_files ?? job.total_files,
           failed_files: event.batch.failed_files ?? job.failed_files,
           avg_sec_per_file: event.batch.avg_sec_per_file,
-          eta_sec: event.batch.eta_sec
+          eta_sec: event.batch.eta_sec,
         })
       }
       break
@@ -61,7 +68,7 @@ batchStore.handleEvent = function (event) {
         total_files: event.total_files ?? job.total_files,
         failed_files: event.failed_files ?? job.failed_files,
         avg_sec_per_file: event.avg_sec_per_file,
-        eta_sec: event.eta_sec
+        eta_sec: event.eta_sec,
       })
       break
 
@@ -77,7 +84,7 @@ batchStore.handleEvent = function (event) {
     case 'batch_completed':
       Object.assign(job, {
         status: 'done',
-        total_time_sec: event.total_time_sec || event.batch?.total_time_sec
+        total_time_sec: event.total_time_sec || event.batch?.total_time_sec,
       })
       if (event.batch) {
         job.processed_files = event.batch.processed_files ?? job.processed_files
@@ -94,7 +101,7 @@ batchStore.handleEvent = function (event) {
     case 'batch_failed':
       Object.assign(job, {
         status: 'failed',
-        error_message: event.error_message
+        error_message: event.error_message,
       })
       break
 

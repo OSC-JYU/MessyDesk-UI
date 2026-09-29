@@ -2,9 +2,9 @@
 
 ## Router Setup
 
-The router uses `createWebHistory` with `VITE_PUBLIC_PATH` as the base. Routes are defined statically in `src/main.js`—there is no lazy loading or code splitting.
+The router uses `createWebHistory` with `VITE_PUBLIC_PATH` as the base. Routes are defined in `src/app/router.js`. Every route component is lazy-loaded (`() => import(...)`), so each screen is its own chunk. Route `meta` carries `title` (page title, set in `router.afterEach`), `legacy` (still served by an old view in `src/components/`), `drawer` / `inProject` (project workspace header behaviour) and `shell: false` (no app header, used by the login page).
 
-**Verified from:** `src/main.js`
+**Verified from:** `src/app/router.js`
 
 ## Route Table
 
@@ -32,7 +32,7 @@ The router uses `createWebHistory` with `VITE_PUBLIC_PATH` as the base. Routes a
 | `/about` | about | `About` | About page |
 | `/login` | login | `Login` | SSO permission request page |
 
-**Verified from:** `src/main.js` (route definitions)
+**Verified from:** `src/app/router.js` (route definitions)
 
 ### Admin Route Guard
 
@@ -41,7 +41,7 @@ The router uses `createWebHistory` with `VITE_PUBLIC_PATH` as the base. Routes a
 This is enforced independently of nav-link visibility (which merely hides the link for non-admins) and
 independently of each backend admin route's own `access === 'admin'` check.
 
-**Verified from:** `src/main.js`
+**Verified from:** `src/app/router.js`
 
 ## Key Routing Patterns
 
@@ -66,7 +66,7 @@ When opening a file from a set, the route includes query parameters (`browseMode
 
 The old URL pattern `/graph?node=xxx` is redirected to `/project/xxx` for backward compatibility.
 
-**Verified from:** `src/main.js`
+**Verified from:** `src/app/router.js`
 
 ## Navigation Flow
 

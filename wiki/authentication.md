@@ -4,11 +4,11 @@
 
 The application uses SSO (Single Sign-On) with session-based authentication. The backend handles the auth protocol; the frontend only checks session validity.
 
-**Verified from:** `src/App.vue`, `src/web.js`
+**Verified from:** `src/app/App.vue`, `src/web.js`
 
 ## Session Check Mechanism
 
-`App.vue` on mount:
+`src/app/App.vue` on mount:
 1. Calls `web.ready()` → `GET /api`
 2. If successful and currently on `/login` page, redirects to home
 3. If 401 and not on `/login`, redirects to `/login`
@@ -16,13 +16,13 @@ The application uses SSO (Single Sign-On) with session-based authentication. The
 
 This check repeats every 30 seconds via `setInterval`.
 
-**Verified from:** `src/App.vue` (`login` function, `onMounted`)
+**Verified from:** `src/app/App.vue` (`login` function, `onMounted`)
 
 ## Session Expiry UI
 
 When `store.logged_out` is `true`, the entire `<router-view>` is replaced with a centered alert: "Your session expired" + reload button.
 
-**Verified from:** `src/App.vue` (template)
+**Verified from:** `src/app/App.vue` (template)
 
 ## Login Page
 
@@ -50,4 +50,4 @@ This is not a login form—it's a registration/permission-request page for authe
 - **Periodic polling, not event-driven:** Session validity is checked by polling every 30 seconds, not by intercepting 401s from API calls (though the global error interceptor does catch them).
 - **Redirect logic assumes path-based routing:** The login redirect uses `window.location.pathname.includes('login')` which could break if the public path prefix contains "login".
 
-**Verified from:** `src/App.vue`
+**Verified from:** `src/app/App.vue`

@@ -120,7 +120,6 @@ em {
 </style>
 
 <script setup>
-    import JYUHeader_plain from './JYUHeader_plain.vue'
     import web from "../web.js";
     
     import { onMounted, reactive, watch} from "vue";
@@ -128,7 +127,6 @@ em {
 
     const route = useRoute();
 
-    document.title = "MessyDesk - prompts"
 
 
     var state = reactive({
@@ -288,7 +286,6 @@ em {
   <div class="main-container">
     <v-card class="mx-auto fill-height" flat>
       <v-layout class="fill-height">
-        <JYUHeader_plain/>
 
         <v-main class="fill-height">
           <v-container class="fill-height pa-0" fluid>

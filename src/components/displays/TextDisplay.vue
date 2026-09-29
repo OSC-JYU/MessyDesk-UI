@@ -141,10 +141,11 @@
 }
 
 .rendered-text :deep(code) {
-  font-family: "Courier New", Courier, monospace;
+  font-family: var(--md-font-mono);
 }
 
 .rendered-text.plain-text {
+  font-family: var(--md-font-mono);
   white-space: pre-wrap;
   word-break: break-word;
 }

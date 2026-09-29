@@ -1,5 +1,4 @@
 <script setup>
-    import JYUHeader from './JYUHeader.vue'
     import ImageDisplay from './displays/ImageDisplay.vue'
     import OSDDisplay from './displays/OSDDisplay.vue'
     import HOCRDisplay from './displays/HOCRDisplay.vue'
@@ -15,7 +14,6 @@
 
     const route = useRoute();
 
-    document.title = "MessyDesk - files"
 
 
     var state = reactive({
@@ -49,7 +47,6 @@
     <v-card class="mx-auto fill-height" color="grey-lighten-3" flat>
       <v-layout class="fill-height">
 
-        <JYUHeader/>
   
         <v-main class="fill-height">
           <v-container class="fill-height pa-0" fluid>

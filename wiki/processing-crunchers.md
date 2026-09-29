@@ -115,7 +115,7 @@ Each `params_help.<key>` entry is rendered in `CruncherList.vue` based on its `d
 
 ### BatchProgressPanel (Floating Panel)
 
-A persistent floating panel (`src/components/BatchProgressPanel.vue`) is rendered in `App.vue` outside the router-view. It is visible whenever there are active batch jobs and shows:
+A persistent floating panel (`src/components/BatchProgressPanel.vue`) is rendered in `src/app/App.vue` outside the router-view. It is visible whenever there are active batch jobs and shows:
 - Service name and status (running/paused/cancelling/failed)
 - Progress: processed files / total files / failed files
 - ETA (when available)
@@ -130,7 +130,7 @@ GraphDisplay.vue also shows running process banners at the top of the graph view
 
 ### Progress Update Flow
 
-1. A single SSE connection is managed by `src/services/events.js` (opened on app mount in `App.vue`)
+1. A single SSE connection is managed by `src/services/events.js` (opened on app mount in `src/app/App.vue`)
 2. SSE events are parsed and routed to `batchStore.handleEvent()` for batch state
 3. Graph-specific events (`add`, `update`, `add_and_finish`) are dispatched as `window` custom events (`md-sse`)
 4. `GraphDisplay.vue` listens for `md-sse` events to update the visual graph

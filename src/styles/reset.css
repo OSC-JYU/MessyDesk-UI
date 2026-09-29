@@ -1,0 +1,61 @@
+/*
+ * Global reset and base typography. Loaded after Bootstrap and Vuetify so the
+ * tokens win while both frameworks are still on the page.
+ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--md-color-bg);
+  color: var(--md-color-text);
+  font-family: var(--md-font-body);
+  font-size: var(--md-font-size-sm);
+  line-height: var(--md-line-height);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Vuetify hardcodes Roboto on the app root and its typography classes. */
+.v-application,
+.v-application .text-h1,
+.v-application .text-h2,
+.v-application .text-h3,
+.v-application .text-h4,
+.v-application .text-h5,
+.v-application .text-h6,
+.v-application .text-subtitle-1,
+.v-application .text-subtitle-2,
+.v-application .text-body-1,
+.v-application .text-body-2,
+.v-application .text-button,
+.v-application .text-caption,
+.v-application .text-overline {
+  font-family: var(--md-font-body) !important;
+}
+
+code,
+kbd,
+pre,
+samp {
+  font-family: var(--md-font-mono);
+}
+
+pre {
+  white-space: pre-wrap;
+}
+
+img,
+svg,
+video {
+  max-width: 100%;
+}

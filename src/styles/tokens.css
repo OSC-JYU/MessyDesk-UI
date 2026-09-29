@@ -1,0 +1,72 @@
+/*
+ * Design tokens. Every colour, spacing step, radius, shadow and font used by
+ * new code comes from here (or from the Vuetify theme, which reads the same
+ * values in vuetify-theme.js). Components never hardcode hex values or pixels.
+ */
+:root {
+  /* Brand: the MessyDesk teal-blue used by the header and processing nodes */
+  --md-color-brand-900: #0d3a55;
+  --md-color-brand-700: #13547a;
+  --md-color-brand-500: #2a7f9e;
+  --md-color-brand-300: #80d0c7;
+  --md-color-brand-100: #e3f4f2;
+  --md-gradient-brand: linear-gradient(
+    to top right,
+    rgba(19, 84, 122, 0.92),
+    rgba(128, 208, 199, 0.92)
+  );
+
+  /* Neutrals */
+  --md-color-bg: #f5f7f9;
+  --md-color-surface: #ffffff;
+  --md-color-surface-muted: #eef2f5;
+  --md-color-border: #dbe2e8;
+  --md-color-text: #1c2a35;
+  --md-color-text-muted: #5b6b78;
+  --md-color-text-on-brand: #ffffff;
+
+  /* Status */
+  --md-color-info: #2a7f9e;
+  --md-color-success: #2e7d4f;
+  --md-color-warning: #b26a00;
+  --md-color-error: #c62828;
+  --md-color-highlight: #fff3a3;
+
+  /* Typography */
+  --md-font-body:
+    'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --md-font-mono:
+    'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
+  --md-font-size-xs: 0.75rem;
+  --md-font-size-sm: 0.875rem;
+  --md-font-size-md: 1rem;
+  --md-font-size-lg: 1.25rem;
+  --md-font-size-xl: 1.5rem;
+  --md-font-size-2xl: 2rem;
+  --md-font-weight-regular: 400;
+  --md-font-weight-medium: 500;
+  --md-font-weight-bold: 650;
+  --md-line-height: 1.5;
+
+  /* Spacing (4 px scale) */
+  --md-space-1: 0.25rem;
+  --md-space-2: 0.5rem;
+  --md-space-3: 0.75rem;
+  --md-space-4: 1rem;
+  --md-space-5: 1.5rem;
+  --md-space-6: 2rem;
+  --md-space-7: 3rem;
+
+  /* Shape and depth */
+  --md-radius-sm: 4px;
+  --md-radius-md: 8px;
+  --md-radius-lg: 12px;
+  --md-radius-pill: 999px;
+  --md-shadow-1: 0 1px 2px rgba(16, 32, 48, 0.08), 0 1px 3px rgba(16, 32, 48, 0.06);
+  --md-shadow-2: 0 4px 12px rgba(16, 32, 48, 0.1);
+
+  /* Layout */
+  --md-header-height: 64px;
+  --md-content-max-width: 1280px;
+}

@@ -4,7 +4,7 @@
 
 MessyDesk-UI is a Vue 3 single-page application that serves as the frontend for the MessyDesk digital humanities platform. It provides a graph-based project workspace where users manage files, run processing services ("crunchers"), and browse results.
 
-**Verified from source:** `package.json`, `src/main.js`, `vite.config.js`
+**Verified from source:** `package.json`, `src/app/main.js`, `vite.config.js`
 
 ## Technology Stack
 
@@ -14,13 +14,14 @@ MessyDesk-UI is a Vue 3 single-page application that serves as the frontend for 
 | Build tool | Vite | ^6.0.7 |
 | Router | vue-router | ^4.1.3 |
 | State | Reactive singleton (no Vuex/Pinia) | — |
-| UI framework | Vuetify 3 + Bootstrap 5 | ^3.5.17 / ^5.3.1 |
+| UI framework | Vuetify 3 (Bootstrap 5 still loaded for old screens until stage 8) | ^3.5.17 / ^5.3.1 |
 | Graph visualization | @vue-flow/core + dagre | ^1.33.5 / ^0.8.5 |
 | HTTP client | Axios | ^1.7.2 |
 | i18n | vue-i18n | ^9.2.2 |
 | PDF rendering | vue-pdf-embed | ^2.0.4 |
 | Markdown | marked + DOMPurify | ^18.0.4 / ^3.4.7 |
-| Test runner | Vitest + jsdom + @vue/test-utils | ^4.1.7 |
+| Test runner | Vitest + jsdom + @vue/test-utils; Playwright route smoke tests | ^4.1.7 |
+| Lint / format | ESLint (flat config, eslint-plugin-vue) + Prettier | — |
 
 **Verified from:** `package.json`
 
@@ -28,24 +29,28 @@ MessyDesk-UI is a Vue 3 single-page application that serves as the frontend for 
 
 ```
 src/
-├── main.js              # App bootstrap, router, Vuetify, i18n
-├── App.vue              # Root: session check, auth polling, SSE connect, BatchProgressPanel
-├── web.js               # Centralized API client (Axios)
+├── app/                 # New shell: main.js (bootstrap), router.js (route table, the old/new switch),
+│                        # App.vue (session check, SSE connect, BatchProgressPanel), AppShell.vue +
+│                        # AppHeader.vue (the one header), vuetify.js, i18n.js
+├── styles/              # tokens.css, reset.css, vuetify-theme.js, legacy.css (old global rules)
+├── api/                 # Area modules (projects, files, services, search, entities, admin, session);
+│                        # thin wrappers over web.js for now
+├── stores/              # session.js (signed-in user), ui.js (header/drawer state), batchStore.js
+├── ui/                  # Shared UI kit (stage 1)
+├── features/            # Rewritten screens by area (stages 2-7)
+├── web.js               # Legacy Axios API client, emptied as callers move to api/
 ├── services/
 │   └── events.js        # Single SSE connection manager (routes events to stores/DOM)
-├── stores/
-│   └── batchStore.js    # Reactive batch job state + pause/resume/cancel actions
-└── components/
-    ├── Store.js         # Global reactive state singleton
-    ├── BatchProgressPanel.vue  # Floating batch progress panel (rendered in App.vue)
+└── components/          # Old UI, replaced route by route (see rewrite.md)
+    ├── Store.js         # Old global reactive store (store.user delegates to stores/session.js)
+    ├── BatchProgressPanel.vue  # Floating batch progress panel (rendered in app/App.vue)
     ├── Main.vue         # Home page (project listing)
-    ├── GraphMain.vue    # Project shell: header + nested route views
+    ├── GraphMain.vue    # Project workspace: drawer + nested route views
+    ├── ProjectDrawer.vue # Project side drawer, toggled from the app header
     ├── GraphDisplay.vue # Graph canvas (VueFlow) + set panel (listens md-sse events)
     ├── displays/        # File content viewers (type-dispatched)
-    │   ├── FileDisplayWrapper.vue  # Three-column layout orchestrator
-    │   └── ...Display.vue          # Per-type display components
     ├── nodes/           # Graph node renderers (per type)
-    └── ...              # Dialogs, forms, lists, header variants
+    └── ...              # Dialogs, forms, lists
 ```
 
 ## Architectural Decisions
@@ -60,19 +65,19 @@ State lives in a single `reactive({})` object exported from `Store.js`. Componen
 
 ### 2. Dual CSS Framework (Vuetify + Bootstrap)
 
-Both Vuetify 3 and Bootstrap 5 are loaded. Vuetify provides structural components (dialogs, app bars, expansion panels). Bootstrap provides utility classes and icons. They coexist via separate CSS imports in `App.vue`.
+Both Vuetify 3 and Bootstrap 5 are loaded. Vuetify provides structural components (dialogs, app bars, expansion panels). Bootstrap provides utility classes and icons. They coexist via separate CSS imports in `src/app/main.js`. Bootstrap is being dropped: new code uses Vuetify only, and Bootstrap is removed with the last old screen.
 
-**Verified from:** `src/App.vue` (imports), `package.json`
+**Verified from:** `src/app/main.js` (imports), `package.json`
 
 ### 3. Server-Sent Events (SSE) Instead of WebSockets
 
-Real-time updates (node additions, process progress) arrive via SSE at `{apiUrl}/events`. A single connection is managed by `src/services/events.js`, opened once on app mount in `App.vue`. It auto-reconnects with 5-second delay on error and hydrates batch state on reconnect.
+Real-time updates (node additions, process progress) arrive via SSE at `{apiUrl}/events`. A single connection is managed by `src/services/events.js`, opened once on app mount in `src/app/App.vue`. It auto-reconnects with 5-second delay on error and hydrates batch state on reconnect.
 
 Components receive events via:
 - `batchStore` — batch/process events are routed directly to the reactive store
 - `window` custom event `md-sse` — graph-specific events (add, update) are dispatched for `GraphDisplay.vue`
 
-**Verified from:** `src/services/events.js`, `src/App.vue`
+**Verified from:** `src/services/events.js`, `src/app/App.vue`
 
 ### 4. Dagre for Graph Layout
 
@@ -94,7 +99,7 @@ File display uses a two-level lookup: first by `file.type` (backend-assigned sem
 | `VITE_API_PATH` | Axios `baseURL` for all API requests | `web.js` |
 | `VITE_FALLBACK_LOCALE` | i18n fallback locale | `main.js` |
 
-**Verified from:** `src/main.js`, `src/web.js`, `vite.config.js`
+**Verified from:** `src/app/main.js`, `src/web.js`, `vite.config.js`
 
 ## Dev Server Proxy
 

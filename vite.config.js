@@ -43,7 +43,7 @@ export default ({ mode }) => {
               target: 'http://localhost:8200',
               changeOrigin: true,
               ws: false,
-              onProxyReq: (proxyReq, req, res) => {
+              onProxyReq: (proxyReq) => {
                 proxyReq.setHeader('Connection', 'keep-alive');
                 proxyReq.setHeader('Accept', 'text/event-stream');
                 proxyReq.setHeader('Accept-Encoding', 'identity');

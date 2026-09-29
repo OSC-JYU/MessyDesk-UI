@@ -4,9 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import web from '../web.js'
 import { store } from './Store.js'
 import SetPanel from './displays/SetPanel.vue'
-import JYUHeader_main from './JYUHeader_main.vue'
 
-document.title = 'MessyDesk - tags'
 
 const route = useRoute()
 const router = useRouter()
@@ -15,7 +13,6 @@ const props = defineProps({
   projectRid: { type: String, default: null }
 })
 
-const isStandaloneRoute = computed(() => ['search', 'entities', 'tags'].includes(String(route.name || '')))
 
 const stateKey = computed(() => {
   const current = props.projectRid || route.params.rid || 'global'
@@ -518,20 +515,6 @@ function removeProject(project) {
   onProjectSelectionChange()
 }
 
-function changeTab(tab) {
-  if (tab === 1) {
-    router.push({ name: 'search' })
-    return
-  }
-
-  if (tab === 2) {
-    router.push({ name: 'entities' })
-    return
-  }
-
-  router.push({ name: 'Home' })
-}
-
 async function hydrateState() {
   const key = stateKey.value
   const buckets = getEntitiesPageStates()
@@ -582,7 +565,6 @@ watch(
 
 <template>
   <v-layout class="fill-height">
-    <JYUHeader_main v-if="isStandaloneRoute" mode="projects" @change-tab="changeTab" />
 
     <v-main class="fill-height">
       <v-row class="w-100 fill-height m-0 p-0">

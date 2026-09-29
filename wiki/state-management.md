@@ -117,4 +117,4 @@ null
 - **Unreachable code in `current()`:** The `Store.js` `current()` method has a `return` statement after the if/else block that can never execute.
 - **`source_creator_type` is set before opening dialog:** The pattern for the source creator is to set `store.source_creator_type` then set `store.source_creator_open = true`, relying on the dialog reading the type on mount.
 
-**Verified from:** `src/components/Store.js`, `src/components/JYUHeader.vue`
+**Verified from:** `src/components/Store.js`, `src/components/ProjectDrawer.vue`

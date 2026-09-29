@@ -2,12 +2,10 @@
 <script setup>
     import { onMounted, watch, reactive, ref, computed } from "vue";
     import { useRouter, useRoute } from 'vue-router'
- 	import JYUHeader from './JYUHeader.vue'
  	import CruncherList from './CruncherList.vue'
 	import NodeCard from './NodeCard.vue'
     import ProcessCreator from './ProcessCreator.vue'
 
-	document.title = "Crunchers aka processing tools"
 
     const route  = useRoute();
     const router = useRouter();
@@ -20,7 +18,6 @@
     <v-card class="mx-auto fill-height" color="grey-lighten-3" flat>
       <v-layout class="fill-height">
 
-        <JYUHeader/>
   
         <v-main class="fill-height">
           <v-container class="fill-height pa-0" fluid>

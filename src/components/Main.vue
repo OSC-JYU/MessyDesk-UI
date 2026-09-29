@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import web from '../web.js'
 import { store } from './Store.js'
 import { batchStore } from '@/stores/batchStore'
-import JYUHeader_main from './JYUHeader_main.vue'
 
 const router = useRouter()
 const organizationLogoModules = import.meta.glob('../assets/images/organisation.{svg,png}', { eager: true, import: 'default' })
@@ -12,7 +11,6 @@ const organizationLogoSrc = Object.values(organizationLogoModules)[0] || ''
 const createSection = ref(null)
 const projectInput = ref(null)
 
-document.title = 'MessyDesk - Home'
 
 const state = reactive({
   loadingProjects: false,
@@ -325,20 +323,6 @@ function openRoute(path) {
   router.push(path)
 }
 
-function changeTab(tab) {
-  if (tab === 1) {
-    router.push({ name: 'search' })
-    return
-  }
-
-  if (tab === 2) {
-    router.push({ name: 'entities' })
-    return
-  }
-
-  router.push({ name: 'Home' })
-}
-
 async function focusCreateProject() {
   await nextTick()
   createSection.value?.$el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -551,11 +535,6 @@ onMounted(async () => {
 <template>
 
     <v-layout class="fill-height">
-      <JYUHeader_main
-        mode="projects"
-        @create-project="focusCreateProject"
-        @change-tab="changeTab"
-      />
 
       <v-main class="fill-height main-scroll">
         <v-container fluid class="main-shell pa-4 pa-md-8">

@@ -62,7 +62,7 @@ There is no global error notification system. Errors are handled locally per com
 
 Internationalization is configured with `vue-i18n` (legacy mode disabled, global injection enabled). Locale defaults to `fi` (Finnish), with `en` as fallback. However, most UI text is hardcoded in English directly in templates. i18n is only used in a few places (login page, navigation labels).
 
-**Verified from:** `src/main.js` (i18n config), `lang/messages.json`, templates
+**Verified from:** `src/app/main.js` (i18n config), `lang/messages.json`, templates
 
 ## Testing
 
@@ -79,11 +79,13 @@ Test patterns:
 
 ## CSS Organization
 
-- `src/assets/base.css` — Global base styles (imported in `App.vue`)
-- `src/assets/editor.css` — Editor-specific styles
-- `src/components/displays/*.css` — Display-specific styles (imported as modules)
+- `src/styles/tokens.css` — design tokens (colour, type, spacing, radius, shadow); the only place hex values live, together with `src/styles/vuetify-theme.js`
+- `src/styles/reset.css` — global reset and base typography (Inter body font, JetBrains Mono for code)
+- `src/styles/legacy.css` — global rules old screens still need, including the old `position: relative; margin: 0` reset scoped to `.legacy-screen` and overlays; nothing new is added here
 - Component-scoped `<style scoped>` blocks
-- Many components use unscoped `<style>` (global CSS leakage risk)
+- Many old components use unscoped `<style>` (global CSS leakage risk)
+
+New code follows the style rules in [rewrite.md](rewrite.md); `npm run lint` checks them.
 
 **Verified from:** file structure, component style blocks
 

@@ -1,8 +1,6 @@
 
 <script setup>
- 	import JYUHeader from './JYUHeader.vue'
 	 import GraphDisplay from './GraphDisplay.vue'
-	document.title = "About KuKaKo"
 </script>
 
 
@@ -13,7 +11,6 @@
     <div class="col-12 m-0 p-0">
         <div class="h-100 d-flex flex-column w-100 m-0 p-0">
             <div class="row justify-content-center m-0 p-0">
-                <JYUHeader/>
             </div>
             <div class="row m-0 p-0  flex-grow-1 ">
                 <GraphDisplay mode="about"/>

@@ -58,15 +58,15 @@ If the backend doesn't support project-scoped search, the search method retries 
 
 ## 9. Session Check Redirect Uses Path Substring Match
 
-`App.vue` uses `window.location.pathname.includes('login')` to detect the login page. If `VITE_PUBLIC_PATH` contained the string "login", this check would incorrectly match.
+`src/app/App.vue` uses `window.location.pathname.includes('login')` to detect the login page. If `VITE_PUBLIC_PATH` contained the string "login", this check would incorrectly match.
 
-**Verified from:** `src/App.vue` (`login` function)
+**Verified from:** `src/app/App.vue` (`login` function)
 
 ## 10. Two Bootstrap + Vuetify Coexistence
 
 Both frameworks register global styles. Bootstrap's grid system and Vuetify's grid system (`v-row`/`v-col`) coexist. Some components use Bootstrap classes (`row`, `col-12`), others use Vuetify equivalents. Mixing them in the same template can cause layout conflicts.
 
-**Verified from:** `src/App.vue` (imports), component templates
+**Verified from:** `src/app/App.vue` (imports), component templates
 
 ## 11. File Upload Accepts Limited Formats
 

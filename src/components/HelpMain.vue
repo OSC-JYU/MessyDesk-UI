@@ -1,13 +1,11 @@
 <script setup>
 import { onMounted, reactive, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import JYUHeader_plain from './JYUHeader_plain.vue'
 import web from '../web.js'
 
 const route = useRoute()
 const router = useRouter()
 
-document.title = 'MessyDesk - Help'
 
 const state = reactive({
   loading: true,
@@ -125,7 +123,6 @@ watch(() => [route.params.slug, route.params.service, route.params.assetPath], l
 
 <template>
   <div class="help-page">
-    <JYUHeader_plain />
 
     <v-container class="py-6">
       <v-card class="help-card">
@@ -153,9 +150,8 @@ watch(() => [route.params.slug, route.params.service, route.params.assetPath], l
 
 <style scoped>
 .help-page {
-  min-height: 100vh;
+  min-height: 100%;
   background: linear-gradient(180deg, #edf4f7 0%, #f9fcfd 100%);
-  padding-top: 72px;
 }
 
 .help-card {

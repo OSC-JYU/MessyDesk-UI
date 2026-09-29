@@ -1,11 +1,12 @@
 import { reactive } from 'vue'
-import web from "../web.js";
+import { session } from "../stores/session.js";
 
 export const store = reactive({
-  logged_out : false,
   update: 0,
   update_data: null,
-  user: null,
+  // The signed-in user now lives in stores/session.js; old readers keep store.user.
+  get user() { return session.user },
+  set user(value) { session.user = value },
   x: 0,
   y: 0,
   process: {},

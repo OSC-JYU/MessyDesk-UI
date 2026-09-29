@@ -15,7 +15,6 @@
 </style>
 
 <script setup>
-    import JYUHeader_plain from './JYUHeader_plain.vue'
     import web from "../web.js";
     import { store } from "./Store.js";
 
@@ -24,7 +23,6 @@
 
     const router = useRouter();
 
-    document.title = "MessyDesk - Service Control"
 
     const emptyForm = () => ({
         kind: 'nomad',
@@ -190,7 +188,6 @@
 
 <template>
     <v-layout class="fill-height">
-        <JYUHeader_plain/>
 
         <v-main class="fill-height">
             <v-container v-if="state.authorized">

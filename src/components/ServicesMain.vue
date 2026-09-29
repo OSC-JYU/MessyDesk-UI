@@ -22,7 +22,6 @@
 </style>
 
 <script setup>
-    import JYUHeader_plain from './JYUHeader_plain.vue'
     import web from "../web.js";
     import { store } from "./Store.js";
 
@@ -31,7 +30,6 @@
 
     const router = useRouter();
 
-    document.title = "MessyDesk - Services"
 
     const POLL_INTERVAL_MS = 5000;
     let pollTimer = null;
@@ -217,7 +215,6 @@
 
 <template>
     <v-layout class="fill-height">
-        <JYUHeader_plain/>
 
         <v-main class="fill-height">
             <v-container>

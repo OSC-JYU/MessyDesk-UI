@@ -1,0 +1,156 @@
+/* eslint-disable no-restricted-syntax -- the router is the switch between old and new screens */
+import { createRouter, createWebHistory } from 'vue-router'
+import { session } from '@/stores/session.js'
+
+// Each route points at its old view until the new version replaces it.
+// meta.title sets the page title; meta.shell === false hides the app header;
+// meta.drawer shows the header's drawer button for the project workspace;
+// meta.legacy marks a route still served by an old view (see styles/legacy.css).
+const routes = [
+  {
+    path: '/',
+    name: 'Home',
+    component: () => import('@/components/Main.vue'),
+    meta: { legacy: true, title: 'Desks' },
+  },
+
+  // Legacy redirect: /graph?node=xxx → /project/xxx
+  {
+    path: '/graph',
+    redirect: (to) =>
+      to.query.node ? { name: 'project-graph', params: { rid: to.query.node } } : { name: 'Home' },
+  },
+
+  {
+    path: '/project/:rid',
+    component: () => import('@/components/GraphMain.vue'),
+    meta: { legacy: true, drawer: true, inProject: true },
+    children: [
+      {
+        path: '',
+        name: 'project-graph',
+        component: () => import('@/components/GraphDisplay.vue'),
+        meta: { legacy: true, title: 'Desk' },
+      },
+      {
+        path: 'search',
+        name: 'project-search',
+        component: () => import('@/components/SearchMain.vue'),
+        meta: { legacy: true, title: 'Search' },
+      },
+      {
+        path: 'entities',
+        name: 'project-entities',
+        component: () => import('@/components/EntitiesMain.vue'),
+        meta: { legacy: true, title: 'Tags' },
+      },
+      {
+        path: 'file/:fileRid',
+        name: 'project-file',
+        component: () => import('@/components/displays/FileDisplayWrapper.vue'),
+        meta: { legacy: true, title: 'File' },
+      },
+    ],
+  },
+
+  {
+    path: '/services',
+    name: 'services',
+    component: () => import('@/components/ServicesMain.vue'),
+    meta: { legacy: true, title: 'Services' },
+  },
+  {
+    path: '/services/admin',
+    name: 'services-admin',
+    component: () => import('@/components/ServicesAdmin.vue'),
+    meta: { legacy: true, title: 'Service control', requiresAdmin: true },
+  },
+  {
+    path: '/intro',
+    name: 'introduction',
+    component: () => import('@/components/Introduction.vue'),
+    meta: { legacy: true, title: 'Introduction' },
+  },
+  {
+    path: '/files/:rid',
+    name: 'files',
+    component: () => import('@/components/FilesMain.vue'),
+    meta: { legacy: true, title: 'Files' },
+  },
+  {
+    path: '/crunchers',
+    name: 'crunchers',
+    component: () => import('@/components/CrunchersMain.vue'),
+    meta: { legacy: true, title: 'Crunchers' },
+  },
+  {
+    path: '/search',
+    name: 'search',
+    component: () => import('@/components/SearchMain.vue'),
+    meta: { legacy: true, title: 'Search' },
+  },
+  {
+    path: '/prompts',
+    name: 'prompts',
+    component: () => import('@/components/PromptsMain.vue'),
+    meta: { legacy: true, title: 'Prompts' },
+  },
+  {
+    path: '/help/services/:service/',
+    name: 'service-help',
+    component: () => import('@/components/HelpMain.vue'),
+    meta: { legacy: true, title: 'Help' },
+  },
+  {
+    path: '/help/services/:service/:assetPath(.*)*',
+    name: 'service-help-asset',
+    component: () => import('@/components/HelpMain.vue'),
+    meta: { legacy: true, title: 'Help' },
+  },
+  {
+    path: '/help/:slug?',
+    name: 'help',
+    component: () => import('@/components/HelpMain.vue'),
+    meta: { legacy: true, title: 'Help' },
+  },
+  { path: '/tags', name: 'tags', redirect: { name: 'entities' } },
+  {
+    path: '/entities',
+    name: 'entities',
+    component: () => import('@/components/EntitiesMain.vue'),
+    meta: { legacy: true, title: 'Tags' },
+  },
+  {
+    path: '/admin',
+    name: 'admin',
+    component: () => import('@/components/AdminMain.vue'),
+    meta: { legacy: true, title: 'Admin', requiresAdmin: true },
+  },
+  {
+    path: '/about',
+    name: 'about',
+    component: () => import('@/components/About.vue'),
+    meta: { legacy: true, title: 'About' },
+  },
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('@/components/Login.vue'),
+    meta: { legacy: true, title: 'Sign in', shell: false },
+  },
+]
+
+export const router = createRouter({
+  history: createWebHistory(import.meta.env.VITE_PUBLIC_PATH),
+  routes,
+})
+
+router.beforeEach(async (to) => {
+  if (!to.meta.requiresAdmin) return true
+  await session.loadUser()
+  return session.isAdmin ? true : { name: 'services' }
+})
+
+router.afterEach((to) => {
+  document.title = to.meta.title ? `${to.meta.title} · MessyDesk` : 'MessyDesk'
+})
