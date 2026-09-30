@@ -51,8 +51,11 @@ store's `store.file` / `store.file_browse_context` point at them.
 - **Set mode** (`{ mode: 'set', set_rid, set_label, file_count, skip, source_rid, source_label }`,
   `skip` 0-based) is also written to the URL (`browseMode=set&setRid=…&skip=…`), so a reload keeps
   it. Previous/next fetch the neighbouring file with `getSetFiles(set, skip, 1)`.
-- **Search mode** (`{ mode: 'search', query, results: [{ rid, label, score, highlight }], index }`)
-  steps through the result list the Search or Tags screen handed over.
+- **Search mode** (`{ mode: 'search', query, results: [{ rid, label, score, highlight }], index, returnTo, kind }`)
+  steps through the result list the Search or Tags screen handed over. `returnTo` is the full path
+  of that screen (recorded by `useFileOpener`), so "Back to results" goes back to Tags or Search,
+  global or in a desk, with the screen's own state restored from `pageMemory`. `kind` (`search` or
+  `tags`) picks the chip icon.
 - Arrow keys step too, except while typing in a field.
 
 **Lineage offset:** when the user opens an ancestor (or descendant) of the browsed file in the

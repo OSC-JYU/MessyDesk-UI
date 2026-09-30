@@ -124,6 +124,9 @@ export function useFileViewer() {
       const query = { openSet: ridParam(ctx.set_rid) }
       if (ctx.source_rid) query.sourceRid = ridParam(ctx.source_rid)
       router.push({ name: 'project-graph', params: { rid: deskRid.value }, query })
+    } else if (ctx?.mode === 'search' && ctx.returnTo) {
+      // The Search or Tags page the file was opened from.
+      router.push(ctx.returnTo)
     } else if (ctx?.mode === 'search' && deskRid.value) {
       router.push({ name: 'project-search', params: { rid: deskRid.value } })
     } else {

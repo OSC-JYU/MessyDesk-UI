@@ -95,3 +95,9 @@ this with HTTP 503. The original PDF is always deleted after splitting (no user-
 In a scoped `<style>`, Vue replaces the whole selector with what is inside `:global(...)`: `:global(button:hover) > .icon .part` compiles to plain `button:hover`. This once made every hovered button and link in the app play the cookie's bite animation. Scoped CSS only tags the last part of a selector, so ancestor conditions need no `:global` at all: write `button:hover > .icon .part` (or `[data-motion='off'] .part`). `npm run lint` rejects `:global(...)` followed by more selector.
 
 **Verified from:** `src/ui/CrunchIcon.vue`, `src/ui/ThumbnailImage.vue`, `scripts/check-new-code.mjs`, `e2e/smoke.pw.js` (hover check)
+
+## 14. Vue Flow Drops Edges to Nodes It Has Not Seen Yet
+
+When a node and its edge are added in the same update (a server `add` event for a cruncher result or a batch run), Vue Flow checks the edge before it has the node, warns "Edge source or target is missing" and drops the edge. `useDeskGraph.addFromEvent` therefore adds the nodes first and the edges on the next tick (`nextTick`); the dagre layout already counts the new edges. `e2e/live-updates.pw.js` covers this with a mocked API.
+
+**Verified from:** `src/features/project/useDeskGraph.js`, `e2e/live-updates.pw.js`

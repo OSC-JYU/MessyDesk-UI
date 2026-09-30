@@ -38,7 +38,7 @@ const tags = computed(() =>
     </v-chip>
     <v-chip
       v-else-if="context?.mode === 'search'"
-      prepend-icon="mdi-magnify"
+      :prepend-icon="context.kind === 'tags' ? 'mdi-tag-outline' : 'mdi-magnify'"
       size="small"
       label
       variant="flat"

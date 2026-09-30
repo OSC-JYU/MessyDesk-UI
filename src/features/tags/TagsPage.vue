@@ -36,6 +36,7 @@ function openFile(result, index) {
     results: tags.results.value,
     query: title.value,
     projectRid: projectRid.value,
+    kind: 'tags',
   })
 }
 

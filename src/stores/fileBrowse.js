@@ -7,7 +7,9 @@ import { reactive } from 'vue'
 // context shapes:
 //   null                                   file opened on its own
 //   { mode: 'set', set_rid, set_label, file_count, skip, source_rid, source_label }
-//   { mode: 'search', query, results: [{ rid, label, score, highlight }], index }
+//   { mode: 'search', query, results: [{ rid, label, score, highlight }], index,
+//     returnTo, kind }   returnTo: the results page (route location) to go
+//                        back to; kind: 'search' or 'tags'
 export const fileBrowse = reactive({
   file: null,
   context: null,
@@ -18,8 +20,9 @@ export const fileBrowse = reactive({
   markdown: false,
 })
 
-// Opens `file` from a list of results, remembering the list for previous/next.
-export function browseFromResults(file, query, results, index) {
+// Opens `file` from a list of results, remembering the list for previous/next
+// and, in `from`, the page to go back to ({ returnTo, kind }).
+export function browseFromResults(file, query, results, index, from = {}) {
   fileBrowse.file = file
-  fileBrowse.context = { mode: 'search', query, results, index }
+  fileBrowse.context = { mode: 'search', query, results, index, ...from }
 }

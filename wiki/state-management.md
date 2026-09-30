@@ -19,8 +19,10 @@ workspace shared by provide/inject.
 
 ```
 { mode: 'set', set_rid, set_label, file_count, skip, source_rid, source_label }   // skip is 0-based
-{ mode: 'search', query, results: [{ rid, label, score, highlight }], index }
+{ mode: 'search', query, results: [{ rid, label, score, highlight }], index, returnTo, kind }
 ```
+
+`returnTo` is the path of the Search or Tags page the file was opened from; `kind` is `search` or `tags`.
 
 Set mode is also written to the file viewer's URL (`browseMode=set&…`); see
 [file-display-system.md](file-display-system.md).
