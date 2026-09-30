@@ -1,4 +1,4 @@
-import { onMounted, onUnmounted, reactive } from 'vue'
+import { nextTick, onMounted, onUnmounted, reactive } from 'vue'
 import { useVueFlow } from '@vue-flow/core'
 import { getProject, setProjectAttribute } from '@/api/projects.js'
 import {
@@ -95,8 +95,11 @@ export function useDeskGraph(workspace, { onThumbnailsChanged } = {}) {
     graph.nodes = graph.nodes.filter((n) => n.id !== EMPTY_DESK_ID)
     const added = nodesFromAddEvent(event, randomPosition)
     graph.nodes.push(...added.nodes)
-    graph.edges.push(...added.edges)
-    relayout()
+    // Vue Flow drops an edge whose nodes it does not have yet, so the edges
+    // go in once it has taken the new nodes. The layout counts them already.
+    const edges = added.edges
+    graph.nodes = layoutLeftToRight(graph.nodes, [...graph.edges, ...edges])
+    nextTick(() => (graph.edges = [...graph.edges, ...edges]))
     focusAfterLayout = added.id
     if (event.process) updateNode(event.process['@rid'], event.process)
   }
