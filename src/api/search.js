@@ -4,3 +4,6 @@ import web from './client.js'
 
 export const search = (...args) => web.search(...args)
 export const getSearchInfo = (...args) => web.getSearchInfo(...args)
+export const getSemanticIndexes = (...args) => web.getSemanticIndexes(...args)
+export const startSemanticSearch = (...args) => web.startSemanticSearch(...args)
+export const getSemanticSearch = (...args) => web.getSemanticSearch(...args)

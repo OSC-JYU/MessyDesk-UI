@@ -6,10 +6,13 @@ import { recall, remember } from '@/stores/pageMemory.js'
 import ErrorAlert from '@/ui/ErrorAlert.vue'
 import ResultsGrid from './ResultsGrid.vue'
 import ProjectScope from './ProjectScope.vue'
+import SemanticIndexes from './SemanticIndexes.vue'
+import { semanticHitToResult } from './semantic.js'
 import { searchDocToResult } from './results.js'
 import { deskForResults, useFileOpener } from './useFileOpener.js'
 
-// Full-text search, in one desk (/project/:rid/search) or across desks (/search).
+// Full-text search, in one desk (/project/:rid/search) or across desks (/search), and search by
+// meaning in the user's vector indexes (SemanticIndexes). Both fill the same results grid.
 const route = useRoute()
 const openResult = useFileOpener()
 
@@ -26,6 +29,9 @@ const state = reactive({
   filterIgnored: false,
   loading: false,
   error: null,
+  // 'text' (full-text) or 'semantic'; the title says which results are shown.
+  mode: 'text',
+  semanticLabel: '',
 })
 
 const deskRids = computed(() => (inDesk.value ? [`#${scope.value}`] : state.desks))
@@ -46,12 +52,28 @@ async function search() {
     state.lastQuery = query
     state.searched = true
     state.page = 1
+    state.mode = 'text'
   } catch (error) {
     state.error = error
   } finally {
     state.loading = false
   }
 }
+
+function showSemantic({ query, index, hits }) {
+  state.results = hits.map(semanticHitToResult)
+  state.lastQuery = query
+  state.searched = true
+  state.page = 1
+  state.mode = 'semantic'
+  state.semanticLabel = index?.model?.id || ''
+}
+
+const title = computed(() => {
+  if (!state.lastQuery) return 'Search'
+  if (state.mode === 'semantic') return `By meaning: ${state.lastQuery} (${state.semanticLabel})`
+  return `Search: ${state.lastQuery}`
+})
 
 function open(result, index) {
   openResult({
@@ -76,6 +98,8 @@ watch(
       page: saved?.page || 1,
       desks: saved?.desks || [],
       filterIgnored: Boolean(saved?.filterIgnored),
+      mode: saved?.mode || 'text',
+      semanticLabel: saved?.semanticLabel || '',
       error: null,
     })
   },
@@ -83,7 +107,7 @@ watch(
 )
 
 watch(
-  () => [state.lastQuery, state.results, state.page, state.desks, state.query],
+  () => [state.lastQuery, state.results, state.page, state.desks, state.query, state.mode],
   () =>
     remember('search', scope.value, {
       query: state.query,
@@ -93,13 +117,15 @@ watch(
       page: state.page,
       desks: state.desks,
       filterIgnored: state.filterIgnored,
+      mode: state.mode,
+      semanticLabel: state.semanticLabel,
     }),
   { deep: true },
 )
 
 watch(
   () => state.desks,
-  () => state.lastQuery && search(),
+  () => state.lastQuery && state.mode === 'text' && search(),
   { deep: true },
 )
 </script>
@@ -109,13 +135,15 @@ watch(
     <ResultsGrid
       v-model:page="state.page"
       class="search-page__results"
-      :title="state.lastQuery ? `Search: ${state.lastQuery}` : 'Search'"
+      :title="title"
       :results="state.results"
       :loading="state.loading"
       :empty-title="state.searched ? 'No matches' : 'Search the text of your files'"
       :empty-text="
         state.searched
-          ? 'Try other words, or search all desks.'
+          ? state.mode === 'semantic'
+            ? 'Nothing in this index matched.'
+            : 'Try other words, or search all desks.'
           : 'Type words in the search box and press Enter.'
       "
       @open="open"
@@ -148,6 +176,11 @@ watch(
         desks.
       </v-alert>
       <ErrorAlert :error="state.error" title="Search failed" class="mt-4" />
+      <SemanticIndexes
+        :desk-rids="deskRids"
+        @loading="state.loading = $event"
+        @results="showSemantic"
+      />
     </aside>
   </div>
 </template>
