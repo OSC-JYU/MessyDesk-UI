@@ -39,6 +39,8 @@ const BY_TYPE = {
   'human.json': 'human',
   'dspace7.json': 'json',
   'similarity.json': 'similarity',
+  similarity_index: 'index',
+  vector_index: 'index',
 }
 
 const BY_EXTENSION = { hocr: 'hocr', json: 'json', txt: 'text' }

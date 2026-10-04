@@ -17,8 +17,12 @@ import {
 
 // Text similarity: the original document, the query text and the list of
 // matching chunks. Picking a match (in the list or on a highlighted word)
-// loads its document and scrolls both texts to it.
-const props = defineProps({ file: { type: Object, required: true } })
+// loads its document and scrolls both texts to it. Shows a similarity.json
+// file, or `data` of the same shape (an index search, IndexDisplay).
+const props = defineProps({
+  file: { type: Object, default: null },
+  data: { type: Object, default: null },
+})
 
 const state = reactive({
   data: null,
@@ -91,8 +95,8 @@ function pickToken(map, index) {
 }
 
 watch(
-  () => props.file['@rid'],
-  async (rid) => {
+  () => props.data ?? props.file?.['@rid'],
+  async (source) => {
     Object.assign(state, {
       data: null,
       loading: true,
@@ -102,7 +106,7 @@ watch(
       active: -1,
     })
     try {
-      const raw = await getNodeFile(rid)
+      const raw = props.data ?? (await getNodeFile(source))
       state.data = typeof raw === 'string' ? JSON.parse(raw) : raw
       if (!state.data?.doc_map && state.data?.text_file) await loadDoc(0)
     } catch (error) {
@@ -163,6 +167,14 @@ watch(
       <dl class="sim__stats">
         <dt>Matches</dt>
         <dd>{{ state.data.chunk_count }}</dd>
+        <template v-if="state.data.query_windows > 1">
+          <dt>Query passages</dt>
+          <dd>{{ state.data.query_windows }}</dd>
+        </template>
+        <template v-if="state.data.threshold">
+          <dt>Smallest match</dt>
+          <dd>{{ (state.data.threshold * 100).toFixed(0) }}%</dd>
+        </template>
         <dt>Best similarity</dt>
         <dd>{{ ((state.data.max_similarity || 0) * 100).toFixed(2) }}%</dd>
         <dt>Window</dt>
@@ -177,7 +189,7 @@ watch(
           :active="state.active === index"
           color="primary"
           :title="`Match ${index + 1} (${(match.similarity * 100).toFixed(1)}%)`"
-          :subtitle="`Doc ${docIndexOf(match)}, char ${match.text_start_char ?? '–'} · query token ${match.query_start_token}`"
+          :subtitle="`${match.doc_label || `Doc ${docIndexOf(match)}`}, char ${match.text_start_char ?? '–'} · query token ${match.query_start_token}`"
           @click="pick(index)"
         />
       </v-list>

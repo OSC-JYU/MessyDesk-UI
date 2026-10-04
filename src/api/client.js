@@ -401,15 +401,15 @@ web.reindexProjectSearch = async function (rid) {
   return result.data
 }
 
-// Semantic search: the user's vector indexes, starting a search (answers at once with its id)
+// Semantic search: the user's vector and similarity indexes, starting a search (answers at once with its id)
 // and polling it until it is done.
 web.getSemanticIndexes = async function () {
   var result = await axios.get(`/api/search/semantic/indexes`)
   return result.data
 }
 
-web.startSemanticSearch = async function ({ index, query, k, level }) {
-  var result = await axios.post(`/api/search/semantic`, { index, query, k, level })
+web.startSemanticSearch = async function ({ index, query, k, level, threshold }) {
+  var result = await axios.post(`/api/search/semantic`, { index, query, k, level, threshold })
   return result.data
 }
 

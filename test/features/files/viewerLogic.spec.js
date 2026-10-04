@@ -32,6 +32,8 @@ describe('fileTypes', () => {
     [{ type: 'polygons.json' }, 'lines'],
     [{ type: 'human.json' }, 'human'],
     [{ type: 'similarity.json' }, 'similarity'],
+    [{ type: 'similarity_index', extension: 'safetensors' }, 'index'],
+    [{ type: 'vector_index', extension: 'safetensors' }, 'index'],
     [{ type: 'osd.json' }, 'json'],
     [{ type: 'weird', extension: 'hocr' }, 'hocr'],
     [{ type: 'weird', extension: 'bin' }, 'json'],

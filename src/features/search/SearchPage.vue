@@ -7,7 +7,7 @@ import ErrorAlert from '@/ui/ErrorAlert.vue'
 import ResultsGrid from './ResultsGrid.vue'
 import ProjectScope from './ProjectScope.vue'
 import SemanticIndexes from './SemanticIndexes.vue'
-import { semanticHitToResult } from './semantic.js'
+import { isSimilarityIndex, semanticHitToResult } from './semantic.js'
 import { searchDocToResult } from './results.js'
 import { deskForResults, useFileOpener } from './useFileOpener.js'
 
@@ -32,6 +32,7 @@ const state = reactive({
   // 'text' (full-text) or 'semantic'; the title says which results are shown.
   mode: 'text',
   semanticLabel: '',
+  semanticKind: '',
 })
 
 const deskRids = computed(() => (inDesk.value ? [`#${scope.value}`] : state.desks))
@@ -67,11 +68,13 @@ function showSemantic({ query, index, hits }) {
   state.page = 1
   state.mode = 'semantic'
   state.semanticLabel = index?.model?.id || ''
+  state.semanticKind = isSimilarityIndex(index) ? 'By wording' : 'By meaning'
 }
 
 const title = computed(() => {
   if (!state.lastQuery) return 'Search'
-  if (state.mode === 'semantic') return `By meaning: ${state.lastQuery} (${state.semanticLabel})`
+  if (state.mode === 'semantic')
+    return `${state.semanticKind || 'By meaning'}: ${state.lastQuery} (${state.semanticLabel})`
   return `Search: ${state.lastQuery}`
 })
 
@@ -100,6 +103,7 @@ watch(
       filterIgnored: Boolean(saved?.filterIgnored),
       mode: saved?.mode || 'text',
       semanticLabel: saved?.semanticLabel || '',
+      semanticKind: saved?.semanticKind || '',
       error: null,
     })
   },
@@ -119,6 +123,7 @@ watch(
       filterIgnored: state.filterIgnored,
       mode: state.mode,
       semanticLabel: state.semanticLabel,
+      semanticKind: state.semanticKind,
     }),
   { deep: true },
 )

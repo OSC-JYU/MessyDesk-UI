@@ -12,4 +12,5 @@ export const displays = {
   human: defineAsyncComponent(() => import('./HumanJsonDisplay.vue')),
   lines: defineAsyncComponent(() => import('./LineSegmentsDisplay.vue')),
   similarity: defineAsyncComponent(() => import('./SimilarityDisplay.vue')),
+  index: defineAsyncComponent(() => import('./IndexDisplay.vue')),
 }

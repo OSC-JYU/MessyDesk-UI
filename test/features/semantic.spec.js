@@ -3,7 +3,9 @@ import {
   indexSubtitle,
   indexTitle,
   indexesInScope,
+  isSimilarityIndex,
   runSemanticSearch,
+  searchToSimilarity,
   semanticHitToResult,
 } from '@/features/search/semantic.js'
 
@@ -31,7 +33,12 @@ describe('semantic search', () => {
   })
 
   it('turns a hit into an escaped result card', () => {
-    const card = semanticHitToResult({ rid: '10:2', label: 'a.txt', similarity: 0.8829, snippet: '<b>ship</b>' })
+    const card = semanticHitToResult({
+      rid: '10:2',
+      label: 'a.txt',
+      similarity: 0.8829,
+      snippet: '<b>ship</b>',
+    })
     expect(card.rid).toBe('#10:2')
     expect(card.badge).toBe('0.88')
     expect(card.snippetHtml).toBe('&lt;b&gt;ship&lt;/b&gt;')
@@ -52,6 +59,76 @@ describe('semantic search', () => {
       startSemanticSearch: async () => ({ search_id: 'x' }),
       getSemanticSearch: async () => ({ status: 'failed', error: 'model missing' }),
     }
-    await expect(runSemanticSearch({ index: '#1:1', query: 'q' }, { api })).rejects.toThrow('model missing')
+    await expect(runSemanticSearch({ index: '#1:1', query: 'q' }, { api })).rejects.toThrow(
+      'model missing',
+    )
+  })
+})
+
+describe('similarity indexes', () => {
+  it('tells similarity indexes from vector indexes', () => {
+    expect(isSimilarityIndex({ type: 'similarity_index' })).toBe(true)
+    expect(isSimilarityIndex(index)).toBe(false)
+  })
+
+  it('passes the threshold of a text reuse search', async () => {
+    let sent = null
+    const api = {
+      startSemanticSearch: async (body) => ((sent = body), { search_id: 'x' }),
+      getSemanticSearch: async () => ({ status: 'done', hits: [] }),
+    }
+    await runSemanticSearch(
+      { index: '#10:5', query: 'a long text', k: 100, threshold: 0.4 },
+      { api },
+    )
+    expect(sent).toMatchObject({ index: '#10:5', k: 100, threshold: 0.4 })
+  })
+
+  it('turns a finished search into similarity data', () => {
+    const data = searchToSimilarity({
+      query: 'my words then the old captain stood on deck',
+      comparison: { window_size: 15, overlap: 5, threshold: 0.3, query_windows: 2 },
+      hits: [
+        {
+          rid: '10:2',
+          label: 'b.txt',
+          similarity: 0.9,
+          start_char: 40,
+          end_char: 70,
+          query_start_token: 3,
+          query_end_char: 43,
+        },
+        {
+          rid: '#10:1',
+          label: 'a.txt',
+          similarity: 0.5,
+          start_char: 0,
+          end_char: 12,
+          query_start_token: 0,
+        },
+        {
+          rid: '#10:2',
+          label: 'b.txt',
+          similarity: 0.4,
+          start_char: 90,
+          end_char: 99,
+          query_start_token: 5,
+        },
+      ],
+    })
+    expect(data.doc_map).toEqual(['#10:2', '#10:1'])
+    expect(data.chunk_similarities.map((m) => m.doc_index)).toEqual([0, 1, 0])
+    expect(data.chunk_similarities[0]).toMatchObject({
+      text_start_char: 40,
+      text_end_char: 70,
+      query_end_char: 43,
+    })
+    expect(data).toMatchObject({
+      window_size: 15,
+      threshold: 0.3,
+      query_windows: 2,
+      max_similarity: 0.9,
+      chunk_count: 3,
+    })
   })
 })

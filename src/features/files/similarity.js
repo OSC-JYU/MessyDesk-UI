@@ -1,9 +1,11 @@
-// Text similarity results (similarity.json): chunks of a query text matched
-// against one or more original documents.
+// Text similarity results (similarity.json, or an index search): chunks of a
+// query text matched against one or more original documents.
 // { query_text, window_size, overlap, max_similarity, chunk_count,
 //   doc_map: [rid, …] | text_file: rid,
 //   chunk_similarities: [{ similarity, doc_index, query_start_token,
-//                          text_start_char | text_start_token | … }] }
+//                          text_start_char | text_start_token | …,
+//                          text_end_char?, query_end_char? }] }
+// A match covers window_size tokens, or up to its end characters when given.
 
 export function tokenize(text) {
   return typeof text === 'string' ? text.split(/\s+/).filter(Boolean) : []
@@ -50,11 +52,17 @@ export function matchStartToken(match, doc) {
 
 export const docIndexOf = (match) => match.doc_index ?? 0
 
+// Tokens from `start` up to the token holding character `endChar` (exclusive).
+function lengthTo(offsets, textLength, start, endChar) {
+  if (endChar === undefined || endChar === null || !offsets.length) return null
+  return Math.max(1, tokenAt(offsets, textLength, Math.max(0, endChar - 1)) - start + 1)
+}
+
 // Map of token index → indexes of the matches covering it.
 function coverage(starts, windowSize) {
   const map = new Map()
-  starts.forEach(({ start, matchIndex }) => {
-    for (let i = 0; i < windowSize; i++) {
+  starts.forEach(({ start, length, matchIndex }) => {
+    for (let i = 0; i < (length || windowSize); i++) {
       const at = start + i
       if (!map.has(at)) map.set(at, [])
       map.get(at).push(matchIndex)
@@ -65,8 +73,14 @@ function coverage(starts, windowSize) {
 
 export function queryCoverage(data) {
   const matches = data?.chunk_similarities || []
+  const query = data?.query_text || ''
+  const { offsets } = tokenizeWithOffsets(query)
   return coverage(
-    matches.map((m, matchIndex) => ({ start: m.query_start_token, matchIndex })),
+    matches.map((m, matchIndex) => ({
+      start: m.query_start_token,
+      length: lengthTo(offsets, query.length, m.query_start_token, m.query_end_char),
+      matchIndex,
+    })),
     data?.window_size || 15,
   )
 }
@@ -77,7 +91,13 @@ export function documentCoverage(data, docIndex, doc) {
     matches
       .map((m, matchIndex) => ({ m, matchIndex }))
       .filter(({ m }) => docIndexOf(m) === docIndex)
-      .map(({ m, matchIndex }) => ({ start: matchStartToken(m, doc), matchIndex })),
+      .map(({ m, matchIndex }) => {
+        const start = matchStartToken(m, doc)
+        const length = doc?.text
+          ? lengthTo(doc.offsets, doc.text.length, start, m.text_end_char)
+          : null
+        return { start, length, matchIndex }
+      }),
     data?.window_size || 15,
   )
 }

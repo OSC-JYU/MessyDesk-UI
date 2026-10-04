@@ -131,6 +131,25 @@ describe('similarity', () => {
     expect(similarityLevel(0.5)).toBe('low')
   })
 
+  it('covers a match up to its end characters when given', () => {
+    const data = {
+      window_size: 15,
+      query_text: 'a b c d e f',
+      chunk_similarities: [
+        {
+          similarity: 0.9,
+          doc_index: 0,
+          query_start_token: 1,
+          query_end_char: 7,
+          text_start_char: 4,
+          text_end_char: 14,
+        },
+      ],
+    }
+    expect([...queryCoverage(data).keys()]).toEqual([1, 2, 3])
+    expect([...documentCoverage(data, 0, doc).keys()]).toEqual([1, 2])
+  })
+
   it('lists the documents', () => {
     expect(docRids({ doc_map: ['1:0', '2:0'] })).toEqual(['1:0', '2:0'])
     expect(docRids({ text_file: '3:0' })).toEqual(['3:0'])
