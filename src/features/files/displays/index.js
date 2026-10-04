@@ -13,4 +13,5 @@ export const displays = {
   lines: defineAsyncComponent(() => import('./LineSegmentsDisplay.vue')),
   similarity: defineAsyncComponent(() => import('./SimilarityDisplay.vue')),
   index: defineAsyncComponent(() => import('./IndexDisplay.vue')),
+  fields: defineAsyncComponent(() => import('./FieldsDisplay.vue')),
 }

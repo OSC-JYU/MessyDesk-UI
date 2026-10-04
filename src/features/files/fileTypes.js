@@ -39,6 +39,7 @@ const BY_TYPE = {
   'human.json': 'human',
   'dspace7.json': 'json',
   'similarity.json': 'similarity',
+  'fields.json': 'fields',
   similarity_index: 'index',
   vector_index: 'index',
 }
