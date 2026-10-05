@@ -93,6 +93,8 @@ web.getError = async function (rid) {
 
 web.search = async function (search, options = {}) {
   const payload = { query: search }
+  // Also find OCR misreadings: each word matches words one letter different (backend G6).
+  if (options.fuzzy) payload.fuzzy = true
   const requestedRows = Number(options.rows)
   if (Number.isFinite(requestedRows) && requestedRows > 0)
     payload.rows = Math.min(1000, Math.floor(requestedRows))
@@ -457,7 +459,11 @@ web.getEntities = async function (options = {}) {
 
 // One page of a type's tags, sorted by label: { type, total, skip, limit, items }.
 web.getEntitiesByType = async function (type, options = {}) {
-  var params = { ...entityListParams(options), skip: options.skip || 0, limit: options.limit || 200 }
+  var params = {
+    ...entityListParams(options),
+    skip: options.skip || 0,
+    limit: options.limit || 200,
+  }
   var result = await axios.get(`/api/entities/by-type/${encodeURIComponent(type)}`, { params })
   return result.data
 }

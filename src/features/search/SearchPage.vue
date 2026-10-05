@@ -21,6 +21,8 @@ const scope = computed(() => String(route.params.rid || 'global').replace('#', '
 
 const state = reactive({
   query: '',
+  // Include OCR misspellings: slower, and finds words one letter apart too.
+  fuzzy: false,
   lastQuery: '',
   results: [],
   searched: false,
@@ -46,7 +48,11 @@ async function search() {
   state.loading = true
   state.error = null
   try {
-    const response = await runSearch(query, { projectRids: deskRids.value, rows: 500 })
+    const response = await runSearch(query, {
+      projectRids: deskRids.value,
+      rows: 500,
+      fuzzy: state.fuzzy,
+    })
     const docs = response?.response?.docs || []
     state.results = docs.map((doc) => searchDocToResult(doc, response.highlighting))
     state.filterIgnored = Boolean(response?._project_filter_ignored)
@@ -101,6 +107,7 @@ watch(
       page: saved?.page || 1,
       desks: saved?.desks || [],
       filterIgnored: Boolean(saved?.filterIgnored),
+      fuzzy: Boolean(saved?.fuzzy),
       mode: saved?.mode || 'text',
       semanticLabel: saved?.semanticLabel || '',
       semanticKind: saved?.semanticKind || '',
@@ -111,7 +118,15 @@ watch(
 )
 
 watch(
-  () => [state.lastQuery, state.results, state.page, state.desks, state.query, state.mode],
+  () => [
+    state.lastQuery,
+    state.results,
+    state.page,
+    state.desks,
+    state.query,
+    state.mode,
+    state.fuzzy,
+  ],
   () =>
     remember('search', scope.value, {
       query: state.query,
@@ -121,6 +136,7 @@ watch(
       page: state.page,
       desks: state.desks,
       filterIgnored: state.filterIgnored,
+      fuzzy: state.fuzzy,
       mode: state.mode,
       semanticLabel: state.semanticLabel,
       semanticKind: state.semanticKind,
@@ -167,6 +183,15 @@ watch(
           hide-details
           class="mb-4"
           @click:clear="search"
+        />
+        <v-checkbox
+          v-model="state.fuzzy"
+          label="Include OCR misspellings"
+          hint="Also finds words one letter different. Slower, and finds some unrelated words."
+          persistent-hint
+          density="compact"
+          class="mb-4"
+          @update:model-value="state.query && search()"
         />
       </form>
       <ProjectScope v-if="!inDesk" v-model="state.desks" hint="None selected: all your desks." />
