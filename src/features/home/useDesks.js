@@ -1,4 +1,4 @@
-import { computed, reactive } from 'vue'
+import { computed, onMounted, onUnmounted, reactive } from 'vue'
 import {
   createProject,
   deleteProject,
@@ -91,6 +91,15 @@ export function useDesks() {
     await deleteProject(rid)
     await load()
   }
+
+  // A desk is deleted in the background (backend decision G5): it leaves the list at once; the
+  // list is reloaded when the delete ends (storage figures change, or the desk comes back if the
+  // delete failed).
+  function onEvent({ detail: event }) {
+    if (event?.command === 'delete_finished' || event?.command === 'delete_failed') load()
+  }
+  onMounted(() => window.addEventListener('md-sse', onEvent))
+  onUnmounted(() => window.removeEventListener('md-sse', onEvent))
 
   return { state, rows, load, refresh, sortBy, create, rename, reindex, remove }
 }

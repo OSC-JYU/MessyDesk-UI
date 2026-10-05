@@ -113,6 +113,12 @@ export function useDeskGraph(workspace, { onThumbnailsChanged } = {}) {
       case 'update':
         updateNode(event.target, event.node)
         break
+      // Deletes finish in the background (backend decision G5): the desk is reloaded when one
+      // ends, so the node's children go too, or the node comes back if the delete failed.
+      case 'delete_finished':
+      case 'delete_failed':
+        load()
+        break
       case 'process_update':
       case 'process_finished':
         if (event.process) updateNode(event.process['@rid'], event.process)
