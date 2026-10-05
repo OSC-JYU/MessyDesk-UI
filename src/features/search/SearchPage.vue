@@ -21,7 +21,7 @@ const scope = computed(() => String(route.params.rid || 'global').replace('#', '
 
 const state = reactive({
   query: '',
-  // Include OCR misspellings: slower, and finds words one letter apart too.
+  // Fuzzy search: also finds misspellings (OCR errors); slower, and finds near words too.
   fuzzy: false,
   lastQuery: '',
   results: [],
@@ -186,8 +186,8 @@ watch(
         />
         <v-checkbox
           v-model="state.fuzzy"
-          label="Include OCR misspellings"
-          hint="Also finds words one letter different. Slower, and finds some unrelated words."
+          label="Fuzzy search"
+          hint="Also finds misspelled words, such as OCR errors. Slower, and finds some unrelated words."
           persistent-hint
           density="compact"
           class="mb-4"
