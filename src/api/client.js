@@ -15,6 +15,14 @@ function projectParams(options = {}) {
   return params
 }
 
+function entityListParams(options = {}) {
+  const params = projectParams(options)
+  if (options.createdBy) params.created_by = options.createdBy
+  const search = String(options.search || '').trim()
+  if (search) params.search = search
+  return params
+}
+
 // Narrows NER label/mention lookups to a given set of file rids (options.fileRids), used to
 // intersect NER browsing with an active manual-tag selection in Tag view.
 function fileRidsParams(options = {}) {
@@ -440,8 +448,17 @@ web.getFiles = async function (dir) {
   return result.data
 }
 
+// Tag types with how many tags each has: [{ type, count, icon, color }]. Options: desks
+// (projectRid/projectRids), createdBy ('user' | 'machine') and a label search.
 web.getEntities = async function (options = {}) {
-  var result = await axios.get(`/api/entities`, { params: projectParams(options) })
+  var result = await axios.get(`/api/entities`, { params: entityListParams(options) })
+  return result.data
+}
+
+// One page of a type's tags, sorted by label: { type, total, skip, limit, items }.
+web.getEntitiesByType = async function (type, options = {}) {
+  var params = { ...entityListParams(options), skip: options.skip || 0, limit: options.limit || 200 }
+  var result = await axios.get(`/api/entities/by-type/${encodeURIComponent(type)}`, { params })
   return result.data
 }
 
@@ -480,11 +497,6 @@ web.getEntityItems = async function (entities, options = {}) {
     }
     throw error
   }
-}
-
-web.getEntitiesByType = async function (type) {
-  var result = await axios.get(`/api/entities/types/${type}`)
-  return result.data
 }
 
 web.createEntity = async function (type, label) {

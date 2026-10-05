@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { groupByRun, manualTagTypes, nerLabelKey, runLabel } from '@/features/tags/tagGroups.js'
+import { groupByRun, nerLabelKey, runLabel } from '@/features/tags/tagGroups.js'
 
 describe('tagGroups', () => {
   it('groups tags by the service and task that made them', () => {
@@ -19,19 +19,4 @@ describe('tagGroups', () => {
     expect(nerLabelKey({ service_id: 's', task: 't', label: 'person' })).toBe('s:t:person')
   })
 
-  it('lists manual tags only, filtered by label, dropping empty types', () => {
-    const types = [
-      {
-        type: 'Person',
-        items: [{ label: 'Alvar Aalto' }, { label: 'Auto', created_by: 'machine' }],
-      },
-      { type: 'Place', items: [{ label: 'Jyväskylä' }] },
-      { type: 'Machine', items: [{ label: 'fi', created_by: 'machine' }] },
-    ]
-    expect(manualTagTypes(types).map((t) => [t.type, t.items.length])).toEqual([
-      ['Person', 1],
-      ['Place', 1],
-    ])
-    expect(manualTagTypes(types, 'aalto').map((t) => t.type)).toEqual(['Person'])
-  })
 })

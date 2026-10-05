@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive } from 'vue'
+import { computed, reactive, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ErrorAlert from '@/ui/ErrorAlert.vue'
 import EmptyState from '@/ui/EmptyState.vue'
@@ -22,7 +22,13 @@ const fixedDesk = computed(() => (route.params.rid ? `#${scope.value}` : ''))
 const tags = useTags(scope, fixedDesk)
 const { state } = tags
 
-const view = reactive({ preview: null, addOpen: false })
+const view = reactive({ preview: null, addOpen: false, openType: null })
+// A type's tags are loaded when its panel opens, and again when the list is reloaded
+// (search or desk change) while it is open.
+watch(
+  () => [view.openType, state.typeItems[view.openType]],
+  () => view.openType && tags.loadType(view.openType),
+)
 const searching = computed(() => Boolean(String(state.search || '').trim()))
 const title = computed(() =>
   state.selected.length ? `Tags: ${state.selected.map((t) => t.label).join(', ')}` : 'Tagged files',
@@ -112,16 +118,17 @@ function openHitFile(hit) {
           icon="mdi-tag-outline"
           :title="searching ? 'No tags match' : 'No tags yet'"
         />
-        <v-expansion-panels v-else variant="accordion">
+        <v-expansion-panels v-else v-model="view.openType" variant="accordion">
           <v-expansion-panel
             v-for="type in tags.manualTypes.value"
             :key="type.type"
-            :title="`${type.type} (${type.items.length})`"
+            :value="type.type"
+            :title="`${type.type} (${type.count})`"
           >
             <v-expansion-panel-text>
               <div class="tags-page__chips">
                 <v-chip
-                  v-for="item in type.items"
+                  v-for="item in state.typeItems[type.type]?.items || []"
                   :key="item['@rid']"
                   :color="tags.isSelected(item['@rid']) ? 'primary' : undefined"
                   :variant="tags.isSelected(item['@rid']) ? 'flat' : 'tonal'"
@@ -131,6 +138,26 @@ function openHitFile(hit) {
                   {{ item.label }}
                 </v-chip>
               </div>
+              <v-progress-linear
+                v-if="state.typeItems[type.type]?.loading"
+                indeterminate
+                class="mt-2"
+              />
+              <v-btn
+                v-else-if="
+                  (state.typeItems[type.type]?.items.length || 0) <
+                  (state.typeItems[type.type]?.total || 0)
+                "
+                size="small"
+                variant="text"
+                class="mt-2"
+                @click="tags.loadType(type.type, true)"
+              >
+                Show more ({{
+                  state.typeItems[type.type].total - state.typeItems[type.type].items.length
+                }}
+                left)
+              </v-btn>
             </v-expansion-panel-text>
           </v-expansion-panel>
         </v-expansion-panels>
