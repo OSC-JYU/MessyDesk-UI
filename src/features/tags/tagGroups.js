@@ -22,24 +22,3 @@ export function runLabel(group) {
 export function nerLabelKey(tag) {
   return `${tag.service_id}:${tag.task}:${tag.label}`
 }
-
-// Manual tag types, without tags created by machines (those are listed as
-// machine tags), filtered by label text.
-export function manualTagTypes(types, search = '') {
-  const needle = String(search || '')
-    .trim()
-    .toLowerCase()
-  return (types || [])
-    .map((type) => ({
-      ...type,
-      items: (type.items || []).filter(
-        (item) =>
-          item.created_by !== 'machine' &&
-          (!needle ||
-            String(item.label || '')
-              .toLowerCase()
-              .includes(needle)),
-      ),
-    }))
-    .filter((type) => type.items.length)
-}

@@ -1,13 +1,21 @@
 import { computed, reactive, watch } from 'vue'
-import { getEntities, getEntityItems, getMachineTags, getNerLabelGroups } from '@/api/entities.js'
+import {
+  getEntities,
+  getEntitiesByType,
+  getEntityItems,
+  getMachineTags,
+  getNerLabelGroups,
+} from '@/api/entities.js'
 import { recall, remember } from '@/stores/pageMemory.js'
 import { taggedFileToResult } from '@/features/search/results.js'
-import { groupByRun, manualTagTypes } from './tagGroups.js'
+import { groupByRun } from './tagGroups.js'
 
 // State of the Tags screen for one scope (a desk, or 'global').
 export function useTags(scope, fixedDeskRid) {
   const state = reactive({
+    // Manual tag types with counts; a type's tags are loaded when it is opened (typeItems).
     types: [],
+    typeItems: {},
     selected: [],
     files: [],
     page: 1,
@@ -21,7 +29,7 @@ export function useTags(scope, fixedDeskRid) {
   })
 
   const deskRids = computed(() => (fixedDeskRid.value ? [fixedDeskRid.value] : state.desks))
-  const manualTypes = computed(() => manualTagTypes(state.types, state.search))
+  const manualTypes = computed(() => state.types)
   const nerGroups = computed(() => groupByRun(state.nerLabels))
   const machineGroups = computed(() => groupByRun(state.machineTags))
   const results = computed(() => state.files.map(taggedFileToResult))
@@ -39,8 +47,30 @@ export function useTags(scope, fixedDeskRid) {
     }
   }
 
+  const tagQuery = () => ({ projectRids: deskRids.value, createdBy: 'user', search: state.search })
+
   const loadTypes = () =>
-    guard(async () => (state.types = (await getEntities({ projectRids: deskRids.value })) || []))
+    guard(async () => {
+      state.types = (await getEntities(tagQuery())) || []
+      state.typeItems = {}
+    })
+
+  // Loads the first page of a type's tags, or with `more` the next page.
+  async function loadType(type, more = false) {
+    const current = state.typeItems[type]
+    if (current?.loading || (current && !more)) return
+    const skip = more && current ? current.items.length : 0
+    state.typeItems[type] = { items: current?.items || [], total: current?.total ?? 0, loading: true }
+    await guard(async () => {
+      const page = await getEntitiesByType(type, { ...tagQuery(), skip })
+      state.typeItems[type] = {
+        items: [...(skip ? current.items : []), ...(page?.items || [])],
+        total: page?.total ?? 0,
+        loading: false,
+      }
+    })
+    if (state.typeItems[type]?.loading) state.typeItems[type].loading = false
+  }
 
   const loadNer = () =>
     guard(async () => {
@@ -117,7 +147,10 @@ export function useTags(scope, fixedDeskRid) {
     () => state.search,
     () => {
       clearTimeout(searchTimer)
-      searchTimer = setTimeout(loadNer, 300)
+      searchTimer = setTimeout(() => {
+        loadTypes()
+        loadNer()
+      }, 300)
     },
   )
   watch(
@@ -140,5 +173,6 @@ export function useTags(scope, fixedDeskRid) {
     isSelected,
     toggle,
     loadTypes,
+    loadType,
   }
 }
