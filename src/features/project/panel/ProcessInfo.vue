@@ -4,8 +4,7 @@ import { getBatch } from '@/api/services.js'
 import StatusChip from '@/ui/StatusChip.vue'
 
 // What a processing step did: its service, parameters, how long it took and,
-// for an LLM job, the prompt. Timing comes from the batch record; parameters
-// and prompt are shown when the node carries them.
+// for an LLM job, the prompt. All of it comes from the batch record.
 const props = defineProps({ node: { type: Object, required: true } })
 
 const batch = ref(null)
@@ -24,24 +23,21 @@ watch(
   { immediate: true },
 )
 
-const parsedParams = computed(() => {
-  const raw = props.node.data?.params
-  if (!raw) return null
+// What the user sent when starting the run: { id, params, system_params }, stored on the batch.
+const payload = computed(() => {
+  const raw = batch.value?.task_payload_json
   try {
-    return typeof raw === 'string' ? JSON.parse(raw) : raw
+    return (typeof raw === 'string' ? JSON.parse(raw) : raw) || {}
   } catch {
-    return null
+    return {}
   }
 })
 
-const prompt = computed(() => parsedParams.value?.system_params?.prompts?.content || '')
+const prompt = computed(() => payload.value.system_params?.prompts?.content || '')
 
-// The user's own parameter values, without the prompt machinery.
-const paramRows = computed(() => {
-  return Object.entries(parsedParams.value || {}).filter(
-    ([name, value]) => name !== 'system_params' && value !== '' && value !== null,
-  )
-})
+const paramRows = computed(() =>
+  Object.entries(payload.value.params || {}).filter(([, value]) => value !== '' && value !== null),
+)
 
 const status = computed(() => batch.value?.status || props.node.data?.status || '')
 
