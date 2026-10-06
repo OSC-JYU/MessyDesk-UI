@@ -4,6 +4,7 @@ import { setNodeAttribute } from '@/api/projects.js'
 import { useWorkspace } from '../useWorkspace.js'
 import EditableText from './EditableText.vue'
 import NodeTools from './NodeTools.vue'
+import ProcessInfo from './ProcessInfo.vue'
 import ProcessDetailsDialog from './ProcessDetailsDialog.vue'
 import ThumbnailImage from '@/ui/ThumbnailImage.vue'
 
@@ -14,13 +15,6 @@ const node = computed(() => workspace.state.selected)
 const detailsOpen = ref(false)
 
 const isProcess = computed(() => ['process', 'setprocess'].includes(node.value?.type))
-const prompt = computed(() => {
-  try {
-    return JSON.parse(node.value?.data?.params || '').system_params.prompts.content
-  } catch {
-    return ''
-  }
-})
 
 function saver(key) {
   return async (value) => {
@@ -68,15 +62,7 @@ const saveLabel = async (value) => {
       >
         Show details
       </v-btn>
-      <v-alert
-        v-if="prompt"
-        type="info"
-        variant="tonal"
-        density="compact"
-        icon="mdi-message-text-outline"
-        class="mt-3"
-        >{{ prompt }}</v-alert
-      >
+      <ProcessInfo v-if="isProcess" :node="node" />
       <v-alert v-if="node.data.error" type="error" variant="tonal" density="compact" class="mt-3">
         Something went wrong in this cruncher.
       </v-alert>
