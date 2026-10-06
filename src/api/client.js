@@ -753,6 +753,12 @@ web.getBatch = async function (process_rid) {
   return result.data
 }
 
+// The params.json a run was started with; rejects with 404 when none was kept.
+web.getBatchParams = async function (process_rid) {
+  const result = await axios.get(`/api/batches/${process_rid.replace('#', '')}/params`)
+  return result.data
+}
+
 web.pauseBatch = async function (process_rid) {
   const url = `/api/batches/${process_rid.replace('#', '')}/pause`
   const result = await axios.post(url)

@@ -1,30 +1,36 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { getBatch } from '@/api/services.js'
+import { getBatch, getBatchParams } from '@/api/services.js'
 import StatusChip from '@/ui/StatusChip.vue'
 
 // What a processing step did: its service, parameters, how long it took and,
-// for an LLM job, the prompt. All of it comes from the batch record.
+// for an LLM job, the prompt. Timing comes from the batch record.
 const props = defineProps({ node: { type: Object, required: true } })
 
 const batch = ref(null)
+const saved = ref(null)
 
 watch(
   () => props.node.id,
   async (id) => {
     batch.value = null
-    try {
-      const result = await getBatch(id)
-      if (id === props.node.id) batch.value = result
-    } catch {
-      // A step without a batch record just shows what the node itself has.
-    }
+    saved.value = null
+    // A step without a batch record or params.json shows what the node itself has.
+    const [record, params] = await Promise.all([
+      getBatch(id).catch(() => null),
+      getBatchParams(id).catch(() => null),
+    ])
+    if (id !== props.node.id) return
+    batch.value = record
+    saved.value = params
   },
   { immediate: true },
 )
 
-// What the user sent when starting the run: { id, params, system_params }, stored on the batch.
+// What the user sent when starting the run: { id, params, system_params }. The params.json
+// is used when the run kept one, otherwise the copy stored on the batch.
 const payload = computed(() => {
+  if (saved.value) return saved.value
   const raw = batch.value?.task_payload_json
   try {
     return (typeof raw === 'string' ? JSON.parse(raw) : raw) || {}
