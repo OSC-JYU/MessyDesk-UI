@@ -6,6 +6,7 @@ import ResultsGrid from '@/features/search/ResultsGrid.vue'
 import ErrorAlert from '@/ui/ErrorAlert.vue'
 import { taggedFileToResult } from '@/features/search/results.js'
 import { toRid } from '@/features/files/fileTypes.js'
+import { versioned } from '@/features/project/nodes/thumbnails.js'
 
 // The files of a set, paged from the server, shown in place of the graph.
 // With an ROI set, each image says whether it has regions yet.
@@ -31,6 +32,7 @@ const roiPresence = new Map()
 const results = computed(() =>
   state.files.map((file) => ({
     ...taggedFileToResult(file),
+    thumb: versioned(taggedFileToResult(file).thumb, props.refreshToken || ''),
     badge: file.has_rois ? 'Has regions' : '',
   })),
 )
@@ -56,8 +58,10 @@ async function markRegions(files) {
   )
 }
 
-async function load() {
-  state.loading = true
+// `quiet` reloads in place (no spinner, files stay on screen) for thumbnail updates that arrive
+// while the set is being browsed.
+async function load({ quiet = false } = {}) {
+  if (!quiet) state.loading = true
   state.error = null
   try {
     const data = await getSetFiles(props.set.id, (state.page - 1) * PER_PAGE, PER_PAGE)
@@ -81,7 +85,11 @@ watch(
     load()
   },
 )
-watch(() => [props.set.id, props.roiSet?.id, props.refreshToken], load, { immediate: true })
+watch(() => [props.set.id, props.roiSet?.id], () => load(), { immediate: true })
+watch(
+  () => props.refreshToken,
+  () => load({ quiet: true }),
+)
 </script>
 
 <template>
