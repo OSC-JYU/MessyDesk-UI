@@ -324,6 +324,16 @@ web.updateServiceGroup = async function (id, data) {
   return result.data
 }
 
+web.getServiceGroupUsage = async function (id) {
+  var result = await axios.get(`/api/service-groups/${encodeURIComponent(id)}/usage`)
+  return result.data
+}
+
+web.getMyUsage = async function () {
+  var result = await axios.get(`/api/me/usage`)
+  return result.data
+}
+
 web.deleteServiceGroup = async function (id) {
   var result = await axios.delete(`/api/service-groups/${encodeURIComponent(id)}`)
   return result.data

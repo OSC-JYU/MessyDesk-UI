@@ -14,6 +14,7 @@ import ErrorAlert from '@/ui/ErrorAlert.vue'
 import EmptyState from '@/ui/EmptyState.vue'
 import CruncherService from './CruncherService.vue'
 import CruncherTask from './CruncherTask.vue'
+import LlmCruncher from './LlmCruncher.vue'
 import TagFilterDialog from './TagFilterDialog.vue'
 import {
   buildProcess,
@@ -21,6 +22,7 @@ import {
   categoryTabs,
   categoryTitle,
   inCategory,
+  isLlmService,
   prepareCatalogue,
   processTarget,
   searchCatalogue,
@@ -37,7 +39,7 @@ const emit = defineEmits(['done'])
 const router = useRouter()
 
 const state = reactive({
-  catalogue: { services: [], filters: [] },
+  catalogue: { services: [], filters: [], llm: [] },
   loading: false,
   error: null,
   tab: 'preparation',
@@ -50,9 +52,11 @@ const target = computed(() => processTarget(props.node?.type, props.cruncherFilt
 const onSet = computed(() => target.value === 'set')
 const tabs = computed(() => categoryTabs(state.catalogue))
 const results = computed(() => searchCatalogue(state.catalogue, state.search || ''))
+// LLM services are shown through their combined entries (LlmCruncher), not one by one.
+const plainServices = computed(() => state.catalogue.services.filter((s) => !isLlmService(s)))
 
 async function load() {
-  state.catalogue = { services: [], filters: [] }
+  state.catalogue = { services: [], filters: [], llm: [] }
   state.error = null
   if (!props.node?.id) return
   state.loading = true
@@ -161,13 +165,34 @@ watch(() => [props.node?.id, props.cruncherFilter], load, { immediate: true })
               >
                 {{ item.service.name }}
               </v-chip>
+              <v-chip
+                v-if="item.kind === 'llm'"
+                size="x-small"
+                label
+                color="primary"
+                variant="tonal"
+                class="ms-2"
+              >
+                {{ item.entry.name }}
+              </v-chip>
               <v-chip size="x-small" label variant="outlined" class="ms-2">
-                {{ categoryTitle(categoryOf(item.service || item.filter)) }}
+                {{ categoryTitle(categoryOf(item.service || item.filter || item.entry)) }}
               </v-chip>
             </v-expansion-panel-title>
             <v-expansion-panel-text>
+              <LlmCruncher
+                v-if="item.kind === 'llm'"
+                :entry="item.entry"
+                :services="state.catalogue.services"
+                :initial-task-key="item.task.key"
+                :on-set="onSet"
+                :source-rid="node.id"
+                :running-key="state.runningKey"
+                @run="run"
+                @help="openHelp"
+              />
               <CruncherTask
-                v-if="item.kind === 'task'"
+                v-else-if="item.kind === 'task'"
                 :service="item.service"
                 :task="item.task"
                 :on-set="onSet"
@@ -208,15 +233,41 @@ watch(() => [props.node?.id, props.cruncherFilter], load, { immediate: true })
           <v-window-item v-for="tab in tabs" :key="tab.value" :value="tab.value">
             <EmptyState
               v-if="
-                !inCategory(state.catalogue.services, tab.value).length &&
+                !inCategory(plainServices, tab.value).length &&
+                !inCategory(state.catalogue.llm, tab.value).length &&
                 !inCategory(state.catalogue.filters, tab.value).length
               "
               icon="mdi-cog-off-outline"
               title="No crunchers in this category for this file"
             />
             <v-expansion-panels variant="accordion">
+              <v-expansion-panel
+                v-for="entry in inCategory(state.catalogue.llm, tab.value)"
+                :key="entry.key"
+                class="cruncher-picker__llm"
+              >
+                <v-expansion-panel-title>
+                  <div class="cruncher-picker__llm-head">
+                    <span class="cruncher-picker__name">
+                      <v-icon icon="mdi-creation" size="small" class="me-1" />{{ entry.name }}
+                    </span>
+                    <span class="cruncher-picker__llm-description">{{ entry.description }}</span>
+                  </div>
+                </v-expansion-panel-title>
+                <v-expansion-panel-text>
+                  <LlmCruncher
+                    :entry="entry"
+                    :services="state.catalogue.services"
+                    :on-set="onSet"
+                    :source-rid="node.id"
+                    :running-key="state.runningKey"
+                    @run="run"
+                    @help="openHelp"
+                  />
+                </v-expansion-panel-text>
+              </v-expansion-panel>
               <CruncherService
-                v-for="service in inCategory(state.catalogue.services, tab.value)"
+                v-for="service in inCategory(plainServices, tab.value)"
                 :key="service.id"
                 :service="service"
                 :on-set="onSet"
@@ -273,6 +324,17 @@ watch(() => [props.node?.id, props.cruncherFilter], load, { immediate: true })
 
 .cruncher-picker__name {
   font-weight: var(--md-font-weight-medium);
+}
+
+.cruncher-picker__llm-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-space-1);
+}
+
+.cruncher-picker__llm-description {
+  font-size: var(--md-font-size-xs);
+  color: var(--md-color-text-muted);
 }
 
 .cruncher-picker__tab {

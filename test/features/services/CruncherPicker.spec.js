@@ -127,4 +127,118 @@ describe('CruncherPicker', () => {
     expect(api.getServicesForFile).not.toHaveBeenCalled()
     expect(wrapper.text()).toContain('No file selected')
   })
+
+  describe('LLM services', () => {
+    const params_help = { temperature: { name: 'Temperature', default: 0.2 } }
+    const summary = {
+      name: 'Summary',
+      description: 'Short summary',
+      content: 'Summarise.',
+      type: 'text',
+      output_type: 'text',
+      system_params: { prompts: { content: 'Summarise.' } },
+    }
+    const autotag = {
+      name: 'Tag with AI',
+      description: 'Tags',
+      autotag: true,
+      params_help: { labels: { name: 'Categories' } },
+    }
+    const llmCatalogue = {
+      for_format: [
+        {
+          id: 'md-llm-ollama',
+          name: 'Ollama',
+          category: 'generative',
+          location: 'on-premise',
+          external_tasks: 'prompts',
+          params_help,
+          models: {
+            'gemma3:4b': {
+              name: 'Gemma 3 4B',
+              family: 'gemma-3-4b',
+              supported_types: ['text', 'image'],
+            },
+            'gpt-oss:20b': {
+              name: 'gpt-oss 20B',
+              family: 'gpt-oss-20b',
+              supported_types: ['text'],
+            },
+          },
+          tasks: { summary, autotag },
+        },
+        {
+          id: 'md-llm-vllm',
+          name: 'vLLM',
+          category: 'generative',
+          location: 'on-premise',
+          external_tasks: 'prompts',
+          params_help,
+          models: {
+            'gpt-oss-20b': {
+              name: 'gpt-oss 20B',
+              family: 'gpt-oss-20b',
+              supported_types: ['text'],
+            },
+          },
+          tasks: { summary, autotag },
+        },
+      ],
+      filters: [],
+    }
+
+    beforeEach(() => {
+      api.getServicesForFile.mockResolvedValue(structuredClone(llmCatalogue))
+    })
+
+    it('shows one AI prompts entry and one per own task instead of each provider', async () => {
+      const wrapper = await mountPicker({ id: '#76:0', type: 'text' })
+      await click(wrapper, 'Generative AI')
+      expect(wrapper.text()).toContain('AI prompts')
+      expect(wrapper.text()).toContain('Tag with AI')
+      expect(wrapper.text()).not.toContain('Ollama')
+    })
+
+    it('runs a prompt with the chosen model on the chosen provider', async () => {
+      api.createFileProcess.mockResolvedValue({})
+      const wrapper = await mountPicker({ id: '#76:0', type: 'text' })
+      await wrapper.find('input').setValue('Summary')
+      await flushPromises()
+      await click(wrapper, 'Summary')
+      await wrapper.find('input[type="radio"][value="gpt-oss-20b"]').setValue()
+      await flushPromises()
+      // the same model from two providers: the provider is chosen last
+      expect(wrapper.text()).toContain('Ollama')
+      expect(wrapper.text()).toContain('vLLM')
+      await wrapper.find('input[type="radio"][value="md-llm-vllm:gpt-oss-20b"]').setValue()
+      await flushPromises()
+      await click(wrapper, 'Crunch file')
+      expect(api.createFileProcess).toHaveBeenCalledWith(
+        {
+          service: 'md-llm-vllm',
+          id: 'summary',
+          params: { temperature: 0.2 },
+          model: 'gpt-oss-20b',
+          name: 'Summary',
+          description: 'Short summary',
+          system_params: { prompts: { content: 'Summarise.' }, output_type: 'text' },
+        },
+        '#76:0',
+      )
+    })
+
+    it('runs the autotagger like a normal task, with a model', async () => {
+      api.createFileProcess.mockResolvedValue({})
+      const wrapper = await mountPicker({ id: '#76:0', type: 'text' })
+      await click(wrapper, 'Generative AI')
+      await click(wrapper, 'Tag with AI')
+      // Gemma is only on Ollama, so the provider is preselected
+      await wrapper.find('input[type="radio"][value="gemma-3-4b"]').setValue()
+      await flushPromises()
+      await click(wrapper, 'Crunch file')
+      const [process] = api.createFileProcess.mock.calls[0]
+      expect(process).toMatchObject({ service: 'md-llm-ollama', id: 'autotag', model: 'gemma3:4b' })
+      expect(process.system_params).toBeUndefined()
+    })
+  })
 })

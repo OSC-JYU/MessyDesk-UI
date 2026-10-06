@@ -6,6 +6,7 @@ import {
   createUser,
   deleteServiceGroup,
   getPermissionRequests,
+  getServiceGroupUsage,
   getServiceGroups,
   getUsers,
   removePermissionRequest,
@@ -48,6 +49,8 @@ const state = reactive({
   users: [],
   services: [],
   groups: [],
+  // Tokens each group has used this period: { <group id>: number }
+  groupUsage: {},
   userForm: { open: false, label: '', email: '', fromRequest: null, pending: false, error: null },
   groupForm: { open: false, id: '', name: '', description: '', pending: false, error: null },
   groupDelete: { open: false, group: null, pending: false, error: '' },
@@ -72,8 +75,14 @@ async function loadAll() {
       getServiceGroups(),
       getServices(),
     ])
-    Object.assign(state, { requests, users, groups, services: toServiceList(services) })
+    Object.assign(state, {
+      requests,
+      users,
+      groups: withLimits(groups),
+      services: toServiceList(services),
+    })
   })
+  await loadGroupUsage()
   state.loading = false
 }
 
@@ -138,7 +147,7 @@ async function submitGroup() {
   try {
     await createServiceGroup({ id: form.id.trim(), name: form.name, description: form.description })
     form.open = false
-    state.groups = await getServiceGroups()
+    state.groups = withLimits(await getServiceGroups())
   } catch (error) {
     form.error = error
   } finally {
@@ -146,8 +155,32 @@ async function submitGroup() {
   }
 }
 
+// Every group gets an editable token_limits object; empty fields mean no limit.
+function withLimits(groups) {
+  return (groups || []).map((g) => ({
+    ...g,
+    token_limits: { period: 'month', ...(g.token_limits || {}) },
+  }))
+}
+
+async function loadGroupUsage() {
+  const entries = await Promise.all(
+    state.groups.map(async (g) => [
+      g.id,
+      (await getServiceGroupUsage(g.id).catch(() => null))?.total ?? null,
+    ]),
+  )
+  state.groupUsage = Object.fromEntries(entries)
+}
+
 const saveGroup = (group) =>
-  guard(() => updateServiceGroup(group.id, { name: group.name, description: group.description }))
+  guard(() =>
+    updateServiceGroup(group.id, {
+      name: group.name,
+      description: group.description,
+      token_limits: group.token_limits,
+    }),
+  )
 
 async function uploadLogo(group, file) {
   await guard(async () => Object.assign(group, await uploadServiceGroupLogo(group.id, file)))
@@ -162,7 +195,7 @@ async function confirmDeleteGroup() {
   del.pending = true
   try {
     await deleteServiceGroup(del.group.id)
-    state.groups = await getServiceGroups()
+    state.groups = withLimits(await getServiceGroups())
     del.open = false
   } catch (error) {
     del.error = error?.message || 'Could not delete the service group.'
@@ -214,6 +247,7 @@ onMounted(loadAll)
         <v-tabs-window-item value="groups">
           <ServiceGroupsTab
             :groups="state.groups"
+            :usage="state.groupUsage"
             :upload-logo="uploadLogo"
             @add="openGroupForm"
             @save="saveGroup"

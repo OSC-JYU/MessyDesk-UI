@@ -52,6 +52,12 @@ export function prepareCatalogue(result) {
             params[param] = { ...help, values: normaliseValues(help.values) }
             values[param] = help.multi ? [] : help.default
           }
+          // Tasks without their own parameters (prompts) use the service's common ones.
+          if (!task.params_help) {
+            for (const [param, help] of Object.entries(service.params_help || {})) {
+              values[param] = help.multi ? [] : help.default
+            }
+          }
           return { ...task, key, params_help: task.params_help ? params : undefined, values }
         })
       return { ...service, tasks }
@@ -59,7 +65,99 @@ export function prepareCatalogue(result) {
   const filters = (Array.isArray(result?.filters) ? result.filters : []).filter(
     (filter) => categoryOf(filter) !== SYSTEM,
   )
-  return { services, filters }
+  return { services, filters, llm: llmEntries(services) }
+}
+
+// ---- LLM services --------------------------------------------------------------------------
+// LLM services (`external_tasks`, one per provider) are not listed one by one. They make up one
+// "AI prompts" entry, plus one entry per task of their own (such as "Tag with AI"), where the user
+// picks the prompt, then the model, then the provider (MessyDesk plan/llm-adapter.md 4.5).
+
+export function isLlmService(service) {
+  return Boolean(service?.external_tasks)
+}
+
+// A user's prompt offered as a task, as opposed to a task of the descriptor.
+export function isPromptTask(task) {
+  return Boolean(task?.system_params)
+}
+
+const byName = (a, b) => String(a.name).localeCompare(String(b.name))
+
+export function llmEntries(services) {
+  const prompts = new Map()
+  const fixed = new Map()
+  for (const service of services.filter(isLlmService)) {
+    for (const task of service.tasks) {
+      const map = isPromptTask(task) ? prompts : fixed
+      if (!map.has(task.key)) map.set(task.key, task)
+    }
+  }
+  const entries = []
+  if (prompts.size) {
+    entries.push({
+      key: 'llm:prompts',
+      kind: 'prompts',
+      name: 'AI prompts',
+      description: 'Run one of your prompts with the language model and provider you choose',
+      category: 'generative',
+      tasks: [...prompts.values()].sort(byName),
+    })
+  }
+  for (const [key, task] of [...fixed.entries()].sort(([, a], [, b]) => byName(a, b))) {
+    entries.push({
+      key: `llm:task:${key}`,
+      kind: 'task',
+      name: task.name,
+      description: task.description,
+      category: 'generative',
+      tasks: [task],
+    })
+  }
+  return entries
+}
+
+function modelFits(model, task) {
+  if (!isPromptTask(task) || !task.type || !model?.supported_types?.length) return true
+  return model.supported_types.includes(task.type)
+}
+
+const LOCATION_ORDER = { 'on-premise': 0 }
+
+// The models that can run `task`, one per family (the same model from several providers shows
+// once), each with the providers offering it, on-premise ones first.
+export function llmModels(services, task) {
+  const families = new Map()
+  for (const service of services.filter(isLlmService)) {
+    if (!service.tasks.some((t) => t.key === task?.key)) continue
+    for (const [id, model] of Object.entries(service.models || {})) {
+      if (!modelFits(model, task)) continue
+      const family = model.family || model.name || id
+      if (!families.has(family)) {
+        families.set(family, {
+          family,
+          name: model.name || id,
+          description: model.description || '',
+          supported_types: model.supported_types || [],
+          offers: [],
+        })
+      }
+      families.get(family).offers.push({ service, modelId: id, model })
+    }
+  }
+  for (const entry of families.values()) {
+    entry.offers.sort(
+      (a, b) =>
+        (LOCATION_ORDER[a.service.location] ?? 1) - (LOCATION_ORDER[b.service.location] ?? 1) ||
+        String(a.service.name).localeCompare(String(b.service.name)),
+    )
+  }
+  return [...families.values()].sort(byName)
+}
+
+// The provider's own copy of the task (its parameter values are kept per service).
+export function providerTask(service, task) {
+  return service?.tasks?.find((t) => t.key === task?.key) || null
 }
 
 export function categoryTabs(catalogue) {
@@ -79,7 +177,17 @@ export function searchCatalogue(catalogue, query) {
   if (!needle) return []
   const matches = (...parts) => parts.filter(Boolean).join(' ').toLowerCase().includes(needle)
   const results = []
+  for (const entry of catalogue.llm || []) {
+    for (const task of entry.tasks) {
+      if (
+        matches(entry.name, entry.description, task.name, task.description, task.content, task.key)
+      ) {
+        results.push({ kind: 'llm', key: `${entry.key}:${task.key}`, entry, task, name: task.name })
+      }
+    }
+  }
   for (const service of catalogue.services) {
+    if (isLlmService(service)) continue
     for (const task of service.tasks) {
       if (
         matches(
@@ -127,7 +235,7 @@ export function fillInfo(info, values) {
 export function buildProcess(service, task, model) {
   const process = { service: service.id, id: task.key, params: task.values }
   if (model) process.model = model
-  if (service.external_tasks) {
+  if (service.external_tasks && isPromptTask(task)) {
     process.name = task.name
     process.description = task.description
     process.system_params = task.system_params

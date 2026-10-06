@@ -10,5 +10,6 @@ export const updateUserServiceGroups = (...args) => web.updateUserServiceGroups(
 export const getServiceGroups = (...args) => web.getServiceGroups(...args)
 export const createServiceGroup = (...args) => web.createServiceGroup(...args)
 export const updateServiceGroup = (...args) => web.updateServiceGroup(...args)
+export const getServiceGroupUsage = (...args) => web.getServiceGroupUsage(...args)
 export const deleteServiceGroup = (...args) => web.deleteServiceGroup(...args)
 export const uploadServiceGroupLogo = (...args) => web.uploadServiceGroupLogo(...args)

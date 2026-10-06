@@ -4,7 +4,9 @@ import {
   categoryTabs,
   fillInfo,
   inCategory,
+  llmModels,
   prepareCatalogue,
+  providerTask,
   processTarget,
   searchCatalogue,
 } from '@/features/services/crunchers/crunchers.js'
@@ -124,5 +126,84 @@ describe('processTarget', () => {
     ['image', '', 'file'],
   ])('%s with filter "%s" runs on %s', (type, filter, target) => {
     expect(processTarget(type, filter)).toBe(target)
+  })
+})
+
+describe('LLM services', () => {
+  const prompt = (name, type) => ({
+    name,
+    type,
+    content: name,
+    system_params: { prompts: { content: name } },
+  })
+  const llm = (id, location, models, tasks) => ({
+    id,
+    name: id,
+    location,
+    category: 'generative',
+    external_tasks: 'prompts',
+    params_help: { temperature: { default: 0.5 } },
+    models,
+    tasks,
+  })
+  const catalogue = prepareCatalogue({
+    for_format: [
+      llm(
+        'cloud',
+        'external',
+        {
+          'oss-c': { name: 'OSS', family: 'oss' },
+          vis: { name: 'Vision', supported_types: ['image'] },
+        },
+        {
+          describe: prompt('Describe', 'image'),
+          summary: prompt('Summary', 'text'),
+          autotag: { name: 'Tag with AI' },
+        },
+      ),
+      llm(
+        'local',
+        'on-premise',
+        { 'oss-l': { name: 'OSS', family: 'oss', supported_types: ['text'] } },
+        {
+          summary: prompt('Summary', 'text'),
+          autotag: { name: 'Tag with AI' },
+        },
+      ),
+    ],
+  })
+
+  it('groups prompts into one entry and own tasks into entries of their own', () => {
+    expect(catalogue.llm.map((e) => [e.key, e.tasks.map((t) => t.key)])).toEqual([
+      ['llm:prompts', ['describe', 'summary']],
+      ['llm:task:autotag', ['autotag']],
+    ])
+  })
+
+  it('gives prompts the service parameter defaults', () => {
+    expect(catalogue.services[0].tasks.find((t) => t.key === 'summary').values).toEqual({
+      temperature: 0.5,
+    })
+  })
+
+  it('lists models by family with their providers, on-premise first, and only those fitting the prompt type', () => {
+    const summary = catalogue.llm[0].tasks.find((t) => t.key === 'summary')
+    const models = llmModels(catalogue.services, summary)
+    expect(models.map((m) => m.family)).toEqual(['oss'])
+    expect(models[0].offers.map((o) => `${o.service.id}:${o.modelId}`)).toEqual([
+      'local:oss-l',
+      'cloud:oss-c',
+    ])
+    const describeTask = catalogue.llm[0].tasks.find((t) => t.key === 'describe')
+    expect(llmModels(catalogue.services, describeTask).map((m) => m.family)).toEqual([
+      'oss',
+      'Vision',
+    ])
+    expect(providerTask(catalogue.services[1], summary).values).toEqual({ temperature: 0.5 })
+  })
+
+  it('searches prompts as LLM entries, not per provider', () => {
+    const results = searchCatalogue(catalogue, 'summary')
+    expect(results.map((r) => [r.kind, r.key])).toEqual([['llm', 'llm:prompts:summary']])
   })
 })

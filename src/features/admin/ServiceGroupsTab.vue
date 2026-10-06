@@ -1,15 +1,26 @@
 <script setup>
 import { reactive } from 'vue'
 
-// Service groups decide which services a user sees. Name and description
-// save when the field loses focus.
+// Service groups decide which services a user sees, and may limit the tokens
+// their members use on paid LLM providers. Fields save when they lose focus.
 const props = defineProps({
   groups: { type: Array, required: true },
+  usage: { type: Object, default: () => ({}) },
   uploadLogo: { type: Function, required: true },
 })
 const emit = defineEmits(['save', 'delete', 'add'])
 
+const LIMITS = [
+  { key: 'per_user', label: 'Per user' },
+  { key: 'group_total', label: 'Whole group' },
+  { key: 'per_job_max_output', label: 'Answer per job' },
+]
+
 const uploading = reactive({})
+
+function formatTokens(value) {
+  return value === null || value === undefined ? '–' : Number(value).toLocaleString()
+}
 const inputs = {}
 
 const headers = [
@@ -17,6 +28,7 @@ const headers = [
   { title: 'Id', key: 'id' },
   { title: 'Name', key: 'name', sortable: false },
   { title: 'Description', key: 'description', sortable: false },
+  { title: 'Token limits per month', key: 'limits', sortable: false },
   { title: '', key: 'actions', sortable: false, align: 'end' },
 ]
 
@@ -97,6 +109,26 @@ async function onFile(group, event) {
         @blur="emit('save', item)"
       />
     </template>
+    <template #[`item.limits`]="{ item }">
+      <div class="groups-tab__limits">
+        <v-text-field
+          v-for="limit in LIMITS"
+          :key="limit.key"
+          v-model="item.token_limits[limit.key]"
+          :label="limit.label"
+          :aria-label="`${limit.label} token limit of ${item.id}`"
+          type="number"
+          min="1"
+          placeholder="no limit"
+          persistent-placeholder
+          density="compact"
+          variant="underlined"
+          hide-details
+          @blur="emit('save', item)"
+        />
+      </div>
+      <span class="groups-tab__used">Used this month: {{ formatTokens(usage[item.id]) }}</span>
+    </template>
     <template #[`item.actions`]="{ item }">
       <v-btn
         color="error"
@@ -115,6 +147,17 @@ async function onFile(group, event) {
   display: flex;
   justify-content: flex-end;
   margin-block-end: var(--md-space-3);
+}
+
+.groups-tab__limits {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(6rem, 1fr));
+  gap: var(--md-space-2);
+}
+
+.groups-tab__used {
+  font-size: var(--md-font-size-xs);
+  color: var(--md-color-text-muted);
 }
 
 .groups-tab__logo {
