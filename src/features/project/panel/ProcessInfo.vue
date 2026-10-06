@@ -59,7 +59,9 @@ function formatDuration(value) {
   if (value < 60) return `${Math.round(value * 10) / 10} s`
   const minutes = Math.floor(value / 60)
   const rest = Math.round(value % 60)
-  return minutes < 60 ? `${minutes} min ${rest} s` : `${Math.floor(minutes / 60)} h ${minutes % 60} min`
+  return minutes < 60
+    ? `${minutes} min ${rest} s`
+    : `${Math.floor(minutes / 60)} h ${minutes % 60} min`
 }
 
 const formatTime = (iso) => (iso ? new Date(iso).toLocaleString() : '')
