@@ -85,7 +85,11 @@ watch(
     load()
   },
 )
-watch(() => [props.set.id, props.roiSet?.id], () => load(), { immediate: true })
+watch(
+  () => [props.set.id, props.roiSet?.id],
+  () => load(),
+  { immediate: true },
+)
 watch(
   () => props.refreshToken,
   () => load({ quiet: true }),
