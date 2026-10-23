@@ -9,7 +9,8 @@ const props = defineProps({
   tag: { type: Object, required: true },
   search: { type: String, default: '' },
   deskRids: { type: Array, default: () => [] },
-  fileRids: { type: Array, default: () => [] },
+  tagRids: { type: Array, default: () => [] },
+  tagMatch: { type: String, default: 'or' },
   showCount: { type: Boolean, default: false },
 })
 
@@ -39,7 +40,8 @@ async function load(page = 1) {
         page,
         pageSize: state.pageSize,
         projectRids: props.deskRids,
-        fileRids: props.fileRids,
+        tagRids: props.tagRids,
+        tagMatch: props.tagMatch,
       },
     )
     state.mentions = response?.mentions || []

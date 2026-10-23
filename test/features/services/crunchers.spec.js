@@ -3,6 +3,7 @@ import {
   buildProcess,
   categoryTabs,
   fillInfo,
+  forModel,
   inCategory,
   llmModels,
   prepareCatalogue,
@@ -108,6 +109,27 @@ describe('buildProcess', () => {
       system_params: { prompt: 'x', output_type: 'json', json_schema: '{}' },
       info: 'Language: fin, pages: Not given',
     })
+  })
+
+  it('leaves out the temperature for a model that does not take one', () => {
+    const service = {
+      id: 'md-llm',
+      external_tasks: true,
+      models: { 'gpt-5.1': { temperature: false }, 'gpt-4o': {} },
+    }
+    const task = { key: 'p', values: { temperature: 0.2, max_output_tokens: 2048 } }
+    expect(buildProcess(service, task, 'gpt-5.1').params).toEqual({ max_output_tokens: 2048 })
+    expect(buildProcess(service, task, 'gpt-4o').params).toEqual(task.values)
+  })
+})
+
+describe('forModel', () => {
+  it('drops temperature only when the model says temperature: false', () => {
+    const params = { temperature: { name: 'Temperature' }, max_output_tokens: { name: 'Max' } }
+    expect(forModel(params, { temperature: false })).toEqual({ max_output_tokens: { name: 'Max' } })
+    expect(forModel(params, {})).toBe(params)
+    expect(forModel(params, null)).toBe(params)
+    expect(forModel(undefined, { temperature: false })).toBeUndefined()
   })
 })
 

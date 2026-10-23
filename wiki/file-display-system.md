@@ -16,8 +16,8 @@ LineagePanel | display for the file type (or the ROI editor) | FileToolsPanel
   to set" / "Back to results" and close. Without a browse context it shows the file name and close.
 - **LineagePanel** shows the path the file came from (`getNodePath`), without users and sets.
   Clicking an earlier file opens it and remembers the lineage offset (see below).
-- **FileToolsPanel**: file name, description (edited in place), metadata, Open file, Refresh,
-  Tags (add from the entity types, remove with the chip's close button), Quick edits, and "Show as
+- **FileToolsPanel**: file name, description (edited in place), metadata, Open file, Regenerate thumbnail (images only, not for references; asks the backend to make the thumbnail again, which fixes a broken one),
+  Quick edits, Tags (add from the desk's tag types; new tags are made in Tag admin; the applied tags are listed last, below the tag types, so the types keep their place while tagging; remove with the chip's close button; the chip tooltip says who tagged), and "Show as
   Markdown" for text files.
 
 ## Which display shows a file

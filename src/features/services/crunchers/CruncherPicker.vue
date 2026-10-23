@@ -16,6 +16,7 @@ import CruncherService from './CruncherService.vue'
 import CruncherTask from './CruncherTask.vue'
 import LlmCruncher from './LlmCruncher.vue'
 import TagFilterDialog from './TagFilterDialog.vue'
+import { provideDesk } from './deskScope.js'
 import {
   buildProcess,
   categoryOf,
@@ -33,7 +34,9 @@ import {
 const props = defineProps({
   node: { type: Object, default: null }, // { id, type }
   cruncherFilter: { type: String, default: '' },
+  deskRid: { type: String, default: '' }, // the node's desk
 })
+provideDesk(() => props.deskRid)
 
 const emit = defineEmits(['done'])
 const router = useRouter()
@@ -311,6 +314,7 @@ watch(() => [props.node?.id, props.cruncherFilter], load, { immediate: true })
         v-model="state.tagFilter.open"
         :filter-id="state.tagFilter.id || 'mdf-set-filter'"
         :set-rid="node.id"
+        :desk-rid="deskRid"
         @created="emit('done', { reload: true })"
       />
     </template>

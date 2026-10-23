@@ -1,10 +1,12 @@
 <script setup>
 import ParamField from './ParamField.vue'
+import { forModel } from './crunchers.js'
 
 // Parameters and run button of one task.
 const props = defineProps({
   service: { type: Object, required: true },
   task: { type: Object, required: true },
+  model: { type: Object, default: null },
   onSet: { type: Boolean, default: false },
   sourceRid: { type: String, default: '' },
   running: { type: Boolean, default: false },
@@ -17,7 +19,7 @@ const emit = defineEmits(['run', 'dspace-query'])
 const values = props.task.values
 
 // Tasks without their own parameters use the service's common ones.
-const params = props.task.params_help || props.service.params_help || {}
+const params = forModel(props.task.params_help || props.service.params_help || {}, props.model)
 const formats =
   (props.task.supported_formats || props.service.supported_formats || []).join(', ') || 'all'
 </script>

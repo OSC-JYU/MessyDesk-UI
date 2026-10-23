@@ -155,6 +155,14 @@ export function llmModels(services, task) {
   return [...families.values()].sort(byName)
 }
 
+// Drops `temperature` from params or values when the model does not take it (`temperature: false`).
+export function forModel(params, model) {
+  if (!params || model?.temperature !== false) return params
+  const rest = { ...params }
+  delete rest.temperature
+  return rest
+}
+
 // The provider's own copy of the task (its parameter values are kept per service).
 export function providerTask(service, task) {
   return service?.tasks?.find((t) => t.key === task?.key) || null
@@ -233,7 +241,11 @@ export function fillInfo(info, values) {
 
 // The process request for running `task` of `service`.
 export function buildProcess(service, task, model) {
-  const process = { service: service.id, id: task.key, params: task.values }
+  const process = {
+    service: service.id,
+    id: task.key,
+    params: forModel(task.values, service.models?.[model]),
+  }
   if (model) process.model = model
   if (service.external_tasks && isPromptTask(task)) {
     process.name = task.name

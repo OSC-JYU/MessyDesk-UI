@@ -158,9 +158,10 @@ function inputOf(types) {
         >
       </v-alert>
       <CruncherTask
-        :key="`${offer.service.id}:${chosenTask.key}`"
+        :key="`${offer.service.id}:${offer.modelId}:${chosenTask.key}`"
         :service="offer.service"
         :task="chosenTask"
+        :model="offer.model"
         :on-set="onSet"
         :source-rid="sourceRid"
         :running="runningKey === `${offer.service.id}:${chosenTask.key}`"

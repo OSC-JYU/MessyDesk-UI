@@ -4,19 +4,24 @@ import DescriptionField from './DescriptionField.vue'
 import FileTagsTool from './FileTagsTool.vue'
 import QuickEditTool from './QuickEditTool.vue'
 import { fileUrl } from '../fileUrls.js'
-import { isImage, isTextLike } from '../fileTypes.js'
+import { isImage, isReference, isTextLike } from '../fileTypes.js'
 
-// Right-hand panel of the file viewer: file details, tags, quick edits and
-// display options.
+// Right-hand panel of the file viewer: quick edits, tags, file details
+// and display options. The tags come before the file's title, description and
+// size, and the open and thumbnail buttons are last.
 const props = defineProps({
   file: { type: Object, required: true },
   edit: { type: Object, required: true },
   canEditText: { type: Boolean, default: false },
+  deskRid: { type: String, default: '' },
 })
 
 const collapsed = defineModel('collapsed', { type: Boolean, default: false })
 const markdown = defineModel('markdown', { type: Boolean, default: false })
-const emit = defineEmits(['refresh', 'file-updated', 'quick-edit'])
+const emit = defineEmits(['file-updated', 'quick-edit'])
+
+// Only images have a thumbnail to remake, and a reference shows another file's.
+const canRegenerateThumbnail = computed(() => isImage(props.file) && !isReference(props.file))
 
 const showQuickEdit = computed(
   () => isImage(props.file) || isTextLike(props.file) || props.file.edited,
@@ -37,6 +42,51 @@ const showQuickEdit = computed(
     </header>
 
     <template v-if="!collapsed">
+      <v-expansion-panels multiple variant="accordion" class="tools__panels">
+        <v-expansion-panel v-if="showQuickEdit" value="edit">
+          <v-expansion-panel-title>
+            <v-icon icon="mdi-history" size="16" class="me-2" aria-hidden="true" />
+            Quick edits
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
+            <QuickEditTool
+              :file="file"
+              :edit="edit"
+              :can-edit-text="canEditText"
+              @rotate="(degrees) => emit('quick-edit', 'rotate', degrees)"
+              @start-crop="emit('quick-edit', 'start-crop')"
+              @clear-crop="emit('quick-edit', 'clear-crop')"
+              @cancel-crop="emit('quick-edit', 'cancel-crop')"
+              @start-text="emit('quick-edit', 'start-text')"
+              @cancel-text="emit('quick-edit', 'cancel-text')"
+              @save="emit('quick-edit', 'save')"
+              @revert="emit('quick-edit', 'revert')"
+            />
+          </v-expansion-panel-text>
+        </v-expansion-panel>
+        <v-expansion-panel value="tags">
+          <v-expansion-panel-title>
+            <v-icon icon="mdi-tag-outline" size="16" class="me-2" aria-hidden="true" />
+            Tags
+            <v-chip
+              v-if="file.entities?.length"
+              size="x-small"
+              variant="tonal"
+              color="primary"
+              class="ms-2"
+              >{{ file.entities.length }}</v-chip
+            >
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
+            <FileTagsTool
+              :file="file"
+              :desk-rid="deskRid"
+              @file-updated="emit('file-updated', $event)"
+            />
+          </v-expansion-panel-text>
+        </v-expansion-panel>
+      </v-expansion-panels>
+
       <section class="tools__section">
         <h2 class="tools__file">{{ file.label }}</h2>
         <v-chip v-if="file.edited" size="x-small" color="warning" variant="tonal" label class="mb-2"
@@ -59,62 +109,7 @@ const showQuickEdit = computed(
             </dd></template
           >
         </dl>
-        <div class="tools__buttons">
-          <v-btn
-            :href="fileUrl(file['@rid'])"
-            target="_blank"
-            size="small"
-            variant="tonal"
-            color="primary"
-            prepend-icon="mdi-open-in-new"
-            >Open file</v-btn
-          >
-          <v-btn size="small" variant="text" prepend-icon="mdi-refresh" @click="emit('refresh')"
-            >Refresh</v-btn
-          >
-        </div>
       </section>
-
-      <v-expansion-panels multiple variant="accordion" class="tools__panels">
-        <v-expansion-panel value="tags">
-          <v-expansion-panel-title>
-            <v-icon icon="mdi-tag-outline" size="16" class="me-2" aria-hidden="true" />
-            Tags
-            <v-chip
-              v-if="file.entities?.length"
-              size="x-small"
-              variant="tonal"
-              color="primary"
-              class="ms-2"
-              >{{ file.entities.length }}</v-chip
-            >
-          </v-expansion-panel-title>
-          <v-expansion-panel-text>
-            <FileTagsTool :file="file" @file-updated="emit('file-updated', $event)" />
-          </v-expansion-panel-text>
-        </v-expansion-panel>
-        <v-expansion-panel v-if="showQuickEdit" value="edit">
-          <v-expansion-panel-title>
-            <v-icon icon="mdi-history" size="16" class="me-2" aria-hidden="true" />
-            Quick edits
-          </v-expansion-panel-title>
-          <v-expansion-panel-text>
-            <QuickEditTool
-              :file="file"
-              :edit="edit"
-              :can-edit-text="canEditText"
-              @rotate="(degrees) => emit('quick-edit', 'rotate', degrees)"
-              @start-crop="emit('quick-edit', 'start-crop')"
-              @clear-crop="emit('quick-edit', 'clear-crop')"
-              @cancel-crop="emit('quick-edit', 'cancel-crop')"
-              @start-text="emit('quick-edit', 'start-text')"
-              @cancel-text="emit('quick-edit', 'cancel-text')"
-              @save="emit('quick-edit', 'save')"
-              @revert="emit('quick-edit', 'revert')"
-            />
-          </v-expansion-panel-text>
-        </v-expansion-panel>
-      </v-expansion-panels>
 
       <section v-if="canEditText" class="tools__section">
         <v-switch
@@ -136,6 +131,28 @@ const showQuickEdit = computed(
       >
         {{ edit.message.text }}
       </v-alert>
+
+      <section class="tools__section tools__buttons">
+        <v-btn
+          :href="fileUrl(file['@rid'])"
+          target="_blank"
+          size="small"
+          variant="tonal"
+          color="primary"
+          prepend-icon="mdi-open-in-new"
+          >Open file</v-btn
+        >
+        <v-btn
+          v-if="canRegenerateThumbnail"
+          size="small"
+          variant="text"
+          prepend-icon="mdi-image-refresh-outline"
+          :disabled="edit.busy"
+          data-test="regenerate-thumbnail"
+          @click="emit('quick-edit', 'thumbnail')"
+          >Regenerate thumbnail</v-btn
+        >
+      </section>
     </template>
   </aside>
 </template>
@@ -203,7 +220,6 @@ const showQuickEdit = computed(
   display: flex;
   flex-wrap: wrap;
   gap: var(--md-space-2);
-  margin-block-start: var(--md-space-3);
 }
 
 .tools__panels :deep(.v-expansion-panel) {

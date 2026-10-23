@@ -6,11 +6,11 @@ import EmptyState from '@/ui/EmptyState.vue'
 import ResultsGrid from '@/features/search/ResultsGrid.vue'
 import ProjectScope from '@/features/search/ProjectScope.vue'
 import { deskForResults, useFileOpener } from '@/features/search/useFileOpener.js'
-import { useTags } from './useTags.js'
-import { nerLabelKey, runLabel } from './tagGroups.js'
+import { TAGGED_FILES_PER_PAGE, useTags } from './useTags.js'
+import { deskHint, nerLabelKey, runLabel } from './tagGroups.js'
 import NerLabel from './NerLabel.vue'
 import MentionPreview from './MentionPreview.vue'
-import AddTagDialog from './AddTagDialog.vue'
+import TagAdminDialog from './TagAdminDialog.vue'
 
 // Browse files by tag: manual tags, tags added by machines, and the named
 // entities (NER) models found in the text.
@@ -22,7 +22,7 @@ const fixedDesk = computed(() => (route.params.rid ? `#${scope.value}` : ''))
 const tags = useTags(scope, fixedDesk)
 const { state } = tags
 
-const view = reactive({ preview: null, addOpen: false, openType: null })
+const view = reactive({ preview: null, adminOpen: false, openType: null })
 // A type's tags are loaded when its panel opens, and again when the list is reloaded
 // (search or desk change) while it is open.
 watch(
@@ -30,9 +30,11 @@ watch(
   () => view.openType && tags.loadType(view.openType),
 )
 const searching = computed(() => Boolean(String(state.search || '').trim()))
-const title = computed(() =>
-  state.selected.length ? `Tags: ${state.selected.map((t) => t.label).join(', ')}` : 'Tagged files',
-)
+const title = computed(() => {
+  if (!state.selected.length) return 'Tagged files'
+  const mode = state.selected.length > 1 && state.match === 'and' ? ' (all)' : ''
+  return `Tags${mode}: ${state.selected.map((t) => t.label).join(', ')}`
+})
 const projectRid = computed(() => deskForResults(route.params.rid, state.desks))
 
 function openFile(result, index) {
@@ -67,6 +69,8 @@ function openHitFile(hit) {
       class="tags-page__main"
       :title="title"
       :results="tags.results.value"
+      :total="state.selected.length ? state.total : 0"
+      :per-page="TAGGED_FILES_PER_PAGE"
       :loading="state.loading"
       :empty-title="
         state.selected.length ? 'No files with these tags' : 'Pick a tag to see its files'
@@ -103,15 +107,36 @@ function openHitFile(hit) {
           {{ tag.label }}
         </v-chip>
       </div>
+      <v-btn-toggle
+        v-if="state.selected.length > 1"
+        v-model="state.match"
+        mandatory
+        density="comfortable"
+        variant="outlined"
+        divided
+        class="mb-4"
+        aria-label="Files must have"
+        data-test="tag-match"
+      >
+        <v-btn value="or" size="small">Any selected tag</v-btn>
+        <v-btn value="and" size="small">All selected tags</v-btn>
+      </v-btn-toggle>
 
       <ErrorAlert :error="state.error" title="Could not load tags" class="mb-4" />
 
       <section class="tags-page__section">
         <div class="tags-page__section-head">
           <h3 class="tags-page__heading">Tags</h3>
-          <v-btn size="small" variant="text" prepend-icon="mdi-plus" @click="view.addOpen = true"
-            >New tag</v-btn
-          >
+          <div>
+            <v-btn
+              size="small"
+              variant="text"
+              prepend-icon="mdi-tag-cog-outline"
+              data-test="tag-admin"
+              @click="view.adminOpen = true"
+              >Tag admin</v-btn
+            >
+          </div>
         </div>
         <EmptyState
           v-if="!tags.manualTypes.value.length"
@@ -136,6 +161,9 @@ function openHitFile(hit) {
                   @click="tags.toggle(item)"
                 >
                   {{ item.label }}
+                  <span v-if="!fixedDesk && deskHint(item)" class="tags-page__count">
+                    · {{ deskHint(item) }}
+                  </span>
                 </v-chip>
               </div>
               <v-progress-linear
@@ -207,7 +235,8 @@ function openHitFile(hit) {
                   :tag="tag"
                   :search="state.search || ''"
                   :desk-rids="tags.deskRids.value"
-                  :file-rids="tags.selectedFileRids.value"
+                  :tag-rids="tags.selectedTagRids.value"
+                  :tag-match="state.match"
                   :show-count="searching"
                   @preview="view.preview = $event"
                   @close-preview="view.preview = null"
@@ -229,7 +258,7 @@ function openHitFile(hit) {
       </v-alert>
     </aside>
 
-    <AddTagDialog v-model="view.addOpen" @created="tags.loadTypes" />
+    <TagAdminDialog v-model="view.adminOpen" :desk-rid="fixedDesk" @changed="tags.loadTypes" />
   </div>
 </template>
 

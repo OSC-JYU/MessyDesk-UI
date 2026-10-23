@@ -85,11 +85,14 @@ export function useQuickEdit(file, display, setFile) {
   }
 
   const actions = {
-    // Remakes the thumbnail and reloads the file.
-    async refresh() {
-      await createFileThumbnail(file()['@rid']).catch(() => {})
-      edit.version = Date.now()
-      await reload()
+    // Asks the backend to make the thumbnail again; it appears when the thumbnailer is done.
+    async thumbnail() {
+      try {
+        await createFileThumbnail(file()['@rid'])
+        say('The thumbnail is being regenerated.')
+      } catch (error) {
+        say(error?.response?.data?.message || 'The thumbnail could not be regenerated.', 'error')
+      }
     },
     rotate(degrees) {
       if (edit.cropMode) return say('Finish or cancel the crop before rotating.', 'error')

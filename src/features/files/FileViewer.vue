@@ -99,7 +99,7 @@ onUnmounted(() => window.removeEventListener('keyup', onKey))
         :file="file"
         :edit="quick.edit"
         :can-edit-text="displayName === 'text'"
-        @refresh="quick.act('refresh')"
+        :desk-rid="viewer.deskRid.value"
         @file-updated="(updated) => (fileBrowse.file = updated)"
         @quick-edit="quick.act"
       />

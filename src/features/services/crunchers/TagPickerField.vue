@@ -1,25 +1,25 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { createTag, getTags } from '@/api/entities.js'
+import { getTags } from '@/api/entities.js'
+import { injectDesk } from './deskScope.js'
 
 // Parameter input for taggers: either free-text categories or existing tags.
 // With tags picked, the value is [{ label, description }] and the cruncher
-// only links back those tags.
+// only links back those tags. The tags are the desk's own; they are created in Tag admin.
 const model = defineModel({ type: [String, Array], default: '' })
 
+const desk = injectDesk()
 const mode = ref(Array.isArray(model.value) ? 'tags' : 'text')
 const text = ref(typeof model.value === 'string' ? model.value : '')
 const selected = ref([])
 const tags = ref([])
-const draft = ref({ label: '', description: '' })
-const creating = ref(false)
 
 const options = computed(() =>
   tags.value.map((tag) => ({ value: tag.rid, title: tag.label, subtitle: tag.description })),
 )
 
 async function loadTags() {
-  const response = await getTags()
+  const response = await getTags({ projectRid: desk() })
   tags.value = (response?.result || []).map((tag) => ({
     rid: tag.rid,
     label: tag.label,
@@ -42,22 +42,6 @@ function switchMode(value) {
   mode.value = value
   if (value === 'text') emitText()
   else emitTags()
-}
-
-async function addTag() {
-  const label = draft.value.label.trim()
-  if (!label) return
-  creating.value = true
-  try {
-    await createTag(label, draft.value.description.trim())
-    await loadTags()
-    const created = tags.value.find((tag) => tag.label === label)
-    if (created && !selected.value.includes(created.rid)) selected.value.push(created.rid)
-    emitTags()
-    draft.value = { label: '', description: '' }
-  } finally {
-    creating.value = false
-  }
 }
 
 onMounted(loadTags)
@@ -105,27 +89,15 @@ onMounted(loadTags)
           <v-list-item v-bind="props" :subtitle="item.raw.subtitle" />
         </template>
       </v-autocomplete>
-      <v-expansion-panels variant="accordion">
-        <v-expansion-panel title="Define a new tag">
-          <v-expansion-panel-text>
-            <v-text-field
-              v-model="draft.label"
-              label="Label"
-              density="compact"
-              variant="outlined"
-            />
-            <v-text-field
-              v-model="draft.description"
-              label="Description (optional)"
-              density="compact"
-              variant="outlined"
-            />
-            <v-btn size="small" variant="tonal" :loading="creating" @click="addTag"
-              >Create and select</v-btn
-            >
-          </v-expansion-panel-text>
-        </v-expansion-panel>
-      </v-expansion-panels>
+      <p class="tag-picker__hint">New tags are created in Tag admin on the Tags page.</p>
     </template>
   </div>
 </template>
+
+<style scoped>
+.tag-picker__hint {
+  margin: var(--md-space-2) 0 0;
+  color: var(--md-color-text-muted);
+  font-size: var(--md-font-size-xs);
+}
+</style>

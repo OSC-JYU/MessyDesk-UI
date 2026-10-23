@@ -34,6 +34,7 @@ function done({ reload }) {
           v-if="dialog.open"
           :node="{ id: dialog.node?.id, type: nodeType }"
           :cruncher-filter="dialog.filter"
+          :desk-rid="workspace.state.deskRid || ''"
           @done="done"
         />
       </v-card-text>

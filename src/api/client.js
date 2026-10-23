@@ -23,13 +23,15 @@ function entityListParams(options = {}) {
   return params
 }
 
-// Narrows NER label/mention lookups to a given set of file rids (options.fileRids), used to
-// intersect NER browsing with an active manual-tag selection in Tag view.
-function fileRidsParams(options = {}) {
-  const fileRids = Array.isArray(options.fileRids) ? options.fileRids.filter(Boolean) : []
-  return fileRids.length
-    ? { file_rids: fileRids.map((r) => String(r).replace('#', '')).join(',') }
-    : {}
+// Narrows NER label/mention lookups to the files that have a tag selection (options.tagRids,
+// options.tagMatch 'and' | 'or'), used to intersect NER browsing with the tags chosen in Tag view.
+function tagSelectionParams(options = {}) {
+  const tagRids = Array.isArray(options.tagRids) ? options.tagRids.filter(Boolean) : []
+  if (!tagRids.length) return {}
+  return {
+    tag_rids: tagRids.map((r) => String(r).replace('#', '')).join(','),
+    ...(options.tagMatch === 'and' ? { tag_match: 'and' } : {}),
+  }
 }
 let web = {}
 
@@ -478,8 +480,25 @@ web.getEntitiesByType = async function (type, options = {}) {
   return result.data
 }
 
-web.getEntitySchema = async function () {
-  var result = await axios.get(`/api/entities/types`)
+// The user's tag types: [{ type, label, icon, color }]. With options.counts each also has `count`
+// (tags of the type in all desks, human and machine) and `protected` (the type 'Tag').
+web.getEntityTypes = async function (options = {}) {
+  var result = await axios.get(`/api/entities/types`, {
+    params: options.counts ? { counts: 1 } : {},
+  })
+  return result.data
+}
+
+web.createEntityType = async function (type, color) {
+  const body = { type }
+  if (color) body.color = color
+  var result = await axios.post(`/api/entities/types`, body)
+  return result.data
+}
+
+// Rejected with 409 while the type still has tags.
+web.deleteEntityType = async function (type) {
+  var result = await axios.delete(`/api/entities/types/${encodeURIComponent(type)}`)
   return result.data
 }
 
@@ -497,6 +516,10 @@ web.getEntityItems = async function (entities, options = {}) {
       : []
   const params = new URLSearchParams()
   params.set('entities', entity_rids.join(','))
+  const matchAll = options.match === 'and'
+  if (matchAll) params.set('match', 'and')
+  if (options.skip) params.set('skip', String(options.skip))
+  if (options.limit) params.set('limit', String(options.limit))
   if (projectRids.length === 1) params.set('project_rid', String(projectRids[0]).replace('#', ''))
   if (projectRids.length > 1)
     params.set('project_rids', projectRids.map((r) => String(r).replace('#', '')).join(','))
@@ -506,17 +529,26 @@ web.getEntityItems = async function (entities, options = {}) {
     return result.data
   } catch (error) {
     if (projectRids.length > 0) {
-      var fallback = await axios.get(`/api/entities/items?entities=${entity_rids.join(',')}`)
-      const data = fallback.data || []
-      if (Array.isArray(data)) data._project_filter_ignored = true
+      params.delete('project_rid')
+      params.delete('project_rids')
+      var fallback = await axios.get(`/api/entities/items?${params.toString()}`)
+      const data = fallback.data || {}
+      if (typeof data === 'object') data._project_filter_ignored = true
       return data
     }
     throw error
   }
 }
 
-web.createEntity = async function (type, label) {
-  var result = await axios.post(`/api/entities`, { type: type, label: label })
+const cleanRid = (rid) => String(rid || '').replace('#', '')
+
+// A human tag belongs to a desk: projectRid is required by the backend.
+web.createEntity = async function (type, label, projectRid) {
+  var result = await axios.post(`/api/entities`, {
+    project_rid: cleanRid(projectRid),
+    type: type,
+    label: label,
+  })
   return result.data
 }
 
@@ -534,18 +566,86 @@ web.unLinkEntity = async function (entityRID, itemRId) {
   return result.data
 }
 
-web.getTags = async function () {
-  var result = await axios.get(`/api/tags`)
+// Tag entities of the user; with options.projectRid only that desk's human tags.
+web.getTags = async function (options = {}) {
+  var result = await axios.get(`/api/tags`, { params: projectParams(options) })
   return result.data
 }
 
-web.createTag = async function (label, description) {
-  var result = await axios.post(`/api/tags`, { label: label, description: description })
+web.createTag = async function (label, description, projectRid) {
+  var result = await axios.post(`/api/tags`, {
+    project_rid: cleanRid(projectRid),
+    label: label,
+    description: description,
+  })
   return result.data
 }
 
-web.getMachineTags = async function () {
-  var result = await axios.get(`/api/tags/machine`)
+// Human tags with desks, file counts and creator: { total, skip, limit, items }. Options: projectRid
+// (that desk's vocabulary; none = all the user's tags), search, skip, limit.
+web.getTagAdmin = async function (options = {}) {
+  const params = { ...projectParams(options), skip: options.skip || 0, limit: options.limit || 50 }
+  const search = String(options.search || '').trim()
+  if (search) params.search = search
+  var result = await axios.get(`/api/tags/admin`, { params })
+  return result.data
+}
+
+// Where a human tag is used: { rid, label, type, files, desks: [{ rid, label, files }] }.
+web.getEntityUsage = async function (entityRID) {
+  var result = await axios.get(`/api/entities/${cleanRid(entityRID)}/usage`)
+  return result.data
+}
+
+// Renames the tag in every desk that has it (409 if one of them has that label already).
+web.renameEntity = async function (entityRID, label, description) {
+  const body = { label }
+  if (description !== undefined) body.description = description
+  var result = await axios.patch(`/api/entities/${cleanRid(entityRID)}`, body)
+  return result.data
+}
+
+// Deletes the tag and its links in every desk.
+web.deleteEntity = async function (entityRID) {
+  var result = await axios.delete(`/api/entities/${cleanRid(entityRID)}`)
+  return result.data
+}
+
+web.createDeskTag = async function (projectRid, data) {
+  var result = await axios.post(`/api/projects/${cleanRid(projectRid)}/tags`, data)
+  return result.data
+}
+
+// payload: { entity_rids: [...] } or { from_project_rid } -> { imported, skipped, conflicts }
+web.importDeskTags = async function (projectRid, payload) {
+  var result = await axios.post(`/api/projects/${cleanRid(projectRid)}/tags/import`, payload)
+  return result.data
+}
+
+// Takes the tag out of the desk and removes its links on the desk's files.
+web.removeDeskTag = async function (projectRid, entityRID) {
+  var result = await axios.delete(
+    `/api/projects/${cleanRid(projectRid)}/tags/${cleanRid(entityRID)}`,
+  )
+  return result.data
+}
+
+// ROI labels found in text (indexed ner.json runs): { items: [{ service_id, task, model, label,
+// count, service_name }], hasMore }. Options: desks (projectRid/projectRids), search, offset, limit.
+web.getRoiLabels = async function (options = {}) {
+  const params = {
+    ...projectParams(options),
+    offset: options.offset || 0,
+    limit: options.limit || 100,
+  }
+  const search = String(options.search || '').trim()
+  if (search) params.search = search
+  var result = await axios.get(`/api/tags/roi/labels`, { params })
+  return result.data
+}
+
+web.getMachineTags = async function (options = {}) {
+  var result = await axios.get(`/api/tags/machine`, { params: projectParams(options) })
   return result.data
 }
 
@@ -578,7 +678,7 @@ web.getNerRegions = async function (fileRID) {
 // straight off ner.json runs, not TagLink, so these have no entity rid to key on.
 web.getNerLabelGroups = async function (search, options = {}) {
   var result = await axios.get(`/api/tags/ner/labels`, {
-    params: { search, ...projectParams(options), ...fileRidsParams(options) },
+    params: { search, ...projectParams(options), ...tagSelectionParams(options) },
   })
   return result.data
 }
@@ -590,7 +690,7 @@ web.getNerLabelFiles = async function (serviceId, task, label, options = {}) {
       task: task,
       label: label,
       ...projectParams(options),
-      ...fileRidsParams(options),
+      ...tagSelectionParams(options),
     },
   })
   return result.data
@@ -606,7 +706,7 @@ web.getNerLabelMentions = async function (serviceId, task, label, options = {}) 
       page: options.page,
       pageSize: options.pageSize,
       ...projectParams(options),
-      ...fileRidsParams(options),
+      ...tagSelectionParams(options),
     },
   })
   return result.data

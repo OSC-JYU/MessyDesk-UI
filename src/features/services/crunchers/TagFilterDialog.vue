@@ -1,8 +1,9 @@
 <script setup>
 import { reactive, watch } from 'vue'
-import { getSetEntities } from '@/api/entities.js'
 import { createFilter } from '@/api/services.js'
 import ErrorAlert from '@/ui/ErrorAlert.vue'
+import TagPicker from '@/features/tags/TagPicker.vue'
+import { tagFilterPayload } from './tagFilter.js'
 
 // The tag filter makes a new set of references to the files of a set that
 // have (or lack) chosen tags.
@@ -11,6 +12,8 @@ const open = defineModel({ type: Boolean, default: false })
 const props = defineProps({
   filterId: { type: String, required: true },
   setRid: { type: String, required: true },
+  // The set's desk: the picker lists this desk's tags.
+  deskRid: { type: String, default: '' },
 })
 
 const emit = defineEmits(['created'])
@@ -22,63 +25,37 @@ const MODES = [
 ]
 
 const state = reactive({
-  tags: [],
   mode: 'include',
-  selected: [],
+  tags: [],
+  roi: [],
   match: 'or',
   label: '',
   pending: false,
   error: null,
 })
 
-async function loadTags() {
-  const rows = await getSetEntities(props.setRid)
-  state.tags = (rows || [])
-    .filter((row) => row?.['@rid'] || row?.rid)
-    .map((row) => {
-      const raw = String(row['@rid'] || row.rid)
-      const rid = raw.startsWith('#') ? raw : `#${raw}`
-      return {
-        value: rid,
-        title: `${row.label || rid} (${row.type || 'entity'}, ${Number(row.count || 0)})`,
-      }
-    })
-    .sort((a, b) => a.title.localeCompare(b.title))
-  if (!state.tags.length) state.error = 'This set has no tags yet.'
-}
-
-watch(open, async (isOpen) => {
+watch(open, (isOpen) => {
   if (!isOpen) return
   Object.assign(state, {
     mode: 'include',
-    selected: [],
+    tags: [],
+    roi: [],
     match: 'or',
     label: '',
     pending: false,
     error: null,
   })
-  try {
-    await loadTags()
-  } catch (error) {
-    state.error = error
-  }
 })
 
 async function submit() {
-  if (state.mode !== 'untagged' && !state.selected.length) {
-    state.error = 'Select at least one tag.'
+  if (state.mode !== 'untagged' && !state.tags.length && !state.roi.length) {
+    state.error = 'Select at least one tag or label.'
     return
   }
-  const payload = {
-    selection_mode: state.mode,
-    selected_entity_rids: state.mode === 'untagged' ? [] : state.selected,
-    match: state.mode === 'include' ? state.match : 'or',
-  }
-  if (state.label.trim()) payload.set_label = state.label.trim()
   state.pending = true
   state.error = null
   try {
-    await createFilter(props.filterId, props.setRid, payload)
+    await createFilter(props.filterId, props.setRid, tagFilterPayload(state))
     open.value = false
     emit('created')
   } catch (error) {
@@ -90,7 +67,7 @@ async function submit() {
 </script>
 
 <template>
-  <v-dialog v-model="open" max-width="640" :persistent="state.pending">
+  <v-dialog v-model="open" max-width="720" scrollable :persistent="state.pending">
     <v-card rounded="lg" title="Create a tag filter set">
       <v-card-text>
         <p class="tag-filter__intro">
@@ -104,17 +81,12 @@ async function submit() {
           variant="outlined"
           density="comfortable"
         />
-        <v-autocomplete
+        <TagPicker
           v-if="state.mode !== 'untagged'"
-          v-model="state.selected"
-          :items="state.tags"
-          label="Tags"
-          multiple
-          chips
-          closable-chips
-          clearable
-          variant="outlined"
-          density="comfortable"
+          v-model:tags="state.tags"
+          v-model:roi="state.roi"
+          :desk-rid="deskRid"
+          class="tag-filter__picker"
         />
         <v-radio-group
           v-if="state.mode === 'include'"
@@ -122,8 +94,8 @@ async function submit() {
           inline
           label="Files must have"
         >
-          <v-radio label="any selected tag" value="or" />
-          <v-radio label="all selected tags" value="and" />
+          <v-radio label="any selected tag or label" value="or" />
+          <v-radio label="all selected tags and labels" value="and" />
         </v-radio-group>
         <v-text-field
           v-model="state.label"
@@ -145,6 +117,10 @@ async function submit() {
 </template>
 
 <style scoped>
+.tag-filter__picker {
+  margin-block-end: var(--md-space-4);
+}
+
 .tag-filter__intro {
   margin: 0 0 var(--md-space-4);
   color: var(--md-color-text-muted);
