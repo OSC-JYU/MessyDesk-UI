@@ -6,7 +6,7 @@
 - **Cruncher:** The UI term for a processing task offered by a service. Each service exposes one or more cruncher tasks.
 - **Batch:** A group of processing jobs (e.g., running OCR on all files in a set). Has lifecycle states: running → paused/cancelling → finished.
 
-**Verified from:** `src/components/CruncherList.vue`, `src/web.js` (batch methods), `src/components/GraphDisplay.vue` (process tracking)
+**Verified from:** `src/features/services/crunchers/`, `src/api/client.js` (batch methods), `src/features/project/useDeskGraph.js` (process updates)
 
 ## Processing Scope
 
@@ -20,13 +20,13 @@ Processing can be triggered at three levels:
 | ROI | `POST /api/queue/:service/files/:rid/roi` | ROI-specific processing |
 | **Auto-import** | Automatic on PDF upload | `afterFileCreated()` in import pipeline |
 
-**Verified from:** `src/web.js` (`createFileProcess`, `createSetProcess`, `createSourceProcess`, `createROIProcess`)
+**Verified from:** `src/api/client.js` (`createFileProcess`, `createSetProcess`, `createSourceProcess`, `createROIProcess`)
 
 ### PDF Auto-Import
 
 PDF uploads automatically trigger the split pipeline without user action. The Process node has `role: 'import'`, which causes ProcessingNode.vue to display "Importing…" instead of "Crunching…". Files with `processable: false` (non-splitter PDF outputs) only show the split cruncher in CruncherList.
 
-**Verified from:** `src/components/nodes/ProcessingNode.vue`, `src/components/Uploader.vue`
+**Verified from:** `src/features/project/nodes/ProcessNode.vue`, `src/features/project/dialogs/UploadController.vue`
 
 ### Set Locking After Batch Processing
 
@@ -39,21 +39,20 @@ afterwards.
 - Backend: `POST /api/projects/{rid}/upload/{set}` calls `Graph.hasSetBeenProcessed(setRid)` and responds
   `409 Conflict` if the Set has already been processed, before any file is written.
 - Frontend: the graph query that hydrates Set nodes (`getSetThumbnails` in `graph.mjs`) attaches a bulk-computed
-  `processed` boolean to each Set node's data via `Graph.getProcessedSetRids`. `GraphDisplay.vue` copies this
-  flag onto the vue-flow node. `NodeCard.vue`'s `setLocked` computed reads it to swap the "Upload image to set"
+  `processed` boolean to each Set node's data via `Graph.getProcessedSetRids`. `graphModel.js` copies this
+  flag onto the vue-flow node. `panel/NodeTools.vue` (`setLocked`) reads it to swap the "Add files to set"
   button for a warning alert.
 
-**Verified from:** `src/routes/files.mjs`, `src/graph.mjs` (MessyDesk), `src/components/NodeCard.vue`,
-`src/components/GraphDisplay.vue`
+**Verified from:** `src/routes/files.mjs`, `src/graph.mjs` (MessyDesk), `src/features/project/panel/NodeTools.vue`,
+`src/features/project/graphModel.js`
 
-## Cruncher Selection UI (`CruncherList.vue`)
+## Cruncher Selection UI (`features/services/crunchers/CruncherPicker.vue`)
 
-The cruncher dialog is opened by:
-1. Setting `store.current_node` to the target node
-2. Optionally setting `store.cruncher_filter` to filter by format
-3. Setting `store.crunchers_open = true`
+The cruncher dialog (`features/project/dialogs/CrunchersDialog.vue`) is opened with
+`workspace.openCrunchers(node, filter)` — from a node's cookie button, or with filter `'ROI'` from an
+image's regions button. It passes the node (`{ id, type }`) and the filter to `CruncherPicker`, which has no dependency on the old store. The picker fetches services compatible with the node via `getServicesForFile(file_rid, filter)` and emits `done` (`{ reload }`) when it has started a process (no reload; the new node arrives over SSE) or created a filter (reload). The pure parts (catalogue preparation, categories, search, building the process request, choosing the queue endpoint) are in `crunchers.js`. `CruncherPicker` also takes the node's `deskRid` (from `CrunchersDialog`), provides it to the parameter fields and passes it to `TagFilterDialog`, which shows the desk's tags with `features/tags/TagPicker.vue` (human tags, machine tags and ROI labels) and sends `selected_entity_rids` and `selected_roi_labels` to `mdf-set-filter` (`tagFilter.js`).
 
-The dialog fetches services compatible with the current node's file type via `web.getServicesForFile(file_rid, filter)`.
+The endpoint depends on the node: `source` → `createSourceProcess`, a set (`set` or `*-set`) → `createSetProcess`, `cruncher_filter === 'ROI'` → `createROIProcess`, otherwise `createFileProcess`.
 
 A search field at the top filters client-side across service/task/filter `name`, `description` and `id`. While a query is entered, the category tabs are replaced by a flat matching list (each result tagged with its category); clearing the search restores the tabbed view.
 
@@ -74,7 +73,7 @@ Each service card shows metadata:
 - Status: stable / experimental
 - Model selection (if service offers multiple models)
 
-**Verified from:** `src/components/CruncherList.vue`
+**Verified from:** `src/features/services/crunchers/CruncherPicker.vue`, `crunchers.js`
 
 ## Service Metadata Shape
 
@@ -97,25 +96,25 @@ Each service card shows metadata:
 }
 ```
 
-**Inferred from:** `src/components/CruncherList.vue`, `src/components/ServicesMain.vue` (template bindings)
+**Inferred from:** `src/features/services/crunchers/CruncherService.vue`, `src/features/services/ServicesPage.vue` (template bindings)
 
 ### `params_help` display types
 
-Each `params_help.<key>` entry is rendered in `CruncherList.vue` based on its `display` field:
+Each `params_help.<key>` entry is rendered by `crunchers/ParamField.vue` based on its `display` field (tasks without `params_help` use the service's):
 
 | `display` | Control |
 |-----------|---------|
 | (default/none) | Plain text input, bound to `task.values[key]` as a string |
 | `checkbox` | Single checkbox, or one checkbox per `values` entry if `values` is an array |
 | `dropdown` | `v-select` over `values` |
-| `tagpicker` | `TagPickerField.vue` \u2014 toggles between free-form comma-string entry (same as default) and picking from the user's existing Tag entities (with descriptions), plus an inline "define a new tag" form. In pick mode, `task.values[key]` becomes a JSON array of `{label, description}` instead of a string. This is a per-task opt-in (set on the specific task's `params_help`, not the whole service): MD-Gliner2's `classify_text` uses it for its `labels` param (whole-document category, maps cleanly onto a fixed tag), but `extract_entities` (NER) deliberately does not \u2014 it extracts many per-mention spans per label, so it isn't restricted to/linked with a fixed existing-tag set the same way (see MessyDesk's `tags.md` \u00a78 step 8, and [graph-data-model.md](../../MessyDesk/wiki/architecture/graph-data-model.md#entitytag-system) for how `Tag.description` and `autotagNerFile`'s reuse-by-label matching interact) |
-| `component: 'dspace'` | `DspaceQueryForm.vue` (special-cased before `display` is checked) |
+| `tagpicker` | `crunchers/TagPickerField.vue` \u2014 toggles between free-form comma-string entry (same as default) and picking from the desk's existing Tag entities (with descriptions; the desk comes from `CruncherPicker`'s `deskRid` through `deskScope.js`), with a hint that new tags are made in Tag admin. In pick mode, `task.values[key]` becomes a JSON array of `{label, description}` instead of a string. This is a per-task opt-in (set on the specific task's `params_help`, not the whole service): MD-Gliner2's `classify_text` uses it for its `labels` param (whole-document category, maps cleanly onto a fixed tag), but `extract_entities` (NER) deliberately does not \u2014 it extracts many per-mention spans per label, so it isn't restricted to/linked with a fixed existing-tag set the same way (see MessyDesk's `tags.md` \u00a78 step 8, and [graph-data-model.md](../../MessyDesk/wiki/architecture/graph-data-model.md#entitytag-system) for how `Tag.description` and `autotagNerFile`'s reuse-by-label matching interact) |
+| `component: 'dspace'` | `crunchers/DspaceQueryForm.vue` (query building in `dspaceQuery.js`; special-cased before `display` is checked) |
 
 ## Process Tracking and Progress
 
 ### BatchProgressPanel (Floating Panel)
 
-A persistent floating panel (`src/components/BatchProgressPanel.vue`) is rendered in `App.vue` outside the router-view. It is visible whenever there are active batch jobs and shows:
+A persistent floating panel (`src/features/jobs/JobsPanel.vue`) is rendered in `src/app/App.vue` outside the router-view. It is visible whenever there are active batch jobs and shows:
 - Service name and status (running/paused/cancelling/failed)
 - Progress: processed files / total files / failed files
 - ETA (when available)
@@ -126,14 +125,12 @@ The panel reads from `batchStore.jobs` reactively.
 
 ### Graph View Banners
 
-GraphDisplay.vue also shows running process banners at the top of the graph view with the same controls. These read from the local `state.running_processes` which mirrors `store.running_processes`.
-
 ### Progress Update Flow
 
-1. A single SSE connection is managed by `src/services/events.js` (opened on app mount in `App.vue`)
+1. A single SSE connection is managed by `src/services/events.js` (opened on app mount in `src/app/App.vue`)
 2. SSE events are parsed and routed to `batchStore.handleEvent()` for batch state
 3. Graph-specific events (`add`, `update`, `add_and_finish`) are dispatched as `window` custom events (`md-sse`)
-4. `GraphDisplay.vue` listens for `md-sse` events to update the visual graph
+4. `features/project/useDeskGraph.js` listens for `md-sse` events to update the visual graph
 5. On SSE reconnect, `batchStore.hydrate()` fetches active jobs from `GET /api/queue/jobs/active`
 
 **No polling timer.** All progress is SSE-driven with hydration on reconnect.
@@ -151,13 +148,5 @@ stateDiagram-v2
     running --> [*] : finish
 ```
 
-**Verified from:** `src/stores/batchStore.js`, `src/services/events.js`, `src/components/BatchProgressPanel.vue`
+**Verified from:** `src/stores/batchStore.js`, `src/services/events.js`, `src/features/jobs/JobsPanel.vue`
 
-## Process Creator Dialog
-
-`ProcessCreator.vue` renders a form with:
-- Dynamic parameters from `store.process.tasks[store.task_id].params_help`
-- Each param has: `name`, `help`, `values` (allowed values)
-- Submit calls the appropriate `web.createFileProcess/createSetProcess` method
-
-**Verified from:** `src/components/ProcessCreator.vue`

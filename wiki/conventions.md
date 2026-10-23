@@ -14,33 +14,30 @@ var state = reactive({ ... })
 ```
 No `ref()` for complex state objects. `ref()` is used for single primitive values (e.g., pagination `page`, boolean flags).
 
-**Verified from:** `GraphDisplay.vue`, `FileDisplayWrapper.vue`, `SearchMain.vue`
+**Verified from:** `src/features/`
 
-### Global Store Import
-```js
-import { store } from './Store.js'   // relative path varies
-```
-Used in nearly every component. Mutations are direct property assignments.
+### Stores
+Small stores in `src/stores/` (`session`, `ui`, `fileBrowse`, `pageMemory`, `batchStore`); state of one desk is shared through `useWorkspace()` (provide/inject). The old global store is gone.
 
 ### API Access
 ```js
-import web from '../web.js'
+import { getProject } from '@/api/projects.js'
 ```
-All API calls go through `web.*` methods. No direct `axios` usage in components (with one exception: `ServicesMain.vue` imports `axios` directly for queue loading).
+Code calls the `src/api/*` modules, which wrap the Axios client in `src/api/client.js`. No component uses `axios` or `client.js` directly.
 
 **Verified from:** all component files
 
 ### Event Communication
 - Parent↔child: Vue `defineEmits` + `$emit` (standard)
 - Cross-component: Direct store mutation (not event bus)
-- Backend→frontend: SSE in `GraphDisplay.vue`
+- Backend→frontend: SSE via `services/events.js` (`md-sse` window events, read in `features/project/useDeskGraph.js`)
 
 ## Naming Conventions
 
 | Convention | Example | Note |
 |-----------|---------|------|
-| Component files | PascalCase `.vue` | `GraphDisplay.vue`, `SetPanel.vue` |
-| JS modules | camelCase `.js` | `useLayout.js`, `web.js` |
+| Component files | PascalCase `.vue` | `GraphCanvas.vue`, `SetBrowser.vue` |
+| JS modules | camelCase `.js` | `useWorkspace.js`, `graphModel.js` |
 | Store property | snake_case | `current_node`, `file_browse_context` |
 | API methods | camelCase | `web.getNodeFile()` |
 | Route names | kebab-case | `project-graph`, `service-help` |
@@ -56,19 +53,19 @@ There is no global error notification system. Errors are handled locally per com
 - `console.error()` for developer debugging
 - Some methods silently swallow errors (e.g., ROI resolution fallbacks)
 
-**Verified from:** `Login.vue`, `Main.vue`, `FileDisplayWrapper.vue`
+**Verified from:** old components. New screens use `ui/ErrorAlert.vue`.
 
 ## i18n Usage
 
 Internationalization is configured with `vue-i18n` (legacy mode disabled, global injection enabled). Locale defaults to `fi` (Finnish), with `en` as fallback. However, most UI text is hardcoded in English directly in templates. i18n is only used in a few places (login page, navigation labels).
 
-**Verified from:** `src/main.js` (i18n config), `lang/messages.json`, templates
+**Verified from:** `src/app/main.js` (i18n config), `lang/messages.json`, templates
 
 ## Testing
 
 The test suite uses Vitest with jsdom environment. Test coverage is minimal—only one test file exists:
 
-- `test/components/displays/VersionTools.spec.js` — Tests the VersionTools component in isolation using Vuetify component stubs
+- `test/` mirrors `src/` (`test/ui`, `test/features/…`, `test/stores`); Vuetify is installed for every test in `test/setup.js`
 
 Test patterns:
 - Mount with stubs for Vuetify components
@@ -79,11 +76,13 @@ Test patterns:
 
 ## CSS Organization
 
-- `src/assets/base.css` — Global base styles (imported in `App.vue`)
-- `src/assets/editor.css` — Editor-specific styles
-- `src/components/displays/*.css` — Display-specific styles (imported as modules)
+- `src/styles/tokens.css` — design tokens (colour, type, spacing, radius, shadow); the only place hex values live, together with `src/styles/vuetify-theme.js`
+- `src/styles/reset.css` — global reset and base typography (IBM Plex Sans body, IBM Plex Mono for code, Junicode titles; fonts in `src/styles/fonts.css`)
+- `src/features/project/graph.css` — Vue Flow styles inside the desk
 - Component-scoped `<style scoped>` blocks
-- Many components use unscoped `<style>` (global CSS leakage risk)
+- Many old components use unscoped `<style>` (global CSS leakage risk)
+
+New code follows the style rules in [rewrite.md](rewrite.md); `npm run lint` checks them.
 
 **Verified from:** file structure, component style blocks
 

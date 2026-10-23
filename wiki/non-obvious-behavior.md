@@ -8,65 +8,61 @@ The `file.type` field is assigned by the backend after processing. A file named 
 
 **Implication:** Never rely on filename to determine rendering logic. The same `.json` extension can map to completely different display components.
 
-**Verified from:** `src/components/displays/FileDisplayWrapper.vue` (`typeMap` lookup order)
+**Verified from:** `src/features/files/fileTypes.js` (`displayFor` lookup order)
 
 ## 2. `#` Stripping is Manual and Pervasive
 
-ArcadeDB RIDs include a `#` prefix (`#21:5`). Every API method in `web.js` strips it manually with `.replace('#','')` before building URLs. This is done per-call, not centralized. Missing a strip would produce invalid URLs.
+ArcadeDB RIDs include a `#` prefix (`#21:5`). Every API method in `api/client.js` strips it manually with `.replace('#','')` before building URLs. This is done per-call, not centralized. Missing a strip would produce invalid URLs.
 
-**Verified from:** `src/web.js` (every method)
+**Verified from:** `src/api/client.js` (every method)
 
 ## 3. SSE Reconnection Resets State
 
-When SSE reconnects after a failure, there's no mechanism to replay missed events. If a node was added during the disconnection window, the graph won't show it until the next full reload (triggered by `store.reload()`).
+When SSE reconnects after a failure, there's no mechanism to replay missed events (only batch jobs are re-read with `batchStore.hydrate()`). If a node was added during the disconnection window, the graph won't show it until the next reload (`workspace.reload()`).
 
-**Verified from:** `src/components/GraphDisplay.vue` (`connectSSE`)
+**Verified from:** `src/services/events.js`, `src/features/project/useDeskGraph.js`
 
-## 4. `GraphDisplay` Uses `keep-alive`
+## 4. The Graph Canvas Uses `keep-alive`
 
-The `GraphDisplay` component is cached via `<keep-alive>` when navigating to search/entities/file views within a project. This means:
-- The VueFlow instance stays mounted
-- SSE connection stays open
-- Batch polling continues
-- Returning to graph view shows stale data unless an SSE event triggered an update
+`GraphCanvas` is cached with `<keep-alive>` while moving to the desk's search, tags or file views. The Vue Flow instance stays mounted and keeps applying SSE updates, so returning to the graph shows it as it was, without a reload.
 
-**Verified from:** `src/components/GraphMain.vue` (template)
+**Verified from:** `src/features/project/ProjectWorkspace.vue` (template)
 
 ## 5. Position Persistence on Drag (100px Grid Snap)
 
-Dragging a node snaps its position to a 100px grid: `Math.round(position/100)*100`. This happens client-side before saving. If the backend stores sub-grid positions, they'll be overwritten on next drag.
+Dragging a node snaps its position to a 100px grid: `Math.round(position/100)*100`, then saves it with `setProjectAttribute(node, { key: 'position' })`. The graph is still laid out with dagre on load, so saved positions are not used for drawing.
 
-**Verified from:** `src/components/GraphDisplay.vue` (`onNodeDragStop`)
+**Verified from:** `src/features/project/useDeskGraph.js` (`onNodeDragStop`)
 
-## 6. Concurrent Dialog Opening is Possible
+## 6. Dialogs Are Opened Through the Workspace
 
-Store flags like `uploader_open`, `crunchers_open`, etc. are independent booleans. Nothing prevents multiple dialogs from being `true` simultaneously. In practice this rarely happens due to UI flow, but programmatic state manipulation could cause it.
+The desk's dialogs (crunchers, delete node, create set, create source, uploads) are opened with workspace actions (`useWorkspace()`), not global flags. Uploads are one-shot requests: bumping `dialogs.upload.request` or `dialogs.setUpload.request` makes `UploadController` click a hidden file input.
 
-**Verified from:** `src/components/Store.js`
+**Verified from:** `src/features/project/useWorkspace.js`, `dialogs/UploadController.vue`
 
 ## 7. `web.search()` Falls Back Silently on Project Filter Failure
 
 If the backend doesn't support project-scoped search, the search method retries without the filter and tags the result with `_project_filter_ignored = true`. The UI should (but may not always) indicate to the user that results are unfiltered.
 
-**Verified from:** `src/web.js` (`search` method)
+**Verified from:** `src/api/client.js` (`search` method)
 
 ## 8. DOMPurify Applied to Markdown but Not All HTML
 
-`TextDisplay` sanitizes markdown-rendered HTML via `DOMPurify`. However, `HelpMain.vue` renders backend-provided HTML directly (received from `/api/help`) without visible sanitization in the frontend—relying on the backend to serve safe HTML.
+`features/files/displays/TextDisplay.vue` sanitizes markdown-rendered HTML via `DOMPurify`. The help pages (`/api/help`, `/api/services/{id}/help`) arrive as whole HTML documents with their own nav and stylesheet. `features/help/helpContent.js` takes the nav links and the article, drops the backend stylesheet (which used to be injected into the app and restyled it globally), and sanitises the article with DOMPurify before `HelpArticle.vue` renders it with the app's styles.
 
-**Verified from:** `src/components/displays/TextDisplay.vue`, `src/components/HelpMain.vue`
+**Verified from:** `src/features/files/displays/TextDisplay.vue`, `src/features/help/helpContent.js`
 
 ## 9. Session Check Redirect Uses Path Substring Match
 
-`App.vue` uses `window.location.pathname.includes('login')` to detect the login page. If `VITE_PUBLIC_PATH` contained the string "login", this check would incorrectly match.
+`src/app/App.vue` uses `window.location.pathname.includes('login')` to detect the login page. If `VITE_PUBLIC_PATH` contained the string "login", this check would incorrectly match.
 
-**Verified from:** `src/App.vue` (`login` function)
+**Verified from:** `src/app/App.vue` (`onLoginPage`)
 
-## 10. Two Bootstrap + Vuetify Coexistence
+## 10. Bootstrap Class Names Do Nothing
 
-Both frameworks register global styles. Bootstrap's grid system and Vuetify's grid system (`v-row`/`v-col`) coexist. Some components use Bootstrap classes (`row`, `col-12`), others use Vuetify equivalents. Mixing them in the same template can cause layout conflicts.
+Bootstrap is no longer installed (stage 8), so classes like `row`, `btn` or `mt-3`-style Bootstrap utilities have no styles of their own. Vuetify has utilities with the same names for spacing (`mt-3`, `pa-2`), which still work. `npm run lint` fails on Bootstrap-only classes. Base margins for headings, paragraphs and lists come from `src/styles/reset.css`.
 
-**Verified from:** `src/App.vue` (imports), component templates
+**Verified from:** `src/app/main.js`, `src/styles/reset.css`, `scripts/check-new-code.mjs`
 
 ## 11. File Upload Accepts Limited Formats
 
@@ -76,33 +72,32 @@ The uploader restricts accepted file types client-side via the `accept` attribut
 
 This is purely UI guidance—the backend may accept other formats.
 
-**Direct-to-picker UX**: Clicking an "Upload" button does not open a `v-file-input`-based dialog anymore.
-`store.uploader_open`/`store.set_uploader_open` are one-shot triggers that `Uploader.vue` watches to
-immediately `.click()` a hidden native `<input type="file">`. For the main-desk (single-file) upload, the
-file is sent as soon as it's chosen — no confirmation step. For Set (multi-file) upload, `store.set_uploader_open`
-is flipped back to `true` only after files are picked, showing a minimal confirm/progress card (file count,
+**Direct-to-picker UX**: Clicking an "Upload" button opens the native file picker straight away (see §6).
+For the main-desk (single-file) upload, the file is sent as soon as it's chosen — no confirmation step. For
+Set (multi-file) upload, a minimal confirm/progress dialog shows after files are picked (file count,
 large-upload and PDF-gating warnings, Upload/Cancel) rather than a file-browsing step.
 
 **PDF gating**: When the PDF splitter service (`md-pypdf_fs`) has no active consumers, the uploader disables
-the Upload button (Set flow) or aborts with an alert (main-desk flow) for PDF files. The backend also enforces
+the Upload button (Set flow) or stops with an error message (main-desk flow) for PDF files. The backend also enforces
 this with HTTP 503. The original PDF is always deleted after splitting (no user-facing toggle;
 `delete_original` defaults to `true` server-side and the UI never overrides it to `false`).
 
-**Verified from:** `src/components/Uploader.vue`
+**Verified from:** `src/features/project/dialogs/UploadController.vue`
 
-## 12. `current_node` Shape is Polymorphic
+## 12. The Selected Node Is a Vue Flow Node
 
-`store.current_node` can be:
-- A VueFlow node object (from graph click): `{ id, type, data: { label, type, ... }, position }`
-- `null` (pane click deselect)
-- An object with `{ data: { name: '', type: '' } }` (initial state)
+`workspace.state.selected` is a Vue Flow node (`{ id, type, data, position }`) or `null`. `node.type` picks the node component (`text`, `image`, `set`, `setprocess`, … and `file` for unknown file types), while `node.data.type` keeps the file type from the backend.
 
-Components that read `current_node` must handle all shapes.
+**Verified from:** `src/features/project/graphModel.js`, `nodes/index.js`
 
-**Verified from:** `src/components/Store.js`, `src/components/GraphDisplay.vue`
+## 13. `:global()` Swallows the Rest of a Scoped Selector
 
-## 13. Batch Refresh Continues Even When No Processes Are Running
+In a scoped `<style>`, Vue replaces the whole selector with what is inside `:global(...)`: `:global(button:hover) > .icon .part` compiles to plain `button:hover`. This once made every hovered button and link in the app play the cookie's bite animation. Scoped CSS only tags the last part of a selector, so ancestor conditions need no `:global` at all: write `button:hover > .icon .part` (or `[data-motion='off'] .part`). `npm run lint` rejects `:global(...)` followed by more selector.
 
-The 3-second `setInterval` for batch polling runs unconditionally while `GraphDisplay` is mounted (which is always, due to keep-alive). It polls `web.getBatch()` for each entry in `store.running_processes` regardless of whether any are active.
+**Verified from:** `src/ui/CrunchIcon.vue`, `src/ui/ThumbnailImage.vue`, `scripts/check-new-code.mjs`, `e2e/smoke.pw.js` (hover check)
 
-**Verified from:** `src/components/GraphDisplay.vue` (`batchRefreshTimer`)
+## 14. Vue Flow Drops Edges to Nodes It Has Not Seen Yet
+
+When a node and its edge are added in the same update (a server `add` event for a cruncher result or a batch run), Vue Flow checks the edge before it has the node, warns "Edge source or target is missing" and drops the edge. `useDeskGraph.addFromEvent` therefore adds the nodes first and the edges on the next tick (`nextTick`); the dagre layout already counts the new edges. `e2e/live-updates.pw.js` covers this with a mocked API.
+
+**Verified from:** `src/features/project/useDeskGraph.js`, `e2e/live-updates.pw.js`

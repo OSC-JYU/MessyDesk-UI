@@ -1,0 +1,444 @@
+/*
+ * Design tokens. Every colour, spacing step, radius, shadow and font used by
+ * new code comes from here (or from the Vuetify theme, which uses the same
+ * values in vuetify-theme.js). Components never hardcode hex values or pixels.
+ */
+:root,
+[data-theme='fjord'] {
+  /* Colour: the Fjord theme. Teal is the action colour, navy (secondary)
+     marks sets, the process colours are for the graph's processing steps. */
+  --md-color-header: #0d3b3a; /* app header (brand navy) */
+  --md-color-text-on-dark: #ffffff;
+  --md-color-text-on-dark-muted: #a9d6cf;
+  --md-color-bg: #eaf2f1; /* page */
+  --md-color-surface: #ffffff;
+  --md-color-surface-subtle: #f3f8f7;
+  --md-color-border: #cfdfdc;
+  --md-color-border-strong: #5f8b86;
+  --md-color-text: #143532;
+  --md-color-text-muted: #47625e;
+  --md-color-primary: #0f6e6a;
+  --md-color-primary-hover: #0a504d;
+  --md-color-on-primary: #ffffff;
+  --md-color-primary-soft: #dcf0ed;
+  --md-color-teal: #0f6e6a;
+  --md-color-secondary: #1d5a8c;
+  --md-color-on-secondary: #ffffff;
+  --md-color-secondary-soft: #e2ecf6;
+  --md-color-graph: #1d4f6e; /* processing steps in the graph */
+  --md-color-on-graph: #ffffff;
+  --md-color-graph-light: #8fd4c2;
+  --md-gradient-graph: linear-gradient(
+    to top right,
+    rgba(29, 79, 110, 0.9),
+    rgba(143, 212, 194, 0.85)
+  );
+  --md-color-focus: #0f6e6a;
+  /* The cruncher cookie. The classic colours depend on the theme; the other
+     presets (Settings page) are below. */
+  --md-cookie-classic: #d9a25f;
+  --md-cookie-classic-edge: #b27a3c;
+  --md-cookie-classic-chip: #5a3413;
+  --md-color-cookie: var(--md-cookie-classic);
+  --md-color-cookie-edge: var(--md-cookie-classic-edge);
+  --md-color-cookie-chip: var(--md-cookie-classic-chip);
+
+  /* Status */
+  --md-color-info: #1d5a8c;
+  --md-color-success: #2e7d32;
+  --md-color-success-soft: #e8f5e9;
+  --md-color-warning: #9a5b00;
+  --md-color-warning-soft: #fff3e0;
+  --md-color-error: #c62828;
+  --md-color-on-error: #ffffff;
+  --md-color-error-soft: #ffebee;
+  --md-color-highlight: #fff3a3;
+
+  /* Depth */
+  --md-shadow-1: 0 1px 2px rgba(13, 59, 58, 0.08);
+  --md-shadow-2: 0 6px 18px rgba(13, 59, 58, 0.1);
+  --md-shadow-3: 0 16px 40px rgba(13, 59, 58, 0.18);
+  --md-drop-shadow: drop-shadow(0 2px 3px rgba(13, 59, 58, 0.3));
+}
+
+[data-theme='fjord-dark'] {
+  --md-color-header: #0a2625;
+  --md-color-text-on-dark: #e4f1ee;
+  --md-color-text-on-dark-muted: #a9d6cf;
+  --md-color-bg: #0c1a19;
+  --md-color-surface: #132625;
+  --md-color-surface-subtle: #182e2d;
+  --md-color-border: #27413f;
+  --md-color-border-strong: #6a948f;
+  --md-color-text: #e4f1ee;
+  --md-color-text-muted: #9fbab5;
+  --md-color-primary: #5cc4b6;
+  --md-color-primary-hover: #86d6cb;
+  --md-color-on-primary: #0a1e1c;
+  --md-color-primary-soft: #173c39;
+  --md-color-teal: #5cc4b6;
+  --md-color-secondary: #7fb2e3;
+  --md-color-on-secondary: #0b1a2a;
+  --md-color-secondary-soft: #1a3048;
+  --md-color-graph: #2a6a8f;
+  --md-color-on-graph: #ffffff;
+  --md-color-graph-light: #8fd4c2;
+  --md-gradient-graph: linear-gradient(
+    to top right,
+    rgba(42, 106, 143, 0.9),
+    rgba(143, 212, 194, 0.6)
+  );
+  --md-color-focus: #86d6cb;
+  --md-cookie-classic: #d9a25f;
+  --md-cookie-classic-edge: #e0b377;
+  --md-cookie-classic-chip: #4a2a0f;
+  --md-color-cookie: var(--md-cookie-classic);
+  --md-color-cookie-edge: var(--md-cookie-classic-edge);
+  --md-color-cookie-chip: var(--md-cookie-classic-chip);
+  --md-color-info: #7fb2e3;
+  --md-color-success: #7cc98a;
+  --md-color-success-soft: #1b3326;
+  --md-color-warning: #f0b05a;
+  --md-color-warning-soft: #3a2c14;
+  --md-color-error: #ef7a7a;
+  --md-color-on-error: #0b1a2a;
+  --md-color-error-soft: #3d1f24;
+  --md-color-highlight: #5a4a00;
+  --md-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --md-shadow-2: 0 6px 18px rgba(0, 0, 0, 0.45);
+  --md-shadow-3: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --md-drop-shadow: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+}
+
+/* The other themes (Settings page). Same tokens; the source palettes use the
+   names brand-navy, page, ink, process, which map onto --md-color-*. */
+/* Navy: the original MessyDesk look. Blue is the action colour, teal
+   (secondary) marks sets. */
+[data-theme='light'] {
+  --md-color-header: #002957;
+  --md-color-text-on-dark: #ffffff;
+  --md-color-text-on-dark-muted: #9fc2e4;
+  --md-color-bg: #edf2f6;
+  --md-color-surface: #ffffff;
+  --md-color-surface-subtle: #f5f7fa;
+  --md-color-border: #d5dee8;
+  --md-color-border-strong: #6d88a6;
+  --md-color-text: #17324f;
+  --md-color-text-muted: #4f6580;
+  --md-color-primary: #1565c0;
+  --md-color-primary-hover: #0d47a1;
+  --md-color-on-primary: #ffffff;
+  --md-color-primary-soft: #e3f2fd;
+  --md-color-teal: #1565c0;
+  --md-color-secondary: #187a62;
+  --md-color-on-secondary: #ffffff;
+  --md-color-secondary-soft: #e3f4ee;
+  --md-color-graph: #13547a;
+  --md-color-on-graph: #ffffff;
+  --md-color-graph-light: #80d0c7;
+  --md-gradient-graph: linear-gradient(
+    to top right,
+    rgba(19, 84, 122, 0.9),
+    rgba(128, 208, 199, 0.85)
+  );
+  --md-color-focus: #1565c0;
+  --md-cookie-classic: #d9a25f;
+  --md-cookie-classic-edge: #b27a3c;
+  --md-cookie-classic-chip: #5a3413;
+  --md-color-cookie: var(--md-cookie-classic);
+  --md-color-cookie-edge: var(--md-cookie-classic-edge);
+  --md-color-cookie-chip: var(--md-cookie-classic-chip);
+  --md-color-info: #1565c0;
+  --md-color-success: #2e7d32;
+  --md-color-success-soft: #e8f5e9;
+  --md-color-warning: #9a5b00;
+  --md-color-warning-soft: #fff3e0;
+  --md-color-error: #c62828;
+  --md-color-on-error: #ffffff;
+  --md-color-error-soft: #ffebee;
+  --md-color-highlight: #fff3a3;
+  --md-shadow-1: 0 1px 2px rgba(14, 67, 101, 0.08);
+  --md-shadow-2: 0 6px 18px rgba(14, 67, 101, 0.1);
+  --md-shadow-3: 0 16px 40px rgba(14, 67, 101, 0.18);
+  --md-drop-shadow: drop-shadow(0 2px 3px rgba(14, 67, 101, 0.3));
+}
+
+/* Navy dark. */
+[data-theme='dark'] {
+  --md-color-header: #0a1d33;
+  --md-color-text-on-dark: #e6edf4;
+  --md-color-text-on-dark-muted: #9fc2e4;
+  --md-color-bg: #0e1a26;
+  --md-color-surface: #152433;
+  --md-color-surface-subtle: #1a2b3c;
+  --md-color-border: #2c4157;
+  --md-color-border-strong: #6f8aa6;
+  --md-color-text: #e6edf4;
+  --md-color-text-muted: #9fb2c6;
+  --md-color-primary: #64a8f0;
+  --md-color-primary-hover: #8cc0f5;
+  --md-color-on-primary: #0b1a2a;
+  --md-color-primary-soft: #1b3552;
+  --md-color-teal: #64a8f0;
+  --md-color-secondary: #4cc3a3;
+  --md-color-on-secondary: #0b1a2a;
+  --md-color-secondary-soft: #173a36;
+  --md-color-graph: #1f6a94;
+  --md-color-on-graph: #ffffff;
+  --md-color-graph-light: #80d0c7;
+  --md-gradient-graph: linear-gradient(
+    to top right,
+    rgba(31, 106, 148, 0.9),
+    rgba(128, 208, 199, 0.6)
+  );
+  --md-color-focus: #8cc0f5;
+  --md-cookie-classic: #d9a25f;
+  --md-cookie-classic-edge: #e0b377;
+  --md-cookie-classic-chip: #4a2a0f;
+  --md-color-cookie: var(--md-cookie-classic);
+  --md-color-cookie-edge: var(--md-cookie-classic-edge);
+  --md-color-cookie-chip: var(--md-cookie-classic-chip);
+  --md-color-info: #64a8f0;
+  --md-color-success: #7cc98a;
+  --md-color-success-soft: #1b3326;
+  --md-color-warning: #f0b05a;
+  --md-color-warning-soft: #3a2c14;
+  --md-color-error: #ef7a7a;
+  --md-color-on-error: #0b1a2a;
+  --md-color-error-soft: #3d1f24;
+  --md-color-highlight: #5a4a00;
+  --md-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --md-shadow-2: 0 6px 18px rgba(0, 0, 0, 0.45);
+  --md-shadow-3: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --md-drop-shadow: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+}
+
+/* Slate: neutral greys with a muted blue action colour. */
+[data-theme='slate'] {
+  --md-color-header: #1f2833;
+  --md-color-text-on-dark: #f3f5f7;
+  --md-color-text-on-dark-muted: #aab6c3;
+  --md-color-bg: #f1f3f5;
+  --md-color-surface: #ffffff;
+  --md-color-surface-subtle: #f6f7f9;
+  --md-color-border: #dde1e6;
+  --md-color-border-strong: #76808c;
+  --md-color-text: #1d242c;
+  --md-color-text-muted: #56606b;
+  --md-color-primary: #2d5b93;
+  --md-color-primary-hover: #1f4371;
+  --md-color-on-primary: #ffffff;
+  --md-color-primary-soft: #e6edf6;
+  --md-color-teal: #2d5b93;
+  --md-color-secondary: #3f6b5a;
+  --md-color-on-secondary: #ffffff;
+  --md-color-secondary-soft: #e6efeb;
+  --md-color-graph: #34495e;
+  --md-color-on-graph: #ffffff;
+  --md-color-graph-light: #9fb4c8;
+  --md-gradient-graph: linear-gradient(
+    to top right,
+    rgba(52, 73, 94, 0.9),
+    rgba(159, 180, 200, 0.85)
+  );
+  --md-color-focus: #2d5b93;
+  --md-cookie-classic: #d9a25f;
+  --md-cookie-classic-edge: #b27a3c;
+  --md-cookie-classic-chip: #5a3413;
+  --md-color-cookie: var(--md-cookie-classic);
+  --md-color-cookie-edge: var(--md-cookie-classic-edge);
+  --md-color-cookie-chip: var(--md-cookie-classic-chip);
+  --md-color-info: #2d5b93;
+  --md-color-success: #2e7d32;
+  --md-color-success-soft: #e8f5e9;
+  --md-color-warning: #9a5b00;
+  --md-color-warning-soft: #fff3e0;
+  --md-color-error: #c62828;
+  --md-color-on-error: #ffffff;
+  --md-color-error-soft: #ffebee;
+  --md-color-highlight: #fff3a3;
+  --md-shadow-1: 0 1px 2px rgba(31, 40, 51, 0.08);
+  --md-shadow-2: 0 6px 18px rgba(31, 40, 51, 0.1);
+  --md-shadow-3: 0 16px 40px rgba(31, 40, 51, 0.18);
+  --md-drop-shadow: drop-shadow(0 2px 3px rgba(31, 40, 51, 0.3));
+}
+
+/* Reading room: warm paper tones, green actions, rust sets. */
+[data-theme='warm'] {
+  --md-color-header: #2f4a3e;
+  --md-color-text-on-dark: #fbf6ee;
+  --md-color-text-on-dark-muted: #cfdcc9;
+  --md-color-bg: #f5efe6;
+  --md-color-surface: #fffcf7;
+  --md-color-surface-subtle: #f9f4ec;
+  --md-color-border: #e4d9c9;
+  --md-color-border-strong: #8c7a66;
+  --md-color-text: #2e261f;
+  --md-color-text-muted: #6a5b4d;
+  --md-color-primary: #1f6650;
+  --md-color-primary-hover: #154a3a;
+  --md-color-on-primary: #ffffff;
+  --md-color-primary-soft: #e2efe7;
+  --md-color-teal: #1f6650;
+  --md-color-secondary: #9a4a26;
+  --md-color-on-secondary: #ffffff;
+  --md-color-secondary-soft: #f7e6dc;
+  --md-color-graph: #3d5a73;
+  --md-color-on-graph: #ffffff;
+  --md-color-graph-light: #d6b27a;
+  --md-gradient-graph: linear-gradient(
+    to top right,
+    rgba(61, 90, 115, 0.9),
+    rgba(214, 178, 122, 0.85)
+  );
+  --md-color-focus: #1f6650;
+  --md-cookie-classic: #d9a25f;
+  --md-cookie-classic-edge: #b27a3c;
+  --md-cookie-classic-chip: #5a3413;
+  --md-color-cookie: var(--md-cookie-classic);
+  --md-color-cookie-edge: var(--md-cookie-classic-edge);
+  --md-color-cookie-chip: var(--md-cookie-classic-chip);
+  --md-color-info: #1f6650;
+  --md-color-success: #2f7a3a;
+  --md-color-success-soft: #e7f2e3;
+  --md-color-warning: #8f5a00;
+  --md-color-warning-soft: #fbeed3;
+  --md-color-error: #b3261e;
+  --md-color-on-error: #ffffff;
+  --md-color-error-soft: #fbe6e1;
+  --md-color-highlight: #fbe38a;
+  --md-shadow-1: 0 1px 2px rgba(74, 52, 32, 0.08);
+  --md-shadow-2: 0 6px 18px rgba(74, 52, 32, 0.1);
+  --md-shadow-3: 0 16px 40px rgba(74, 52, 32, 0.18);
+  --md-drop-shadow: drop-shadow(0 2px 3px rgba(74, 52, 32, 0.3));
+}
+
+/* Reading room dark. */
+[data-theme='warm-dark'] {
+  --md-color-header: #18241e;
+  --md-color-text-on-dark: #f3ebdf;
+  --md-color-text-on-dark-muted: #b9c7b3;
+  --md-color-bg: #1b1713;
+  --md-color-surface: #25201a;
+  --md-color-surface-subtle: #2d2720;
+  --md-color-border: #3e352b;
+  --md-color-border-strong: #8f7f6c;
+  --md-color-text: #f1e8dc;
+  --md-color-text-muted: #bfb0a0;
+  --md-color-primary: #74c2a4;
+  --md-color-primary-hover: #98d4bc;
+  --md-color-on-primary: #16201b;
+  --md-color-primary-soft: #233a31;
+  --md-color-teal: #74c2a4;
+  --md-color-secondary: #e59b74;
+  --md-color-on-secondary: #231710;
+  --md-color-secondary-soft: #3d271c;
+  --md-color-graph: #56799a;
+  --md-color-on-graph: #ffffff;
+  --md-color-graph-light: #d6b27a;
+  --md-gradient-graph: linear-gradient(
+    to top right,
+    rgba(86, 121, 154, 0.9),
+    rgba(214, 178, 122, 0.6)
+  );
+  --md-color-focus: #98d4bc;
+  --md-cookie-classic: #d9a25f;
+  --md-cookie-classic-edge: #e0b377;
+  --md-cookie-classic-chip: #4a2a0f;
+  --md-color-cookie: var(--md-cookie-classic);
+  --md-color-cookie-edge: var(--md-cookie-classic-edge);
+  --md-color-cookie-chip: var(--md-cookie-classic-chip);
+  --md-color-info: #74c2a4;
+  --md-color-success: #8fcf8a;
+  --md-color-success-soft: #223322;
+  --md-color-warning: #f0b660;
+  --md-color-warning-soft: #3b2d15;
+  --md-color-error: #f08a7e;
+  --md-color-on-error: #231311;
+  --md-color-error-soft: #3f211d;
+  --md-color-highlight: #5d4a12;
+  --md-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --md-shadow-2: 0 6px 18px rgba(0, 0, 0, 0.45);
+  --md-shadow-3: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --md-drop-shadow: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+}
+
+/* Cookie colour presets, chosen on the Settings page. The attribute sits on
+   <html>, or on a single element to preview a preset there. */
+[data-cookie='classic'] {
+  --md-color-cookie: var(--md-cookie-classic);
+  --md-color-cookie-edge: var(--md-cookie-classic-edge);
+  --md-color-cookie-chip: var(--md-cookie-classic-chip);
+}
+
+[data-cookie='chocolate'] {
+  --md-color-cookie: #6b3f22;
+  --md-color-cookie-edge: #9a6a45;
+  --md-color-cookie-chip: #f3e6d2;
+}
+
+[data-cookie='matcha'] {
+  --md-color-cookie: #a5c77f;
+  --md-color-cookie-edge: #6f9650;
+  --md-color-cookie-chip: #34501f;
+}
+
+[data-cookie='strawberry'] {
+  --md-color-cookie: #f2a9b6;
+  --md-color-cookie-edge: #d0788b;
+  --md-color-cookie-chip: #8c2a3e;
+}
+
+[data-cookie='blueberry'] {
+  --md-color-cookie: #a3b8e2;
+  --md-color-cookie-edge: #6c86bf;
+  --md-color-cookie-chip: #2b3f78;
+}
+
+:root {
+  /* Typography */
+  --md-font-body: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --md-font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --md-font-title: 'Junicode', 'Palatino Linotype', Georgia, serif;
+  --md-font-size-xs: 0.75rem;
+  --md-font-size-sm: 0.875rem;
+  --md-font-size-md: 1rem;
+  --md-font-size-lg: 1.25rem;
+  --md-font-size-xl: 1.5rem;
+  --md-font-size-2xl: 2rem;
+  --md-font-weight-regular: 400;
+  --md-font-weight-medium: 500;
+  --md-font-weight-bold: 600;
+  --md-line-height: 1.5;
+
+  /* Spacing (4 px scale) */
+  --md-space-1: 4px;
+  --md-space-2: 8px;
+  --md-space-3: 12px;
+  --md-space-4: 16px;
+  --md-space-5: 24px;
+  --md-space-6: 32px;
+  --md-space-7: 48px;
+
+  /* Shape and depth */
+  --md-radius-sm: 4px;
+  --md-radius-md: 8px;
+  --md-radius-lg: 12px;
+  --md-radius-pill: 999px;
+
+  /* Layout */
+  --md-header-height: 64px;
+  --md-header-logo-size: 40px;
+  --md-logo-size-lg: 80px;
+  --md-dialog-width: 480px;
+  --md-card-min-width: 280px;
+  --md-swatch-min-width: 128px;
+  --md-media-max-height: 320px;
+
+  /* Graph nodes */
+  --md-node-width: 280px;
+  --md-node-width-wide: 320px;
+  --md-node-body-max-height: 360px;
+  --md-node-cookie-size: 44px;
+  --md-content-max-width: 1280px;
+}

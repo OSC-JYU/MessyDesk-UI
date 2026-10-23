@@ -27,7 +27,7 @@ export function connect() {
     try {
       const data = JSON.parse(event.data)
       routeEvent(data)
-    } catch (e) {
+    } catch {
       // ignore parse errors
     }
   }

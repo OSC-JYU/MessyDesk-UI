@@ -1,0 +1,15 @@
+// Users, permission requests and service groups.
+// Thin wrappers over the Axios client in client.js, grouped by area.
+import web from './client.js'
+
+export const getUsers = (...args) => web.getUsers(...args)
+export const getPermissionRequests = (...args) => web.getPermissionRequests(...args)
+export const removePermissionRequest = (...args) => web.removePermissionRequest(...args)
+export const createUser = (...args) => web.createUser(...args)
+export const updateUserServiceGroups = (...args) => web.updateUserServiceGroups(...args)
+export const getServiceGroups = (...args) => web.getServiceGroups(...args)
+export const createServiceGroup = (...args) => web.createServiceGroup(...args)
+export const updateServiceGroup = (...args) => web.updateServiceGroup(...args)
+export const getServiceGroupUsage = (...args) => web.getServiceGroupUsage(...args)
+export const deleteServiceGroup = (...args) => web.deleteServiceGroup(...args)
+export const uploadServiceGroupLogo = (...args) => web.uploadServiceGroupLogo(...args)

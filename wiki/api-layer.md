@@ -1,13 +1,13 @@
-# API Layer (`web.js`)
+# API Layer (`src/api/`)
 
 ## Design
 
-All HTTP communication is centralized in `src/web.js`, which exports a single `web` object with async methods. Axios is configured once with:
+All HTTP communication goes through `src/api/client.js`, which exports a single `web` object with async methods. Code does not import it directly: it calls the area modules in `src/api/` (`projects`, `files`, `services`, `search`, `entities`, `admin`, `session`), which wrap it. Axios is configured once with:
 
 - `baseURL` from `VITE_API_PATH`
-- A global response interceptor that normalizes errors into `{ status, message }` shape
+- A global response interceptor that normalizes errors into `{ status, message }` shape and reports 401/302 responses to the handler set with `onAuthError()` (see [authentication.md](authentication.md))
 
-**Verified from:** `src/web.js`
+**Verified from:** `src/api/client.js`
 
 ## Error Handling Pattern
 
@@ -19,9 +19,9 @@ The interceptor transforms Axios errors into three categories:
 | No response (network) | `0` | `'Network error - no response received'` |
 | Request config error | `0` | `'Request configuration error'` |
 
-Components consuming `web.*` functions receive rejected promises with `{ status, message }` objects (not Axios error objects).
+Components calling `api/` functions receive rejected promises with `{ status, message }` objects (not Axios error objects).
 
-**Verified from:** `src/web.js` (interceptor)
+**Verified from:** `src/api/client.js` (interceptor)
 
 ## API Method Categories
 
@@ -98,22 +98,48 @@ Components consuming `web.*` functions receive rejected promises with `{ status,
 | Method | Verb | Endpoint |
 |--------|------|----------|
 | `getEntities()` | GET | `/api/entities` |
-| `getEntitySchema()` | GET | `/api/entities/types` |
+| `getEntityTypes({ counts })` | GET | `/api/entities/types` (`?counts=1` adds `count` and `protected`) |
+| `createEntityType(type, color)` | POST | `/api/entities/types` |
+| `deleteEntityType(type)` | DELETE | `/api/entities/types/:type` (name URL-encoded) |
 | `getSetEntities(setRid)` | GET | `/api/entities/sets/:rid` |
-| `getEntityItems(entities, options)` | GET | `/api/entities/items` |
+| `getEntityItems(entities, options)` | GET | `/api/entities/items` (`options.match: 'and'` for files with all the tags; default any; `options.skip` / `options.limit` for a page). Returns `{ total, skip, limit, items }` |
 | `getEntitiesByType(type)` | GET | `/api/entities/types/:type` |
-| `createEntity(type, label)` | POST | `/api/entities` |
+| `createEntity(type, label, projectRid)` | POST | `/api/entities` (`project_rid` required) |
 | `linkEntityToItem(entityRID, itemRid)` | POST | `/api/entities/:eid/vertex/:vid` |
 | `unLinkEntity(entityRID, itemRid)` | DELETE | `/api/entities/:eid/vertex/:vid` |
-| `getTags()` | GET | `/api/tags` |
-| `createTag(label)` | POST | `/api/tags` |
-| `getMachineTags()` | GET | `/api/tags/machine` |
+| `getTags({ projectRid })` | GET | `/api/tags` (the desk's Tag entities; all without a desk) |
+| `createTag(label, description, projectRid)` | POST | `/api/tags` (`project_rid` required) |
+| `getTagAdmin({ projectRid, search, skip, limit })` | GET | `/api/tags/admin` |
+| `getEntityUsage(entityRID)` | GET | `/api/entities/:eid/usage` |
+| `renameEntity(entityRID, label, description)` | PATCH | `/api/entities/:eid` |
+| `deleteEntity(entityRID)` | DELETE | `/api/entities/:eid` (delete everywhere) |
+| `createDeskTag(projectRid, { type, label, description })` | POST | `/api/projects/:rid/tags` |
+| `importDeskTags(projectRid, { entity_rids } or { from_project_rid })` | POST | `/api/projects/:rid/tags/import` |
+| `removeDeskTag(projectRid, entityRID)` | DELETE | `/api/projects/:rid/tags/:eid` |
+| `getRoiLabels({ projectRids, search, offset, limit })` | GET | `/api/tags/roi/labels` |
+| `getMachineTags({ projectRids })` | GET | `/api/tags/machine` |
 | `getMachineTagFiles(entityRID, serviceId, task)` | GET | `/api/tags/machine/:eid/files` |
 | `getNerRegions(fileRID)` | GET | `/api/files/:rid/ner` |
 
+Tag types are per user, shared by all their desks. `getEntityTypes({ counts: true })` adds `count` (tags of the
+type in all desks, human and machine) and `protected` (true only for `Tag`, which autotag uses and which can
+never be deleted). `createEntityType` rejects with 400 (invalid name) or 409 (name exists, case-insensitive);
+`deleteEntityType` rejects with 409 while the type has tags and 400 for `Tag`. `createEntity`/`createTag` answer
+400 for a missing or unknown type.
+
 `getTags`/`createTag` operate on manual Tag entities (backed by `TagLink` rows with `created_by: 'user'`).
+Human tags belong to desks (backend `DeskTag`): creating needs a `projectRid`, `getTags`/`getEntities`/
+`getEntitiesByType` with a desk list that desk's tags (also unused ones), and `getEntitiesByType` items of human
+tags carry `desks: [{ rid, label }]`. The admin calls (`getTagAdmin` … `removeDeskTag`) work on human tags only
+(machine tags answer 400). `renameEntity` renames in every desk that has the tag and rejects with
+`{ status: 409, message }` when one already has that label. `getRoiLabels` lists labels of indexed `ner.json`
+runs (`{ items: [{ service_id, task, model, label, count, service_name }], hasMore }`; `model` is `''` for none)
+and fails when the search index is down. The tag filter (`createFilter('mdf-set-filter', …)`) accepts
+`selected_roi_labels` next to `selected_entity_rids`.
 `getMachineTags`/`getMachineTagFiles` browse machine-generated tags (`created_by: 'machine'`), grouped by
-the service/task that produced them — used by `TagsMain.vue`. Per-mention detail (start/end/confidence) for
+the service/task/model that produced them (limited to the Tags page's desks) — used by `TagsPage.vue`,
+labelled by `tagGroups.js` `runLabel` as "service: task" or, for runs with a model,
+"model (provider name): task". Per-mention detail (start/end/confidence) for
 a machine tag is not stored per-region; `getNerRegions` reads the source `ner.json` file node directly and
 the UI filters its regions by label client-side.
 
@@ -149,7 +175,7 @@ the UI filters its regions by label client-side.
 
 All methods that accept a graph RID (OrientDB-style `#cluster:position`) strip the `#` prefix before embedding it in URLs using `.replace('#','')`. This is applied consistently across all methods.
 
-**Verified from:** `src/web.js` (every method using rid parameters)
+**Verified from:** `src/api/client.js` (every method using rid parameters)
 
 ## Fallback Behavior
 
@@ -157,4 +183,4 @@ All methods that accept a graph RID (OrientDB-style `#cluster:position`) strip t
 
 **Inferred purpose:** Allows the UI to gracefully degrade when the backend doesn't support project-scoped filtering.
 
-**Verified from:** `src/web.js` (`search`, `getEntityItems` methods)
+**Verified from:** `src/api/client.js` (`search`, `getEntityItems` methods)
