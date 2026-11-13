@@ -16,15 +16,25 @@ const workspace = useWorkspace()
       <p class="empty-desk__quote">
         “If a cluttered desk is a sign of a cluttered mind, of what, then, is an empty desk a sign?”
       </p>
-      <v-btn
-        color="primary"
-        variant="flat"
-        prepend-icon="mdi-upload"
-        class="nodrag"
-        @click="workspace.uploadToDesk()"
-      >
-        Upload a file
-      </v-btn>
+      <div class="empty-desk__actions">
+        <v-btn
+          color="primary"
+          variant="flat"
+          prepend-icon="mdi-upload"
+          class="nodrag"
+          @click="workspace.uploadToDesk()"
+        >
+          Upload a file
+        </v-btn>
+        <v-btn
+          variant="tonal"
+          prepend-icon="mdi-folder-plus-outline"
+          class="nodrag"
+          @click="workspace.openCreateSet()"
+        >
+          Create set
+        </v-btn>
+      </div>
     </v-card-text>
   </v-card>
 </template>
@@ -39,6 +49,12 @@ const workspace = useWorkspace()
 .empty-desk__title {
   font-family: var(--md-font-title);
   font-size: var(--md-font-size-xl);
+}
+
+.empty-desk__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--md-space-2);
 }
 
 .empty-desk__quote {

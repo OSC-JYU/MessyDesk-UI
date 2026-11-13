@@ -18,6 +18,7 @@ const DATA_FIELDS = [
   'processed',
   'params',
   'types',
+  '_file_removed',
 ]
 
 export const EMPTY_DESK_ID = 'empty-desk'
@@ -101,6 +102,7 @@ const UPDATE_FIELDS = [
   'metadata',
   'paths',
   'edited',
+  '_file_removed',
 ]
 
 // Copies changed fields onto `target`; returns whether anything changed.

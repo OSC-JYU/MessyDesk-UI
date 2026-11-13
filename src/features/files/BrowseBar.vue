@@ -1,21 +1,53 @@
 <script setup>
 import { computed } from 'vue'
+import BarHeader from '@/ui/BarHeader.vue'
+import BreadcrumbTrail from '@/ui/BreadcrumbTrail.vue'
 import { browsePosition } from './browseQuery.js'
 
-// Bar above the file when it was opened from a set or a result list:
-// where it is in the list, previous/next, and the way back.
+// The bar above the file, like the bar of the set browser: where the file is (the set, the PDF
+// it comes from, the file), previous/next through the set or result list, and close (back to the
+// desk). Clicking a step of the path goes back to it.
 const props = defineProps({
   context: { type: Object, default: null },
   file: { type: Object, default: null },
 })
 
+// `back` gives where to return: { origin } is the PDF to open inside the set.
 const emit = defineEmits(['prev', 'next', 'back', 'close'])
 
 const position = computed(() => browsePosition(props.context))
 const isSet = computed(() => props.context?.mode === 'set')
-const setTitle = computed(
-  () => props.context?.set_label || String(props.context?.set_rid || '').replace('#', ''),
-)
+
+const crumbs = computed(() => {
+  const items = []
+  if (isSet.value) {
+    items.push({
+      key: 'set',
+      label: props.context.set_label || 'Set',
+      icon: 'mdi-folder-multiple-outline',
+      back: {},
+    })
+    if (props.file?.origin_label) {
+      items.push({
+        key: 'origin',
+        label: props.file.origin_label,
+        icon: 'mdi-file-pdf-box',
+        color: 'error',
+        back: { origin: props.context.origin_rid ?? props.file.origin_rid },
+      })
+    }
+  } else if (props.context?.mode === 'search') {
+    items.push({
+      key: 'results',
+      label: props.context.query || 'Results',
+      icon: props.context.kind === 'tags' ? 'mdi-tag-outline' : 'mdi-magnify',
+      back: {},
+    })
+  }
+  items.push({ key: 'file', label: props.file?.label || '…' })
+  return items
+})
+
 const tags = computed(() =>
   (props.file?.entities || props.file?.tags || [])
     .map((tag) => (typeof tag === 'string' ? { label: tag } : tag))
@@ -24,28 +56,12 @@ const tags = computed(() =>
 </script>
 
 <template>
-  <nav class="browse-bar" aria-label="Browse files">
-    <span v-if="!position" class="browse-bar__file">{{ file?.label }}</span>
-    <v-chip
-      v-else-if="isSet"
-      prepend-icon="mdi-folder-multiple-outline"
-      size="small"
-      label
-      variant="flat"
-      color="secondary"
-    >
-      {{ setTitle }}
-    </v-chip>
-    <v-chip
-      v-else-if="context?.mode === 'search'"
-      :prepend-icon="context.kind === 'tags' ? 'mdi-tag-outline' : 'mdi-magnify'"
-      size="small"
-      label
-      variant="flat"
-      color="primary"
-    >
-      {{ context.query }}
-    </v-chip>
+  <BarHeader label="Browse files">
+    <BreadcrumbTrail
+      :items="crumbs"
+      label="Where the file is"
+      @select="(item) => emit('back', item.back)"
+    />
     <v-chip v-if="isSet && context.source_label" size="small" label variant="tonal">
       Original: {{ context.source_label }}
     </v-chip>
@@ -85,39 +101,16 @@ const tags = computed(() =>
 
     <v-spacer />
     <v-btn
-      v-if="position"
-      size="small"
-      variant="text"
-      prepend-icon="mdi-arrow-left"
-      @click="emit('back')"
-    >
-      {{ isSet ? 'Back to set' : 'Back to results' }}
-    </v-btn>
-    <v-btn
       icon="mdi-close"
       size="small"
       variant="text"
       aria-label="Close file"
       @click="emit('close')"
     />
-  </nav>
+  </BarHeader>
 </template>
 
 <style scoped>
-.browse-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--md-space-2);
-  padding: var(--md-space-1) var(--md-space-4);
-  border-bottom: 1px solid var(--md-color-border);
-  background: var(--md-color-surface);
-}
-
-.browse-bar__file {
-  font-weight: var(--md-font-weight-medium);
-}
-
 .browse-bar__stepper {
   display: flex;
   align-items: center;

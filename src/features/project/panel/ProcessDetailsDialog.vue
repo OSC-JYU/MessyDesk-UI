@@ -3,6 +3,8 @@ import { computed, reactive, watch } from 'vue'
 import { getBatch, resumeBatch } from '@/api/services.js'
 import StatusChip from '@/ui/StatusChip.vue'
 import ErrorAlert from '@/ui/ErrorAlert.vue'
+import ApiKeyDialog from '@/features/services/crunchers/ApiKeyDialog.vue'
+import { loadCredentialFields } from '@/features/services/crunchers/serviceCredentials.js'
 
 // The raw details of a processing step and its batch job; a paused batch
 // can be resumed from here.
@@ -10,6 +12,7 @@ const open = defineModel({ type: Boolean, default: false })
 const props = defineProps({ node: { type: Object, required: true } })
 
 const state = reactive({ batch: null, loading: false, resuming: false, error: null })
+const keyDialog = reactive({ open: false, error: '', fields: [] })
 const status = computed(
   () => state.batch?.status || state.batch?.state || props.node.data?.status || 'unknown',
 )
@@ -34,13 +37,26 @@ async function refresh() {
   }
 }
 
-async function resume() {
+async function resume(apiKey) {
   state.resuming = true
   try {
-    await resumeBatch(props.node.id)
+    await resumeBatch(props.node.id, { apiKey })
+    keyDialog.open = false
+    keyDialog.fields = []
     await refresh()
   } catch (error) {
-    state.error = error
+    // A provider that needs the user's own key asks for it again.
+    if (/own API key/i.test(error?.message || '')) {
+      if (!keyDialog.open) {
+        keyDialog.fields = await loadCredentialFields(
+          state.batch?.topic || state.batch?.service_id || props.node.data?.service_id,
+        )
+      }
+      keyDialog.error = apiKey ? error.message : ''
+      keyDialog.open = true
+    } else {
+      state.error = error
+    }
   } finally {
     state.resuming = false
   }
@@ -74,7 +90,7 @@ watch(open, (isOpen) => isOpen && refresh())
             variant="flat"
             prepend-icon="mdi-play"
             :loading="state.resuming"
-            @click="resume"
+            @click="resume()"
           >
             Resume
           </v-btn>
@@ -86,6 +102,12 @@ watch(open, (isOpen) => isOpen && refresh())
         <v-btn variant="text" @click="open = false">Close</v-btn>
       </v-card-actions>
     </v-card>
+    <ApiKeyDialog
+      v-model="keyDialog.open"
+      :error="keyDialog.error"
+      :fields="keyDialog.fields"
+      @submit="resume($event)"
+    />
   </v-dialog>
 </template>
 

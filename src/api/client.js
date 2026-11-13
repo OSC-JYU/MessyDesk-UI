@@ -350,6 +350,58 @@ web.uploadServiceGroupLogo = async function (id, fileObject) {
   return result.data
 }
 
+// Demo desks: users list and import them, admins manage them.
+web.getDemos = async function () {
+  var result = await axios.get(`/api/demos`)
+  return result.data
+}
+
+web.importDemo = async function (id) {
+  var result = await axios.post(`/api/demos/${encodeURIComponent(id)}/import`, {})
+  return result.data
+}
+
+web.getAdminDemos = async function () {
+  var result = await axios.get(`/api/admin/demos`)
+  return result.data
+}
+
+web.createDemo = async function (data) {
+  var result = await axios.post(`/api/admin/demos`, data)
+  return result.data
+}
+
+web.uploadDemoBundle = async function (fileObject, meta) {
+  var query = meta ? `?meta=${encodeURIComponent(JSON.stringify(meta))}` : ''
+  var result = await axios.post(`/api/admin/demos/upload${query}`, fileObject, {
+    headers: { 'Content-Type': 'application/zip' },
+    maxBodyLength: Infinity,
+  })
+  return result.data
+}
+
+web.updateDemo = async function (id, data) {
+  var result = await axios.put(`/api/admin/demos/${encodeURIComponent(id)}`, data)
+  return result.data
+}
+
+web.reexportDemo = async function (id, project) {
+  var result = await axios.post(`/api/admin/demos/${encodeURIComponent(id)}/export`, { project })
+  return result.data
+}
+
+web.uploadDemoCover = async function (id, fileObject) {
+  var result = await axios.put(`/api/admin/demos/${encodeURIComponent(id)}/cover`, fileObject, {
+    headers: { 'Content-Type': fileObject.type },
+  })
+  return result.data
+}
+
+web.deleteDemo = async function (id) {
+  var result = await axios.delete(`/api/admin/demos/${encodeURIComponent(id)}`)
+  return result.data
+}
+
 web.getServicesForFile = async function (file_rid, filter) {
   var filter_query = ''
   if (filter) filter_query = '?filter=' + filter
@@ -449,8 +501,11 @@ web.getSetFiles = async function (rid, skip, limit, options = {}) {
   const params = new URLSearchParams()
   if (skip !== undefined && skip !== null) params.set('skip', String(skip))
   if (limit !== undefined && limit !== null) params.set('limit', String(limit))
-  if (options.groupByOrigin) params.set('group_by_origin', 'true')
-  if (options.sourceRid) params.set('source_rid', String(options.sourceRid).replace('#', ''))
+  // group: 'origin' lists the set by the original PDF of its files. With `origin` (a PDF's rid) it
+  // lists the files of that PDF; with order: 'flat' the whole set in the grouped order.
+  if (options.group) params.set('group', options.group)
+  if (options.origin) params.set('origin', String(options.origin).replace('#', ''))
+  if (options.order) params.set('order', options.order)
 
   const query = params.toString() ? `?${params.toString()}` : ''
   var result = await axios.get(`/api/sets/${rid.replace('#', '')}/files${query}`)
@@ -799,23 +854,27 @@ web.getMyGraph = async function (rel_types = [], node_types = [], q_return = '')
   return result
 }
 
-web.createFileProcess = async function (process, file_rid) {
+// A user's own API key for an external provider goes in a header, never in the request body:
+// bodies are stored with the run, the key is kept in the backend's memory only.
+function keyOptions(apiKey) {
+  return apiKey ? { headers: { 'X-MD-API-Key': apiKey } } : undefined
+}
+
+web.createFileProcess = async function (process, file_rid, { apiKey } = {}) {
   const url = `/api/queue/${process.service}/files/${file_rid.replace('#', '')}`
-  console.log(url)
-  var result = await axios.post(url, process)
+  var result = await axios.post(url, process, keyOptions(apiKey))
   return result
 }
 
-web.createROIProcess = async function (process, file_rid) {
+web.createROIProcess = async function (process, file_rid, { apiKey } = {}) {
   const url = `/api/queue/${process.service}/files/${file_rid.replace('#', '')}/roi`
-  console.log(url)
-  var result = await axios.post(url, process)
+  var result = await axios.post(url, process, keyOptions(apiKey))
   return result
 }
 
-web.createSetProcess = async function (process, set_rid) {
+web.createSetProcess = async function (process, set_rid, { apiKey } = {}) {
   const url = `/api/queue/${process.service}/sets/${set_rid.replace('#', '')}`
-  var result = await axios.post(url, process)
+  var result = await axios.post(url, process, keyOptions(apiKey))
   return result
 }
 
@@ -865,9 +924,9 @@ web.pauseBatch = async function (process_rid) {
   return result.data
 }
 
-web.resumeBatch = async function (process_rid) {
+web.resumeBatch = async function (process_rid, { apiKey } = {}) {
   const url = `/api/batches/${process_rid.replace('#', '')}/resume`
-  const result = await axios.post(url)
+  const result = await axios.post(url, undefined, keyOptions(apiKey))
   return result.data
 }
 
@@ -916,6 +975,26 @@ web.setNodeAttribute = async function (rid, data) {
 web.setProjectAttribute = async function (rid, data) {
   var result = await axios.put(`/api/projects/${rid.replace('#', '')}`, data)
   return result
+}
+
+// Desk cover: an uploaded image, the thumbnail of an image file of the desk, or (reset) the first image.
+web.uploadProjectCover = async function (rid, fileObject) {
+  var result = await axios.put(`/api/projects/${rid.replace('#', '')}/cover`, fileObject, {
+    headers: { 'Content-Type': fileObject.type },
+  })
+  return result.data
+}
+
+web.setProjectCoverFile = async function (rid, fileRid) {
+  var result = await axios.put(`/api/projects/${rid.replace('#', '')}/cover-file`, {
+    file: fileRid,
+  })
+  return result.data
+}
+
+web.resetProjectCover = async function (rid) {
+  var result = await axios.delete(`/api/projects/${rid.replace('#', '')}/cover`)
+  return result.data
 }
 
 web.getSourceInit = async function (rid) {
@@ -978,7 +1057,6 @@ web.uploadFile = async function (fileObject, project_rid, set_rid, options = {})
 
   const queryParams = []
   if (options.noThumbnails) queryParams.push('no-thumbnails=true')
-  if (options.deleteOriginal === false) queryParams.push('delete_original=false')
   const queryString = queryParams.length > 0 ? '?' + queryParams.join('&') : ''
 
   if (set_rid)
@@ -1005,7 +1083,6 @@ web.uploadFiles = async function (fileObjects, project_rid, set_rid, options = {
 
   const queryParams = []
   if (options.noThumbnails) queryParams.push('no-thumbnails=true')
-  if (options.deleteOriginal === false) queryParams.push('delete_original=false')
   const queryString = queryParams.length > 0 ? '?' + queryParams.join('&') : ''
   const url = `/api/projects/${project_rid.replace('#', '')}/upload/${set_rid.replace('#', '')}${queryString}`
 

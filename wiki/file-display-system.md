@@ -8,14 +8,24 @@ inside a desk) and `/files/:rid` (a file on its own, e.g. from a search across d
 ## Layout
 
 ```
-BrowseBar      set or result-list position, previous/next, back, close
-LineagePanel | display for the file type (or the ROI editor) | FileToolsPanel
+             | BrowseBar (path, position, previous/next, close)    |
+LineagePanel | display for the file type (or the ROI editor)      | FileToolsPanel
 ```
 
-- **BrowseBar** shows the set name or search query, the position (`3 / 12`), previous/next, "Back
-  to set" / "Back to results" and close. Without a browse context it shows the file name and close.
+The lineage and tools panels run the full height, like the panels beside the set view; the bar
+sits above the file only and looks like the bar of the set view (`ui/BarHeader.vue`).
+
+- **BrowseBar** shows the path to the file as a breadcrumb (`ui/BreadcrumbTrail.vue`, the same as the
+  set view): **Set › file.pdf › file** (or **search query › file**), the position (`3 / 12`),
+  previous/next and close. Every step of the path but the last is a button that goes back to it: the set
+  (`?openSet=`), the PDF inside the set (`&openOrigin=`), or the Search/Tags results. There is no separate
+  "Back to set" button. Close always goes to the desk. Without a browse context it shows the file name
+  and close.
+- A file that was deleted from disk (`_file_removed`, an original PDF after splitting) shows a "This file
+  was deleted" message instead of a display, and the tools panel is hidden.
 - **LineagePanel** shows the path the file came from (`getNodePath`), without users and sets.
-  Clicking an earlier file opens it and remembers the lineage offset (see below).
+  Clicking an earlier file opens it beside the browsed file (side by side, see below), or in its place when the setting is off, and remembers the lineage offset. A file that was deleted
+  from disk is drawn faded and struck through with "File deleted after splitting" and cannot be opened.
 - **FileToolsPanel**: file name, description (edited in place), metadata, Open file, Regenerate thumbnail (images only, not for references; asks the backend to make the thumbnail again, which fixes a broken one),
   Quick edits, Tags (add from the desk's tag types; new tags are made in Tag admin; the applied tags are listed last, below the tag types, so the types keep their place while tagging; remove with the chip's close button; the chip tooltip says who tagged), and "Show as
   Markdown" for text files.
@@ -53,7 +63,7 @@ store's `store.file` / `store.file_browse_context` point at them.
   it. Previous/next fetch the neighbouring file with `getSetFiles(set, skip, 1)`.
 - **Search mode** (`{ mode: 'search', query, results: [{ rid, label, score, highlight }], index, returnTo, kind }`)
   steps through the result list the Search or Tags screen handed over. `returnTo` is the full path
-  of that screen (recorded by `useFileOpener`), so "Back to results" goes back to Tags or Search,
+  of that screen (recorded by `useFileOpener`), so the search step of the path goes back to Tags or Search,
   global or in a desk, with the screen's own state restored from `pageMemory`. `kind` (`search` or
   `tags`) picks the chip icon.
 - Arrow keys step too, except while typing in a field.
@@ -63,7 +73,20 @@ lineage panel, the viewer remembers how many file steps away it is. Previous/nex
 at the same offset from each browsed file, e.g. the OCR result of every page in a set.
 `useFileViewer.js` holds this (`contextRid`, `offset`).
 
-**Verified from:** `src/features/files/useFileViewer.js`, `browseQuery.js`, `lineage.js`
+**Side by side:** by default (user setting `lineage_compare`, `on`; the compare button in the lineage
+panel's header switches it for the view on screen, `fileBrowse.sideBySide`) a file picked in the lineage
+opens *beside* the browsed file instead of replacing it: the picked file (the source) on the left, the
+browsed file on the right, each pane with a small header (file name, level, close). The browsed file keeps
+its own display, so the OCR, polygon and ROI displays keep their overlays, while the picked file is shown
+with the plain display of its type. The tools panel folds away while two files are shown and comes back
+when the second pane closes. Clicking the same lineage file again, the browsed file, or the pane's close
+button returns to one pane. `useFileViewer.js` keeps the level in `nav.compareOffset` (1 = parent), loads
+the file into `fileBrowse.compare`, and writes it to the URL (`?compare=1`) so a reload or a shared link
+keeps the comparison. Previous/next keep the level: each browsed file gets the ancestor at the same level,
+and a pane says "No file here" when a file's lineage is shorter. With the setting off the old behaviour
+(replace + lineage offset above) applies.
+
+**Verified from:** `src/features/files/useFileViewer.js`, `FileViewer.vue`, `LineagePanel.vue`, `browseQuery.js`, `lineage.js`
 
 ## Quick edits
 

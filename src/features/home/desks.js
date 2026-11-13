@@ -79,6 +79,8 @@ export function toDeskRow(project, docsByProject) {
     items,
     docs,
     expires,
+    description: String(project.description || '').trim(),
+    cover: project.cover?.url || '',
     sizeText: sizeMb === null ? 'No estimate yet' : `${sizeMb.toFixed(1)} MB`,
     itemsText: items === null ? 'Not counted yet' : `${Math.floor(items)} items`,
     docsText: docs === null ? 'n/a' : `${docs} docs`,

@@ -56,6 +56,15 @@ describe('graphModel', () => {
     expect(nodeTypeFor('roi-set')).toBe('roi-set')
   })
 
+  it('draws an original PDF with its own node and keeps the removed mark', () => {
+    const node = toFlowNode({
+      data: { id: '#1', type: 'original-pdf', name: 'a.pdf', _file_removed: true },
+    })
+    expect(node.type).toBe('original-pdf')
+    expect(node.data._file_removed).toBe(true)
+    expect(nodeTypeFor('pdf')).toBe('pdf')
+  })
+
   it('shows an empty-desk node for an empty desk', () => {
     expect(toFlowGraph({ nodes: [], edges: [] }).nodes[0].id).toBe(EMPTY_DESK_ID)
   })

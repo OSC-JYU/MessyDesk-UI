@@ -8,13 +8,11 @@ import {
   getSetZipJobStatus,
 } from '@/api/files.js'
 import { fileUrl } from '@/features/files/fileUrls.js'
-import { useWorkspace } from '../useWorkspace.js'
 import { useTask } from './useTask.js'
 
 // Actions for the selected node: open the file, remake thumbnails,
-// download a set as zip, or add files to a set.
+// or download a set as zip.
 const props = defineProps({ node: { type: Object, required: true } })
-const workspace = useWorkspace()
 
 const thumbnail = useTask()
 const setThumbnails = useTask()
@@ -36,7 +34,6 @@ const opensFile = computed(
       'filter',
     ].includes(type.value),
 )
-const setLocked = computed(() => isSet.value && Boolean(props.node.data?.processed))
 
 // Sets of images only (not PDFs) can remake their thumbnails.
 const imageSet = computed(() => {
@@ -158,19 +155,6 @@ function downloadSet() {
         density="compact"
       >
         {{ setThumbnails.task.message }}
-      </v-alert>
-      <v-btn
-        v-if="!setLocked"
-        size="small"
-        color="primary"
-        variant="flat"
-        prepend-icon="mdi-upload"
-        @click="workspace.uploadToSet(node)"
-      >
-        Add files to set
-      </v-btn>
-      <v-alert v-else type="info" variant="tonal" density="compact">
-        A cruncher has already processed this set, so no more files can be added.
       </v-alert>
     </template>
   </div>

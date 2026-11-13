@@ -29,6 +29,7 @@ export function ridParam(rid) {
 const BY_TYPE = {
   image: 'image',
   pdf: 'pdf',
+  'original-pdf': 'pdf',
   text: 'text',
   html: 'text',
   json: 'text',

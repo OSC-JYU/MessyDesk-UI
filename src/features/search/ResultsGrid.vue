@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import EmptyState from '@/ui/EmptyState.vue'
 import LoadingState from '@/ui/LoadingState.vue'
+import BarHeader from '@/ui/BarHeader.vue'
 import ResultCard from './ResultCard.vue'
 import { pageCount, pageOf } from './results.js'
 
@@ -17,6 +18,8 @@ const props = defineProps({
   // With `total` set, `results` is the current page only and the parent
   // loads pages (v-model:page); otherwise the grid pages `results` itself.
   total: { type: Number, default: null },
+  // Replaces the "N files" count (a grouped set counts PDFs).
+  countText: { type: String, default: '' },
 })
 
 const page = defineModel('page', { type: Number, default: 1 })
@@ -32,12 +35,14 @@ const offset = computed(() => (page.value - 1) * props.perPage)
 
 <template>
   <section class="results" :aria-label="title">
-    <header class="results__header">
+    <BarHeader>
       <v-icon icon="mdi-folder-search-outline" color="primary" aria-hidden="true" />
-      <h2 class="results__title">{{ title }}</h2>
-      <span v-if="count" class="results__count">{{ count }} files</span>
+      <slot name="title">
+        <h2 class="results__title">{{ title }}</h2>
+      </slot>
+      <span v-if="count" class="results__count">{{ countText || `${count} files` }}</span>
       <slot name="actions" />
-    </header>
+    </BarHeader>
 
     <div class="results__body">
       <LoadingState v-if="loading" text="Searching…" />
@@ -69,15 +74,6 @@ const offset = computed(() => (page.value - 1) * props.perPage)
   flex-direction: column;
   height: 100%;
   min-height: 0;
-}
-
-.results__header {
-  display: flex;
-  align-items: center;
-  gap: var(--md-space-2);
-  padding: var(--md-space-3) var(--md-space-5);
-  border-bottom: 1px solid var(--md-color-border);
-  background: var(--md-color-surface);
 }
 
 .results__title {

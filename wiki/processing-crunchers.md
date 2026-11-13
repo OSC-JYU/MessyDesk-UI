@@ -18,15 +18,14 @@ Processing can be triggered at three levels:
 | Set (batch) | `POST /api/queue/:service/sets/:rid` | From cruncher list on set node |
 | Source | `POST /api/queue/:service/sources/:rid` | From source node processing |
 | ROI | `POST /api/queue/:service/files/:rid/roi` | ROI-specific processing |
-| **Auto-import** | Automatic on PDF upload | `afterFileCreated()` in import pipeline |
 
 **Verified from:** `src/api/client.js` (`createFileProcess`, `createSetProcess`, `createSourceProcess`, `createROIProcess`)
 
-### PDF Auto-Import
+### PDF split
 
-PDF uploads automatically trigger the split pipeline without user action. The Process node has `role: 'import'`, which causes ProcessingNode.vue to display "Importing…" instead of "Crunching…". Files with `processable: false` (non-splitter PDF outputs) only show the split cruncher in CruncherList.
+Splitting a PDF is an ordinary cruncher run. An uploaded PDF has type `original-pdf`, drawn by `OriginalPdfNode.vue` (PDF icon, "Original PDF", no thumbnail, crunchable; "File removed after splitting" once the original is deleted). Split pages (`pdf`) are drawn by `PdfNode.vue`; the backend offers only the PyPDF split for it, and Poppler only for the split pages (`pdf`).
 
-**Verified from:** `src/features/project/nodes/ProcessNode.vue`, `src/features/project/dialogs/UploadController.vue`
+**Verified from:** `src/features/project/nodes/OriginalPdfNode.vue`, `src/features/services/crunchers/CruncherTask.vue`
 
 ### Set Locking After Batch Processing
 

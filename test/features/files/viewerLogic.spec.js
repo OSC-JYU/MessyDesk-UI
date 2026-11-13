@@ -61,6 +61,7 @@ describe('browseQuery', () => {
     skip: 3,
     source_rid: '#5:0',
     source_label: 'scan.pdf',
+    origin_rid: '#9:2',
   }
 
   it('round-trips a set context through the URL', () => {
@@ -73,6 +74,7 @@ describe('browseQuery', () => {
       skip: '3',
       sourceRid: '5:0',
       sourceLabel: 'scan.pdf',
+      originRid: '9:2',
     })
     expect(setContextFromQuery(query)).toEqual(context)
   })

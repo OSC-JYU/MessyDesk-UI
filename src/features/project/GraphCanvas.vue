@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, watch } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { VueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
@@ -20,22 +20,26 @@ defineOptions({ name: 'GraphCanvas' })
 const route = useRoute()
 const router = useRouter()
 const workspace = useWorkspace()
-const setView = reactive({ set: null, roiSet: null, page: 1, refresh: 0 })
+const setView = reactive({ set: null, roiSet: null, page: 1, origin: '', refresh: 0 })
 
 const desk = useDeskGraph(workspace, {
   onThumbnailsChanged: () => setView.set && setView.refresh++,
 })
 
-function openSet(set, roiSet = null) {
+function openSet(set, roiSet = null, origin = '') {
   const saved = recall('setBrowser', `${workspace.state.deskRid}|${set.id}`)
-  Object.assign(setView, { set, roiSet, page: saved?.page || 1 })
+  Object.assign(setView, { set, roiSet, page: saved?.page || 1, origin })
 }
 
 function closeSet() {
   setView.set = null
 }
 
-const openNode = useOpenNode(workspace, desk.flow, { openSet })
+const removedFile = ref(null)
+const openNode = useOpenNode(workspace, desk.flow, {
+  openSet,
+  onFileRemoved: (node) => (removedFile.value = node),
+})
 const openFile = useOpenFile(workspace)
 
 function onSetPage(page) {
@@ -51,7 +55,7 @@ async function openSetFromQuery() {
   const rid = route.query.openSet
   if (!rid) return
   const node = desk.graph.nodes.find((n) => n.id === `#${String(rid).replace('#', '')}`)
-  if (node?.type === 'set') openSet(node)
+  if (node?.type === 'set') openSet(node, null, route.query.openOrigin || '')
   router.replace({ name: 'project-graph', params: { rid: route.params.rid } })
 }
 
@@ -77,6 +81,7 @@ watch(
       :set="setView.set"
       :roi-set="setView.roiSet"
       :initial-page="setView.page"
+      :initial-origin="setView.origin"
       :refresh-token="setView.refresh"
       @page="onSetPage"
       @close="closeSet"
@@ -88,6 +93,7 @@ watch(
             roiSet: setView.roiSet,
             index: file.index,
             total: file.total,
+            origin: file.origin,
           })
       "
     />
@@ -114,6 +120,22 @@ watch(
       >
         <Background />
       </VueFlow>
+      <v-dialog
+        :model-value="Boolean(removedFile)"
+        max-width="460"
+        @update:model-value="removedFile = null"
+      >
+        <v-card rounded="lg" title="File deleted">
+          <v-card-text>
+            The file {{ removedFile?.data?.label }} was deleted from the disk when it was split into
+            pages, so it cannot be opened. Open the set of pages made from it instead.
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn variant="text" @click="removedFile = null">OK</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
       <div class="desk-graph__controls" role="toolbar" aria-label="Desk view">
         <v-btn
           size="small"

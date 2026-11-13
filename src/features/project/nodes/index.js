@@ -2,6 +2,7 @@ import { markRaw } from 'vue'
 import FileNode from './FileNode.vue'
 import ImageNode from './ImageNode.vue'
 import PdfNode from './PdfNode.vue'
+import OriginalPdfNode from './OriginalPdfNode.vue'
 import ProcessNode from './ProcessNode.vue'
 import SetNode from './SetNode.vue'
 import EmptyDeskNode from './EmptyDeskNode.vue'
@@ -34,6 +35,7 @@ export const nodeTypes = {
   ...Object.fromEntries(FILE_TYPES.map((type) => [type, markRaw(FileNode)])),
   image: markRaw(ImageNode),
   pdf: markRaw(PdfNode),
+  'original-pdf': markRaw(OriginalPdfNode),
   process: markRaw(ProcessNode),
   setprocess: markRaw(ProcessNode),
   filter: markRaw(ProcessNode),

@@ -57,7 +57,8 @@ export function createWorkspace(deskRid) {
     },
   }
 
-  const workspace = { state: ws, ...actions }
+  // ProjectWorkspace replaces this with the function that reloads the desk's own data.
+  const workspace = { state: ws, refreshDesk: () => {}, ...actions }
   provide(KEY, workspace)
   return workspace
 }

@@ -90,7 +90,46 @@ describe('BrowseBar', () => {
     expect(wrapper.get('[aria-label="Previous file"]').attributes('disabled')).toBeDefined()
     await wrapper.get('[aria-label="Next file"]').trigger('click')
     expect(wrapper.emitted('next')).toHaveLength(1)
-    expect(wrapper.text()).toContain('Back to set')
+    expect(wrapper.text()).not.toContain('Back to set')
+    expect(wrapper.get('h2').text()).toBe('a.jpg')
+  })
+
+  it('goes back to the set or to the PDF from the path, and closes to the desk', async () => {
+    const context = {
+      mode: 'set',
+      set_label: 'Letters',
+      file_count: 3,
+      skip: 1,
+      origin_rid: '#9:2',
+    }
+    const file = { label: 'page_002.txt', origin_label: 'report.pdf' }
+    const wrapper = mount(BrowseBar, { props: { context, file } })
+    const steps = wrapper.findAll('.crumbs__step')
+    expect(steps.map((s) => s.text())).toEqual(['Letters', 'report.pdf'])
+    expect(wrapper.get('h2').text()).toBe('page_002.txt')
+    await steps[0].trigger('click')
+    await steps[1].trigger('click')
+    expect(wrapper.emitted('back')).toEqual([[{}], [{ origin: '#9:2' }]])
+    await wrapper.get('[aria-label="Close file"]').trigger('click')
+    expect(wrapper.emitted('close')).toHaveLength(1)
+  })
+
+  it('goes back to the results of a search from the path', async () => {
+    const context = { mode: 'search', query: 'Helsinki', kind: 'tags', index: 0, results: [{}] }
+    const wrapper = mount(BrowseBar, { props: { context, file: { label: 'a.txt' } } })
+    await wrapper.get('.crumbs__step').trigger('click')
+    expect(wrapper.get('.crumbs__step').text()).toBe('Helsinki')
+    expect(wrapper.emitted('back')).toEqual([[{}]])
+  })
+
+  it('shows the PDF the file comes from after the set', () => {
+    const context = { mode: 'set', set_label: 'Letters', file_count: 3, skip: 1 }
+    const file = { label: 'page_002.txt', origin_label: 'report.pdf' }
+    const wrapper = mount(BrowseBar, { props: { context, file } })
+    expect(wrapper.text()).toContain('Letters')
+    expect(wrapper.text()).toContain('report.pdf')
+    const plain = mount(BrowseBar, { props: { context, file: { label: 'a.jpg' } } })
+    expect(plain.text()).not.toContain('report.pdf')
   })
 
   it('shows only the file name and close without a context', () => {

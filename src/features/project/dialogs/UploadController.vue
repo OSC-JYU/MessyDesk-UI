@@ -1,7 +1,6 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import { uploadFile, uploadFiles } from '@/api/files.js'
-import { getServices } from '@/api/services.js'
 import ErrorAlert from '@/ui/ErrorAlert.vue'
 import { useWorkspace } from '../useWorkspace.js'
 
@@ -17,49 +16,24 @@ const state = reactive({
   setOpen: false,
   progress: { completed: 0, total: 0 },
   error: null,
-  splitterRunning: false,
   notice: '',
 })
 
-const isPdf = (file) =>
-  file?.name?.toLowerCase().endsWith('.pdf') || file?.type === 'application/pdf'
-const pdfBlocked = computed(() => state.files.some(isPdf) && !state.splitterRunning)
 const set = computed(() => workspace.state.dialogs.setUpload.set)
-
-// PDFs need the PDF splitter service to be running.
-async function checkSplitter() {
-  try {
-    state.splitterRunning = Boolean((await getServices())?.['md-pypdf_fs']?.consumers?.length)
-  } catch {
-    state.splitterRunning = false
-  }
-}
 
 watch(
   () => workspace.state.dialogs.upload.request,
-  () => {
-    checkSplitter()
-    deskPicker.value?.click()
-  },
+  () => deskPicker.value?.click(),
 )
 watch(
   () => workspace.state.dialogs.setUpload.request,
-  () => {
-    checkSplitter()
-    setPicker.value?.click()
-  },
+  () => setPicker.value?.click(),
 )
 
 async function onDeskFile(event) {
   const file = event.target.files?.[0]
   event.target.value = ''
   if (!file) return
-  await checkSplitter()
-  if (isPdf(file) && !state.splitterRunning) {
-    state.error =
-      'Importing PDFs needs the PDF splitter service (md-pypdf_fs), which is not running.'
-    return
-  }
   state.busy = true
   state.error = null
   try {
@@ -141,9 +115,6 @@ async function uploadToSet() {
         >
           This many files can take a while.
         </v-alert>
-        <v-alert v-if="pdfBlocked" type="warning" variant="tonal" density="compact" class="mb-2">
-          Importing PDFs needs the PDF splitter service (md-pypdf_fs), which is not running.
-        </v-alert>
         <template v-if="state.busy">
           <v-progress-linear
             :model-value="
@@ -165,12 +136,7 @@ async function uploadToSet() {
       <v-card-actions>
         <v-spacer />
         <v-btn variant="text" :disabled="state.busy" @click="state.setOpen = false">Cancel</v-btn>
-        <v-btn
-          color="primary"
-          variant="flat"
-          :loading="state.busy"
-          :disabled="pdfBlocked"
-          @click="uploadToSet"
+        <v-btn color="primary" variant="flat" :loading="state.busy" @click="uploadToSet"
           >Upload</v-btn
         >
       </v-card-actions>

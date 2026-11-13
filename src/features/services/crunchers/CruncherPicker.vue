@@ -81,11 +81,15 @@ const RUNNERS = {
   file: createFileProcess,
 }
 
-async function run(service, task, model) {
+async function run(service, task, model, apiKey) {
   state.runningKey = `${service.id}:${task.key}`
   state.error = null
   try {
-    await RUNNERS[target.value](buildProcess(service, task, model), props.node.id)
+    await RUNNERS[target.value](
+      buildProcess(service, task, model),
+      props.node.id,
+      ...(apiKey ? [{ apiKey }] : []),
+    )
     emit('done', { reload: false })
   } catch (error) {
     state.error = error
@@ -276,7 +280,7 @@ watch(() => [props.node?.id, props.cruncherFilter], load, { immediate: true })
                 :on-set="onSet"
                 :source-rid="node.id"
                 :running-key="state.runningKey"
-                @run="(task, model) => run(service, task, model)"
+                @run="(task, model, key) => run(service, task, model, key)"
                 @help="openHelp"
                 @dspace-query="runDspaceQuery"
               />

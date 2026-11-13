@@ -25,6 +25,7 @@ import RequestsTab from './RequestsTab.vue'
 import UsersTab from './UsersTab.vue'
 import AdminServicesTab from './AdminServicesTab.vue'
 import ServiceGroupsTab from './ServiceGroupsTab.vue'
+import DemosTab from './DemosTab.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -34,6 +35,7 @@ const TABS = [
   { value: 'users', label: 'Users' },
   { value: 'services', label: 'Services' },
   { value: 'groups', label: 'Service groups' },
+  { value: 'demos', label: 'Demos' },
 ]
 
 // The open tab is kept in the URL (?tab=users) so reloads and links keep it.
@@ -209,7 +211,10 @@ onMounted(loadAll)
 
 <template>
   <div class="admin-page">
-    <PageHeader title="Admin" subtitle="Access requests, users, services and service groups." />
+    <PageHeader
+      title="Admin"
+      subtitle="Access requests, users, services, service groups and demo desks."
+    />
 
     <ErrorAlert :error="state.error" title="Admin action failed" class="mb-4" />
 
@@ -253,6 +258,9 @@ onMounted(loadAll)
             @save="saveGroup"
             @delete="askDeleteGroup"
           />
+        </v-tabs-window-item>
+        <v-tabs-window-item value="demos">
+          <DemosTab />
         </v-tabs-window-item>
       </v-tabs-window>
     </v-card>

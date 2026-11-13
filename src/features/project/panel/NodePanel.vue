@@ -1,7 +1,8 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { setNodeAttribute } from '@/api/projects.js'
+import { setNodeAttribute, setProjectCoverFile } from '@/api/projects.js'
 import { useWorkspace } from '../useWorkspace.js'
+import DeskPanel from './DeskPanel.vue'
 import EditableText from './EditableText.vue'
 import NodeTools from './NodeTools.vue'
 import ProcessInfo from './ProcessInfo.vue'
@@ -20,6 +21,18 @@ function saver(key) {
   return async (value) => {
     await setNodeAttribute(node.value.id, { key, value })
     node.value.data[key] = value
+  }
+}
+
+const coverMessage = ref('')
+async function useAsCover() {
+  coverMessage.value = ''
+  try {
+    await setProjectCoverFile(workspace.state.deskRid, node.value.id)
+    await workspace.refreshDesk()
+    coverMessage.value = 'This image is now the cover of the desk.'
+  } catch (error) {
+    coverMessage.value = error?.message || 'Could not set the cover.'
   }
 }
 
@@ -73,6 +86,17 @@ const saveLabel = async (value) => {
           :src="node.data.image"
           class="node-panel__image"
         />
+        <template v-if="node.type === 'image'">
+          <v-btn
+            size="small"
+            variant="tonal"
+            prepend-icon="mdi-image-check-outline"
+            @click="useAsCover"
+          >
+            Use as desk cover
+          </v-btn>
+          <p v-if="coverMessage" class="node-panel__muted" role="status">{{ coverMessage }}</p>
+        </template>
         <p v-if="node.data.info" class="node-panel__info">
           <v-icon icon="mdi-information-outline" size="16" aria-hidden="true" />
           {{ node.data.info }}
@@ -94,26 +118,7 @@ const saveLabel = async (value) => {
       <ProcessDetailsDialog v-if="isProcess" v-model="detailsOpen" :node="node" />
     </template>
 
-    <div v-else>
-      <h2 class="node-panel__title">{{ workspace.state.desk?.label || 'Desk' }}</h2>
-      <p v-if="workspace.state.desk?.description" class="node-panel__muted">
-        {{ workspace.state.desk.description }}
-      </p>
-      <v-alert type="info" variant="tonal" density="compact" class="my-3">
-        Upload files and click the cookie on a file to see what crunchers can do with it.
-      </v-alert>
-      <p>
-        Here you see your files and how you have <strong>processed</strong> them with crunchers.
-      </p>
-      <v-btn
-        color="primary"
-        variant="flat"
-        prepend-icon="mdi-upload"
-        @click="workspace.uploadToDesk()"
-      >
-        Upload file
-      </v-btn>
-    </div>
+    <DeskPanel v-else />
   </aside>
 </template>
 

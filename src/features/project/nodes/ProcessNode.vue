@@ -15,7 +15,7 @@ const status = computed(() => {
   if (props.data.status === 'running') {
     return {
       icon: 'mdi-progress-clock',
-      text: props.data.role === 'import' ? 'Importing…' : 'Crunching…',
+      text: 'Crunching…',
       spin: true,
     }
   }

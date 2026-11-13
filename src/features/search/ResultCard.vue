@@ -5,10 +5,18 @@ import ThumbnailImage from '@/ui/ThumbnailImage.vue'
 // and the matching text.
 defineProps({ result: { type: Object, required: true } })
 defineEmits(['open'])
+
+const isPdf = (type) => type === 'pdf' || type === 'original-pdf'
 </script>
 
 <template>
-  <button type="button" class="result-card" :title="`Open ${result.label}`" @click="$emit('open')">
+  <button
+    type="button"
+    class="result-card"
+    :class="{ 'result-card--group': result.group }"
+    :title="`${result.group ? 'Show the pages of' : 'Open'} ${result.label}`"
+    @click="$emit('open')"
+  >
     <span class="result-card__label">{{ result.label }}</span>
     <span v-if="result.entities.length || result.badge" class="result-card__tags">
       <v-chip v-if="result.badge" size="x-small" color="warning" variant="flat" label>{{
@@ -26,13 +34,13 @@ defineEmits(['open'])
       </v-chip>
     </span>
     <ThumbnailImage
-      v-if="result.thumb && (result.type === 'image' || result.type === 'pdf')"
+      v-if="result.thumb && (result.type === 'image' || isPdf(result.type))"
       :src="result.thumb"
       lazy
       class="result-card__thumb"
     />
     <v-icon
-      v-else-if="result.type === 'pdf'"
+      v-else-if="isPdf(result.type)"
       icon="mdi-file-pdf-box"
       size="48"
       class="result-card__icon"
@@ -63,6 +71,15 @@ defineEmits(['open'])
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease;
+}
+
+/* a group of files (the pages of one PDF): drawn as a stack */
+.result-card--group {
+  box-shadow:
+    3px 3px 0 var(--md-color-surface),
+    4px 4px 0 var(--md-color-border),
+    7px 7px 0 var(--md-color-surface),
+    8px 8px 0 var(--md-color-border);
 }
 
 .result-card:hover,

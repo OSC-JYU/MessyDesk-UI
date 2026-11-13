@@ -15,7 +15,7 @@ Vue Flow (`@vue-flow/core`) and laid out left to right with dagre. The code is i
 | `graphModel.js` | API graph → Vue Flow nodes/edges, dagre layout, update merging, nodes from "add" events |
 | `nodeKinds.js` | What kind of node something is; finding the source of an ROI set |
 | `useOpenNode.js` | Double-click: file → file viewer, set → set browser, ROI set → ROI editor |
-| `SetBrowser.vue` | A set's files, paged from the server (10 per page), shown with the search results grid |
+| `SetBrowser.vue` | A set's files, paged from the server (10 per page), shown with the search results grid. Sets with files from PDFs show one card per original PDF (cover = first page), click → that PDF's files, breadcrumb "Set › file.pdf"; chosen by the user setting `group_pdf` and a toggle in the view. Only a view: the file viewer steps through the whole set in the grouped order (`getSetFiles(..., { group: 'origin', order: 'flat' })`), `BrowseBar.vue` shows the PDF of the file in its path, and the PDF step of the path returns to that PDF (`?openSet=…&openOrigin=…`) |
 | `nodes/` | Node components on a shared `NodeShell` (header, cookie button, handles) |
 | `panel/` | Node panel: label and description editing, tools, process details |
 | `dialogs/` | Crunchers, delete node, create set, create source, uploads |

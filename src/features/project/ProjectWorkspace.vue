@@ -22,12 +22,16 @@ const onGraph = computed(() => route.name === 'project-graph')
 async function loadDesk() {
   try {
     const desk = (await getProjects()).find((p) => p['@rid'] === workspace.state.deskRid)
-    workspace.state.desk = desk ? { label: desk.label, description: desk.description } : null
+    workspace.state.desk = desk
+      ? { label: desk.label, description: desk.description, cover: desk.cover || null }
+      : null
     ui.projectLabel = desk?.label || ''
   } catch {
     ui.projectLabel = ''
   }
 }
+
+workspace.refreshDesk = loadDesk
 
 watch(
   () => route.params.rid,

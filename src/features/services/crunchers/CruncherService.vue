@@ -1,9 +1,12 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import CruncherTask from './CruncherTask.vue'
+import CredentialsForm from './CredentialsForm.vue'
+import { encodeCredentials } from './credentials.js'
 
 // One service: its badges, model choice (when it has several models) and
-// tasks. Emits `run` with (task, model).
+// tasks. Emits `run` with (task, model, key); `key` is the encoded credentials
+// when the service asks the user for several (otherwise undefined).
 const props = defineProps({
   service: { type: Object, required: true },
   onSet: { type: Boolean, default: false },
@@ -17,6 +20,30 @@ const models = computed(() => Object.entries(props.service.models || {}))
 const chosenModel = ref(models.value.length === 1 ? models.value[0][0] : null)
 const tasksVisible = computed(() => models.value.length <= 1 || chosenModel.value)
 const external = computed(() => props.service.location === 'external')
+
+const credentialFields = computed(() =>
+  props.service.api_key_source === 'user' && Array.isArray(props.service.credentials)
+    ? props.service.credentials
+    : [],
+)
+const credentials = ref({})
+const credentialErrors = ref({})
+
+function run(task) {
+  if (!credentialFields.value.length) {
+    emit('run', task, chosenModel.value)
+    return
+  }
+  const { key, errors } = encodeCredentials(credentials.value, credentialFields.value)
+  credentialErrors.value = errors || {}
+  if (errors) return
+  emit('run', task, chosenModel.value, key)
+  credentials.value = {}
+}
+
+onBeforeUnmount(() => {
+  credentials.value = {}
+})
 </script>
 
 <template>
@@ -104,6 +131,14 @@ const external = computed(() => props.service.location === 'external')
         Model: <strong>{{ models[0][1].name }}</strong> · {{ models[0][1].output }}
       </p>
 
+      <CredentialsForm
+        v-if="credentialFields.length"
+        v-model="credentials"
+        :fields="credentialFields"
+        :errors="credentialErrors"
+        :service-name="service.name"
+      />
+
       <v-expansion-panels v-if="tasksVisible" variant="accordion">
         <v-expansion-panel v-for="task in service.tasks" :key="task.key">
           <v-expansion-panel-title>
@@ -117,7 +152,7 @@ const external = computed(() => props.service.location === 'external')
               :on-set="onSet"
               :source-rid="sourceRid"
               :running="runningKey === `${service.id}:${task.key}`"
-              @run="emit('run', task, chosenModel)"
+              @run="run(task)"
               @dspace-query="emit('dspace-query', $event)"
             />
           </v-expansion-panel-text>
