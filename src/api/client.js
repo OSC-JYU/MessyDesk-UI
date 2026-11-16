@@ -158,6 +158,11 @@ web.createProject = async function (name, description, x, y) {
   return response.data
 }
 
+web.mergeSets = async function (set_rids, label) {
+  const response = await axios.post('/api/sets/merge', { set_rids, label })
+  return response.data
+}
+
 web.createSet = async function (project_rid, name, description) {
   project_rid = project_rid.replace('#', '')
   var data = {

@@ -17,6 +17,7 @@ defineProps({
 const { node } = useNode()
 const via = computed(() => node.data?.via)
 const workspace = useWorkspace()
+const picked = computed(() => workspace.state.selectedSets.some((n) => n.id === node.id))
 
 function crunch(filter = '') {
   workspace.openCrunchers(node, filter)
@@ -26,8 +27,13 @@ defineExpose({ crunch })
 </script>
 
 <template>
-  <div class="gnode" :class="[`gnode--${kind}`, { 'gnode--wide': wide }]">
-    <div v-if="via" class="gnode__via" :class="{ 'gnode__via--error': via.error }" :title="via.label">
+  <div class="gnode" :class="[`gnode--${kind}`, { 'gnode--wide': wide, 'gnode--picked': picked }]">
+    <div
+      v-if="via"
+      class="gnode__via"
+      :class="{ 'gnode__via--error': via.error }"
+      :title="via.label"
+    >
       {{ via.label }}
     </div>
     <header class="gnode__header" :class="{ 'gnode__header--below-via': via }">
@@ -81,6 +87,11 @@ defineExpose({ crunch })
   color: var(--md-color-text);
   font-size: var(--md-font-size-xs);
   text-align: start;
+}
+
+.gnode--picked {
+  outline: 4px solid var(--md-color-focus);
+  outline-offset: 3px;
 }
 
 .gnode--wide {
