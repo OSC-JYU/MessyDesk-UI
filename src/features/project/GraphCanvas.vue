@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref, watch } from 'vue'
+import { onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { VueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
@@ -13,6 +13,7 @@ import { useDeskGraph } from './useDeskGraph.js'
 import { useOpenFile, useOpenNode } from './useOpenNode.js'
 import { nodeTypes } from './nodes/index.js'
 import SetBrowser from './SetBrowser.vue'
+import { watchSet } from '@/api/files.js'
 
 defineOptions({ name: 'GraphCanvas' })
 
@@ -24,7 +25,18 @@ const setView = reactive({ set: null, roiSet: null, page: 1, origin: '', refresh
 
 const desk = useDeskGraph(workspace, {
   onThumbnailsChanged: () => setView.set && setView.refresh++,
+  onSetContentChanged: () => setView.set && setView.refresh++,
 })
+
+// The server sends thumbnails of the open set as they arrive, and only the visible ones otherwise.
+watch(
+  () => setView.set?.id,
+  (id, previous) => {
+    if (previous) watchSet(previous, false).catch(() => {})
+    if (id) watchSet(id).catch(() => {})
+  },
+)
+onBeforeUnmount(() => setView.set && watchSet(setView.set.id, false).catch(() => {}))
 
 function openSet(set, roiSet = null, origin = '') {
   const saved = recall('setBrowser', `${workspace.state.deskRid}|${set.id}`)
@@ -154,7 +166,7 @@ watch(
           prepend-icon="mdi-cog-off-outline"
           @click="desk.toggleProcesses"
         >
-          {{ desk.graph.compact ? 'Show processes' : 'Hide processes' }}
+          {{ desk.graph.compact ? 'Show processes' : 'Collapse processes' }}
         </v-btn>
         <v-btn
           size="small"

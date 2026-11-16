@@ -17,7 +17,7 @@ const DATA_FIELDS = [
   'error_count',
   'processed',
   'params',
-  'types',
+  'params_summary',  'types',
   '_file_removed',
 ]
 
@@ -101,6 +101,7 @@ const UPDATE_FIELDS = [
   'duration',
   'metadata',
   'paths',
+  'text_samples',
   'edited',
   '_file_removed',
 ]

@@ -62,7 +62,12 @@ onMounted(loadTypes)
 
 <template>
   <div class="file-tags">
-    <v-expansion-panels v-model="openTypes" multiple variant="accordion" class="file-tags__available">
+    <v-expansion-panels
+      v-model="openTypes"
+      multiple
+      variant="accordion"
+      class="file-tags__available"
+    >
       <v-expansion-panel v-for="type in types" :key="type.type" :value="type.type">
         <v-expansion-panel-title>
           <v-icon :icon="icon(type.icon)" size="16" class="me-2" aria-hidden="true" />

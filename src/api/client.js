@@ -819,6 +819,12 @@ web.createFileThumbnail = async function (rid) {
   return result.data
 }
 
+// Tells the server which set is open, so it sends that set's thumbnails as they arrive.
+web.watchSet = async function (rid, on = true) {
+  const url = `/api/sets/${rid.replace('#', '')}/watch`
+  await (on ? axios.put(url) : axios.delete(url))
+}
+
 web.createSetThumbnails = async function (rid, options = {}) {
   const params = new URLSearchParams()
   if (options.limit !== undefined && options.limit !== null)

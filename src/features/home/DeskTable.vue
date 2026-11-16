@@ -6,8 +6,8 @@ import DeskActionsMenu from './DeskActionsMenu.vue'
 defineProps({
   rows: { type: Array, required: true },
   loading: { type: Boolean, default: false },
-  sortKey: { type: String, default: 'name' },
-  sortDirection: { type: String, default: 'asc' },
+  sortKey: { type: String, default: 'created' },
+  sortDirection: { type: String, default: 'desc' },
 })
 
 const emit = defineEmits(['sort', 'open', 'rename', 'reindex', 'delete'])
@@ -17,6 +17,7 @@ const columns = [
   { key: 'size', label: 'Size' },
   { key: 'items', label: 'Items' },
   { key: 'docs', label: 'Indexed docs' },
+  { key: 'created', label: 'Created' },
   { key: 'expires', label: 'Expires' },
 ]
 </script>
@@ -72,6 +73,7 @@ const columns = [
         <td>
           <v-chip size="small" variant="tonal" color="primary" label>{{ row.docsText }}</v-chip>
         </td>
+        <td>{{ row.createdText }}</td>
         <td>{{ row.expiresText }}</td>
         <td class="desk-table__actions">
           <DeskActionsMenu

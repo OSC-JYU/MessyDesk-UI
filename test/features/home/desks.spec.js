@@ -57,6 +57,15 @@ describe('sortDesks', () => {
   ]
   const names = (list) => list.map((row) => row.name)
 
+  it('sorts by creation date, newest first when descending', () => {
+    const dated = [
+      toDeskRow({ '@rid': '#1:0', label: 'old', created: '2026-01-01T10:00:00Z' }),
+      toDeskRow({ '@rid': '#2:0', label: 'new', created: '2026-06-01T10:00:00Z' }),
+      toDeskRow({ '@rid': '#3:0', label: 'none' }),
+    ]
+    expect(names(sortDesks(dated, 'created', 'desc'))).toEqual(['new', 'old', 'none'])
+  })
+
   it('sorts by name without regard to case', () => {
     expect(names(sortDesks(rows, 'name', 'asc'))).toEqual(['Alpha', 'beta', 'gamma'])
     expect(names(sortDesks(rows, 'name', 'desc'))).toEqual(['gamma', 'beta', 'Alpha'])

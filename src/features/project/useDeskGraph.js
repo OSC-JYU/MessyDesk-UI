@@ -11,10 +11,12 @@ import {
 } from './graphModel.js'
 import { relatives } from './nodeKinds.js'
 
+const PROCESS_TYPES = new Set(['process', 'setprocess', 'filter'])
+
 // The graph of one desk: loading and laying it out, live updates from
 // server events (window 'md-sse', dispatched by services/events.js), and
 // the isolate / hide-processes views.
-export function useDeskGraph(workspace, { onThumbnailsChanged } = {}) {
+export function useDeskGraph(workspace, { onThumbnailsChanged, onSetContentChanged } = {}) {
   const flow = useVueFlow()
   const graph = reactive({
     nodes: [],
@@ -25,10 +27,7 @@ export function useDeskGraph(workspace, { onThumbnailsChanged } = {}) {
     compact: false,
   })
   let focusAfterLayout = null
-
-  function relayout() {
-    graph.nodes = layoutLeftToRight(graph.nodes, graph.edges)
-  }
+  const collapsed = new Set()
 
   async function load() {
     graph.loading = true
@@ -39,6 +38,7 @@ export function useDeskGraph(workspace, { onThumbnailsChanged } = {}) {
       graph.edges = edges
       graph.isolated = false
       graph.compact = false
+      collapsed.clear()
       focusAfterLayout = workspace.state.focusId
       workspace.state.focusId = null
     } catch (error) {
@@ -91,7 +91,7 @@ export function useDeskGraph(workspace, { onThumbnailsChanged } = {}) {
 
   function addFromEvent(event) {
     // Files uploaded into a set are not drawn on the desk.
-    if (event.set) return
+    if (event.set) return onSetContentChanged?.()
     graph.nodes = graph.nodes.filter((n) => n.id !== EMPTY_DESK_ID)
     const added = nodesFromAddEvent(event, randomPosition)
     graph.nodes.push(...added.nodes)
@@ -123,8 +123,15 @@ export function useDeskGraph(workspace, { onThumbnailsChanged } = {}) {
       case 'process_finished':
         if (event.process) updateNode(event.process['@rid'], event.process)
         if (event.set) updateNode(event.set['@rid'], event.set)
+        onSetContentChanged?.()
         break
     }
+  }
+
+  // Hidden flags go on the graph's own nodes (not only on Vue Flow's copies), so a new layout
+  // cannot bring hidden nodes back. Processes hidden by "Hide processes" stay hidden always.
+  function setHidden(isHidden) {
+    graph.nodes = graph.nodes.map((n) => ({ ...n, hidden: collapsed.has(n.id) || isHidden(n) }))
   }
 
   // Isolate: show only the selected node and everything connected to it.
@@ -139,32 +146,69 @@ export function useDeskGraph(workspace, { onThumbnailsChanged } = {}) {
           (n) => n.id,
         ),
       ])
-      for (const n of graph.nodes) flow.updateNode(n.id, { hidden: !keep.has(n.id) })
-      flow.fitView({ nodes: [selected.id], duration: 800, padding: 5 })
+      setHidden((n) => !keep.has(n.id))
+      nextTick(() => flow.fitView({ nodes: [selected.id], duration: 800, padding: 5 }))
     } else {
       graph.isolated = false
-      for (const n of graph.nodes) flow.updateNode(n.id, { hidden: false })
-      flow.fitView({ duration: 800 })
+      setHidden(() => false)
+      nextTick(() => flow.fitView({ duration: 800 }))
     }
   }
 
-  // Hide processes: connect each process's input straight to its outputs.
+  // A Solr process has no output node: when processes are hidden it stays as a magnifying glass.
+  const isSolrLeaf = (node) =>
+    /solr/i.test(`${node.data.service || ''} ${node.data.label || ''}`) &&
+    !flow.getOutgoers(flow.findNode(node.id)).length
+
+  // Hide processes: connect each process's input straight to its outputs, and write the process
+  // title on top of each output.
   function toggleProcesses() {
+    graph.isolated = false
     if (graph.compact) {
-      load()
+      collapsed.clear()
+      const nodes = graph.nodes.map((n) => {
+        const data = { ...n.data }
+        const type = data.origType || n.type
+        delete data.via
+        delete data.origType
+        return { ...n, type, data, hidden: false }
+      })
+      const edges = graph.edges.filter((e) => !String(e.id).includes('=>'))
+      graph.nodes = layoutLeftToRight(nodes, edges)
+      graph.edges = edges
+      graph.compact = false
+      nextTick(() => flow.fitView({ duration: 800 }))
       return
     }
+    const processes = graph.nodes.filter((n) => PROCESS_TYPES.has(n.type))
+    const solr = new Set(processes.filter(isSolrLeaf).map((n) => n.id))
+    for (const n of processes) if (!solr.has(n.id)) collapsed.add(n.id)
     const shortcuts = []
-    for (const node of graph.nodes.filter((n) => n.type === 'process')) {
-      const input = flow.getIncomers(node)[0]
-      if (input)
-        for (const child of flow.getOutgoers(node))
+    const via = new Map()
+    for (const id of collapsed) {
+      const node = flow.findNode(id)
+      const process = graph.nodes.find((n) => n.id === id)
+      for (const child of flow.getOutgoers(node)) {
+        via.set(child.id, { label: process.data.label, error: Boolean(process.data.error) })
+        for (const input of flow.getIncomers(node))
           shortcuts.push({ id: `${input.id}=>${child.id}`, source: input.id, target: child.id })
-      flow.updateNode(node.id, { hidden: true })
+      }
     }
-    graph.edges.push(...shortcuts)
+    const visible = graph.nodes.filter((n) => !collapsed.has(n.id))
+    const visibleEdges = [...graph.edges, ...shortcuts].filter(
+      (e) => !collapsed.has(e.source) && !collapsed.has(e.target),
+    )
+    const placed = new Map(layoutLeftToRight(visible, visibleEdges).map((n) => [n.id, n]))
+    graph.nodes = graph.nodes.map((n) => {
+      const shown = placed.get(n.id)
+      if (!shown) return { ...n, hidden: true }
+      if (solr.has(n.id))
+        return { ...shown, type: 'search-set', data: { ...shown.data, origType: n.type } }
+      return via.has(n.id) ? { ...shown, data: { ...shown.data, via: via.get(n.id) } } : shown
+    })
+    graph.edges = [...graph.edges, ...shortcuts]
     graph.compact = true
-    relayout()
+    nextTick(() => flow.fitView({ duration: 800 }))
   }
 
   onMounted(() => window.addEventListener('md-sse', onEvent))

@@ -8,9 +8,7 @@ import SectionCard from '@/ui/SectionCard.vue'
 import ErrorAlert from '@/ui/ErrorAlert.vue'
 import organisationLogo from '@/assets/images/organisation.png'
 import { useDesks } from './useDesks.js'
-import { useI18n } from 'vue-i18n'
 import { useDemos } from './useDemos.js'
-import { pickText } from './demos.js'
 import LearnCard from './LearnCard.vue'
 import DeskTable from './DeskTable.vue'
 import DeskGrid from './DeskGrid.vue'
@@ -27,12 +25,8 @@ const router = useRouter()
 const desks = useDesks()
 const demos = useDemos()
 
-const { locale } = useI18n()
 const view = reactive({
   hidSnackbar: false,
-  copySnackbar: false,
-  copiedRid: '',
-  copiedName: '',
   error: null,
 })
 const dialogs = reactive({ desk: null, rename: false, reindex: false, delete: false })
@@ -66,19 +60,11 @@ async function hideDemos() {
   }
 }
 
-// The copy appears in the desk list; the user opens it from there or from the message.
+// The copy opens right away; it also appears in the desk list.
 async function copyDemo(demo) {
   const rid = await demos.copy(demo)
   if (!rid) return
-  view.copiedRid = rid
-  view.copiedName = pickText(demo.title, locale.value)
-  view.copySnackbar = true
-  desks.load()
-}
-
-function openCopy() {
-  view.copySnackbar = false
-  router.push({ name: 'project-graph', params: { rid: view.copiedRid } })
+  router.push({ name: 'project-graph', params: { rid } })
 }
 
 onMounted(async () => {
@@ -118,6 +104,8 @@ onMounted(async () => {
           @copy="copyDemo"
           @hide="hideDemos"
         />
+
+        <CreateDeskCard :create="createAndOpen" />
 
         <SectionCard overline="Your desks" title="Desks">
           <template #actions>
@@ -181,8 +169,6 @@ onMounted(async () => {
             @delete="openDialog('delete', $event)"
           />
         </SectionCard>
-
-        <CreateDeskCard :create="createAndOpen" />
       </div>
 
       <aside class="home__side">
@@ -200,12 +186,6 @@ onMounted(async () => {
       </a>
     </footer>
 
-    <v-snackbar v-model="view.copySnackbar" timeout="10000">
-      “{{ view.copiedName }}” was copied to your desks.
-      <template #actions>
-        <v-btn variant="text" color="primary" @click="openCopy">Open</v-btn>
-      </template>
-    </v-snackbar>
     <v-snackbar v-model="view.hidSnackbar" timeout="6000">
       Learn MessyDesk is hidden. Show it again in Settings → Front page.
     </v-snackbar>

@@ -36,6 +36,7 @@ describe('fileTypes', () => {
     [{ type: 'similarity_index', extension: 'safetensors' }, 'index'],
     [{ type: 'vector_index', extension: 'safetensors' }, 'index'],
     [{ type: 'osd.json' }, 'json'],
+    [{ type: 'text', extension: 'md', note: true }, 'note'],
     [{ type: 'weird', extension: 'hocr' }, 'hocr'],
     [{ type: 'weird', extension: 'bin' }, 'json'],
   ])('%o is shown by %s', (file, display) => {

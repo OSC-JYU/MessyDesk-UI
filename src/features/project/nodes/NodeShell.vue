@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue'
 import { Handle, Position, useNode } from '@vue-flow/core'
 import CrunchIcon from '@/ui/CrunchIcon.vue'
 import { useWorkspace } from '../useWorkspace.js'
@@ -14,6 +15,7 @@ defineProps({
 })
 
 const { node } = useNode()
+const via = computed(() => node.data?.via)
 const workspace = useWorkspace()
 
 function crunch(filter = '') {
@@ -25,7 +27,10 @@ defineExpose({ crunch })
 
 <template>
   <div class="gnode" :class="[`gnode--${kind}`, { 'gnode--wide': wide }]">
-    <header class="gnode__header">
+    <div v-if="via" class="gnode__via" :class="{ 'gnode__via--error': via.error }" :title="via.label">
+      {{ via.label }}
+    </div>
+    <header class="gnode__header" :class="{ 'gnode__header--below-via': via }">
       <v-icon v-if="icon" :icon="icon" size="18" aria-hidden="true" />
       <span class="gnode__label" :title="label">{{ label }}</span>
       <slot name="header" />
@@ -127,6 +132,27 @@ defineExpose({ crunch })
   font-family: var(--md-font-title);
   font-size: var(--md-font-size-lg);
   font-weight: var(--md-font-weight-regular);
+}
+
+.gnode__via {
+  padding: var(--md-space-1) var(--md-space-3);
+  border-radius: var(--md-radius-md) var(--md-radius-md) 0 0;
+  background: var(--md-gradient-graph);
+  color: var(--md-color-on-graph);
+  font-family: var(--md-font-title);
+  font-size: var(--md-font-size-sm);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gnode__via--error {
+  background: var(--md-color-error);
+}
+
+.gnode__header--below-via {
+  border-radius: 0;
 }
 
 .gnode__label {

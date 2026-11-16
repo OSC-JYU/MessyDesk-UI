@@ -177,7 +177,7 @@ onUnmounted(() => window.removeEventListener('keyup', onKey))
                 :is="displays[displayName]"
                 v-else
                 ref="display"
-                :key="displayName"
+                :key="displayName === 'note' ? file['@rid'] : displayName"
                 :file="file"
                 v-bind="displayProps"
                 @crop-selection-change="(has) => (quick.edit.hasCrop = has)"
