@@ -72,7 +72,10 @@ const paramRows = computed(() => {
 const PROMPT_LONG = 300
 const promptOpen = ref(false)
 const promptLong = computed(() => prompt.value.length > PROMPT_LONG)
-watch(() => props.node.id, () => (promptOpen.value = false))
+watch(
+  () => props.node.id,
+  () => (promptOpen.value = false),
+)
 
 const status = computed(() => batch.value?.status || props.node.data?.status || '')
 
@@ -142,8 +145,7 @@ const rows = computed(() => {
       <pre
         class="process-info__prompt"
         :class="{ 'process-info__prompt--clamped': promptLong && !promptOpen }"
-        >{{ prompt }}</pre
-      >
+        >{{ prompt }}</pre>
       <v-btn
         v-if="promptLong"
         size="x-small"

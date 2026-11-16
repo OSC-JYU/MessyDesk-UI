@@ -9,11 +9,13 @@ import {
 } from '@/api/files.js'
 import { fileUrl } from '@/features/files/fileUrls.js'
 import { useTask } from './useTask.js'
+import { useWorkspace } from '../useWorkspace.js'
 
 // Actions for the selected node: open the file, remake thumbnails,
 // or download a set as zip.
 const props = defineProps({ node: { type: Object, required: true } })
 
+const workspace = useWorkspace()
 const thumbnail = useTask()
 const setThumbnails = useTask()
 const zip = useTask()
@@ -138,6 +140,14 @@ function downloadSet() {
       <v-alert v-if="zip.task.message" :type="zip.task.type" variant="tonal" density="compact">{{
         zip.task.message
       }}</v-alert>
+      <v-btn
+        size="small"
+        variant="tonal"
+        prepend-icon="mdi-set-merge"
+        @click="workspace.startMerge(props.node)"
+      >
+        Merge with other sets…
+      </v-btn>
       <v-btn
         v-if="imageSet"
         size="small"

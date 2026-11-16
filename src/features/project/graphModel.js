@@ -17,7 +17,8 @@ const DATA_FIELDS = [
   'error_count',
   'processed',
   'params',
-  'params_summary',  'types',
+  'params_summary',
+  'types',
   '_file_removed',
 ]
 

@@ -6,6 +6,7 @@ import { ui } from '@/stores/ui.js'
 import { createWorkspace } from './useWorkspace.js'
 import ProjectDrawer from './ProjectDrawer.vue'
 import NodePanel from './panel/NodePanel.vue'
+import MergeSetsPanel from './panel/MergeSetsPanel.vue'
 import CrunchersDialog from './dialogs/CrunchersDialog.vue'
 import DeleteNodeDialog from './dialogs/DeleteNodeDialog.vue'
 import CreateSetDialog from './dialogs/CreateSetDialog.vue'
@@ -61,7 +62,11 @@ onUnmounted(() => {
         </keep-alive>
       </router-view>
     </div>
-    <NodePanel v-if="onGraph" class="workspace__panel" />
+    <MergeSetsPanel
+      v-if="onGraph && workspace.state.selectedSets.length"
+      class="workspace__panel"
+    />
+    <NodePanel v-else-if="onGraph" class="workspace__panel" />
 
     <CrunchersDialog />
     <DeleteNodeDialog />

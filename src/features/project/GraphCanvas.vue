@@ -58,7 +58,15 @@ function onSetPage(page) {
   remember('setBrowser', `${workspace.state.deskRid}|${setView.set.id}`, { page })
 }
 
-desk.flow.onNodeClick(({ node }) => node && workspace.select(node))
+desk.flow.onNodeClick(({ node, event }) => {
+  if (!node) return
+  // Shift or Ctrl/Cmd picks several sets to merge; anything else is a normal selection.
+  if ((event?.shiftKey || event?.ctrlKey || event?.metaKey) && node.type === 'set') {
+    workspace.toggleSet(node)
+    return
+  }
+  workspace.select(node)
+})
 desk.flow.onNodeDoubleClick(({ node }) => node && openNode(node))
 desk.flow.onPaneClick(() => workspace.select(null))
 
