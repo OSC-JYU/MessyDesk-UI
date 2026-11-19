@@ -6,6 +6,8 @@ import DeskPanel from './DeskPanel.vue'
 import EditableText from './EditableText.vue'
 import NodeTools from './NodeTools.vue'
 import ProcessInfo from './ProcessInfo.vue'
+import CodersPanel from './CodersPanel.vue'
+import CodingSetsDialogButton from './CodingSetsDialogButton.vue'
 import ProcessDetailsDialog from './ProcessDetailsDialog.vue'
 import ThumbnailImage from '@/ui/ThumbnailImage.vue'
 
@@ -76,6 +78,12 @@ const saveLabel = async (value) => {
         Show details
       </v-btn>
       <ProcessInfo v-if="isProcess" :node="node" />
+      <CodersPanel
+        v-if="node.type === 'roi-set'"
+        :set-rid="node.id"
+        :desk-rid="workspace.state.deskRid"
+      />
+      <CodingSetsDialogButton v-if="['text', 'set'].includes(node.type)" :source-rid="node.id" />
       <v-alert v-if="node.data.error" type="error" variant="tonal" density="compact" class="mt-3">
         Something went wrong in this cruncher.
       </v-alert>

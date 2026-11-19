@@ -2,6 +2,7 @@
 import { computed, reactive, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { search as runSearch } from '@/api/search.js'
+import { getTags } from '@/api/entities.js'
 import { recall, remember } from '@/stores/pageMemory.js'
 import ErrorAlert from '@/ui/ErrorAlert.vue'
 import ResultsGrid from './ResultsGrid.vue'
@@ -23,6 +24,10 @@ const state = reactive({
   query: '',
   // Fuzzy search: also finds misspellings (OCR errors); slower, and finds near words too.
   fuzzy: false,
+  // Only texts with a coded passage that has these tags
+  passageTags: [],
+  passageMatch: 'or',
+  tagOptions: [],
   lastQuery: '',
   results: [],
   searched: false,
@@ -52,6 +57,8 @@ async function search() {
       projectRids: deskRids.value,
       rows: 500,
       fuzzy: state.fuzzy,
+      passageTagRids: state.passageTags,
+      passageMatch: state.passageMatch,
     })
     const docs = response?.response?.docs || []
     state.results = docs.map((doc) => searchDocToResult(doc, response.highlighting))
@@ -144,6 +151,18 @@ watch(
   { deep: true },
 )
 
+async function loadTagOptions() {
+  try {
+    const response = await getTags({ projectRids: deskRids.value })
+    state.tagOptions = (response?.result || []).map((t) => ({ value: t.rid, title: t.label }))
+    const known = new Set(state.tagOptions.map((o) => o.value))
+    state.passageTags = state.passageTags.filter((rid) => known.has(rid))
+  } catch {
+    state.tagOptions = []
+  }
+}
+watch(deskRids, loadTagOptions, { immediate: true, deep: true })
+
 watch(
   () => state.desks,
   () => state.lastQuery && state.mode === 'text' && search(),
@@ -193,6 +212,33 @@ watch(
           class="mb-4"
           @update:model-value="state.query && search()"
         />
+        <v-autocomplete
+          v-model="state.passageTags"
+          :items="state.tagOptions"
+          label="Only texts with a coded passage tagged"
+          multiple
+          chips
+          closable-chips
+          clearable
+          variant="outlined"
+          density="compact"
+          hide-details
+          class="mb-2"
+          data-test="passage-tags"
+          @update:model-value="state.query && search()"
+        />
+        <v-radio-group
+          v-if="state.passageTags.length > 1"
+          v-model="state.passageMatch"
+          inline
+          density="compact"
+          hide-details
+          class="mb-4"
+          @update:model-value="state.query && search()"
+        >
+          <v-radio label="any of the tags" value="or" />
+          <v-radio label="all of the tags" value="and" />
+        </v-radio-group>
       </form>
       <ProjectScope v-if="!inDesk" v-model="state.desks" hint="None selected: all your desks." />
       <v-alert

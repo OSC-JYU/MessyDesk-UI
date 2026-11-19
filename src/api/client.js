@@ -97,6 +97,11 @@ web.search = async function (search, options = {}) {
   const payload = { query: search }
   // Also find OCR misreadings: each word matches words one letter different (backend G6).
   if (options.fuzzy) payload.fuzzy = true
+  // Only texts with a coded passage that has these tags (ids with '#', any or all of them)
+  if (options.passageTagRids?.length) {
+    payload.passage_tag_rids = options.passageTagRids
+    if (options.passageMatch === 'and') payload.passage_match = 'and'
+  }
   const requestedRows = Number(options.rows)
   if (Number.isFinite(requestedRows) && requestedRows > 0)
     payload.rows = Math.min(1000, Math.floor(requestedRows))
@@ -665,6 +670,35 @@ web.renameEntity = async function (entityRID, label, description) {
   return result.data
 }
 
+// Merges the source tags into the target: their links move to it and they are deleted.
+// With dryRun nothing changes and the effect is returned.
+web.mergeEntities = async function (targetRID, sourceRIDs, dryRun = false) {
+  var result = await axios.post(`/api/entities/${cleanRid(targetRID)}/merge`, {
+    source_rids: sourceRIDs.map((r) => cleanRid(r)),
+    dry_run: dryRun,
+  })
+  return result.data
+}
+
+web.setEntityColor = async function (entityRID, color) {
+  var result = await axios.patch(`/api/entities/${cleanRid(entityRID)}`, { color })
+  return result.data
+}
+
+// Coded passages of tags (regions of texts that have any of them), a page at a time.
+web.getTagPassages = async function (entities, options = {}) {
+  const params = new URLSearchParams()
+  params.set('entities', entities.map((e) => String(e['@rid'] || e).replace('#', '')).join(','))
+  const projectRids = (options.projectRids || []).filter(Boolean)
+  if (projectRids.length === 1) params.set('project_rid', String(projectRids[0]).replace('#', ''))
+  if (projectRids.length > 1)
+    params.set('project_rids', projectRids.map((r) => String(r).replace('#', '')).join(','))
+  if (options.skip) params.set('skip', String(options.skip))
+  if (options.limit) params.set('limit', String(options.limit))
+  var result = await axios.get(`/api/tags/passages?${params.toString()}`)
+  return result.data
+}
+
 // Deletes the tag and its links in every desk.
 web.deleteEntity = async function (entityRID) {
   var result = await axios.delete(`/api/entities/${cleanRid(entityRID)}`)
@@ -1047,6 +1081,118 @@ web.deleteImageROI = async function (rid, set_rid, roi_rid) {
     `/api/images/${rid.replace('#', '')}/sets/${set_rid.replace('#', '')}/rois/${roi_rid.replace('#', '')}`,
   )
   return result
+}
+
+// Regions of a text in a ROI set (offsets in Unicode code points). Saving replaces them all.
+web.getTextROIs = async function (rid, set_rid) {
+  var result = await axios.get(
+    `/api/texts/${rid.replace('#', '')}/sets/${set_rid.replace('#', '')}/rois`,
+  )
+  return result.data
+}
+
+web.saveTextROIs = async function (rid, set_rid, rois) {
+  var result = await axios.post(
+    `/api/texts/${rid.replace('#', '')}/sets/${set_rid.replace('#', '')}/rois`,
+    { rois },
+  )
+  return result
+}
+
+// Turns the spans of a ner.json run into regions and tags of a text ROI set.
+web.importTextSpans = async function (rid, set_rid, ner_rid, labels) {
+  var result = await axios.post(
+    `/api/texts/${rid.replace('#', '')}/sets/${set_rid.replace('#', '')}/import-spans`,
+    { ner_rid, ...(labels ? { labels } : {}) },
+  )
+  return result.data
+}
+
+web.tagTextRegion = async function (rid, set_rid, region, tag_rid) {
+  var result = await axios.post(
+    `/api/texts/${rid.replace('#', '')}/sets/${set_rid.replace('#', '')}/regions/${region}/tags/${tag_rid.replace('#', '')}`,
+  )
+  return result.data
+}
+
+web.untagTextRegion = async function (rid, set_rid, region, tag_rid) {
+  var result = await axios.delete(
+    `/api/texts/${rid.replace('#', '')}/sets/${set_rid.replace('#', '')}/regions/${region}/tags/${tag_rid.replace('#', '')}`,
+  )
+  return result.data
+}
+
+// Texts with passages in a ROI set: { files: { [text rid]: { regions, tagged, untagged } } }
+web.getTextCoverage = async function (set_rid) {
+  var result = await axios.get(`/api/sets/${set_rid.replace('#', '')}/coding`)
+  return result.data
+}
+
+// ---- coding: a coder works in one ROI set of someone else's desk ----
+const cp = (set, text) =>
+  `/api/coding/sets/${cleanRid(set)}${text ? `/texts/${cleanRid(text)}` : ''}`
+
+web.getMyCodingSets = async function () {
+  return (await axios.get('/api/coding/sets')).data
+}
+web.getCodingTexts = async function (set) {
+  return (await axios.get(`${cp(set)}/texts`)).data
+}
+web.getCodingContent = async function (set, text) {
+  return (await axios.get(`${cp(set, text)}/content`, { responseType: 'text' })).data
+}
+web.getCodingTags = async function (set) {
+  return (await axios.get(`${cp(set)}/tags`)).data
+}
+web.getCodingCoverage = async function (set) {
+  return (await axios.get(`${cp(set)}/coverage`)).data
+}
+web.getCodingRegions = async function (set, text) {
+  return (await axios.get(`${cp(set, text)}/rois`)).data
+}
+web.saveCodingRegions = async function (set, text, rois) {
+  return axios.post(`${cp(set, text)}/rois`, { rois })
+}
+web.tagCodingRegion = async function (set, text, region, tag) {
+  return (await axios.post(`${cp(set, text)}/regions/${region}/tags/${cleanRid(tag)}`)).data
+}
+web.untagCodingRegion = async function (set, text, region, tag) {
+  return (await axios.delete(`${cp(set, text)}/regions/${region}/tags/${cleanRid(tag)}`)).data
+}
+
+// ---- owner: who codes in a ROI set ----
+web.getCoders = async function (set) {
+  return (await axios.get(`/api/sets/${cleanRid(set)}/coders`)).data
+}
+web.addCoder = async function (set, userRid) {
+  return (await axios.post(`/api/sets/${cleanRid(set)}/coders`, { user_rid: userRid })).data
+}
+web.lockCoder = async function (set, userRid, locked) {
+  return (await axios.put(`/api/sets/${cleanRid(set)}/coders/${cleanRid(userRid)}`, { locked })).data
+}
+web.removeCoder = async function (set, userRid) {
+  return (await axios.delete(`/api/sets/${cleanRid(set)}/coders/${cleanRid(userRid)}`)).data
+}
+web.createCodingSets = async function (sourceRid, coderRids, label) {
+  return (
+    await axios.post('/api/coding/sets', { source_rid: sourceRid, coder_rids: coderRids, label })
+  ).data
+}
+web.copyCodingSet = async function (setRid, label) {
+  return (await axios.post(`/api/sets/${cleanRid(setRid)}/copy`, { label })).data
+}
+// The coded passages of a desk (or one ROI set) as a text: 'json' or 'csv'.
+web.exportCoding = async function (deskRid, { roiSet, format = 'json' } = {}) {
+  const params = { format, ...(roiSet ? { roi_set: cleanRid(roiSet) } : {}) }
+  const result = await axios.get(`/api/projects/${cleanRid(deskRid)}/coding/export`, {
+    params,
+    responseType: 'blob',
+  })
+  return result.data
+}
+
+web.getUserNames = async function () {
+  return (await axios.get('/api/users/names')).data
 }
 
 web.saveLayout = async function (positions, node) {

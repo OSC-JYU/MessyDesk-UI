@@ -161,6 +161,37 @@ export function useFileViewer() {
     }
   }
 
+  // Goes to the next file of the set (after the shown one, then from the start) for which
+  // `matches(rid)` is true, in the order previous/next use. Returns false when there is none.
+  async function findNext(matches) {
+    const ctx = fileBrowse.context
+    if (ctx?.mode !== 'set') return false
+    const total = ctx.file_count || 0
+    const CHUNK = 200
+    const start = (ctx.skip || 0) + 1
+    // From just after the shown file to the end, then from the start up to the shown file.
+    for (const [from, to] of [[start, total], [0, start - 1]]) {
+      for (let skip = from; skip < to; skip += CHUNK) {
+        const response = await getSetFiles(ctx.set_rid, skip, Math.min(CHUNK, to - skip), {
+          group: 'origin',
+          order: 'flat',
+        })
+        const files = response?.files || []
+        const at = files.findIndex((f) => matches(f['@rid']))
+        if (at >= 0) {
+          ctx.skip = skip + at
+          ctx.origin_rid = files[at].origin_rid || ''
+          await go(await shownRidFor(files[at]['@rid']), {
+            keepContext: true,
+            contextRid: files[at]['@rid'],
+          })
+          return true
+        }
+      }
+    }
+    return false
+  }
+
   // A file up the lineage of the browsed file was picked: beside the browsed file (a second click
   // on it, or on the browsed file, closes it again), or in its place.
   async function openInLineage({ node, offset }) {
@@ -221,6 +252,7 @@ export function useFileViewer() {
     deskRid,
     sideBySide,
     step,
+    findNext,
     openInLineage,
     closeCompare,
     toggleSideBySide,

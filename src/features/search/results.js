@@ -90,6 +90,7 @@ export function taggedFileToResult(item) {
     label: item.label || item.name || rid,
     type: item.type || item.extension || 'text',
     entities: item.entities || [],
+    passages: item.passages || 0,
     snippetHtml: '',
     text: item.description || item.info || '',
     thumb: item.thumb

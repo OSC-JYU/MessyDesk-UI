@@ -234,3 +234,20 @@ export const themeAttribute = {
   warm: 'warm',
   warmDark: 'warm-dark',
 }
+
+// Colours for tags (highlighting coded passages). The same list as MessyDesk's
+// modules/tags/tag-colors.ts, which gives new tags their colour from it.
+export const tagPalette = [
+  '#e6194b',
+  '#3cb44b',
+  '#4363d8',
+  '#f58231',
+  '#911eb4',
+  '#008080',
+  '#f032e6',
+  '#9a6324',
+  '#808000',
+  '#469990',
+  '#800000',
+  '#000075',
+]

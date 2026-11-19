@@ -1,6 +1,6 @@
 import { useRouter } from 'vue-router'
 import { getDocInfo } from '@/api/files.js'
-import { browseFromResults } from '@/stores/fileBrowse.js'
+import { browseFromResults, fileBrowse } from '@/stores/fileBrowse.js'
 import { browseList } from './results.js'
 
 // Opens a result in the file viewer, remembering the result list so the
@@ -10,10 +10,11 @@ import { browseList } from './results.js'
 export function useFileOpener() {
   const router = useRouter()
 
-  return async function openResult({ result, index, results, query, projectRid, kind = 'search' }) {
+  return async function openResult({ result, index, results, query, projectRid, kind = 'search', focus = null }) {
     const returnTo = router.currentRoute.value.fullPath
     const file = await getDocInfo(result.rid)
     browseFromResults(file, query, browseList(results), index, { returnTo, kind })
+    fileBrowse.focus = focus ? { fileRid: result.rid, start: focus.start, end: focus.end } : null
     const fileRid = result.rid.replace('#', '')
     if (projectRid) {
       router.push({ name: 'project-file', params: { rid: projectRid.replace('#', ''), fileRid } })

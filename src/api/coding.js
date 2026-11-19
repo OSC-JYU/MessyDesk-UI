@@ -1,0 +1,20 @@
+// Coding in a ROI set: the owner's side (who may code) and the coder's side (their sets and texts).
+import web from './client.js'
+
+export const getMyCodingSets = (...args) => web.getMyCodingSets(...args)
+export const getCodingTexts = (...args) => web.getCodingTexts(...args)
+export const getCodingContent = (...args) => web.getCodingContent(...args)
+export const getCodingTags = (...args) => web.getCodingTags(...args)
+export const getCodingCoverage = (...args) => web.getCodingCoverage(...args)
+export const getCodingRegions = (...args) => web.getCodingRegions(...args)
+export const saveCodingRegions = (...args) => web.saveCodingRegions(...args)
+export const tagCodingRegion = (...args) => web.tagCodingRegion(...args)
+export const untagCodingRegion = (...args) => web.untagCodingRegion(...args)
+export const getCoders = (...args) => web.getCoders(...args)
+export const addCoder = (...args) => web.addCoder(...args)
+export const lockCoder = (...args) => web.lockCoder(...args)
+export const removeCoder = (...args) => web.removeCoder(...args)
+export const createCodingSets = (...args) => web.createCodingSets(...args)
+export const copyCodingSet = (...args) => web.copyCodingSet(...args)
+export const exportCoding = (...args) => web.exportCoding(...args)
+export const getUserNames = (...args) => web.getUserNames(...args)

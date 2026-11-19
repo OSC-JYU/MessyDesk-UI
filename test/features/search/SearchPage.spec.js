@@ -3,6 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 
 vi.mock('@/api/search.js', () => ({ search: vi.fn() }))
+vi.mock('@/api/entities.js', () => ({ getTags: vi.fn().mockResolvedValue({ result: [] }) }))
 vi.mock('@/api/files.js', () => ({ getDocInfo: vi.fn() }))
 vi.mock('@/api/projects.js', () => ({ getProjects: vi.fn().mockResolvedValue([]) }))
 
@@ -60,7 +61,7 @@ describe('SearchPage', () => {
   it('searches inside the desk of the route and shows highlighted hits', async () => {
     const { wrapper } = await mountAt('/project/1:0/search')
     await searchFor(wrapper, 'friend')
-    expect(search).toHaveBeenCalledWith('friend', { projectRids: ['#1:0'], rows: 500, fuzzy: false })
+    expect(search).toHaveBeenCalledWith('friend', { projectRids: ['#1:0'], rows: 500, fuzzy: false, passageTagRids: [], passageMatch: 'or' })
     expect(wrapper.text()).toContain('Search: friend')
     expect(wrapper.text()).toContain('2 files')
     expect(wrapper.find('.result-card__snippet em').text()).toBe('friend')
@@ -82,7 +83,7 @@ describe('SearchPage', () => {
   it('opens hits of a search across desks in the stand-alone file view', async () => {
     const { wrapper, router } = await mountAt('/search')
     await searchFor(wrapper, 'friend')
-    expect(search).toHaveBeenCalledWith('friend', { projectRids: [], rows: 500, fuzzy: false })
+    expect(search).toHaveBeenCalledWith('friend', { projectRids: [], rows: 500, fuzzy: false, passageTagRids: [], passageMatch: 'or' })
     await wrapper.findAll('.result-card')[0].trigger('click')
     await flushPromises()
     await vi.waitFor(() => expect(router.currentRoute.value.fullPath).toBe('/files/76:0'))

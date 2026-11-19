@@ -11,6 +11,7 @@ import { deskHint, nerLabelKey, runLabel } from './tagGroups.js'
 import NerLabel from './NerLabel.vue'
 import MentionPreview from './MentionPreview.vue'
 import TagAdminDialog from './TagAdminDialog.vue'
+import TagPassages from './TagPassages.vue'
 
 // Browse files by tag: manual tags, tags added by machines, and the named
 // entities (NER) models found in the text.
@@ -22,7 +23,9 @@ const fixedDesk = computed(() => (route.params.rid ? `#${scope.value}` : ''))
 const tags = useTags(scope, fixedDesk)
 const { state } = tags
 
-const view = reactive({ preview: null, adminOpen: false, openType: null })
+// `mode`: the files that have the selected tags as whole-file tags, or the coded passages.
+const view = reactive({ preview: null, adminOpen: false, openType: null, mode: 'files' })
+const deskRids = computed(() => (fixedDesk.value ? [fixedDesk.value] : state.desks))
 // A type's tags are loaded when its panel opens, and again when the list is reloaded
 // (search or desk change) while it is open.
 watch(
@@ -37,7 +40,7 @@ const title = computed(() => {
 })
 const projectRid = computed(() => deskForResults(route.params.rid, state.desks))
 
-function openFile(result, index) {
+function openFile(result, index, focus = null) {
   openResult({
     result,
     index,
@@ -45,11 +48,14 @@ function openFile(result, index) {
     query: title.value,
     projectRid: projectRid.value,
     kind: 'tags',
+    focus,
   })
 }
 
 function openHitFile(hit) {
-  openFile({ rid: `#${String(hit.file_rid).replace('#', '')}`, label: hit.file_label }, 0)
+  // A coded passage opens its text at the passage.
+  const focus = Number.isInteger(hit.start) && Number.isInteger(hit.end) ? hit : null
+  openFile({ rid: `#${String(hit.file_rid).replace('#', '')}`, label: hit.file_label }, 0, focus)
 }
 </script>
 
@@ -61,6 +67,13 @@ function openHitFile(hit) {
       :hit="view.preview.hit"
       :mention="view.preview.mention"
       @close="view.preview = null"
+      @open-file="openHitFile"
+    />
+    <TagPassages
+      v-else-if="view.mode === 'passages' && state.selected.length"
+      class="tags-page__main"
+      :tags="state.selected"
+      :desk-rids="deskRids"
       @open-file="openHitFile"
     />
     <ResultsGrid
@@ -120,6 +133,21 @@ function openHitFile(hit) {
       >
         <v-btn value="or" size="small">Any selected tag</v-btn>
         <v-btn value="and" size="small">All selected tags</v-btn>
+      </v-btn-toggle>
+
+      <v-btn-toggle
+        v-if="state.selected.length"
+        v-model="view.mode"
+        mandatory
+        density="comfortable"
+        variant="outlined"
+        divided
+        class="mb-4"
+        aria-label="Show"
+        data-test="tag-mode"
+      >
+        <v-btn value="files" size="small">Files</v-btn>
+        <v-btn value="passages" size="small">Coded passages</v-btn>
       </v-btn-toggle>
 
       <ErrorAlert :error="state.error" title="Could not load tags" class="mb-4" />

@@ -106,6 +106,24 @@ const routes = [
     component: () => import('@/features/help/HelpPage.vue'),
     meta: { title: 'Help' },
   },
+  {
+    path: '/coding',
+    name: 'coding',
+    component: () => import('@/features/coding/CodingHome.vue'),
+    meta: { title: 'Coding' },
+  },
+  {
+    path: '/coding/:set',
+    name: 'coding-set',
+    component: () => import('@/features/coding/CodingSet.vue'),
+    meta: { title: 'Coding' },
+  },
+  {
+    path: '/coding/:set/:text',
+    name: 'coding-text',
+    component: () => import('@/features/coding/CodingSet.vue'),
+    meta: { title: 'Coding' },
+  },
   { path: '/tags', name: 'tags', redirect: { name: 'entities' } },
   {
     path: '/entities',

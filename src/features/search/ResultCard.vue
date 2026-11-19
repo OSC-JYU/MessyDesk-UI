@@ -18,10 +18,20 @@ const isPdf = (type) => type === 'pdf' || type === 'original-pdf'
     @click="$emit('open')"
   >
     <span class="result-card__label">{{ result.label }}</span>
-    <span v-if="result.entities.length || result.badge" class="result-card__tags">
+    <span v-if="result.entities.length || result.badge || result.passages" class="result-card__tags">
       <v-chip v-if="result.badge" size="x-small" color="warning" variant="flat" label>{{
         result.badge
       }}</v-chip>
+      <v-chip
+        v-if="result.passages"
+        size="x-small"
+        variant="tonal"
+        label
+        prepend-icon="mdi-format-quote-close"
+        :title="`${result.passages} coded passages`"
+      >
+        {{ result.passages }}
+      </v-chip>
       <v-chip
         v-for="entity in result.entities"
         :key="entity.id || entity['@rid'] || entity.label"

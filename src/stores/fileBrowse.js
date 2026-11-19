@@ -22,6 +22,9 @@ export const fileBrowse = reactive({
   // choice of side by side or replacing instead of the user's setting ('on' | 'off' | null).
   compare: null,
   sideBySide: null,
+  // A passage to show in a text: { fileRid, start, end } (code point offsets), set when a coded
+  // passage is opened from the Tags page. Only the text with that rid uses it.
+  focus: null,
 })
 
 // Opens `file` from a list of results, remembering the list for previous/next

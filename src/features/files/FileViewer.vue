@@ -8,6 +8,7 @@ import BrowseBar from './BrowseBar.vue'
 import LineagePanel from './LineagePanel.vue'
 import FileToolsPanel from './tools/FileToolsPanel.vue'
 import RoiEditor from './roi/RoiEditor.vue'
+import TextRoiEditor from './roi/TextRoiEditor.vue'
 import { displays } from './displays/index.js'
 import { displayFor } from './fileTypes.js'
 import { levelLabel, nodeIcon } from './lineage.js'
@@ -172,7 +173,17 @@ onUnmounted(() => window.removeEventListener('keyup', onKey))
               text="It was removed from the disk when it was split into pages, so there is nothing to show. Its pages are in the set made from it."
             />
             <template v-else-if="file">
-              <RoiEditor v-if="fileBrowse.roiTarget" :file="file" :target="fileBrowse.roiTarget" />
+              <component
+                :is="displayName === 'text' ? TextRoiEditor : RoiEditor"
+                v-if="fileBrowse.roiTarget"
+                :file="file"
+                :target="fileBrowse.roiTarget"
+                v-bind="
+                  displayName === 'text'
+                    ? { deskRid: viewer.deskRid.value, findNext: viewer.findNext }
+                    : {}
+                "
+              />
               <component
                 :is="displays[displayName]"
                 v-else

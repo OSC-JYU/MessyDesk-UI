@@ -24,8 +24,15 @@ const MODES = [
   { value: 'untagged', title: 'No tags (files with no tags at all)' },
 ]
 
+const LEVELS = [
+  { value: 'file', title: 'Tags on the whole file' },
+  { value: 'passage', title: 'Tags on coded passages of a text' },
+  { value: 'any', title: 'Both' },
+]
+
 const state = reactive({
   mode: 'include',
+  level: 'file',
   tags: [],
   roi: [],
   match: 'or',
@@ -38,6 +45,7 @@ watch(open, (isOpen) => {
   if (!isOpen) return
   Object.assign(state, {
     mode: 'include',
+    level: 'file',
     tags: [],
     roi: [],
     match: 'or',
@@ -78,6 +86,13 @@ async function submit() {
           v-model="state.mode"
           :items="MODES"
           label="Filter"
+          variant="outlined"
+          density="comfortable"
+        />
+        <v-select
+          v-model="state.level"
+          :items="LEVELS"
+          label="Look at"
           variant="outlined"
           density="comfortable"
         />

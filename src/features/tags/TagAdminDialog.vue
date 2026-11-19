@@ -1,12 +1,15 @@
 <script setup>
-import { computed, reactive, toRef, watch } from 'vue'
+import { computed, reactive, ref, toRef, watch } from 'vue'
 import { session } from '@/stores/session.js'
 import ErrorAlert from '@/ui/ErrorAlert.vue'
 import EmptyState from '@/ui/EmptyState.vue'
 import AddTagDialog from './AddTagDialog.vue'
 import TagActionDialog from './TagActionDialog.vue'
 import TagImportDialog from './TagImportDialog.vue'
+import TagMergeDialog from './TagMergeDialog.vue'
 import TagTypesDialog from './TagTypesDialog.vue'
+import { setEntityColor } from '@/api/entities.js'
+import { tagColor } from '@/features/files/roi/tagColors.js'
 import { showCreators } from './tagAdmin.js'
 import { ADMIN_PAGE_SIZE, useTagAction, useTagAdmin } from './useTagAdmin.js'
 
@@ -19,13 +22,33 @@ const emit = defineEmits(['changed'])
 const deskRid = toRef(props, 'deskRid')
 const admin = useTagAdmin(deskRid)
 const { state } = admin
-const dialogs = reactive({ add: false, import: false, types: false })
+const dialogs = reactive({ add: false, import: false, types: false, merge: false })
+
+// Tags ticked for merging; a ticked tag that a reload or a search no longer lists is dropped.
+const picked = ref([])
+const pickedTags = computed(() => state.items.filter((t) => picked.value.includes(t.rid)))
+watch(
+  () => state.items,
+  (items) => (picked.value = picked.value.filter((rid) => items.some((t) => t.rid === rid))),
+)
 
 async function changed() {
+  picked.value = []
   await admin.load()
   emit('changed')
 }
 const action = useTagAction(deskRid, changed)
+
+// The colour of a tag shows its passages in the text viewer. Machine-made tags have no colour here.
+async function recolor(tag, event) {
+  state.error = null
+  try {
+    await setEntityColor(tag.rid, event.target.value)
+    tag.color = event.target.value
+  } catch (error) {
+    state.error = error
+  }
+}
 
 const pages = computed(() => Math.max(1, Math.ceil(state.total / ADMIN_PAGE_SIZE)))
 const withCreators = computed(() => showCreators(state.items, session.user?.rid))
@@ -72,6 +95,15 @@ watch(open, (isOpen) => isOpen && admin.load(), { immediate: true })
             Tag types
           </v-btn>
           <v-btn
+            variant="tonal"
+            prepend-icon="mdi-call-merge"
+            :disabled="pickedTags.length < 2"
+            data-test="admin-merge"
+            @click="dialogs.merge = true"
+          >
+            Merge{{ pickedTags.length ? ` (${pickedTags.length})` : '' }}
+          </v-btn>
+          <v-btn
             v-if="deskRid"
             variant="tonal"
             prepend-icon="mdi-tag-arrow-down-outline"
@@ -97,6 +129,8 @@ watch(open, (isOpen) => isOpen && admin.load(), { immediate: true })
         <v-table v-else-if="state.items.length" density="comfortable" class="tag-admin__table">
           <thead>
             <tr>
+              <th class="tag-admin__pick-col"><span class="sr-only">Merge</span></th>
+              <th class="tag-admin__color-col">Colour</th>
               <th>Tag</th>
               <th>Type</th>
               <th class="text-end">Files</th>
@@ -107,6 +141,25 @@ watch(open, (isOpen) => isOpen && admin.load(), { immediate: true })
           </thead>
           <tbody>
             <tr v-for="tag in state.items" :key="tag.rid" data-test="admin-row">
+              <td>
+                <input
+                  v-model="picked"
+                  type="checkbox"
+                  :value="tag.rid"
+                  :aria-label="`Pick ${tag.label} for merging`"
+                  data-test="admin-pick"
+                />
+              </td>
+              <td>
+                <input
+                  type="color"
+                  class="tag-admin__color"
+                  :value="tagColor(tag)"
+                  :aria-label="`Colour of ${tag.label}`"
+                  data-test="admin-color"
+                  @change="recolor(tag, $event)"
+                />
+              </td>
               <td>{{ tag.label }}</td>
               <td>{{ tag.type }}</td>
               <td class="text-end">{{ tag.files }}</td>
@@ -175,6 +228,7 @@ watch(open, (isOpen) => isOpen && admin.load(), { immediate: true })
   />
   <TagTypesDialog v-model="dialogs.types" @changed="changed" />
   <TagActionDialog :action="action" :desk-rid="deskRid" />
+  <TagMergeDialog v-model="dialogs.merge" :tags="pickedTags" @merged="changed" />
 </template>
 
 <style scoped>
@@ -188,6 +242,31 @@ watch(open, (isOpen) => isOpen && admin.load(), { immediate: true })
 
 .tag-admin__search {
   flex: 1 1 var(--md-card-min-width);
+}
+
+.tag-admin__pick-col {
+  width: 2.5rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.tag-admin__color-col {
+  width: 3.5rem;
+}
+
+.tag-admin__color {
+  width: 2rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
 }
 
 .tag-admin__actions {

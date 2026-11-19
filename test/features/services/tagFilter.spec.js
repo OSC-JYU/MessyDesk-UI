@@ -33,4 +33,12 @@ describe('tagFilterPayload', () => {
     expect(untagged.selected_roi_labels).toEqual([])
     expect(tagFilterPayload({ mode: 'exclude', tags: [], roi, match: 'and' }).match).toBe('or')
   })
+
+  it('names the tag level only when it is not the whole file', () => {
+    const base = { mode: 'include', tags: [{ '@rid': '#30:1' }], roi: [], match: 'or' }
+    expect(tagFilterPayload({ ...base, level: 'file' })).not.toHaveProperty('tag_level')
+    expect(tagFilterPayload(base)).not.toHaveProperty('tag_level')
+    expect(tagFilterPayload({ ...base, level: 'passage' }).tag_level).toBe('passage')
+    expect(tagFilterPayload({ ...base, level: 'any' }).tag_level).toBe('any')
+  })
 })

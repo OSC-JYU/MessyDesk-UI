@@ -35,6 +35,7 @@ const menu = computed(() =>
   [
     { title: 'Services', icon: 'mdi-format-list-bulleted', to: { name: 'services' }, admin: true },
     { title: 'Admin', icon: 'mdi-account-cog', to: { name: 'admin' }, admin: true },
+    { title: 'Coding', icon: 'mdi-tag-text-outline', to: { name: 'coding' } },
     { title: 'Prompts', icon: 'mdi-text-box-outline', to: { name: 'prompts' } },
     { title: 'Help', icon: 'mdi-help-circle-outline', to: { name: 'help' } },
     { title: 'Settings', icon: 'mdi-cog-outline', to: { name: 'settings' } },
