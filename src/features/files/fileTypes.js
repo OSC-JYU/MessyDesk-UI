@@ -29,6 +29,7 @@ export function ridParam(rid) {
 const BY_TYPE = {
   image: 'image',
   pdf: 'pdf',
+  'original-pdf': 'pdf',
   text: 'text',
   html: 'text',
   json: 'text',
@@ -48,6 +49,7 @@ const BY_EXTENSION = { hocr: 'hocr', json: 'json', txt: 'text' }
 
 export function displayFor(file) {
   if (!file) return null
+  if (file.note === true) return 'note'
   const type = String(file.type || '').toLowerCase()
   const ext = String(file.extension || '').toLowerCase()
   return BY_TYPE[type] || BY_EXTENSION[ext] || 'json'

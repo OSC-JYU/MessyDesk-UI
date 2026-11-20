@@ -205,13 +205,14 @@ describe('CruncherPicker', () => {
       await wrapper.find('input').setValue('Summary')
       await flushPromises()
       await click(wrapper, 'Summary')
-      await wrapper.find('input[type="radio"][value="gpt-oss-20b"]').setValue()
-      await flushPromises()
-      // the same model from two providers: the provider is chosen last
+      // the provider is chosen first, then one of its models
       expect(wrapper.text()).toContain('Ollama')
       expect(wrapper.text()).toContain('vLLM')
-      await wrapper.find('input[type="radio"][value="md-llm-vllm:gpt-oss-20b"]').setValue()
+      expect(wrapper.text()).not.toContain('Gemma 3 4B')
+      await wrapper.find('input[type="radio"][value="md-llm-vllm"]').setValue()
       await flushPromises()
+      // vLLM has one model: preselected
+      expect(wrapper.text()).toContain('gpt-oss 20B')
       await click(wrapper, 'Crunch file')
       expect(api.createFileProcess).toHaveBeenCalledWith(
         {
@@ -227,13 +228,115 @@ describe('CruncherPicker', () => {
       )
     })
 
+    describe("a provider that needs the user's own API key", () => {
+      const KEY = 'sk-user-SECRET-0987654321'
+
+      beforeEach(() => {
+        const catalogue = structuredClone(llmCatalogue)
+        catalogue.for_format = [
+          {
+            ...catalogue.for_format[1],
+            id: 'md-llm-openai',
+            name: 'OpenAI',
+            location: 'external',
+            api_key_source: 'user',
+          },
+        ]
+        api.getServicesForFile.mockResolvedValue(catalogue)
+      })
+
+      async function openSummary() {
+        const wrapper = await mountPicker({ id: '#76:0', type: 'text' })
+        await wrapper.find('input').setValue('Summary')
+        await flushPromises()
+        await click(wrapper, 'Summary')
+        // one provider with one model: both are preselected
+        return wrapper
+      }
+
+      it('asks for the key and refuses to run without it', async () => {
+        const wrapper = await openSummary()
+        expect(wrapper.find('input[type="password"]').exists()).toBe(true)
+        await click(wrapper, 'Crunch file')
+        expect(api.createFileProcess).not.toHaveBeenCalled()
+        expect(wrapper.text()).toContain('Enter your API key')
+      })
+
+      it('sends the key as an option for the request header, never inside the process', async () => {
+        api.createFileProcess.mockResolvedValue({})
+        const wrapper = await openSummary()
+        await wrapper.find('input[type="password"]').setValue(` ${KEY} `)
+        await click(wrapper, 'Crunch file')
+        const [process, rid, options] = api.createFileProcess.mock.calls[0]
+        expect(options).toEqual({ apiKey: KEY })
+        expect(rid).toBe('#76:0')
+        expect(JSON.stringify(process)).not.toContain(KEY)
+      })
+    })
+
+    it('does not ask for a key from a provider that has its own', async () => {
+      const wrapper = await mountPicker({ id: '#76:0', type: 'text' })
+      await wrapper.find('input').setValue('Summary')
+      await flushPromises()
+      await click(wrapper, 'Summary')
+      await wrapper.find('input[type="radio"][value="md-llm-vllm"]').setValue()
+      await flushPromises()
+      expect(wrapper.find('input[type="password"]').exists()).toBe(false)
+    })
+
+    it('hints at the other providers of the same model', async () => {
+      const wrapper = await mountPicker({ id: '#76:0', type: 'text' })
+      await wrapper.find('input').setValue('Summary')
+      await flushPromises()
+      await click(wrapper, 'Summary')
+      await wrapper.find('input[type="radio"][value="md-llm-vllm"]').setValue()
+      await flushPromises()
+      expect(wrapper.text()).toContain('Also available from Ollama')
+    })
+
+    it('offers a searchable select when a provider has many models', async () => {
+      const many = structuredClone(llmCatalogue)
+      many.for_format = [many.for_format[1]]
+      for (let i = 0; i < 8; i++) {
+        many.for_format[0].models[`extra-${i}`] = {
+          name: `Extra ${i}`,
+          supported_types: ['text'],
+        }
+      }
+      api.getServicesForFile.mockResolvedValue(many)
+      const wrapper = await mountPicker({ id: '#76:0', type: 'text' })
+      await wrapper.find('input').setValue('Summary')
+      await flushPromises()
+      await click(wrapper, 'Summary')
+      expect(wrapper.find('[data-test="model-select"]').exists()).toBe(true)
+      expect(wrapper.find('input[type="radio"][value="extra-3"]').exists()).toBe(false)
+      // no model chosen yet: nothing to run
+      expect(wrapper.text()).not.toContain('Crunch file')
+    })
+
+    it('does not offer a provider without a model for the file', async () => {
+      const catalogue = structuredClone(llmCatalogue)
+      catalogue.for_format[0].models = {
+        'only-image': { name: 'Only image', supported_types: ['image'] },
+      }
+      api.getServicesForFile.mockResolvedValue(catalogue)
+      const wrapper = await mountPicker({ id: '#76:0', type: 'text' })
+      await wrapper.find('input').setValue('Summary')
+      await flushPromises()
+      await click(wrapper, 'Summary')
+      expect(wrapper.find('input[type="radio"][value="md-llm-ollama"]').exists()).toBe(false)
+      expect(wrapper.find('input[type="radio"][value="md-llm-vllm"]').exists()).toBe(true)
+    })
+
     it('runs the autotagger like a normal task, with a model', async () => {
       api.createFileProcess.mockResolvedValue({})
       const wrapper = await mountPicker({ id: '#76:0', type: 'text' })
       await click(wrapper, 'Generative AI')
       await click(wrapper, 'Tag with AI')
-      // Gemma is only on Ollama, so the provider is preselected
-      await wrapper.find('input[type="radio"][value="gemma-3-4b"]').setValue()
+      await wrapper.find('input[type="radio"][value="md-llm-ollama"]').setValue()
+      await flushPromises()
+      expect(wrapper.text()).toContain('Gemma 3 4B')
+      await wrapper.find('input[type="radio"][value="gemma3:4b"]').setValue()
       await flushPromises()
       await click(wrapper, 'Crunch file')
       const [process] = api.createFileProcess.mock.calls[0]

@@ -4,6 +4,7 @@ import { defineAsyncComponent } from 'vue'
 // first use, so the viewer only downloads the displays it shows.
 export const displays = {
   text: defineAsyncComponent(() => import('./TextDisplay.vue')),
+  note: defineAsyncComponent(() => import('./NoteDisplay.vue')),
   json: defineAsyncComponent(() => import('./JsonDisplay.vue')),
   pdf: defineAsyncComponent(() => import('./PdfDisplay.vue')),
   image: defineAsyncComponent(() => import('./ImageDisplay.vue')),

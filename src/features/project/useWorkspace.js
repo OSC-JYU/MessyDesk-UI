@@ -10,6 +10,7 @@ export function createWorkspace(deskRid) {
     deskRid,
     desk: null, // the desk's own node, when known
     selected: null, // the selected Vue Flow node
+    selectedSets: [], // sets picked together (shift-click) to merge
     reloadToken: 0, // bump to reload the graph
     focusId: null, // node to fit into view after the next load
     fitRequest: null, // { id } to fit a node into view now
@@ -27,6 +28,21 @@ export function createWorkspace(deskRid) {
   const actions = {
     select(node) {
       ws.selected = node
+      ws.selectedSets = []
+    },
+    // Shift-click: adds a set to the sets picked together, or takes it out.
+    toggleSet(node) {
+      const picked = ws.selectedSets.filter((n) => n.id !== node.id)
+      if (picked.length === ws.selectedSets.length) {
+        if (!ws.selectedSets.length && ws.selected?.type === 'set' && ws.selected.id !== node.id)
+          picked.push(ws.selected)
+        picked.push(node)
+      }
+      ws.selectedSets = picked
+    },
+    startMerge(node) {
+      ws.selected = node
+      ws.selectedSets = [node]
     },
     reload(focusId = null) {
       ws.focusId = focusId
@@ -57,7 +73,8 @@ export function createWorkspace(deskRid) {
     },
   }
 
-  const workspace = { state: ws, ...actions }
+  // ProjectWorkspace replaces this with the function that reloads the desk's own data.
+  const workspace = { state: ws, refreshDesk: () => {}, ...actions }
   provide(KEY, workspace)
   return workspace
 }

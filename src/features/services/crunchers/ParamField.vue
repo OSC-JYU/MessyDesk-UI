@@ -10,6 +10,9 @@ defineProps({
   name: { type: String, required: true },
   help: { type: Object, required: true },
   sourceRid: { type: String, default: '' },
+  // The task's values: a `warning` of the param shows while it is on and the
+  // param named in `warning_if_set` has a value.
+  values: { type: Object, default: () => ({}) },
 })
 
 const emit = defineEmits(['dspace-query'])
@@ -61,6 +64,15 @@ const emit = defineEmits(['dspace-query'])
       density="compact"
       hide-details
     />
+    <v-alert
+      v-if="help.warning && model && values[help.warning_if_set]"
+      type="warning"
+      variant="tonal"
+      density="compact"
+      class="mt-2"
+    >
+      {{ help.warning }}
+    </v-alert>
   </fieldset>
 </template>
 

@@ -16,17 +16,35 @@ import SettingsPage from '@/features/settings/SettingsPage.vue'
 
 beforeEach(() => {
   saveSettings.mockClear()
-  setSettings({ theme: 'light', cookie: 'classic', motion: 'on' })
+  setSettings({
+    theme: 'light',
+    cookie: 'classic',
+    motion: 'on',
+    group_pdf: 'on',
+    lineage_compare: 'on',
+  })
 })
 
 describe('settings store', () => {
   it('takes only known settings and caches them', () => {
     setSettings({ theme: 'dark', cookie: 'neon', motion: 'off', font: 'comic' })
-    expect({ ...settings }).toEqual({ theme: 'dark', cookie: 'classic', motion: 'off' })
+    expect({ ...settings }).toEqual({
+      theme: 'dark',
+      cookie: 'classic',
+      motion: 'off',
+      group_pdf: 'on',
+      lineage_compare: 'on',
+      hide_demos: 'off',
+      desk_view: 'grid',
+    })
     expect(JSON.parse(localStorage.getItem('md-settings'))).toEqual({
       theme: 'dark',
       cookie: 'classic',
       motion: 'off',
+      group_pdf: 'on',
+      lineage_compare: 'on',
+      hide_demos: 'off',
+      desk_view: 'grid',
     })
   })
 
@@ -40,6 +58,25 @@ describe('settings store', () => {
     saveSettings.mockRejectedValueOnce({ status: 500, message: 'down' })
     await expect(saveSetting('theme', 'dark')).rejects.toMatchObject({ status: 500 })
     expect(settings.theme).toBe('light')
+  })
+})
+
+describe('front page settings', () => {
+  it('saves hiding the demo desks and the desk view', async () => {
+    const page = mount(SettingsPage)
+    const box = page.find('input[type="checkbox"]')
+    expect(box.element.checked).toBe(true)
+    await box.setValue(false)
+    await flushPromises()
+    expect(saveSettings).toHaveBeenCalledWith({ hide_demos: 'on' })
+    expect(settings.hide_demos).toBe('on')
+    await box.setValue(true)
+    await flushPromises()
+    expect(settings.hide_demos).toBe('off')
+    const list = page.findAll('button').find((b) => b.text() === 'List')
+    await list.trigger('click')
+    await flushPromises()
+    expect(saveSettings).toHaveBeenCalledWith({ desk_view: 'list' })
   })
 })
 

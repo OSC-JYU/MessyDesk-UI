@@ -36,12 +36,44 @@ export const MOTION_OPTIONS = [
   { value: 'off', title: 'Reduce motion' },
 ]
 
-const DEFAULTS = { theme: 'light', cookie: 'classic', motion: 'on' }
+export const GROUP_PDF_OPTIONS = [
+  { value: 'on', title: 'One card per PDF' },
+  { value: 'off', title: 'All files in a row' },
+]
+
+export const LINEAGE_COMPARE_OPTIONS = [
+  { value: 'on', title: 'Side by side' },
+  { value: 'off', title: 'Replace the file' },
+]
+
+export const HIDE_DEMOS_OPTIONS = [
+  { value: 'off', title: 'Show Learn MessyDesk' },
+  { value: 'on', title: 'Hide Learn MessyDesk' },
+]
+
+export const DESK_VIEW_OPTIONS = [
+  { value: 'grid', title: 'Grid' },
+  { value: 'list', title: 'List' },
+]
+
+const DEFAULTS = {
+  theme: 'light',
+  cookie: 'classic',
+  motion: 'on',
+  group_pdf: 'on',
+  lineage_compare: 'on',
+  hide_demos: 'off',
+  desk_view: 'grid',
+}
 const STORAGE_KEY = 'md-settings'
 const allowed = {
   theme: THEME_OPTIONS.map((o) => o.value),
   cookie: COOKIE_OPTIONS.map((o) => o.value),
   motion: MOTION_OPTIONS.map((o) => o.value),
+  group_pdf: GROUP_PDF_OPTIONS.map((o) => o.value),
+  lineage_compare: LINEAGE_COMPARE_OPTIONS.map((o) => o.value),
+  hide_demos: HIDE_DEMOS_OPTIONS.map((o) => o.value),
+  desk_view: DESK_VIEW_OPTIONS.map((o) => o.value),
 }
 
 // Known keys with allowed values only.

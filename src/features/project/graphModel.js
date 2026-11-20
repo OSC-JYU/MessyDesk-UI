@@ -17,7 +17,9 @@ const DATA_FIELDS = [
   'error_count',
   'processed',
   'params',
+  'params_summary',
   'types',
+  '_file_removed',
 ]
 
 export const EMPTY_DESK_ID = 'empty-desk'
@@ -100,7 +102,9 @@ const UPDATE_FIELDS = [
   'duration',
   'metadata',
   'paths',
+  'text_samples',
   'edited',
+  '_file_removed',
 ]
 
 // Copies changed fields onto `target`; returns whether anything changed.

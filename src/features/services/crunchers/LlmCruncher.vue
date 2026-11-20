@@ -1,10 +1,14 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import ApiKeyField from './ApiKeyField.vue'
 import CruncherTask from './CruncherTask.vue'
-import { llmModels, providerTask } from './crunchers.js'
+import { llmProviders, otherProvidersOf, providerTask } from './crunchers.js'
 
 // One LLM entry ("AI prompts" or a task such as "Tag with AI"): the user picks the prompt, then
-// the model, then the provider. Emits `run` with (service, task, modelId).
+// the provider (where the files go, what it costs, whether a key is needed), then one of that
+// provider's models. Emits `run` with (service, task, modelId, apiKey). `apiKey` is the user's own
+// key, asked for when the provider is set to `api_key_source: "user"`; it stays in this
+// component's memory and is cleared when the provider changes or the panel closes.
 const props = defineProps({
   entry: { type: Object, required: true },
   services: { type: Array, required: true },
@@ -16,39 +20,64 @@ const props = defineProps({
 
 const emit = defineEmits(['run', 'help'])
 
+// Up to this many models are shown as a list of radio buttons, more as a searchable select.
+const RADIO_LIMIT = 6
+
 const isPrompts = computed(() => props.entry.kind === 'prompts')
 const taskKey = ref(props.initialTaskKey || (isPrompts.value ? null : props.entry.tasks[0]?.key))
 const task = computed(() => props.entry.tasks.find((t) => t.key === taskKey.value) || null)
 
-const models = computed(() => (task.value ? llmModels(props.services, task.value) : []))
-const family = ref(null)
-const model = computed(() => models.value.find((m) => m.family === family.value) || null)
+const providers = computed(() => (task.value ? llmProviders(props.services, task.value) : []))
+const providerId = ref(null)
+const provider = computed(
+  () => providers.value.find((p) => p.service.id === providerId.value) || null,
+)
+const service = computed(() => provider.value?.service || null)
 
-const offerKey = ref(null)
-const offer = computed(
-  () => model.value?.offers.find((o) => `${o.service.id}:${o.modelId}` === offerKey.value) || null,
+const modelId = ref(null)
+const model = computed(() => provider.value?.models.find((m) => m.id === modelId.value) || null)
+const alsoOn = computed(() =>
+  model.value ? otherProvidersOf(providers.value, provider.value, model.value) : [],
 )
+
 const chosenTask = computed(() =>
-  offer.value ? providerTask(offer.value.service, task.value) : null,
+  service.value && model.value ? providerTask(service.value, task.value) : null,
 )
-const external = computed(() => offer.value?.service.location === 'external')
+const external = computed(() => service.value?.location === 'external')
+const needsKey = computed(() => service.value?.api_key_source === 'user')
+const apiKey = ref('')
+const keyMissing = ref(false)
+
+function run() {
+  const key = apiKey.value.trim()
+  keyMissing.value = needsKey.value && !key
+  if (keyMissing.value) return
+  emit('run', service.value, chosenTask.value, model.value.id, needsKey.value ? key : undefined)
+}
+
+watch(providerId, () => {
+  apiKey.value = ''
+  keyMissing.value = false
+})
+onBeforeUnmount(() => {
+  apiKey.value = ''
+})
 
 // Preselect what has only one choice; drop choices that no longer exist.
 watch(
-  models,
+  providers,
   (list) => {
-    if (!list.some((m) => m.family === family.value))
-      family.value = list.length === 1 ? list[0].family : null
+    if (!list.some((p) => p.service.id === providerId.value))
+      providerId.value = list.length === 1 ? list[0].service.id : null
   },
   { immediate: true },
 )
 watch(
-  model,
+  provider,
   (current) => {
-    const offers = current?.offers || []
-    if (!offers.some((o) => `${o.service.id}:${o.modelId}` === offerKey.value)) {
-      offerKey.value = offers.length === 1 ? `${offers[0].service.id}:${offers[0].modelId}` : null
-    }
+    const models = current?.models || []
+    if (!models.some((m) => m.id === modelId.value))
+      modelId.value = models.length === 1 ? models[0].id : null
   },
   { immediate: true },
 )
@@ -93,79 +122,120 @@ function inputOf(types) {
     </section>
 
     <section v-if="task" class="llm-cruncher__step">
-      <h4 class="llm-cruncher__label">{{ isPrompts ? '2.' : '1.' }} Model</h4>
-      <p v-if="!models.length" class="llm-cruncher__muted">No model can run this on this file.</p>
-      <v-radio-group v-else v-model="family" hide-details>
-        <v-radio v-for="m in models" :key="m.family" :value="m.family">
-          <template #label>
-            <span>
-              <strong>{{ m.name }}</strong>
-              <span class="llm-cruncher__muted">
-                {{ m.description }} Input: {{ inputOf(m.supported_types) }}.
-                {{ m.offers.length > 1 ? `${m.offers.length} providers.` : '' }}
-              </span>
-            </span>
-          </template>
-        </v-radio>
-      </v-radio-group>
-    </section>
-
-    <section v-if="model" class="llm-cruncher__step">
-      <h4 class="llm-cruncher__label">{{ isPrompts ? '3.' : '2.' }} Provider</h4>
-      <v-radio-group v-model="offerKey" hide-details>
-        <v-radio
-          v-for="o in model.offers"
-          :key="`${o.service.id}:${o.modelId}`"
-          :value="`${o.service.id}:${o.modelId}`"
-        >
+      <h4 class="llm-cruncher__label">{{ isPrompts ? '2.' : '1.' }} Provider</h4>
+      <p v-if="!providers.length" class="llm-cruncher__muted">
+        No provider has a model that can run this on this file.
+      </p>
+      <v-radio-group v-else v-model="providerId" hide-details>
+        <v-radio v-for="p in providers" :key="p.service.id" :value="p.service.id">
           <template #label>
             <span class="llm-cruncher__provider">
-              <strong>{{ o.service.name }}</strong>
+              <strong>{{ p.service.name }}</strong>
               <v-chip
                 size="x-small"
                 label
                 variant="tonal"
-                :color="o.service.location === 'external' ? 'error' : 'success'"
+                :color="p.service.location === 'external' ? 'error' : 'success'"
               >
-                {{ o.service.location === 'external' ? 'external' : 'on-premise' }}
+                {{ p.service.location === 'external' ? 'external' : 'on-premise' }}
               </v-chip>
               <v-chip
                 size="x-small"
                 label
                 variant="tonal"
-                :color="o.service.access === 'proprietary' ? 'error' : 'success'"
+                :color="p.service.access === 'proprietary' ? 'error' : 'success'"
               >
-                {{ o.service.access === 'proprietary' ? 'proprietary' : 'open source' }}
+                {{ p.service.access === 'proprietary' ? 'proprietary' : 'open source' }}
               </v-chip>
+              <v-chip
+                v-if="p.service.api_key_source === 'user'"
+                size="x-small"
+                label
+                variant="tonal"
+              >
+                your API key
+              </v-chip>
+              <span class="llm-cruncher__muted">
+                {{ p.models.length }} {{ p.models.length === 1 ? 'model' : 'models' }}
+              </span>
               <v-btn
                 size="x-small"
                 variant="text"
                 icon="mdi-help-circle-outline"
-                :aria-label="`Help for ${o.service.name}`"
-                @click.stop="emit('help', o.service.id)"
+                :aria-label="`Help for ${p.service.name}`"
+                @click.stop="emit('help', p.service.id)"
               />
             </span>
           </template>
         </v-radio>
       </v-radio-group>
+
+      <template v-if="service">
+        <v-alert v-if="external" type="error" variant="tonal" density="compact" class="my-3">
+          {{ service.name }} is an external provider.
+          <strong>Your {{ onSet ? 'files' : 'file' }} will be sent to {{ service.name }}.</strong>
+        </v-alert>
+        <ApiKeyField
+          v-if="needsKey"
+          v-model="apiKey"
+          :provider-name="service.name"
+          :error="keyMissing ? 'Enter your API key to run this' : ''"
+          class="mt-3"
+        />
+      </template>
+    </section>
+
+    <section v-if="provider" class="llm-cruncher__step">
+      <h4 class="llm-cruncher__label">{{ isPrompts ? '3.' : '2.' }} Model</h4>
+      <v-radio-group v-if="provider.models.length <= RADIO_LIMIT" v-model="modelId" hide-details>
+        <v-radio v-for="m in provider.models" :key="m.id" :value="m.id">
+          <template #label>
+            <span>
+              <strong>{{ m.name }}</strong>
+              <span class="llm-cruncher__muted">
+                {{ m.description }} Input: {{ inputOf(m.supported_types) }}.
+              </span>
+            </span>
+          </template>
+        </v-radio>
+      </v-radio-group>
+      <v-autocomplete
+        v-else
+        v-model="modelId"
+        :items="provider.models"
+        item-title="name"
+        item-value="id"
+        label="Search the models"
+        variant="outlined"
+        density="compact"
+        hide-details
+        data-test="model-select"
+      >
+        <template #item="{ props: itemProps, item }">
+          <v-list-item
+            v-bind="itemProps"
+            :subtitle="`${item.raw.description} Input: ${inputOf(item.raw.supported_types)}.`"
+          />
+        </template>
+      </v-autocomplete>
+      <p v-if="model && provider.models.length > RADIO_LIMIT" class="llm-cruncher__muted mt-2">
+        {{ model.description }} Input: {{ inputOf(model.supported_types) }}.
+      </p>
+      <p v-if="alsoOn.length" class="llm-cruncher__muted mt-2">
+        Also available from {{ alsoOn.join(', ') }}.
+      </p>
     </section>
 
     <section v-if="chosenTask" class="llm-cruncher__step">
-      <v-alert v-if="external" type="error" variant="tonal" density="compact" class="mb-4">
-        {{ offer.service.name }} is an external provider.
-        <strong
-          >Your {{ onSet ? 'files' : 'file' }} will be sent to {{ offer.service.name }}.</strong
-        >
-      </v-alert>
       <CruncherTask
-        :key="`${offer.service.id}:${offer.modelId}:${chosenTask.key}`"
-        :service="offer.service"
+        :key="`${service.id}:${model.id}:${chosenTask.key}`"
+        :service="service"
         :task="chosenTask"
-        :model="offer.model"
+        :model="model.model"
         :on-set="onSet"
         :source-rid="sourceRid"
-        :running="runningKey === `${offer.service.id}:${chosenTask.key}`"
-        @run="emit('run', offer.service, chosenTask, offer.modelId)"
+        :running="runningKey === `${service.id}:${chosenTask.key}`"
+        @run="run"
       />
     </section>
   </div>

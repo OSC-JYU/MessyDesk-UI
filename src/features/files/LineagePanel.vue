@@ -5,6 +5,7 @@ import { previewUrl } from './fileUrls.js'
 import ThumbnailImage from '@/ui/ThumbnailImage.vue'
 import {
   isOpenable,
+  isRemoved,
   levelLabel,
   nodeColour,
   nodeIcon,
@@ -19,10 +20,12 @@ const props = defineProps({
   contextRid: { type: String, default: null }, // the file the chain is shown for
   selectedRid: { type: String, default: null }, // the file open now
   level: { type: Number, default: 0 },
+  compareRid: { type: String, default: null }, // the file shown beside the open one
+  sideBySide: { type: Boolean, default: false },
 })
 
 const collapsed = defineModel('collapsed', { type: Boolean, default: false })
-const emit = defineEmits(['open'])
+const emit = defineEmits(['open', 'toggle-side-by-side'])
 
 const path = ref([])
 const nodes = computed(() => visibleLineage(path.value))
@@ -49,6 +52,22 @@ function open(node) {
         <v-chip size="x-small" label variant="tonal">{{ levelLabel(level) }}</v-chip>
       </template>
       <v-btn
+        v-if="!collapsed"
+        icon="mdi-compare"
+        size="x-small"
+        :variant="sideBySide ? 'tonal' : 'text'"
+        :color="sideBySide ? 'primary' : undefined"
+        :aria-pressed="sideBySide"
+        :aria-label="sideBySide ? 'Open files in place' : 'Open files side by side'"
+        :title="
+          sideBySide
+            ? 'Side by side: a picked file opens beside this one. Click to replace instead.'
+            : 'Replace: a picked file replaces this one. Click to open side by side.'
+        "
+        class="lineage__toggle"
+        @click="emit('toggle-side-by-side')"
+      />
+      <v-btn
         :icon="collapsed ? 'mdi-chevron-right' : 'mdi-chevron-left'"
         size="x-small"
         variant="text"
@@ -65,7 +84,9 @@ function open(node) {
         class="lineage__item"
         :class="{
           'lineage__item--current': node['@rid'] === selectedRid,
+          'lineage__item--compare': node['@rid'] === compareRid,
           'lineage__item--open': isOpenable(node),
+          'lineage__item--removed': isRemoved(node),
         }"
       >
         <component
@@ -79,6 +100,7 @@ function open(node) {
             {{ nodeKind(node) }}
           </span>
           <span class="lineage__label" :title="node.label">{{ node.label }}</span>
+          <span v-if="isRemoved(node)" class="lineage__removed">File deleted after splitting</span>
           <ThumbnailImage
             v-if="node.type === 'image' && node.path"
             :src="previewUrl(node.path)"
@@ -127,6 +149,10 @@ function open(node) {
   margin-inline-start: auto;
 }
 
+.lineage__toggle + .lineage__toggle {
+  margin-inline-start: 0;
+}
+
 .lineage__list {
   margin: 0;
   padding: var(--md-space-3) var(--md-space-2);
@@ -149,6 +175,12 @@ function open(node) {
   height: var(--md-space-2);
   border-radius: 50%;
   background: var(--md-color-border);
+}
+
+.lineage__item--compare::before {
+  background: var(--md-color-secondary, var(--md-color-primary));
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--md-color-secondary, var(--md-color-primary)) 25%, transparent);
 }
 
 .lineage__item--current::before {
@@ -176,6 +208,7 @@ function open(node) {
 }
 
 .lineage__item--open .lineage__node:hover,
+.lineage__item--compare .lineage__node,
 .lineage__item--current .lineage__node {
   background: color-mix(in srgb, var(--md-color-primary) 7%, transparent);
 }
@@ -194,6 +227,24 @@ function open(node) {
   font-weight: var(--md-font-weight-medium);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.lineage__item--removed .lineage__node {
+  cursor: not-allowed;
+}
+
+.lineage__item--removed .lineage__kind,
+.lineage__item--removed .lineage__label {
+  opacity: 0.55;
+}
+
+.lineage__item--removed .lineage__label {
+  text-decoration: line-through;
+}
+
+.lineage__removed {
+  color: var(--md-color-warning);
+  font-size: var(--md-font-size-xs);
 }
 
 .lineage__thumb {

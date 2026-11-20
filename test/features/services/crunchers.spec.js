@@ -5,7 +5,8 @@ import {
   fillInfo,
   forModel,
   inCategory,
-  llmModels,
+  otherProvidersOf,
+  llmProviders,
   prepareCatalogue,
   providerTask,
   processTarget,
@@ -208,20 +209,30 @@ describe('LLM services', () => {
     })
   })
 
-  it('lists models by family with their providers, on-premise first, and only those fitting the prompt type', () => {
+  it('lists the providers that can run the prompt, on-premise first, each with its own fitting models', () => {
     const summary = catalogue.llm[0].tasks.find((t) => t.key === 'summary')
-    const models = llmModels(catalogue.services, summary)
-    expect(models.map((m) => m.family)).toEqual(['oss'])
-    expect(models[0].offers.map((o) => `${o.service.id}:${o.modelId}`)).toEqual([
-      'local:oss-l',
-      'cloud:oss-c',
+    const providers = llmProviders(catalogue.services, summary)
+    expect(providers.map((p) => [p.service.id, p.models.map((m) => m.id)])).toEqual([
+      ['local', ['oss-l']],
+      ['cloud', ['oss-c']],
     ])
+    // an image prompt: the local provider has no image model, so it is not offered at all
     const describeTask = catalogue.llm[0].tasks.find((t) => t.key === 'describe')
-    expect(llmModels(catalogue.services, describeTask).map((m) => m.family)).toEqual([
-      'oss',
-      'Vision',
-    ])
+    expect(
+      llmProviders(catalogue.services, describeTask).map((p) => [
+        p.service.id,
+        p.models.map((m) => m.id),
+      ]),
+    ).toEqual([['cloud', ['oss-c', 'vis']]])
     expect(providerTask(catalogue.services[1], summary).values).toEqual({ temperature: 0.5 })
+  })
+
+  it('tells where else the same model (family) is offered', () => {
+    const summary = catalogue.llm[0].tasks.find((t) => t.key === 'summary')
+    const providers = llmProviders(catalogue.services, summary)
+    const [local, cloud] = providers
+    expect(otherProvidersOf(providers, local, local.models[0])).toEqual(['cloud'])
+    expect(otherProvidersOf(providers, cloud, cloud.models[0])).toEqual(['local'])
   })
 
   it('searches prompts as LLM entries, not per provider', () => {

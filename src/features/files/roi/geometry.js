@@ -8,6 +8,9 @@ export const MIN_SIZE_PX = 12
 
 export const clamp = (value, min, max) => Math.min(Math.max(value, min), max)
 
+// Deep copy of a shape. structuredClone throws on Vue reactive proxies, so go via JSON.
+export const cloneShape = (shape) => JSON.parse(JSON.stringify(shape))
+
 export function makeShapeId() {
   return `roi_${Date.now()}_${Math.floor(Math.random() * 10000)}`
 }
@@ -103,7 +106,7 @@ export function isBigEnough(shape, size) {
 // The shape after dragging it (or one of its handles) by `delta`
 // ({ xPct, yPct, x, y } between the start point and now).
 export function dragShape(base, drag, delta, current, size) {
-  const shape = structuredClone(base)
+  const shape = cloneShape(base)
   if (drag.type === 'move') {
     if (shape.type === 'rect') {
       shape.left = clamp(base.left + delta.xPct, 0, 100 - base.width)

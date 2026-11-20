@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
+import { reactive } from 'vue'
 import {
   circlePx,
+  cloneShape,
   dragShape,
   draftShape,
   isBigEnough,
@@ -121,5 +123,17 @@ describe('ROI geometry', () => {
     expect(shapesToMap([{ id: 'a', type: 'rect' }])).toEqual({
       a: { id: 'a', '@rid': 'a', type: 'rect' },
     })
+  })
+
+  it('drags shapes held in Vue reactive state', () => {
+    const drag = reactive({ type: 'move', base: null })
+    drag.base = cloneShape(reactive(poly))
+    const moved = dragShape(drag.base, drag, { xPct: 1, yPct: 1 }, null, size)
+    expect(moved.points[0]).toEqual({
+      xPct: poly.points[0].xPct + 1,
+      yPct: poly.points[0].yPct + 1,
+    })
+    drag.base = reactive(rect)
+    expect(dragShape(drag.base, drag, { xPct: 5, yPct: 5 }, null, size).left).toBe(15)
   })
 })

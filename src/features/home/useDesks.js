@@ -19,8 +19,8 @@ export function useDesks() {
     storage: null,
     loading: false,
     error: null,
-    sortKey: 'name',
-    sortDirection: 'asc',
+    sortKey: 'created',
+    sortDirection: 'desc',
   })
 
   const rows = computed(() => {

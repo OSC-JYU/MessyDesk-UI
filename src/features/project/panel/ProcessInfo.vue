@@ -39,10 +39,42 @@ const payload = computed(() => {
   }
 })
 
-const prompt = computed(() => payload.value.system_params?.prompts?.content || '')
+// The saved summary (labelled, secrets left out) is preferred. Runs from before it existed fall
+// back to the raw payload, minus anything that looks like a credential.
+const SECRET_NAME = /secret|token|password|passwd|credential|api[_-]?key|auth/i
 
-const paramRows = computed(() =>
-  Object.entries(payload.value.params || {}).filter(([, value]) => value !== '' && value !== null),
+const summary = computed(() => {
+  try {
+    const raw = props.node.data?.params_summary
+    return (typeof raw === 'string' ? JSON.parse(raw) : raw) || null
+  } catch {
+    return null
+  }
+})
+
+const prompt = computed(
+  () =>
+    summary.value?.prompt ||
+    payload.value.params?.prompts?.content ||
+    payload.value.system_params?.prompts?.content ||
+    '',
+)
+
+const paramRows = computed(() => {
+  if (summary.value?.params) return summary.value.params.map((p) => [p.label, p.value])
+  return Object.entries(payload.value.params || {})
+    .filter(([name]) => name !== 'prompts' && !SECRET_NAME.test(name))
+    .filter(([, value]) => value !== '' && value !== null)
+    .map(([name, value]) => [name, typeof value === 'object' ? JSON.stringify(value) : value])
+})
+
+// A long prompt is cut to a few lines until the user asks for all of it.
+const PROMPT_LONG = 300
+const promptOpen = ref(false)
+const promptLong = computed(() => prompt.value.length > PROMPT_LONG)
+watch(
+  () => props.node.id,
+  () => (promptOpen.value = false),
 )
 
 const status = computed(() => batch.value?.status || props.node.data?.status || '')
@@ -104,13 +136,25 @@ const rows = computed(() => {
       <dl class="process-info__list">
         <template v-for="[name, value] in paramRows" :key="name">
           <dt>{{ name }}</dt>
-          <dd>{{ typeof value === 'object' ? JSON.stringify(value) : value }}</dd>
+          <dd>{{ value }}</dd>
         </template>
       </dl>
     </template>
     <template v-if="prompt">
       <h4 class="process-info__sub">Prompt</h4>
-      <pre class="process-info__prompt">{{ prompt }}</pre>
+      <pre
+        class="process-info__prompt"
+        :class="{ 'process-info__prompt--clamped': promptLong && !promptOpen }"
+        >{{ prompt }}</pre>
+      <v-btn
+        v-if="promptLong"
+        size="x-small"
+        variant="text"
+        class="mt-1"
+        @click="promptOpen = !promptOpen"
+      >
+        {{ promptOpen ? 'Show less' : 'Show all' }}
+      </v-btn>
     </template>
   </section>
 </template>
@@ -162,5 +206,12 @@ const rows = computed(() => {
   font-size: var(--md-font-size-xs);
   white-space: pre-wrap;
   word-break: break-word;
+  max-height: 24rem;
+  overflow-y: auto;
+}
+
+.process-info__prompt--clamped {
+  max-height: 7rem;
+  overflow: hidden;
 }
 </style>

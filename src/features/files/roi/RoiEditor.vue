@@ -8,6 +8,7 @@ import RoiToolsPanel from './RoiToolsPanel.vue'
 import { useRois } from './useRois.js'
 import {
   circlePx,
+  cloneShape,
   dragShape,
   draftShape,
   isBigEnough,
@@ -167,7 +168,7 @@ function startDrag(type, event, extra = {}) {
     type,
     id: shape.id,
     start: pointFrom(event),
-    base: structuredClone({ ...shape }),
+    base: cloneShape(shape),
     moved: false,
     ...extra,
   })

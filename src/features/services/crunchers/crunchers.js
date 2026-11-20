@@ -71,7 +71,7 @@ export function prepareCatalogue(result) {
 // ---- LLM services --------------------------------------------------------------------------
 // LLM services (`external_tasks`, one per provider) are not listed one by one. They make up one
 // "AI prompts" entry, plus one entry per task of their own (such as "Tag with AI"), where the user
-// picks the prompt, then the model, then the provider (MessyDesk plan/llm-adapter.md 4.5).
+// picks the prompt, then the provider, then the model.
 
 export function isLlmService(service) {
   return Boolean(service?.external_tasks)
@@ -124,35 +124,39 @@ function modelFits(model, task) {
 
 const LOCATION_ORDER = { 'on-premise': 0 }
 
-// The models that can run `task`, one per family (the same model from several providers shows
-// once), each with the providers offering it, on-premise ones first.
-export function llmModels(services, task) {
-  const families = new Map()
+// The providers that can run `task`, each with the models of its own that fit, on-premise ones
+// first. Models are per provider: their lists can be discovered at run time and differ between
+// providers. `family` only ties the same model on several providers together, for a hint.
+export function llmProviders(services, task) {
+  const providers = []
   for (const service of services.filter(isLlmService)) {
     if (!service.tasks.some((t) => t.key === task?.key)) continue
-    for (const [id, model] of Object.entries(service.models || {})) {
-      if (!modelFits(model, task)) continue
-      const family = model.family || model.name || id
-      if (!families.has(family)) {
-        families.set(family, {
-          family,
-          name: model.name || id,
-          description: model.description || '',
-          supported_types: model.supported_types || [],
-          offers: [],
-        })
-      }
-      families.get(family).offers.push({ service, modelId: id, model })
-    }
+    const models = Object.entries(service.models || {})
+      .filter(([, model]) => modelFits(model, task))
+      .map(([id, model]) => ({
+        id,
+        name: model.name || id,
+        family: model.family || model.name || id,
+        description: model.description || '',
+        supported_types: model.supported_types || [],
+        model,
+      }))
+      .sort(byName)
+    if (models.length) providers.push({ service, models })
   }
-  for (const entry of families.values()) {
-    entry.offers.sort(
-      (a, b) =>
-        (LOCATION_ORDER[a.service.location] ?? 1) - (LOCATION_ORDER[b.service.location] ?? 1) ||
-        String(a.service.name).localeCompare(String(b.service.name)),
-    )
-  }
-  return [...families.values()].sort(byName)
+  return providers.sort(
+    (a, b) =>
+      (LOCATION_ORDER[a.service.location] ?? 1) - (LOCATION_ORDER[b.service.location] ?? 1) ||
+      String(a.service.name).localeCompare(String(b.service.name)),
+  )
+}
+
+// The names of the other providers that offer the same model (by family).
+export function otherProvidersOf(providers, current, model) {
+  return providers
+    .filter((p) => p.service.id !== current.service.id)
+    .filter((p) => p.models.some((m) => m.family === model.family))
+    .map((p) => p.service.name)
 }
 
 // Drops `temperature` from params or values when the model does not take it (`temperature: false`).

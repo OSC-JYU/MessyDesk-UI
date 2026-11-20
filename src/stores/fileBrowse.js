@@ -18,6 +18,10 @@ export const fileBrowse = reactive({
   roiTarget: null,
   // Show text files as rendered Markdown.
   markdown: false,
+  // The file picked in the lineage, shown beside `file` (null when there is none), and this view's
+  // choice of side by side or replacing instead of the user's setting ('on' | 'off' | null).
+  compare: null,
+  sideBySide: null,
 })
 
 // Opens `file` from a list of results, remembering the list for previous/next

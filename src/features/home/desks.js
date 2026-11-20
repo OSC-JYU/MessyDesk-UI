@@ -64,6 +64,11 @@ export function indexedDocsByProject(searchInfo) {
   return byProject
 }
 
+function createdText(project) {
+  const date = project.created ? new Date(project.created) : null
+  return date && !Number.isNaN(date.getTime()) ? date.toLocaleDateString() : ''
+}
+
 export function toDeskRow(project, docsByProject) {
   const rid = normalizeRid(project['@rid'])
   const name = String(project.label || project.name || '').trim() || 'Untitled desk'
@@ -79,14 +84,20 @@ export function toDeskRow(project, docsByProject) {
     items,
     docs,
     expires,
+    created: project.created ? new Date(project.created) : null,
+    description: String(project.description || '').trim(),
+    cover: project.cover?.url || '',
     sizeText: sizeMb === null ? 'No estimate yet' : `${sizeMb.toFixed(1)} MB`,
     itemsText: items === null ? 'Not counted yet' : `${Math.floor(items)} items`,
     docsText: docs === null ? 'n/a' : `${docs} docs`,
+    createdText: createdText(project),
     expiresText: expires ? expires.toLocaleDateString() : 'No date',
   }
 }
 
 const SORT_VALUES = {
+  created: (row) =>
+    row.created && !Number.isNaN(row.created.getTime()) ? row.created.getTime() : 0,
   name: (row) => row.name.toLowerCase(),
   size: (row) => row.sizeMb ?? -1,
   items: (row) => row.items ?? -1,

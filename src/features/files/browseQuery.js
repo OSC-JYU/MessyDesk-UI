@@ -18,6 +18,7 @@ export function setContextToQuery(context) {
     skip: String(count(context.skip)),
     sourceRid: ridParam(context.source_rid),
     sourceLabel: context.source_label || '',
+    originRid: ridParam(context.origin_rid),
   }
 }
 
@@ -34,6 +35,7 @@ export function setContextFromQuery(query) {
     skip: count(query.skip),
     source_rid: toRid(query.sourceRid),
     source_label: query.sourceLabel ? String(query.sourceLabel) : null,
+    origin_rid: toRid(query.originRid),
   }
 }
 

@@ -1,12 +1,13 @@
 <script setup>
 import EmptyState from '@/ui/EmptyState.vue'
+import DeskActionsMenu from './DeskActionsMenu.vue'
 
 // Sortable list of the user's desks with a menu of actions per desk.
 defineProps({
   rows: { type: Array, required: true },
   loading: { type: Boolean, default: false },
-  sortKey: { type: String, default: 'name' },
-  sortDirection: { type: String, default: 'asc' },
+  sortKey: { type: String, default: 'created' },
+  sortDirection: { type: String, default: 'desc' },
 })
 
 const emit = defineEmits(['sort', 'open', 'rename', 'reindex', 'delete'])
@@ -16,6 +17,7 @@ const columns = [
   { key: 'size', label: 'Size' },
   { key: 'items', label: 'Items' },
   { key: 'docs', label: 'Indexed docs' },
+  { key: 'created', label: 'Created' },
   { key: 'expires', label: 'Expires' },
 ]
 </script>
@@ -71,38 +73,15 @@ const columns = [
         <td>
           <v-chip size="small" variant="tonal" color="primary" label>{{ row.docsText }}</v-chip>
         </td>
+        <td>{{ row.createdText }}</td>
         <td>{{ row.expiresText }}</td>
         <td class="desk-table__actions">
-          <v-menu location="bottom end">
-            <template #activator="{ props }">
-              <v-btn
-                v-bind="props"
-                icon="mdi-dots-vertical"
-                size="small"
-                variant="text"
-                :aria-label="`Actions for ${row.name}`"
-              />
-            </template>
-            <v-list density="compact">
-              <v-list-item
-                prepend-icon="mdi-pencil"
-                title="Rename desk"
-                @click="emit('rename', row)"
-              />
-              <v-list-item
-                prepend-icon="mdi-refresh"
-                title="Re-index search"
-                @click="emit('reindex', row)"
-              />
-              <v-divider />
-              <v-list-item
-                prepend-icon="mdi-delete-outline"
-                title="Delete desk"
-                base-color="error"
-                @click="emit('delete', row)"
-              />
-            </v-list>
-          </v-menu>
+          <DeskActionsMenu
+            :row="row"
+            @rename="emit('rename', $event)"
+            @reindex="emit('reindex', $event)"
+            @delete="emit('delete', $event)"
+          />
         </td>
       </tr>
     </tbody>

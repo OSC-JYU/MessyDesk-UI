@@ -117,9 +117,15 @@ batchStore.pause = async function (rid) {
   await pauseBatch(rid)
 }
 
-batchStore.resume = async function (rid) {
+batchStore.resume = async function (rid, apiKey) {
+  const before = this.jobs[rid]?.status
   if (this.jobs[rid]) this.jobs[rid].status = 'resuming'
-  await resumeBatch(rid)
+  try {
+    await resumeBatch(rid, { apiKey })
+  } catch (error) {
+    if (this.jobs[rid]) this.jobs[rid].status = before
+    throw error
+  }
 }
 
 batchStore.cancel = async function (rid) {

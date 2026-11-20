@@ -8,8 +8,8 @@ import NodeShell from './NodeShell.vue'
 import { versioned } from './thumbnails.js'
 import ThumbnailImage from '@/ui/ThumbnailImage.vue'
 
-// A PDF: first-page thumbnail, page count and size. PDFs are split into
-// pages by an importer, which connects from any side.
+// A PDF page: first-page thumbnail, page count and size. The cruncher that
+// made it connects from any side.
 const props = defineProps({ data: { type: Object, required: true } })
 const src = computed(() => versioned(props.data.image, props.data.thumbnail_version))
 </script>

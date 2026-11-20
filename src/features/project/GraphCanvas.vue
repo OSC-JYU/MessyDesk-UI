@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, watch } from 'vue'
+import { onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { VueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
@@ -13,6 +13,7 @@ import { useDeskGraph } from './useDeskGraph.js'
 import { useOpenFile, useOpenNode } from './useOpenNode.js'
 import { nodeTypes } from './nodes/index.js'
 import SetBrowser from './SetBrowser.vue'
+import { watchSet } from '@/api/files.js'
 
 defineOptions({ name: 'GraphCanvas' })
 
@@ -20,29 +21,52 @@ defineOptions({ name: 'GraphCanvas' })
 const route = useRoute()
 const router = useRouter()
 const workspace = useWorkspace()
-const setView = reactive({ set: null, roiSet: null, page: 1, refresh: 0 })
+const setView = reactive({ set: null, roiSet: null, page: 1, origin: '', refresh: 0 })
 
 const desk = useDeskGraph(workspace, {
   onThumbnailsChanged: () => setView.set && setView.refresh++,
+  onSetContentChanged: () => setView.set && setView.refresh++,
 })
 
-function openSet(set, roiSet = null) {
+// The server sends thumbnails of the open set as they arrive, and only the visible ones otherwise.
+watch(
+  () => setView.set?.id,
+  (id, previous) => {
+    if (previous) watchSet(previous, false).catch(() => {})
+    if (id) watchSet(id).catch(() => {})
+  },
+)
+onBeforeUnmount(() => setView.set && watchSet(setView.set.id, false).catch(() => {}))
+
+function openSet(set, roiSet = null, origin = '') {
   const saved = recall('setBrowser', `${workspace.state.deskRid}|${set.id}`)
-  Object.assign(setView, { set, roiSet, page: saved?.page || 1 })
+  Object.assign(setView, { set, roiSet, page: saved?.page || 1, origin })
 }
 
 function closeSet() {
   setView.set = null
 }
 
-const openNode = useOpenNode(workspace, desk.flow, { openSet })
+const removedFile = ref(null)
+const openNode = useOpenNode(workspace, desk.flow, {
+  openSet,
+  onFileRemoved: (node) => (removedFile.value = node),
+})
 const openFile = useOpenFile(workspace)
 
 function onSetPage(page) {
   remember('setBrowser', `${workspace.state.deskRid}|${setView.set.id}`, { page })
 }
 
-desk.flow.onNodeClick(({ node }) => node && workspace.select(node))
+desk.flow.onNodeClick(({ node, event }) => {
+  if (!node) return
+  // Shift or Ctrl/Cmd picks several sets to merge; anything else is a normal selection.
+  if ((event?.shiftKey || event?.ctrlKey || event?.metaKey) && node.type === 'set') {
+    workspace.toggleSet(node)
+    return
+  }
+  workspace.select(node)
+})
 desk.flow.onNodeDoubleClick(({ node }) => node && openNode(node))
 desk.flow.onPaneClick(() => workspace.select(null))
 
@@ -51,7 +75,7 @@ async function openSetFromQuery() {
   const rid = route.query.openSet
   if (!rid) return
   const node = desk.graph.nodes.find((n) => n.id === `#${String(rid).replace('#', '')}`)
-  if (node?.type === 'set') openSet(node)
+  if (node?.type === 'set') openSet(node, null, route.query.openOrigin || '')
   router.replace({ name: 'project-graph', params: { rid: route.params.rid } })
 }
 
@@ -77,6 +101,7 @@ watch(
       :set="setView.set"
       :roi-set="setView.roiSet"
       :initial-page="setView.page"
+      :initial-origin="setView.origin"
       :refresh-token="setView.refresh"
       @page="onSetPage"
       @close="closeSet"
@@ -88,6 +113,7 @@ watch(
             roiSet: setView.roiSet,
             index: file.index,
             total: file.total,
+            origin: file.origin,
           })
       "
     />
@@ -114,6 +140,22 @@ watch(
       >
         <Background />
       </VueFlow>
+      <v-dialog
+        :model-value="Boolean(removedFile)"
+        max-width="460"
+        @update:model-value="removedFile = null"
+      >
+        <v-card rounded="lg" title="File deleted">
+          <v-card-text>
+            The file {{ removedFile?.data?.label }} was deleted from the disk when it was split into
+            pages, so it cannot be opened. Open the set of pages made from it instead.
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn variant="text" @click="removedFile = null">OK</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
       <div class="desk-graph__controls" role="toolbar" aria-label="Desk view">
         <v-btn
           size="small"
@@ -132,7 +174,7 @@ watch(
           prepend-icon="mdi-cog-off-outline"
           @click="desk.toggleProcesses"
         >
-          {{ desk.graph.compact ? 'Show processes' : 'Hide processes' }}
+          {{ desk.graph.compact ? 'Show processes' : 'Collapse processes' }}
         </v-btn>
         <v-btn
           size="small"

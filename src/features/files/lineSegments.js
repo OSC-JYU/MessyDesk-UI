@@ -29,6 +29,9 @@ export function imageAncestorPath(ancestors) {
   const list = Array.isArray(ancestors) ? ancestors : []
   const kind = (item) => String(item?.type || '').toLowerCase()
   return (
-    (list.find((a) => kind(a) === 'image') || list.find((a) => kind(a) === 'pdf'))?.path || null
+    (
+      list.find((a) => kind(a) === 'image') ||
+      list.find((a) => ['pdf', 'original-pdf'].includes(kind(a)))
+    )?.path || null
   )
 }

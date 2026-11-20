@@ -75,12 +75,12 @@ This is purely UI guidance—the backend may accept other formats.
 **Direct-to-picker UX**: Clicking an "Upload" button opens the native file picker straight away (see §6).
 For the main-desk (single-file) upload, the file is sent as soon as it's chosen — no confirmation step. For
 Set (multi-file) upload, a minimal confirm/progress dialog shows after files are picked (file count,
-large-upload and PDF-gating warnings, Upload/Cancel) rather than a file-browsing step.
+large-upload warning, Upload/Cancel) rather than a file-browsing step.
 
-**PDF gating**: When the PDF splitter service (`md-pypdf_fs`) has no active consumers, the uploader disables
-the Upload button (Set flow) or stops with an error message (main-desk flow) for PDF files. The backend also enforces
-this with HTTP 503. The original PDF is always deleted after splitting (no user-facing toggle;
-`delete_original` defaults to `true` server-side and the UI never overrides it to `false`).
+**PDFs**: An uploaded PDF is stored as an `original-pdf` and needs no service; the uploader has no PDF gating.
+It is split by the user with the PyPDF cruncher, whose `pages` range and `delete_original` params are drawn
+like any task param (`ParamField.vue`; a `warning` shows while a range is set and the original is deleted).
+Params with `filter: "set_pages"` (Poppler's page range) are shown for sets only (`CruncherTask.vue`).
 
 **Verified from:** `src/features/project/dialogs/UploadController.vue`
 

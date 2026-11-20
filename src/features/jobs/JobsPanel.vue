@@ -1,6 +1,8 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, reactive } from 'vue'
 import { batchStore } from '@/stores/batchStore.js'
+import ApiKeyDialog from '@/features/services/crunchers/ApiKeyDialog.vue'
+import { loadCredentialFields } from '@/features/services/crunchers/serviceCredentials.js'
 import StatusChip from '@/ui/StatusChip.vue'
 
 // Floating panel of batch jobs (a cruncher run over a set), fed live by
@@ -16,6 +18,28 @@ const service = (job) =>
   String(job.service_id || job.queue || 'Processing')
     .replace(/^md-/, '')
     .replace(/_(fs|batch)$/, '')
+
+// A run on a provider that needs the user's own key asks for it again when resumed.
+const keyDialog = reactive({ open: false, job: null, error: '', fields: [] })
+
+async function resume(job, apiKey) {
+  try {
+    await batchStore.resume(job.rid, apiKey)
+    keyDialog.open = false
+    keyDialog.fields = []
+  } catch (error) {
+    if (/own API key/i.test(error?.message || '')) {
+      if (!keyDialog.open)
+        keyDialog.fields = await loadCredentialFields(job.service_id || job.queue)
+      keyDialog.job = job
+      keyDialog.error = apiKey ? error.message : ''
+      keyDialog.open = true
+    } else {
+      keyDialog.error = error?.message || 'Could not resume'
+      keyDialog.open = Boolean(apiKey)
+    }
+  }
+}
 
 function eta(job) {
   const sec = Math.round(job.eta_sec || 0)
@@ -83,7 +107,7 @@ function eta(job) {
               size="x-small"
               variant="tonal"
               color="primary"
-              @click="batchStore.resume(job.rid)"
+              @click="resume(job)"
               >Resume</v-btn
             >
             <v-btn
@@ -107,6 +131,13 @@ function eta(job) {
         </li>
       </ul>
     </v-card>
+    <ApiKeyDialog
+      v-model="keyDialog.open"
+      :provider-name="keyDialog.job ? service(keyDialog.job) : ''"
+      :error="keyDialog.error"
+      :fields="keyDialog.fields"
+      @submit="resume(keyDialog.job, $event)"
+    />
   </div>
 </template>
 

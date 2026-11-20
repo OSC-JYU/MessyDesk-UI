@@ -19,7 +19,10 @@ import {
 export function useOpenFile(workspace) {
   const router = useRouter()
 
-  return async function openFile(rid, { set = null, total = 0, index = 0, roiSet = null } = {}) {
+  return async function openFile(
+    rid,
+    { set = null, total = 0, index = 0, roiSet = null, origin = '' } = {},
+  ) {
     fileBrowse.roiTarget = roiSet
     fileBrowse.file = await getDocInfo(rid).catch(() => null)
     fileBrowse.context = set
@@ -31,6 +34,7 @@ export function useOpenFile(workspace) {
           skip: index,
           source_rid: null,
           source_label: null,
+          origin_rid: origin,
         }
       : null
     router.push({
@@ -43,7 +47,7 @@ export function useOpenFile(workspace) {
 
 // What double-clicking a node does: open a file in the viewer, open a set
 // in the set browser, or open the ROI editor on the images of an ROI set.
-export function useOpenNode(workspace, flow, { openSet }) {
+export function useOpenNode(workspace, flow, { openSet, onFileRemoved = () => {} }) {
   const openFile = useOpenFile(workspace)
 
   async function openRoiSet(node) {
@@ -68,6 +72,8 @@ export function useOpenNode(workspace, flow, { openSet }) {
     workspace.select(node)
     if (node.type === 'set') return openSet(node, null)
     if (node.type === 'roi-set') return openRoiSet(node)
+    // The file is gone from disk (an original PDF deleted after splitting): nothing to view.
+    if (node.data?._file_removed) return onFileRemoved(node)
     if (opensAsFile(node)) return openFile(node.id)
   }
 }

@@ -4,12 +4,15 @@ import PageHeader from '@/ui/PageHeader.vue'
 import SectionCard from '@/ui/SectionCard.vue'
 import ErrorAlert from '@/ui/ErrorAlert.vue'
 import CrunchIcon from '@/ui/CrunchIcon.vue'
+import FrontPageCard from './FrontPageCard.vue'
 import {
   settings,
   saveSetting,
   THEME_OPTIONS,
   COOKIE_OPTIONS,
   MOTION_OPTIONS,
+  GROUP_PDF_OPTIONS,
+  LINEAGE_COMPARE_OPTIONS,
 } from '@/stores/settings.js'
 import { themeAttribute } from '@/styles/vuetify-theme.js'
 
@@ -28,6 +31,16 @@ const motionText = {
   on: 'The cookie takes a bite when you point at it; placeholders steam.',
   off: 'Everything stays still.',
 }
+const groupText = {
+  on: 'In a set made from PDFs (pages, texts, images), show one card per PDF with its first page. Click it to see the pages.',
+  off: 'Show all the files of the set in a row.',
+}
+const groupIcon = { on: 'mdi-file-multiple-outline', off: 'mdi-view-grid-outline' }
+const compareText = {
+  on: 'A file you pick in the lineage opens next to the file you are looking at, so you can compare a result to its source.',
+  off: 'A file you pick in the lineage replaces the file you are looking at.',
+}
+const compareIcon = { on: 'mdi-compare', off: 'mdi-swap-horizontal' }
 const motionIcon = { on: 'mdi-motion-play-outline', off: 'mdi-motion-pause-outline' }
 
 async function choose(key, value) {
@@ -148,6 +161,58 @@ async function choose(key, value) {
               {{ option.title }}
             </span>
             <span class="settings-option__text">{{ motionText[option.value] }}</span>
+          </label>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Lineage in the file view" overline="Files">
+        <div class="settings-options" role="radiogroup" aria-label="Lineage in the file view">
+          <label
+            v-for="option in LINEAGE_COMPARE_OPTIONS"
+            :key="option.value"
+            class="settings-option"
+            :class="{ 'settings-option--selected': settings.lineage_compare === option.value }"
+          >
+            <input
+              type="radio"
+              name="lineage_compare"
+              class="d-sr-only"
+              :value="option.value"
+              :checked="settings.lineage_compare === option.value"
+              @change="choose('lineage_compare', option.value)"
+            />
+            <span class="settings-option__title">
+              <v-icon :icon="compareIcon[option.value]" size="18" aria-hidden="true" />
+              {{ option.title }}
+            </span>
+            <span class="settings-option__text">{{ compareText[option.value] }}</span>
+          </label>
+        </div>
+      </SectionCard>
+
+      <FrontPageCard :choose="choose" />
+
+      <SectionCard title="Group PDF content" overline="Sets">
+        <div class="settings-options" role="radiogroup" aria-label="Group PDF content">
+          <label
+            v-for="option in GROUP_PDF_OPTIONS"
+            :key="option.value"
+            class="settings-option"
+            :class="{ 'settings-option--selected': settings.group_pdf === option.value }"
+          >
+            <input
+              type="radio"
+              name="group_pdf"
+              class="d-sr-only"
+              :value="option.value"
+              :checked="settings.group_pdf === option.value"
+              @change="choose('group_pdf', option.value)"
+            />
+            <span class="settings-option__title">
+              <v-icon :icon="groupIcon[option.value]" size="18" aria-hidden="true" />
+              {{ option.title }}
+            </span>
+            <span class="settings-option__text">{{ groupText[option.value] }}</span>
           </label>
         </div>
       </SectionCard>

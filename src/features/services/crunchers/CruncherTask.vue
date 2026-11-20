@@ -19,7 +19,12 @@ const emit = defineEmits(['run', 'dspace-query'])
 const values = props.task.values
 
 // Tasks without their own parameters use the service's common ones.
-const params = forModel(props.task.params_help || props.service.params_help || {}, props.model)
+// A page range that picks pages of a set makes no sense for a single page.
+const params = Object.fromEntries(
+  Object.entries(
+    forModel(props.task.params_help || props.service.params_help || {}, props.model),
+  ).filter(([, help]) => props.onSet || help.filter !== 'set_pages'),
+)
 const formats =
   (props.task.supported_formats || props.service.supported_formats || []).join(', ') || 'all'
 </script>
@@ -36,6 +41,7 @@ const formats =
       v-model="values[key]"
       :name="key"
       :help="help"
+      :values="values"
       :source-rid="sourceRid"
       @dspace-query="emit('dspace-query', $event)"
     />
