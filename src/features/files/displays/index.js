@@ -12,6 +12,7 @@ export const displays = {
   hocr: defineAsyncComponent(() => import('./HocrDisplay.vue')),
   human: defineAsyncComponent(() => import('./HumanJsonDisplay.vue')),
   lines: defineAsyncComponent(() => import('./LineSegmentsDisplay.vue')),
+  pagexml: defineAsyncComponent(() => import('./PageXmlDisplay.vue')),
   similarity: defineAsyncComponent(() => import('./SimilarityDisplay.vue')),
   index: defineAsyncComponent(() => import('./IndexDisplay.vue')),
   fields: defineAsyncComponent(() => import('./FieldsDisplay.vue')),

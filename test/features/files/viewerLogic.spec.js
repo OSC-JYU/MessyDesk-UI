@@ -30,6 +30,7 @@ describe('fileTypes', () => {
     [{ type: 'csv' }, 'text'],
     [{ type: 'ocr.json' }, 'ocr'],
     [{ type: 'polygons.json' }, 'lines'],
+    [{ type: 'page.xml', extension: 'xml' }, 'pagexml'],
     [{ type: 'human.json' }, 'human'],
     [{ type: 'similarity.json' }, 'similarity'],
     [{ type: 'fields.json' }, 'fields'],

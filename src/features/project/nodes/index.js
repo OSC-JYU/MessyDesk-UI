@@ -27,6 +27,7 @@ const FILE_TYPES = [
   'osd.json',
   'ocr.json',
   'polygons.json',
+  'page.xml',
   'faiss.json',
   'error.json',
 ]
