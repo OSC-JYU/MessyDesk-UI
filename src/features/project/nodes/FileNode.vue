@@ -13,6 +13,7 @@ const LOOKS = {
   'ner.json': { icon: 'mdi-account-search-outline', note: 'Named entities' },
   'ocr.json': { icon: 'mdi-text-recognition', note: 'OCR' },
   'polygons.json': { icon: 'mdi-vector-polygon', note: 'Text lines' },
+  'page.xml': { icon: 'mdi-script-text-outline', note: 'PAGE XML' },
   'faiss.json': { icon: 'mdi-search-web', note: 'Search index' },
   'error.json': { icon: 'mdi-alert', note: 'Error' },
   html: { icon: 'mdi-language-html5' },

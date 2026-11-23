@@ -36,6 +36,7 @@ const BY_TYPE = {
   csv: 'text',
   'ocr.json': 'ocr',
   'polygons.json': 'lines',
+  'page.xml': 'pagexml',
   'osd.json': 'json',
   'human.json': 'human',
   'dspace7.json': 'json',
